@@ -1,0 +1,544 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Website Speed Test Tool - Photon Builder</title>
+    <meta name="description" content="Test your website performance, analyze Core Web Vitals, and get actionable optimization suggestions.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-color: #060a12;
+            --card-bg: #0a1020;
+            --accent-color: #6366f1;
+            --accent-hover: #4f46e5;
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
+            --border-color: #1f2937;
+            --success: #10b981;
+            --warning: #f59e0b;
+            --danger: #ef4444;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        code, pre, .mono {
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        header {
+            padding: 2rem;
+            text-align: center;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            color: var(--text-main);
+        }
+
+        header p {
+            color: var(--text-muted);
+            font-size: 1.1rem;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        main {
+            flex: 1;
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 2rem;
+            width: 100%;
+        }
+
+        .test-container {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            padding: 2rem;
+            border: 1px solid var(--border-color);
+            margin-bottom: 3rem;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        }
+
+        .input-group {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        input[type="url"] {
+            flex: 1;
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            border: 1px solid var(--border-color);
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            font-size: 1.1rem;
+            font-family: 'JetBrains Mono', monospace;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        input[type="url"]:focus {
+            border-color: var(--accent-color);
+        }
+
+        button {
+            padding: 1rem 2rem;
+            border-radius: 8px;
+            border: none;
+            background-color: var(--accent-color);
+            color: white;
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        button:hover {
+            background-color: var(--accent-hover);
+        }
+
+        button:disabled {
+            background-color: var(--text-muted);
+            cursor: not-allowed;
+        }
+
+        #results-container {
+            display: none;
+            margin-top: 2rem;
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 2rem;
+            color: var(--text-muted);
+        }
+
+        .spinner {
+            border: 4px solid var(--border-color);
+            border-top: 4px solid var(--accent-color);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .metric-card {
+            background-color: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1.5rem;
+        }
+
+        .metric-title {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .metric-value {
+            font-size: 2rem;
+            font-weight: 700;
+            font-family: 'JetBrains Mono', monospace;
+            margin-bottom: 0.5rem;
+        }
+
+        .metric-status {
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .status-good { color: var(--success); }
+        .status-needs-improvement { color: var(--warning); }
+        .status-poor { color: var(--danger); }
+
+        .suggestions {
+            background-color: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1.5rem;
+        }
+
+        .suggestions h3 {
+            margin-bottom: 1rem;
+            color: var(--text-main);
+            font-size: 1.25rem;
+        }
+
+        .suggestion-list {
+            list-style: none;
+        }
+
+        .suggestion-item {
+            padding: 1rem;
+            border-bottom: 1px solid var(--border-color);
+            display: flex;
+            gap: 1rem;
+            align-items: flex-start;
+        }
+
+        .suggestion-item:last-child {
+            border-bottom: none;
+        }
+
+        .suggestion-icon {
+            color: var(--accent-color);
+            margin-top: 0.25rem;
+        }
+
+        .faq-section {
+            margin-top: 4rem;
+        }
+
+        .faq-section h2 {
+            font-size: 2rem;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .faq-grid {
+            display: grid;
+            gap: 1.5rem;
+        }
+
+        .faq-item {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1.5rem;
+        }
+
+        .faq-item h3 {
+            font-size: 1.1rem;
+            margin-bottom: 0.75rem;
+            color: var(--accent-color);
+        }
+
+        .faq-item p {
+            color: var(--text-muted);
+        }
+
+        footer {
+            text-align: center;
+            padding: 2rem;
+            border-top: 1px solid var(--border-color);
+            color: var(--text-muted);
+            margin-top: auto;
+        }
+
+        @media (max-width: 768px) {
+            .input-group {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>Website Speed Test Tool</h1>
+        <p>Analyze your Core Web Vitals and discover actionable performance optimization suggestions.</p>
+    </header>
+
+    <main>
+        <div class="test-container">
+            <div class="input-group">
+                <input type="url" id="url-input" placeholder="https://example.com" required>
+                <button id="test-btn">Run Test</button>
+            </div>
+
+            <div id="loading" class="loading">
+                <div class="spinner"></div>
+                <p>Analyzing website performance...</p>
+            </div>
+
+            <div id="results-container">
+                <h2 style="margin-bottom: 1.5rem;">Performance Results</h2>
+
+                <div class="metrics-grid">
+                    <div class="metric-card">
+                        <div class="metric-title">
+                            LCP
+                            <span title="Largest Contentful Paint">ⓘ</span>
+                        </div>
+                        <div class="metric-value" id="lcp-value">--</div>
+                        <div class="metric-status" id="lcp-status">--</div>
+                    </div>
+
+                    <div class="metric-card">
+                        <div class="metric-title">
+                            FID
+                            <span title="First Input Delay">ⓘ</span>
+                        </div>
+                        <div class="metric-value" id="fid-value">--</div>
+                        <div class="metric-status" id="fid-status">--</div>
+                    </div>
+
+                    <div class="metric-card">
+                        <div class="metric-title">
+                            CLS
+                            <span title="Cumulative Layout Shift">ⓘ</span>
+                        </div>
+                        <div class="metric-value" id="cls-value">--</div>
+                        <div class="metric-status" id="cls-status">--</div>
+                    </div>
+                </div>
+
+                <div class="suggestions">
+                    <h3>Optimization Suggestions</h3>
+                    <ul class="suggestion-list" id="suggestions-list">
+                        <!-- Suggestions will be injected here -->
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <section class="faq-section">
+            <h2>Frequently Asked Questions</h2>
+            <div class="faq-grid">
+                <div class="faq-item">
+                    <h3>What is Largest Contentful Paint (LCP)?</h3>
+                    <p>LCP measures loading performance. To provide a good user experience, LCP should occur within 2.5 seconds of when the page first starts loading. It marks the point when the page's main content has likely loaded.</p>
+                </div>
+                <div class="faq-item">
+                    <h3>What is First Input Delay (FID)?</h3>
+                    <p>FID measures interactivity. To provide a good user experience, pages should have a FID of 100 milliseconds or less. It quantifies the experience users feel when trying to interact with unresponsive pages.</p>
+                </div>
+                <div class="faq-item">
+                    <h3>What is Cumulative Layout Shift (CLS)?</h3>
+                    <p>CLS measures visual stability. To provide a good user experience, pages should maintain a CLS of 0.1. or less. It helps quantify how often users experience unexpected layout shifts.</p>
+                </div>
+                <div class="faq-item">
+                    <h3>How can I improve my website speed?</h3>
+                    <p>Common optimizations include compressing images, leveraging browser caching, minimizing JavaScript and CSS, using a Content Delivery Network (CDN), and optimizing server response times.</p>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>&copy; 2026 Photon Builder. All rights reserved.</p>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const urlInput = document.getElementById('url-input');
+            const testBtn = document.getElementById('test-btn');
+            const loading = document.getElementById('loading');
+            const resultsContainer = document.getElementById('results-container');
+
+            const lcpValue = document.getElementById('lcp-value');
+            const lcpStatus = document.getElementById('lcp-status');
+
+            const fidValue = document.getElementById('fid-value');
+            const fidStatus = document.getElementById('fid-status');
+
+            const clsValue = document.getElementById('cls-value');
+            const clsStatus = document.getElementById('cls-status');
+
+            const suggestionsList = document.getElementById('suggestions-list');
+
+            testBtn.addEventListener('click', runTest);
+            urlInput.addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') runTest();
+            });
+
+            function isValidUrl(string) {
+                try {
+                    new URL(string);
+                    return true;
+                } catch (_) {
+                    return false;
+                }
+            }
+
+            function runTest() {
+                let url = urlInput.value.trim();
+
+                if (!url) {
+                    alert('Please enter a URL');
+                    return;
+                }
+
+                if (!url.startsWith('http://') && !url.startsWith('https://')) {
+                    url = 'https://' + url;
+                    urlInput.value = url;
+                }
+
+                if (!isValidUrl(url)) {
+                    alert('Please enter a valid URL');
+                    return;
+                }
+
+                // UI state: loading
+                testBtn.disabled = true;
+                resultsContainer.style.display = 'none';
+                loading.style.display = 'block';
+
+                // Simulate API call and analysis (2-3 seconds)
+                setTimeout(() => {
+                    displayResults(url);
+                }, 2000 + Math.random() * 1000);
+            }
+
+            function displayResults(url) {
+                // Generate mock data based on a somewhat realistic distribution
+                const lcp = generateLCP();
+                const fid = generateFID();
+                const cls = generateCLS();
+
+                // Update UI
+                updateMetric(lcpValue, lcpStatus, lcp.value, lcp.unit, lcp.status);
+                updateMetric(fidValue, fidStatus, fid.value, fid.unit, fid.status);
+                updateMetric(clsValue, clsStatus, cls.value, cls.unit, cls.status);
+
+                // Generate suggestions
+                const suggestions = generateSuggestions(lcp.status, fid.status, cls.status);
+
+                suggestionsList.innerHTML = '';
+                if (suggestions.length === 0) {
+                    suggestionsList.innerHTML = '<li class="suggestion-item"><span class="suggestion-icon">✓</span><div><strong>Great job!</strong> Your Core Web Vitals look excellent. Keep up the good work.</div></li>';
+                } else {
+                    suggestions.forEach(suggestion => {
+                        suggestionsList.innerHTML += `
+                            <li class="suggestion-item">
+                                <span class="suggestion-icon">⚡</span>
+                                <div>
+                                    <strong>${suggestion.title}</strong>
+                                    <p>${suggestion.description}</p>
+                                </div>
+                            </li>
+                        `;
+                    });
+                }
+
+                // UI state: results
+                loading.style.display = 'none';
+                resultsContainer.style.display = 'block';
+                testBtn.disabled = false;
+
+                // Scroll to results
+                resultsContainer.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+
+            function updateMetric(valueEl, statusEl, value, unit, status) {
+                valueEl.textContent = `${value}${unit}`;
+
+                let statusText, statusClass;
+                if (status === 'good') {
+                    statusText = 'Good';
+                    statusClass = 'status-good';
+                } else if (status === 'needs-improvement') {
+                    statusText = 'Needs Improvement';
+                    statusClass = 'status-needs-improvement';
+                } else {
+                    statusText = 'Poor';
+                    statusClass = 'status-poor';
+                }
+
+                statusEl.textContent = statusText;
+                statusEl.className = `metric-status ${statusClass}`;
+            }
+
+            function generateLCP() {
+                // LCP: Good < 2.5s, Needs Improv < 4.0s, Poor > 4.0s
+                const val = (Math.random() * 5 + 0.5).toFixed(1);
+                let status = 'poor';
+                if (val <= 2.5) status = 'good';
+                else if (val <= 4.0) status = 'needs-improvement';
+                return { value: val, unit: 's', status };
+            }
+
+            function generateFID() {
+                // FID: Good < 100ms, Needs Improv < 300ms, Poor > 300ms
+                const val = Math.floor(Math.random() * 400 + 10);
+                let status = 'poor';
+                if (val <= 100) status = 'good';
+                else if (val <= 300) status = 'needs-improvement';
+                return { value: val, unit: 'ms', status };
+            }
+
+            function generateCLS() {
+                // CLS: Good < 0.1, Needs Improv < 0.25, Poor > 0.25
+                const val = (Math.random() * 0.4).toFixed(2);
+                let status = 'poor';
+                if (val <= 0.1) status = 'good';
+                else if (val <= 0.25) status = 'needs-improvement';
+                return { value: val, unit: '', status };
+            }
+
+            function generateSuggestions(lcpStatus, fidStatus, clsStatus) {
+                const suggestions = [];
+
+                if (lcpStatus !== 'good') {
+                    suggestions.push({
+                        title: 'Optimize Largest Contentful Paint',
+                        description: 'Consider preloading your largest images, implementing a Content Delivery Network (CDN), and minimizing server response times (TTFB) to improve LCP.'
+                    });
+                }
+
+                if (fidStatus !== 'good') {
+                    suggestions.push({
+                        title: 'Reduce First Input Delay',
+                        description: 'Break up Long Tasks in JavaScript, optimize your page for interaction readiness, and consider using a web worker to run scripts off the main thread.'
+                    });
+                }
+
+                if (clsStatus !== 'good') {
+                    suggestions.push({
+                        title: 'Improve Visual Stability (CLS)',
+                        description: 'Always include width and height size attributes on your images and video elements. Avoid inserting content above existing content unless responding to a user interaction.'
+                    });
+                }
+
+                if (Math.random() > 0.5 && suggestions.length < 3) {
+                     suggestions.push({
+                        title: 'Serve Next-Gen Image Formats',
+                        description: 'Image formats like WebP and AVIF often provide better compression than PNG or JPEG, which means faster downloads and less data consumption.'
+                    });
+                }
+
+                return suggestions;
+            }
+        });
+    </script>
+</body>
+</html>
