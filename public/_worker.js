@@ -75,7 +75,12 @@ export default {
       }
 
       if (resp.ok) {
-        return resp;
+        // For hashed assets (_astro/), allow long cache. For HTML, no cache.
+        const headers = new Headers(resp.headers);
+        if (!pathname.includes('_astro/')) {
+          headers.set('Cache-Control', 'public, max-age=0, must-revalidate');
+        }
+        return new Response(resp.body, { status: resp.status, headers });
       }
     }
 
