@@ -1,0 +1,103 @@
+export interface SiteConfig {
+  id: string;
+  name: string;
+  domain: string;
+  accent: string;
+  gaId: string;
+  nav: { label: string; href: string }[];
+  footer: { text: string; gabVentures?: boolean };
+}
+
+export const sites: Record<string, SiteConfig> = {
+  firemaths: {
+    id: 'firemaths',
+    name: 'FireMaths',
+    domain: 'firemaths.info',
+    accent: '#D4A017',
+    gaId: 'G-G86C7NJG3F',
+    nav: [
+      { label: 'Tools', href: '/#tools' },
+      { label: 'Studies', href: '/#studies' },
+      { label: 'Guides', href: '/#guides' },
+    ],
+    footer: { text: '© 2026 FireMaths', gabVentures: true },
+  },
+  westmount: {
+    id: 'westmount',
+    name: 'Westmount Fundamentals',
+    domain: 'westmountfundamentals.com',
+    accent: '#4a8fe7',
+    gaId: 'G-VYF72NSC1Q',
+    nav: [
+      { label: 'Studies', href: '/#studies' },
+      { label: 'Tools', href: '/#tools' },
+      { label: 'Guides', href: '/#guides' },
+    ],
+    footer: { text: '© 2026 Westmount Fundamentals', gabVentures: true },
+  },
+  siliconbased: {
+    id: 'siliconbased',
+    name: 'siliconbased.dev',
+    domain: 'siliconbased.dev',
+    accent: '#818cf8',
+    gaId: 'G-G86C7NJG3F',
+    nav: [
+      { label: 'Tools', href: '/#tools' },
+      { label: 'Studies', href: '/#studies' },
+      { label: 'Guides', href: '/#guides' },
+    ],
+    footer: { text: '© 2026 siliconbased.dev', gabVentures: true },
+  },
+  '28grams': {
+    id: '28grams',
+    name: '28grams',
+    domain: '28grams.vip',
+    accent: '#C2185B',
+    gaId: 'G-G86C7NJG3F',
+    nav: [
+      { label: 'Tools', href: '/#tools' },
+      { label: 'Guides', href: '/#guides' },
+      { label: 'Lists', href: '/#lists' },
+    ],
+    footer: { text: '© 2026 28grams', gabVentures: true },
+  },
+  migratingmammals: {
+    id: 'migratingmammals',
+    name: 'Migrating Mammals',
+    domain: 'migratingmammals.com',
+    accent: '#C4956A',
+    gaId: 'G-G86C7NJG3F',
+    nav: [
+      { label: 'Tools', href: '/#tools' },
+      { label: 'Guides', href: '/#guides' },
+      { label: 'Lists', href: '/#lists' },
+    ],
+    footer: { text: '© 2026 Migrating Mammals', gabVentures: true },
+  },
+  leeroyjenkins: {
+    id: 'leeroyjenkins',
+    name: 'Leeroy Jenkins',
+    domain: 'leeroyjenkins.quest',
+    accent: '#9333EA',
+    gaId: 'G-G86C7NJG3F',
+    nav: [
+      { label: 'Tools', href: '/#tools' },
+      { label: 'Guides', href: '/#guides' },
+      { label: 'Lists', href: '/#lists' },
+    ],
+    footer: { text: '© 2026 Leeroy Jenkins', gabVentures: true },
+  },
+  ijustwantto: {
+    id: 'ijustwantto',
+    name: 'I Just Want To',
+    domain: 'ijustwantto.live',
+    accent: '#2DB89A',
+    gaId: 'G-G86C7NJG3F',
+    nav: [
+      { label: 'Tools', href: '/#tools' },
+      { label: 'Guides', href: '/#guides' },
+      { label: 'Lists', href: '/#lists' },
+    ],
+    footer: { text: '© 2026 I Just Want To', gabVentures: true },
+  },
+};

@@ -58,6 +58,8 @@ export default {
 
     if (pathname === '/' || pathname === '') {
       assetPath = `${base}/index.html`;
+    } else if (pathname.endsWith('/')) {
+      assetPath = `${base}${pathname}index.html`;
     } else {
       assetPath = `${base}${pathname}`;
     }
