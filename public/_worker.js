@@ -41,6 +41,7 @@ export default {
       'www.leeroyjenkins.quest': 'leeroyjenkins',
       'ijustwantto.live': 'ijustwantto',
       'www.ijustwantto.live': 'ijustwantto',
+      'montrealjobs.photonbuilder.com': 'montrealjobs',
     };
 
     const site = SITE_MAP[host];

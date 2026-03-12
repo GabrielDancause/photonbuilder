@@ -114,3 +114,17 @@ sites['hpv-research'] = {
   ],
   footer: { text: '© 2026 HPV Research', gabVentures: true },
 };
+
+sites['montrealjobs'] = {
+  id: 'montrealjobs',
+  name: 'Montreal Jobs',
+  domain: 'montrealjobs.photonbuilder.com',
+  accent: '#3B82F6',
+  gaId: 'G-G86C7NJG3F',
+  nav: [
+    { label: 'Market', href: '/#market' },
+    { label: 'Jobs', href: '/#jobs' },
+    { label: 'Skills', href: '/#skills' },
+  ],
+  footer: { text: '© 2026 Montreal Jobs', gabVentures: true },
+};
