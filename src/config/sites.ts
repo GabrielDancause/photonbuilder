@@ -101,3 +101,16 @@ export const sites: Record<string, SiteConfig> = {
     footer: { text: '© 2026 I Just Want To', gabVentures: true },
   },
 };
+sites['hpv-research'] = {
+  id: 'hpv-research',
+  name: 'HPV Research',
+  domain: 'hpvresearch.com',
+  accent: '#10b981',
+  gaId: 'G-G86C7NJG3F',
+  nav: [
+    { label: 'Tools', href: '/#tools' },
+    { label: 'Studies', href: '/#studies' },
+    { label: 'Guides', href: '/#guides' },
+  ],
+  footer: { text: '© 2026 HPV Research', gabVentures: true },
+};
