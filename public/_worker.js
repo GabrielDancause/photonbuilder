@@ -1,3 +1,25 @@
+function getMimeType(path) {
+  const ext = path.split('.').pop()?.toLowerCase();
+  const types = {
+    'html': 'text/html; charset=utf-8',
+    'css': 'text/css; charset=utf-8',
+    'js': 'application/javascript; charset=utf-8',
+    'json': 'application/json; charset=utf-8',
+    'xml': 'application/xml; charset=utf-8',
+    'svg': 'image/svg+xml',
+    'png': 'image/png',
+    'jpg': 'image/jpeg',
+    'jpeg': 'image/jpeg',
+    'gif': 'image/gif',
+    'webp': 'image/webp',
+    'woff2': 'font/woff2',
+    'woff': 'font/woff',
+    'ttf': 'font/ttf',
+    'ico': 'image/x-icon',
+  };
+  return types[ext] || null;
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -75,8 +97,11 @@ export default {
       }
 
       if (resp.ok) {
-        // For hashed assets (_astro/), allow long cache. For HTML, no cache.
         const headers = new Headers(resp.headers);
+        // Force correct MIME type based on file extension
+        const mime = getMimeType(path);
+        if (mime) headers.set('Content-Type', mime);
+        // For hashed assets (_astro/), allow long cache. For HTML, no cache.
         if (!pathname.includes('_astro/')) {
           headers.set('Cache-Control', 'public, max-age=0, must-revalidate');
         }
