@@ -11,7 +11,7 @@ export interface SiteConfig {
 export const sites: Record<string, SiteConfig> = {
   firemaths: {
     id: 'firemaths',
-    name: 'FireMaths',
+    name: 'Fire Maths',
     domain: 'firemaths.info',
     accent: '#D4A017',
     gaId: 'G-G86C7NJG3F',
@@ -20,7 +20,7 @@ export const sites: Record<string, SiteConfig> = {
       { label: 'Studies', href: '/#studies' },
       { label: 'Guides', href: '/#guides' },
     ],
-    footer: { text: '© 2026 FireMaths', gabVentures: true },
+    footer: { text: '© 2026 Fire Maths', gabVentures: true },
   },
   westmount: {
     id: 'westmount',
@@ -37,7 +37,7 @@ export const sites: Record<string, SiteConfig> = {
   },
   siliconbased: {
     id: 'siliconbased',
-    name: 'siliconbased.dev',
+    name: 'Silicon Based',
     domain: 'siliconbased.dev',
     accent: '#818cf8',
     gaId: 'G-G86C7NJG3F',
@@ -46,11 +46,11 @@ export const sites: Record<string, SiteConfig> = {
       { label: 'Studies', href: '/#studies' },
       { label: 'Guides', href: '/#guides' },
     ],
-    footer: { text: '© 2026 siliconbased.dev', gabVentures: true },
+    footer: { text: '© 2026 Silicon Based', gabVentures: true },
   },
   '28grams': {
     id: '28grams',
-    name: '28grams',
+    name: '28 Grams',
     domain: '28grams.vip',
     accent: '#C2185B',
     gaId: 'G-G86C7NJG3F',
@@ -59,7 +59,7 @@ export const sites: Record<string, SiteConfig> = {
       { label: 'Guides', href: '/#guides' },
       { label: 'Lists', href: '/#lists' },
     ],
-    footer: { text: '© 2026 28grams', gabVentures: true },
+    footer: { text: '© 2026 28 Grams', gabVentures: true },
   },
   migratingmammals: {
     id: 'migratingmammals',
