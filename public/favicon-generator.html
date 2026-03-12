@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Favicon Generator - Create Icons in ICO, PNG, SVG | PhotonBuilder</title>
+    <meta name="description" content="Free tool to instantly generate favicons in multiple sizes from uploaded images. Creates ICO, PNG, and SVG formats with downloadable ZIP and HTML snippets.">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+    <style>
+        :root {
+            --bg-color: #060a12;
+            --card-bg: #0a1020;
+            --border-color: #152040;
+            --accent-color: #6366f1;
+            --accent-hover: #4f46e5;
+            --text-main: #f3f4f6;
+            --text-muted: #9ca3af;
+            --success-color: #10b981;
+            --error-color: #ef4444;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            line-height: 1.6;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        header {
+            border-bottom: 1px solid var(--border-color);
+            padding: 1rem 2rem;
+            background-color: rgba(10, 16, 32, 0.8);
+            backdrop-filter: blur(8px);
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        .header-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            align-items: center;
+        }
+
+        .logo {
+            color: var(--text-main);
+            text-decoration: none;
+            font-size: 1.25rem;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .logo-icon {
+            color: var(--accent-color);
+        }
+
+        main {
+            flex: 1;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 3rem 1.5rem;
+            width: 100%;
+        }
+
+        .hero {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        .hero h1 {
+            font-size: 2.5rem;
+            margin-bottom: 1rem;
+            background: linear-gradient(to right, #fff, #9ca3af);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .hero p {
+            color: var(--text-muted);
+            font-size: 1.125rem;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .generator-container {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 2rem;
+            margin-bottom: 4rem;
+        }
+
+        @media (min-width: 768px) {
+            .generator-container {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 2rem;
+        }
+
+        .card-title {
+            font-size: 1.25rem;
+            font-weight: 600;
+            margin-bottom: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .upload-area {
+            border: 2px dashed var(--border-color);
+            border-radius: 8px;
+            padding: 3rem 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.2s;
+            background-color: rgba(6, 10, 18, 0.5);
+        }
+
+        .upload-area:hover, .upload-area.dragover {
+            border-color: var(--accent-color);
+            background-color: rgba(99, 102, 241, 0.05);
+        }
+
+        .upload-icon {
+            width: 48px;
+            height: 48px;
+            color: var(--text-muted);
+            margin-bottom: 1rem;
+        }
+
+        .upload-text {
+            color: var(--text-main);
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+        }
+
+        .upload-hint {
+            color: var(--text-muted);
+            font-size: 0.875rem;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .preview-section {
+            display: none;
+            flex-direction: column;
+            gap: 1.5rem;
+        }
+
+        .preview-section.active {
+            display: flex;
+        }
+
+        .browser-tab {
+            background-color: #1e1e1e;
+            border-radius: 8px 8px 0 0;
+            border: 1px solid #333;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .tab-header {
+            background-color: #000;
+            display: flex;
+            padding: 0.5rem 1rem 0;
+            gap: 0.5rem;
+        }
+
+        .tab {
+            background-color: #1e1e1e;
+            padding: 0.5rem 1rem;
+            border-radius: 8px 8px 0 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+            color: #fff;
+            min-width: 150px;
+        }
+
+        .tab-icon {
+            width: 16px;
+            height: 16px;
+            object-fit: contain;
+        }
+
+        .tab-content {
+            padding: 1rem;
+            background-color: #1e1e1e;
+            border-top: 1px solid #333;
+            height: 60px;
+        }
+
+        .sizes-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+            gap: 1rem;
+        }
+
+        .size-item {
+            background-color: rgba(6, 10, 18, 0.5);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1rem;
+            text-align: center;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .size-item img {
+            max-width: 100%;
+            object-fit: contain;
+        }
+
+        .size-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+
+        .btn {
+            background-color: var(--accent-color);
+            color: #fff;
+            border: none;
+            border-radius: 6px;
+            padding: 0.75rem 1.5rem;
+            font-size: 1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+            text-decoration: none;
+            width: 100%;
+        }
+
+        .btn:hover {
+            background-color: var(--accent-hover);
+        }
+
+        .btn-outline {
+            background-color: transparent;
+            border: 1px solid var(--accent-color);
+            color: var(--accent-color);
+        }
+
+        .btn-outline:hover {
+            background-color: rgba(99, 102, 241, 0.1);
+        }
+
+        .code-snippet {
+            margin-top: 1rem;
+        }
+
+        .code-snippet pre {
+            background-color: #060a12;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            padding: 1rem;
+            overflow-x: auto;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.875rem;
+            color: #e5e7eb;
+            white-space: pre-wrap;
+            word-break: break-all;
+        }
+
+        .copy-btn {
+            margin-top: 0.5rem;
+            background: none;
+            border: none;
+            color: var(--accent-color);
+            cursor: pointer;
+            font-size: 0.875rem;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        .copy-btn:hover {
+            text-decoration: underline;
+        }
+
+        .faq-section {
+            margin-top: 4rem;
+        }
+
+        .faq-section h2 {
+            font-size: 1.875rem;
+            margin-bottom: 2rem;
+            text-align: center;
+        }
+
+        .faq-grid {
+            display: grid;
+            gap: 1.5rem;
+        }
+
+        .faq-item {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1.5rem;
+        }
+
+        .faq-question {
+            font-size: 1.125rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+            color: var(--text-main);
+        }
+
+        .faq-answer {
+            color: var(--text-muted);
+        }
+
+        footer {
+            border-top: 1px solid var(--border-color);
+            padding: 2rem;
+            text-align: center;
+            color: var(--text-muted);
+            margin-top: auto;
+        }
+    </style>
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [{
+        "@type": "Question",
+        "name": "What is a favicon?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "A favicon (short for favorite icon) is a small image displayed next to your website's title in the browser tab, bookmarks, and history. It helps users easily identify your site visually."
+        }
+      }, {
+        "@type": "Question",
+        "name": "What sizes are required for modern favicons?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Modern websites typically need a few standard sizes: 16x16 and 32x32 for desktop browsers, 180x180 for Apple touch icons (iOS), and 192x192 for Android home screens. Our tool generates all these sizes automatically."
+        }
+      }, {
+        "@type": "Question",
+        "name": "Can I use an SVG file for my favicon?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes! Modern browsers fully support SVG favicons, which remain perfectly sharp on all screen resolutions and can even adapt to light and dark modes. If you upload an SVG, our tool will provide it along with standard PNG fallbacks for older browsers."
+        }
+      }, {
+        "@type": "Question",
+        "name": "How do I add the generated favicons to my website?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "After downloading the ZIP file, extract it and upload the icon files to the root directory of your website. Then, copy the provided HTML meta tags from our tool and paste them inside the <head> section of your website's HTML source code."
+        }
+      }, {
+        "@type": "Question",
+        "name": "Why do I need an apple-touch-icon.png?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Apple devices use the apple-touch-icon.png file when a user saves your website to their home screen as a shortcut. Providing this specific 180x180 pixel image ensures your site's icon looks perfect and appropriately sized on iPhones and iPads."
+        }
+      }]
+    }
+    </script>
+</head>
+<body>
+
+    <header>
+        <div class="header-content">
+            <a href="https://photonbuilder.com/" class="logo">
+                <svg class="logo-icon" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                    <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"></path>
+                </svg>
+                PhotonBuilder
+            </a>
+        </div>
+    </header>
+
+    <main>
+        <div class="hero">
+            <h1>Favicon Generator</h1>
+            <p>Upload an image to instantly generate favicons in all the standard sizes and formats (ICO, PNG, SVG) for modern web development.</p>
+        </div>
+
+        <div class="generator-container">
+            <div class="card">
+                <h2 class="card-title">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="17 8 12 3 7 8"></polyline><line x1="12" y1="3" x2="12" y2="15"></line></svg>
+                    Upload Image
+                </h2>
+                <div class="upload-area" id="dropZone">
+                    <svg class="upload-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+                    <div class="upload-text">Drag & drop an image here</div>
+                    <div class="upload-hint">or click to browse files</div>
+                    <div class="upload-hint" style="margin-top: 0.5rem;">Supports PNG, JPG, SVG, WEBP (Max 5MB)</div>
+                    <input type="file" id="fileInput" accept="image/png, image/jpeg, image/svg+xml, image/webp">
+                </div>
+                <div id="errorMsg" style="color: var(--error-color); margin-top: 1rem; display: none; text-align: center;"></div>
+            </div>
+
+            <div class="card preview-section" id="previewSection">
+                <h2 class="card-title">
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path><circle cx="12" cy="12" r="3"></circle></svg>
+                    Preview & Output
+                </h2>
+
+                <div>
+                    <div style="margin-bottom: 0.5rem; font-size: 0.875rem; color: var(--text-muted);">Browser Tab Preview</div>
+                    <div class="browser-tab">
+                        <div class="tab-header">
+                            <div class="tab">
+                                <img src="" alt="favicon" class="tab-icon" id="tabIcon">
+                                My Website
+                            </div>
+                        </div>
+                        <div class="tab-content"></div>
+                    </div>
+                </div>
+
+                <div>
+                    <div style="margin-bottom: 0.5rem; font-size: 0.875rem; color: var(--text-muted);">Generated Sizes</div>
+                    <div class="sizes-grid">
+                        <div class="size-item">
+                            <img id="preview16" width="16" height="16">
+                            <span class="size-label">16x16</span>
+                        </div>
+                        <div class="size-item">
+                            <img id="preview32" width="32" height="32">
+                            <span class="size-label">32x32</span>
+                        </div>
+                        <div class="size-item">
+                            <img id="preview180" width="64" height="64" style="max-height:64px;">
+                            <span class="size-label">180x180</span>
+                        </div>
+                        <div class="size-item">
+                            <img id="preview192" width="64" height="64" style="max-height:64px;">
+                            <span class="size-label">192x192</span>
+                        </div>
+                    </div>
+                </div>
+
+                <button class="btn" id="downloadBtn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"></path><polyline points="7 10 12 15 17 10"></polyline><line x1="12" y1="15" x2="12" y2="3"></line></svg>
+                    Download ZIP
+                </button>
+
+                <div class="code-snippet">
+                    <div style="margin-bottom: 0.5rem; font-size: 0.875rem; color: var(--text-muted);">HTML Code to add inside your &lt;head&gt;</div>
+                    <pre id="codeBlock">&lt;link rel="icon" type="image/x-icon" href="/favicon.ico"&gt;
+&lt;link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png"&gt;
+&lt;link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png"&gt;
+&lt;link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png"&gt;
+&lt;link rel="icon" type="image/svg+xml" href="/favicon.svg"&gt;</pre>
+                    <button class="copy-btn" id="copyBtn">
+                        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                        Copy HTML
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <section class="faq-section">
+            <h2>Frequently Asked Questions</h2>
+            <div class="faq-grid">
+                <div class="faq-item">
+                    <div class="faq-question">What is a favicon?</div>
+                    <div class="faq-answer">A favicon (short for favorite icon) is a small image displayed next to your website's title in the browser tab, bookmarks, and history. It helps users easily identify your site visually.</div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-question">What sizes are required for modern favicons?</div>
+                    <div class="faq-answer">Modern websites typically need a few standard sizes: 16x16 and 32x32 for desktop browsers, 180x180 for Apple touch icons (iOS), and 192x192 for Android home screens. Our tool generates all these sizes automatically.</div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-question">Can I use an SVG file for my favicon?</div>
+                    <div class="faq-answer">Yes! Modern browsers fully support SVG favicons, which remain perfectly sharp on all screen resolutions and can even adapt to light and dark modes. If you upload an SVG, our tool will provide it along with standard PNG fallbacks for older browsers.</div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-question">How do I add the generated favicons to my website?</div>
+                    <div class="faq-answer">After downloading the ZIP file, extract it and upload the icon files to the root directory of your website. Then, copy the provided HTML meta tags from our tool and paste them inside the &lt;head&gt; section of your website's HTML source code.</div>
+                </div>
+                <div class="faq-item">
+                    <div class="faq-question">Why do I need an apple-touch-icon.png?</div>
+                    <div class="faq-answer">Apple devices use the apple-touch-icon.png file when a user saves your website to their home screen as a shortcut. Providing this specific 180x180 pixel image ensures your site's icon looks perfect and appropriately sized on iPhones and iPads.</div>
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        &copy; 2026 PhotonBuilder &middot; Build Fast Sites in Minutes
+    </footer>
+
+    <script>
+        const dropZone = document.getElementById('dropZone');
+        const fileInput = document.getElementById('fileInput');
+        const previewSection = document.getElementById('previewSection');
+        const errorMsg = document.getElementById('errorMsg');
+        const downloadBtn = document.getElementById('downloadBtn');
+        const copyBtn = document.getElementById('copyBtn');
+
+        let generatedFiles = {};
+
+        // Drag and Drop handlers
+        dropZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            dropZone.classList.add('dragover');
+        });
+
+        dropZone.addEventListener('dragleave', () => {
+            dropZone.classList.remove('dragover');
+        });
+
+        dropZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            dropZone.classList.remove('dragover');
+            if (e.dataTransfer.files.length) {
+                handleFile(e.dataTransfer.files[0]);
+            }
+        });
+
+        dropZone.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        fileInput.addEventListener('change', (e) => {
+            if (e.target.files.length) {
+                handleFile(e.target.files[0]);
+            }
+        });
+
+        copyBtn.addEventListener('click', () => {
+            const text = document.getElementById('codeBlock').innerText;
+            navigator.clipboard.writeText(text).then(() => {
+                const originalText = copyBtn.innerHTML;
+                copyBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg> Copied!';
+                setTimeout(() => {
+                    copyBtn.innerHTML = originalText;
+                }, 2000);
+            });
+        });
+
+        downloadBtn.addEventListener('click', async () => {
+            if (!generatedFiles || Object.keys(generatedFiles).length === 0) return;
+
+            const zip = new JSZip();
+            for (const [filename, blob] of Object.entries(generatedFiles)) {
+                zip.file(filename, blob);
+            }
+
+            try {
+                const content = await zip.generateAsync({ type: 'blob' });
+                const url = URL.createObjectURL(content);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = 'favicons.zip';
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+            } catch (err) {
+                showError("Failed to generate ZIP file.");
+            }
+        });
+
+        function showError(msg) {
+            errorMsg.textContent = msg;
+            errorMsg.style.display = 'block';
+            previewSection.classList.remove('active');
+        }
+
+        async function handleFile(file) {
+            errorMsg.style.display = 'none';
+            if (!file.type.match('image.*')) {
+                showError("Please upload a valid image file (PNG, JPG, SVG, WEBP).");
+                return;
+            }
+
+            if (file.size > 5 * 1024 * 1024) {
+                showError("File is too large. Maximum size is 5MB.");
+                return;
+            }
+
+            const img = new Image();
+            const objectUrl = URL.createObjectURL(file);
+
+            img.onload = async () => {
+                try {
+                    generatedFiles = {};
+
+                    // Generate PNGs
+                    const sizes = [16, 32, 180, 192];
+                    const names = {
+                        16: 'favicon-16x16.png',
+                        32: 'favicon-32x32.png',
+                        180: 'apple-touch-icon.png',
+                        192: 'android-chrome-192x192.png'
+                    };
+
+                    for (const size of sizes) {
+                        const blob = await resizeImage(img, size, size, 'image/png');
+                        generatedFiles[names[size]] = blob;
+
+                        // Update UI
+                        const url = URL.createObjectURL(blob);
+                        document.getElementById('preview' + size).src = url;
+                        if (size === 16) {
+                            document.getElementById('tabIcon').src = url;
+                        }
+                    }
+
+                    // Generate ICO (from 32x32 PNG)
+                    const icoBlob = await createIcoFromPng(generatedFiles['favicon-32x32.png']);
+                    generatedFiles['favicon.ico'] = icoBlob;
+
+                    // Generate SVG
+                    if (file.type === 'image/svg+xml') {
+                        generatedFiles['favicon.svg'] = file;
+                    } else {
+                        const svgString = createSvgWrapper(img.src, img.width, img.height);
+                        generatedFiles['favicon.svg'] = new Blob([svgString], { type: 'image/svg+xml' });
+                    }
+
+                    previewSection.classList.add('active');
+                } catch (err) {
+                    console.error(err);
+                    showError("An error occurred while processing the image.");
+                }
+            };
+
+            img.onerror = () => {
+                showError("Failed to load image. It might be corrupted.");
+            };
+
+            // For SVG wrapper we need base64, so we'll read as data URL
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                img.src = e.target.result;
+            };
+            reader.readAsDataURL(file);
+        }
+
+        function resizeImage(img, width, height, type) {
+            return new Promise((resolve) => {
+                const canvas = document.createElement('canvas');
+                canvas.width = width;
+                canvas.height = height;
+                const ctx = canvas.getContext('2d');
+
+                // Draw image smoothly
+                ctx.imageSmoothingEnabled = true;
+                ctx.imageSmoothingQuality = 'high';
+                ctx.drawImage(img, 0, 0, width, height);
+
+                canvas.toBlob((blob) => {
+                    resolve(blob);
+                }, type);
+            });
+        }
+
+        function createIcoFromPng(pngBlob) {
+            return new Promise((resolve) => {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const pngData = new Uint8Array(e.target.result);
+                    const size = pngData.length;
+                    const buffer = new ArrayBuffer(22 + size);
+                    const view = new DataView(buffer);
+
+                    // ICO Header
+                    view.setUint16(0, 0, true); // Reserved
+                    view.setUint16(2, 1, true); // Type: 1 (ICO)
+                    view.setUint16(4, 1, true); // Count: 1
+
+                    // Directory Entry
+                    view.setUint8(6, 32); // Width
+                    view.setUint8(7, 32); // Height
+                    view.setUint8(8, 0); // Color count
+                    view.setUint8(9, 0); // Reserved
+                    view.setUint16(10, 1, true); // Planes
+                    view.setUint16(12, 32, true); // BPP
+                    view.setUint32(14, size, true); // Size
+                    view.setUint32(18, 22, true); // Offset
+
+                    const icoData = new Uint8Array(buffer);
+                    icoData.set(pngData, 22);
+
+                    resolve(new Blob([buffer], { type: 'image/x-icon' }));
+                };
+                reader.readAsArrayBuffer(pngBlob);
+            });
+        }
+
+        function createSvgWrapper(base64Data, width, height) {
+            return `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${width} ${height}">
+  <image href="${base64Data}" width="${width}" height="${height}" />
+</svg>`;
+        }
+    </script>
+</body>
+</html>
