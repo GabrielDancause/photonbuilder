@@ -23,28 +23,31 @@ export default {
     const site = SITE_MAP[host];
 
     if (!site) {
-      // photonbuilder.com or unknown — serve from root
       return env.ASSETS.fetch(request);
     }
 
-    // Build rewritten paths to try
     const pathname = url.pathname;
     const base = `/sites/${site}`;
+
+    // ALL requests for a mapped domain get rewritten to /sites/<site>/
+    // This handles HTML, CSS, JS, images, fonts — everything
     const candidates = [];
 
     if (pathname === '/' || pathname === '') {
       candidates.push(`${base}/index.html`);
     } else {
+      // Try exact path first (handles .html, .css, .js, .xml, images, etc.)
       candidates.push(`${base}${pathname}`);
-      if (!pathname.endsWith('.html') && !pathname.includes('.')) {
+      // If no extension, try adding .html or /index.html
+      if (!pathname.includes('.')) {
         candidates.push(`${base}${pathname}.html`);
         candidates.push(`${base}${pathname}/index.html`);
       }
     }
 
     for (const path of candidates) {
-      // Create a clean new URL — don't carry over original request URL
       const assetUrl = new URL(path, url.origin);
+      assetUrl.search = url.search;
       const assetReq = new Request(assetUrl.toString(), {
         method: request.method,
         headers: request.headers,
@@ -53,7 +56,6 @@ export default {
       const resp = await env.ASSETS.fetch(assetReq);
 
       if (resp.status === 301 || resp.status === 302) {
-        // Cloudflare is trying to redirect — follow it internally
         const loc = resp.headers.get('Location');
         if (loc) {
           const locUrl = new URL(loc, url.origin);
@@ -63,7 +65,6 @@ export default {
           });
           const followResp = await env.ASSETS.fetch(followReq);
           if (followResp.ok) {
-            // Return with original URL (no redirect visible to user)
             return new Response(followResp.body, {
               status: followResp.status,
               headers: followResp.headers,
@@ -78,6 +79,7 @@ export default {
       }
     }
 
-    return new Response('Not Found', { status: 404 });
+    // Fallback: try serving from root (for shared assets like fonts)
+    return env.ASSETS.fetch(request);
   }
 };
