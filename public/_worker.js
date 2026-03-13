@@ -54,15 +54,25 @@ export default {
     const base = `/sites/${site}`;
     const hasExtension = pathname.includes('.');
 
-    // Shared Astro assets (CSS, JS) live at root /_astro/ — serve directly
+    // Astro assets (CSS, JS) — try root /_astro/ first, then site-specific /sites/<site>/_astro/
     if (pathname.startsWith('/_astro/')) {
-      const resp = await env.ASSETS.fetch(new URL(pathname, url.origin).toString());
-      if (resp.ok) {
-        const headers = new Headers(resp.headers);
+      // Try root first (shared Astro build assets)
+      const rootResp = await env.ASSETS.fetch(new URL(pathname, url.origin).toString());
+      if (rootResp.ok) {
+        const headers = new Headers(rootResp.headers);
         const mime = getMimeType(pathname);
         if (mime) headers.set('Content-Type', mime);
         headers.set('Cache-Control', 'public, max-age=31536000, immutable');
-        return new Response(resp.body, { status: resp.status, headers });
+        return new Response(rootResp.body, { status: rootResp.status, headers });
+      }
+      // Fall back to site-specific assets (legacy per-site Astro builds)
+      const siteResp = await env.ASSETS.fetch(new URL(`${base}${pathname}`, url.origin).toString());
+      if (siteResp.ok) {
+        const headers = new Headers(siteResp.headers);
+        const mime = getMimeType(pathname);
+        if (mime) headers.set('Content-Type', mime);
+        headers.set('Cache-Control', 'public, max-age=31536000, immutable');
+        return new Response(siteResp.body, { status: siteResp.status, headers });
       }
     }
 
