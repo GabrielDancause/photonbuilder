@@ -42,8 +42,9 @@ def extract_body_content(html_content):
     content = re.sub(r'<nav[\s>].*?</nav>', '', content, flags=re.DOTALL)
     # Remove header
     content = re.sub(r'<header[\s>].*?</header>', '', content, flags=re.DOTALL)
-    # Remove footer
+    # Remove footer (both <footer> tags and <div class="footer">)
     content = re.sub(r'<footer[\s>].*?</footer>', '', content, flags=re.DOTALL)
+    content = re.sub(r'<div\s+class="footer"[^>]*>.*?</div>', '', content, flags=re.DOTALL)
     # Remove nav.js
     content = re.sub(r'<script\s+src=["\'][^"\']*nav\.js["\']></script>\s*', '', content)
     
