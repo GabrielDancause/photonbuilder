@@ -32,6 +32,7 @@ export const sites: Record<string, SiteConfig> = {
       { label: 'Studies', href: '/#studies' },
       { label: 'Tools', href: '/#tools' },
       { label: 'Guides', href: '/#guides' },
+      { label: 'Lists', href: '/#lists' },
     ],
     footer: { text: '© 2026 Westmount Fundamentals', gabVentures: true },
   },
