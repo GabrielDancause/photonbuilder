@@ -54,6 +54,18 @@ export default {
     const base = `/sites/${site}`;
     const hasExtension = pathname.includes('.');
 
+    // Shared Astro assets (CSS, JS) live at root /_astro/ — serve directly
+    if (pathname.startsWith('/_astro/')) {
+      const resp = await env.ASSETS.fetch(new URL(pathname, url.origin).toString());
+      if (resp.ok) {
+        const headers = new Headers(resp.headers);
+        const mime = getMimeType(pathname);
+        if (mime) headers.set('Content-Type', mime);
+        headers.set('Cache-Control', 'public, max-age=31536000, immutable');
+        return new Response(resp.body, { status: resp.status, headers });
+      }
+    }
+
     // Simple rewrite: prefix with /sites/<site>/
     let assetPath;
 
