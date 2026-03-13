@@ -1,0 +1,22 @@
+---
+import SiteLayout from '../../../layouts/SiteLayout.astro';
+import fs from 'node:fs';
+import path from 'node:path';
+
+export async function getStaticPaths() {
+  const dataDir = path.resolve('src/data/montrealjobs');
+  if (!fs.existsSync(dataDir)) return [];
+  const files = fs.readdirSync(dataDir).filter(f => f.endsWith('.json'));
+  return files.map(f => {
+    const slug = f.replace('.json', '');
+    const meta = JSON.parse(fs.readFileSync(path.join(dataDir, f), 'utf-8'));
+    const htmlPath = path.join(dataDir, slug + '.html');
+    const content = fs.existsSync(htmlPath) ? fs.readFileSync(htmlPath, 'utf-8') : '';
+    return { params: { slug }, props: { meta, content } };
+  });
+}
+const { meta, content } = Astro.props;
+---
+<SiteLayout site="montrealjobs" title={meta.title} description={meta.description} canonical={meta.canonical} schema={meta.schemas?.length > 0 ? meta.schemas : undefined}>
+  <Fragment set:html={content} />
+</SiteLayout>
