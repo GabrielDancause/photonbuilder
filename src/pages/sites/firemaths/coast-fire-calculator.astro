@@ -1,0 +1,541 @@
+---
+import SiteLayout from '../../../layouts/SiteLayout.astro';
+
+const schema = {
+  "@context": "https://schema.org",
+  "@type": ["WebApplication", "FAQPage"],
+  "name": "Coast FIRE Calculator",
+  "url": "https://firemaths.info/coast-fire-calculator",
+  "description": "Calculate your Coast FIRE number and see when you can stop contributing to your retirement accounts.",
+  "applicationCategory": "FinanceApplication",
+  "operatingSystem": "All",
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What is Coast FIRE?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Coast FIRE is the point at which your existing investments will grow to your target retirement number by your traditional retirement age without any additional contributions. Once you reach Coast FIRE, you no longer need to save for retirement."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How is the Coast FIRE number calculated?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Your Coast FIRE number is calculated by taking your full FIRE number (which is typically 25 times your annual expenses, adjusted for inflation over the years until retirement) and discounting it back to the present day using your expected real return rate."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What is a good real return rate to use?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Historically, the stock market has returned about 7-10% annually before inflation. A common conservative estimate for a real (inflation-adjusted) return rate is 5-7%."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Does Coast FIRE mean I can retire right now?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "No, Coast FIRE means you can stop saving for retirement. You still need to cover your current living expenses until you reach your target retirement age."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Why do I need to account for inflation?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Inflation reduces purchasing power over time. If your retirement is 20 years away, your annual expenses will be much higher in nominal terms than they are today. Adjusting for inflation ensures your FIRE number will actually cover your future lifestyle."
+      }
+    }
+  ]
+};
+---
+
+<SiteLayout
+  site="firemaths"
+  title="Coast FIRE Calculator | Fire Maths"
+  description="Calculate your Coast FIRE number to find out when you can stop saving for retirement and let compounding do the rest."
+  canonical="https://firemaths.info/coast-fire-calculator"
+  schema={schema}
+>
+  <style>
+    .calculator-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 2rem;
+      margin-bottom: 3rem;
+    }
+
+    @media (min-width: 768px) {
+      .calculator-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    .inputs-section {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 1.5rem;
+    }
+
+    .results-section {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .status-card {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 2rem;
+      text-align: center;
+    }
+
+    .status-text {
+      font-size: 1.25rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+    }
+
+    .status-text.success {
+      color: #22c55e;
+    }
+
+    .status-text.pending {
+      color: #ef4444;
+    }
+
+    .status-text.neutral {
+      color: var(--text-secondary);
+    }
+
+    .milestone-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1rem;
+    }
+
+    @media (min-width: 480px) {
+      .milestone-grid {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    .milestone-card {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 1.5rem;
+      text-align: center;
+    }
+
+    .milestone-label {
+      color: var(--text-secondary);
+      font-size: 0.875rem;
+      margin-bottom: 0.5rem;
+      display: block;
+    }
+
+    .milestone-value {
+      font-family: var(--font-mono);
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--accent-color);
+    }
+
+    .milestone-sub {
+      font-size: 0.75rem;
+      color: var(--text-secondary);
+      margin-top: 0.25rem;
+      display: block;
+    }
+
+    .seo-content h2 {
+      font-size: 1.75rem;
+      margin-top: 2.5rem;
+      margin-bottom: 1rem;
+      color: var(--accent-color);
+    }
+
+    .seo-content p {
+      margin-bottom: 1rem;
+      color: var(--text-secondary);
+    }
+
+    .table-container {
+      margin-top: 2rem;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+  </style>
+
+  <div class="container">
+    <h1>Coast FIRE Calculator</h1>
+    <p style="text-align:center; color:var(--text-secondary); margin-bottom:2rem;">Find out when your existing investments will grow to your FIRE number without any additional contributions.</p>
+
+    <div class="calculator-grid">
+      <div class="inputs-section">
+        <h3>Your Details</h3>
+
+        <div class="input-group">
+          <label for="current-age">Current Age</label>
+          <div class="input-wrapper">
+            <input type="number" id="current-age" value="30" min="0" max="100" step="1">
+            <span class="suffix">years</span>
+          </div>
+        </div>
+
+        <div class="input-group">
+          <label for="target-age">Target Retirement Age</label>
+          <div class="input-wrapper">
+            <input type="number" id="target-age" value="65" min="0" max="100" step="1">
+            <span class="suffix">years</span>
+          </div>
+        </div>
+
+        <div class="input-group">
+          <label for="current-savings">Current Invested Savings</label>
+          <div class="input-wrapper">
+            <span class="suffix" style="left:1rem;right:auto;">$</span>
+            <input type="number" id="current-savings" value="100000" min="0" step="1000" style="padding-left:2rem;">
+          </div>
+        </div>
+
+        <div class="input-group">
+          <label for="annual-expenses">Annual Expenses (in today's dollars)</label>
+          <div class="input-wrapper">
+            <span class="suffix" style="left:1rem;right:auto;">$</span>
+            <input type="number" id="annual-expenses" value="50000" min="0" step="1000" style="padding-left:2rem;">
+          </div>
+        </div>
+
+        <div class="input-group">
+          <label for="return-rate">Expected Return Rate (Nominal)</label>
+          <div class="input-wrapper">
+            <input type="number" id="return-rate" value="7" min="0" max="100" step="0.1">
+            <span class="suffix">%</span>
+          </div>
+        </div>
+
+        <div class="input-group">
+          <label for="inflation-rate">Expected Inflation Rate</label>
+          <div class="input-wrapper">
+            <input type="number" id="inflation-rate" value="3" min="0" max="100" step="0.1">
+            <span class="suffix">%</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="results-section">
+        <div class="status-card">
+          <div id="status-message" class="status-text neutral">Calculating...</div>
+          <p id="status-subtext" style="margin-bottom: 0; color: var(--text-secondary);"></p>
+        </div>
+
+        <div class="milestone-grid">
+          <div class="milestone-card">
+            <span class="milestone-label">Your Coast FIRE Number</span>
+            <span class="milestone-value" id="coast-fire-number">$0</span>
+            <span class="milestone-sub">What you need today</span>
+          </div>
+          <div class="milestone-card">
+            <span class="milestone-label">Your Full FIRE Number</span>
+            <span class="milestone-value" id="full-fire-number">$0</span>
+            <span class="milestone-sub" id="fire-number-sub">At age 65</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="chart-container">
+      <canvas id="coastFireChart"></canvas>
+    </div>
+
+    <div class="table-container">
+      <table id="projection-table">
+        <thead>
+          <tr>
+            <th>Age</th>
+            <th>Year</th>
+            <th>Portfolio Value ($0 contributions)</th>
+            <th>Target Coast Milestone</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Populated by JS -->
+        </tbody>
+      </table>
+    </div>
+
+    <div class="seo-content">
+      <h2>Methodology</h2>
+      <p>The Coast FIRE calculator projects your portfolio growth and retirement needs using the following mathematical formulas:</p>
+      <ul>
+        <li><strong>Years to Retirement:</strong> Target Retirement Age - Current Age</li>
+        <li><strong>Future Annual Expenses:</strong> Annual Expenses &times; (1 + Inflation Rate)<sup>Years to Retirement</sup></li>
+        <li><strong>FIRE Number:</strong> Future Annual Expenses &times; 25 (This is based on the 4% safe withdrawal rate rule)</li>
+        <li><strong>Coast FIRE Number:</strong> FIRE Number &divide; (1 + Nominal Return Rate)<sup>Years to Retirement</sup></li>
+      </ul>
+      <p>This calculator uses your expected nominal return rate and expected inflation rate to project future values. The Coast FIRE number tells you the exact amount you need invested <em>today</em> so that compounding interest alone will grow it to your full FIRE number by the time you retire.</p>
+
+      <div class="faq-section">
+        <h2>Frequently Asked Questions</h2>
+
+        <div class="faq-item">
+          <h3>What is Coast FIRE?</h3>
+          <p>Coast FIRE is the point at which your existing investments will grow to your target retirement number by your traditional retirement age without any additional contributions. Once you reach Coast FIRE, you no longer need to save for retirement.</p>
+        </div>
+
+        <div class="faq-item">
+          <h3>How is the Coast FIRE number calculated?</h3>
+          <p>Your Coast FIRE number is calculated by taking your full FIRE number (which is typically 25 times your annual expenses, adjusted for inflation over the years until retirement) and discounting it back to the present day using your expected real return rate.</p>
+        </div>
+
+        <div class="faq-item">
+          <h3>What is a good real return rate to use?</h3>
+          <p>Historically, the stock market has returned about 7-10% annually before inflation. A common conservative estimate for a real (inflation-adjusted) return rate is 5-7%.</p>
+        </div>
+
+        <div class="faq-item">
+          <h3>Does Coast FIRE mean I can retire right now?</h3>
+          <p>No, Coast FIRE means you can stop saving for retirement. You still need to cover your current living expenses until you reach your target retirement age. Many people choose to downshift to less stressful, lower-paying jobs once they reach Coast FIRE.</p>
+        </div>
+
+        <div class="faq-item">
+          <h3>Why do I need to account for inflation?</h3>
+          <p>Inflation reduces purchasing power over time. If your retirement is 20 years away, your annual expenses will be much higher in nominal terms than they are today. Adjusting for inflation ensures your FIRE number will actually cover your future lifestyle.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script is:inline src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script is:inline>
+    const formatCurrency = (value) => {
+      return new Intl.NumberFormat('en-US', {
+        style: 'currency', currency: 'USD',
+        maximumFractionDigits: 0
+      }).format(value);
+    };
+
+    const currentAgeInput = document.getElementById('current-age');
+    const targetAgeInput = document.getElementById('target-age');
+    const currentSavingsInput = document.getElementById('current-savings');
+    const annualExpensesInput = document.getElementById('annual-expenses');
+    const returnRateInput = document.getElementById('return-rate');
+    const inflationRateInput = document.getElementById('inflation-rate');
+
+    const statusMessageEl = document.getElementById('status-message');
+    const statusSubtextEl = document.getElementById('status-subtext');
+    const coastFireNumberEl = document.getElementById('coast-fire-number');
+    const fullFireNumberEl = document.getElementById('full-fire-number');
+    const fireNumberSubEl = document.getElementById('fire-number-sub');
+    const tableBodyEl = document.querySelector('#projection-table tbody');
+
+    let chartInstance = null;
+
+    const updateCalculator = () => {
+      const currentAge = parseInt(currentAgeInput.value) || 0;
+      const targetAge = parseInt(targetAgeInput.value) || 0;
+      const currentSavings = parseFloat(currentSavingsInput.value) || 0;
+      const annualExpenses = parseFloat(annualExpensesInput.value) || 0;
+      const returnRate = (parseFloat(returnRateInput.value) || 0) / 100;
+      const inflationRate = (parseFloat(inflationRateInput.value) || 0) / 100;
+
+      if (currentAge >= targetAge) {
+        statusMessageEl.textContent = "Current age must be less than target age.";
+        statusMessageEl.className = "status-text neutral";
+        statusSubtextEl.textContent = "";
+        coastFireNumberEl.textContent = "$0";
+        fullFireNumberEl.textContent = "$0";
+        fireNumberSubEl.textContent = "";
+        tableBodyEl.innerHTML = "";
+        if (chartInstance) {
+          chartInstance.destroy();
+          chartInstance = null;
+        }
+        return;
+      }
+
+      const yearsToRetirement = targetAge - currentAge;
+
+      // FIRE Number = annualExpenses * 25 (adjusted for inflation over years to retirement)
+      const futureAnnualExpenses = annualExpenses * Math.pow(1 + inflationRate, yearsToRetirement);
+      const fireNumber = futureAnnualExpenses * 25;
+
+      // Coast FIRE Number = FIRE Number / (1 + return)^yearsToRetirement
+      const coastFireNumber = fireNumber / Math.pow(1 + returnRate, yearsToRetirement);
+
+      // Status
+      if (currentSavings >= coastFireNumber) {
+        statusMessageEl.textContent = "🎉 You've reached Coast FIRE!";
+        statusMessageEl.className = "status-text success";
+        statusSubtextEl.textContent = "Your existing investments should grow to your target retirement number without any more contributions.";
+      } else {
+        const gap = coastFireNumber - currentSavings;
+        statusMessageEl.textContent = "You're on your way!";
+        statusMessageEl.className = "status-text pending";
+        statusSubtextEl.textContent = `You need ${formatCurrency(gap)} more invested today to reach Coast FIRE.`;
+      }
+
+      coastFireNumberEl.textContent = formatCurrency(coastFireNumber);
+      fullFireNumberEl.textContent = formatCurrency(fireNumber);
+      fireNumberSubEl.textContent = `At age ${targetAge}`;
+
+      // Chart and Table Data
+      const labels = [];
+      const portfolioData = [];
+      const coastTargetData = [];
+      let tableHTML = "";
+
+      const currentYear = new Date().getFullYear();
+
+      for (let i = 0; i <= yearsToRetirement; i++) {
+        const age = currentAge + i;
+        const year = currentYear + i;
+
+        // Projected portfolio: current savings growing at returnRate
+        const projectedPortfolio = currentSavings * Math.pow(1 + returnRate, i);
+
+        // Target Coast Milestone for this age:
+        // Coast milestone at age X = FIRE Number / (1 + return)^(targetAge - X)
+        const yearsRemaining = targetAge - age;
+        const targetCoastMilestone = fireNumber / Math.pow(1 + returnRate, yearsRemaining);
+
+        labels.push(`Age ${age}`);
+        portfolioData.push(projectedPortfolio);
+        coastTargetData.push(targetCoastMilestone);
+
+        tableHTML += `
+          <tr>
+            <td>${age}</td>
+            <td>${year}</td>
+            <td>${formatCurrency(projectedPortfolio)}</td>
+            <td>${formatCurrency(targetCoastMilestone)}</td>
+          </tr>
+        `;
+      }
+
+      tableBodyEl.innerHTML = tableHTML;
+      updateChart(labels, portfolioData, coastTargetData);
+    };
+
+    const updateChart = (labels, portfolioData, coastTargetData) => {
+      const ctx = document.getElementById('coastFireChart').getContext('2d');
+
+      const chartConfig = {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [
+            {
+              label: 'Projected Portfolio ($0 contributions)',
+              data: portfolioData,
+              borderColor: '#4a8fe7', // var(--accent-color) equivalent approximately or fallback
+              backgroundColor: 'rgba(74, 143, 231, 0.1)',
+              borderWidth: 2,
+              fill: true,
+              tension: 0.1
+            },
+            {
+              label: 'Coast FIRE Target Path',
+              data: coastTargetData,
+              borderColor: '#ef4444',
+              borderDash: [5, 5],
+              borderWidth: 2,
+              fill: false,
+              tension: 0.1
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              labels: {
+                color: '#e2e8f0' // var(--text-primary)
+              }
+            },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  let label = context.dataset.label || '';
+                  if (label) {
+                    label += ': ';
+                  }
+                  if (context.parsed.y !== null) {
+                    label += formatCurrency(context.parsed.y);
+                  }
+                  return label;
+                }
+              }
+            }
+          },
+          scales: {
+            x: {
+              ticks: { color: '#94a3b8' }, // var(--text-secondary)
+              grid: { color: '#152040' }  // var(--border-color)
+            },
+            y: {
+              ticks: {
+                color: '#94a3b8',
+                callback: function(value) {
+                  return '$' + (value / 1000) + 'k';
+                }
+              },
+              grid: { color: '#152040' }
+            }
+          }
+        }
+      };
+
+      // Ensure container has height
+      document.getElementById('coastFireChart').parentElement.style.height = '400px';
+
+      // Fix colors by getting computed styles if possible
+      try {
+        const rootStyles = getComputedStyle(document.documentElement);
+        const accentColor = rootStyles.getPropertyValue('--accent-color').trim() || '#D4A017';
+        const textColor = rootStyles.getPropertyValue('--text-primary').trim() || '#e2e8f0';
+        const textSecColor = rootStyles.getPropertyValue('--text-secondary').trim() || '#94a3b8';
+        const borderColor = rootStyles.getPropertyValue('--border-color').trim() || '#152040';
+
+        chartConfig.data.datasets[0].borderColor = accentColor;
+        chartConfig.data.datasets[0].backgroundColor = accentColor.replace(')', ', 0.1)').replace('rgb', 'rgba'); // Hacky fallback if it's hex, chart.js handles hex mostly
+        if(accentColor.startsWith('#')) {
+            // Not a real rgba conversion but chart.js can use hex with fill, it just won't have opacity unless we parse it.
+            // Let's rely on chart.js defaults or a fixed rgba for background.
+            chartConfig.data.datasets[0].backgroundColor = 'rgba(212, 160, 23, 0.1)';
+        }
+
+        chartConfig.options.plugins.legend.labels.color = textColor;
+        chartConfig.options.scales.x.ticks.color = textSecColor;
+        chartConfig.options.scales.x.grid.color = borderColor;
+        chartConfig.options.scales.y.ticks.color = textSecColor;
+        chartConfig.options.scales.y.grid.color = borderColor;
+      } catch (e) {
+        console.warn("Could not read CSS variables for chart colors, using defaults.");
+      }
+
+      if (chartInstance) {
+        chartInstance.destroy();
+      }
+      chartInstance = new Chart(ctx, chartConfig);
+    };
+
+    [currentAgeInput, targetAgeInput, currentSavingsInput, annualExpensesInput, returnRateInput, inflationRateInput].forEach(input => {
+      input.addEventListener('input', updateCalculator);
+    });
+
+    // Initial calculation
+    // Wrap in a setTimeout or DOMContentLoaded if needed, but since script is at bottom, should be fine.
+    updateCalculator();
+  </script>
+</SiteLayout>
