@@ -116,6 +116,21 @@ sites['hpv-research'] = {
   footer: { text: '© 2026 HPV Research', gabVentures: true },
 };
 
+sites['photonbuilder'] = {
+  id: 'photonbuilder',
+  name: 'Photon Builder',
+  domain: 'photonbuilder.com',
+  accent: '#FF6B35',
+  gaId: 'G-G86C7NJG3F',
+  nav: [
+    { label: 'Tools', href: '/#tools' },
+    { label: 'Guides', href: '/#guides' },
+    { label: 'Lists', href: '/#lists' },
+    { label: 'Blog', href: '/#blog' },
+  ],
+  footer: { text: '© 2026 Photon Builder', gabVentures: true },
+};
+
 sites['montrealjobs'] = {
   id: 'montrealjobs',
   name: 'Montreal Jobs',
