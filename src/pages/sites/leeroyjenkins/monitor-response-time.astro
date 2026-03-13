@@ -1,0 +1,637 @@
+---
+import SiteLayout from '../../../layouts/SiteLayout.astro';
+
+const schema = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebApplication",
+      "name": "Monitor Response Time Comparison Tool",
+      "url": "https://leeroyjenkins.quest/monitor-response-time",
+      "description": "Compare gaming monitor response times against refresh rate frame budgets to analyze motion blur and performance.",
+      "applicationCategory": "UtilitiesApplication",
+      "operatingSystem": "All",
+      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+    },
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "What is a frame time budget?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "A frame time budget is the amount of time a monitor has to display a single frame before the next frame is ready. It is calculated by dividing 1000 milliseconds by the monitor's refresh rate (e.g., 1000 / 144Hz = 6.94ms). If the pixel response time exceeds this budget, the monitor cannot fully transition colors before the next frame, causing motion blur or ghosting."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What is GTG response time?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "GTG (Gray-to-Gray) response time measures how long it takes for a pixel to change from one shade of gray to another. It is the standard metric used by manufacturers to represent a monitor's speed, though real-world transitions between different colors can often take longer than the advertised GTG time."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Is 1ms response time really 1ms?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "For most LCD panels (IPS, TN, VA), an advertised 1ms GTG response time is usually achieved using aggressive overdrive settings, which can cause inverse ghosting (overshoot artifacts). Real-world average response times for fast IPS and TN panels are typically closer to 3-6ms. OLED panels, however, can genuinely achieve response times under 0.1ms."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Why is my monitor blurry during fast motion?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Motion blur primarily occurs when a monitor's pixel response time is slower than its frame time budget, meaning the pixels are still transitioning when the next frame arrives. It can also be caused by sample-and-hold persistence, which is inherent to how modern displays hold an image on screen until the next refresh."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Which panel type is best for competitive gaming?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "OLED panels are currently the best for competitive gaming due to their near-instantaneous response times (<0.1ms), eliminating response-time-related motion blur. Fast TN panels (1-2ms) and Fast IPS panels (4-6ms) are also excellent choices, with IPS offering better color accuracy and viewing angles than TN."
+          }
+        }
+      ]
+    }
+  ]
+};
+---
+
+<SiteLayout
+  site="leeroyjenkins"
+  title="Monitor Response Time Comparison Tool | Leeroy Jenkins"
+  description="Compare gaming monitor response times, calculate frame budgets, and analyze motion blur severity across different refresh rates."
+  canonical="https://leeroyjenkins.quest/monitor-response-time"
+  schema={schema}
+>
+  <style is:global>
+    .calculator-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 1rem;
+    }
+
+    .monitors-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    @media (min-width: 768px) {
+      .monitors-grid {
+        grid-template-columns: repeat(3, 1fr);
+      }
+    }
+
+    .monitor-card {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 1.5rem;
+      position: relative;
+    }
+
+    .monitor-card-header {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: var(--accent-color);
+      margin-bottom: 1rem;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .input-group {
+      margin-bottom: 1rem;
+    }
+
+    .input-group label {
+      display: block;
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      margin-bottom: 0.5rem;
+    }
+
+    .input-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .calculator-container input, .calculator-container select {
+      width: 100%;
+      background-color: var(--bg-color);
+      border: 1px solid var(--border-color);
+      color: var(--text-primary);
+      padding: 0.75rem;
+      border-radius: 6px;
+      font-family: var(--font-ui);
+      font-size: 1rem;
+    }
+
+    .calculator-container input:focus, .calculator-container select:focus {
+      outline: none;
+      border-color: var(--accent-color);
+    }
+
+    .suffix {
+      position: absolute;
+      right: 1rem;
+      color: var(--text-secondary);
+      pointer-events: none;
+    }
+
+    .results-section {
+      margin-top: 1.5rem;
+      padding-top: 1.5rem;
+      border-top: 1px dashed var(--border-color);
+    }
+
+    .result-row {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 0.75rem;
+      font-size: 0.875rem;
+    }
+
+    .result-value {
+      font-family: var(--font-mono);
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .budget-bar-container {
+      width: 100%;
+      height: 8px;
+      background-color: var(--bg-color);
+      border-radius: 4px;
+      margin-top: 0.5rem;
+      overflow: hidden;
+      border: 1px solid var(--border-color);
+    }
+
+    .budget-bar-fill {
+      height: 100%;
+      transition: width 0.3s ease, background-color 0.3s ease;
+    }
+
+    .recommendation-badge {
+      display: inline-block;
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-weight: 600;
+      margin-top: 0.5rem;
+      width: 100%;
+      text-align: center;
+    }
+
+    .rec-good { background-color: rgba(16, 185, 129, 0.2); color: #10b981; }
+    .rec-warn { background-color: rgba(245, 158, 11, 0.2); color: #f59e0b; }
+    .rec-poor { background-color: rgba(239, 68, 68, 0.2); color: #ef4444; }
+
+    .chart-container {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 3rem;
+      height: 400px;
+    }
+
+    .content-section {
+      margin-top: 3rem;
+    }
+
+    .content-section h2 {
+      font-size: 1.5rem;
+      color: var(--accent-color);
+      margin-bottom: 1.5rem;
+    }
+
+    .content-section h3 {
+      font-size: 1.25rem;
+      color: var(--text-primary);
+      margin-top: 1.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .content-section p {
+      color: var(--text-secondary);
+      line-height: 1.6;
+      margin-bottom: 1rem;
+    }
+
+    .panel-types-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .panel-card {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 1rem;
+    }
+
+    .panel-card h4 {
+      color: var(--accent-color);
+      margin-bottom: 0.5rem;
+    }
+
+    .panel-card .stat {
+      font-family: var(--font-mono);
+      font-size: 1.25rem;
+      color: var(--text-primary);
+      margin-bottom: 0.25rem;
+    }
+
+    .panel-card .desc {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+    }
+
+    .faq-section {
+      margin-top: 3rem;
+    }
+
+    .faq-item {
+      margin-bottom: 1.5rem;
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 1.25rem;
+    }
+
+    .faq-item h3 {
+      margin-top: 0;
+      color: var(--text-primary);
+      font-size: 1.125rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .faq-item p {
+      margin: 0;
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+      line-height: 1.5;
+    }
+  </style>
+
+  <div class="calculator-container">
+    <div style="text-align: center; margin-bottom: 3rem;">
+      <h1 style="color: var(--accent-color); font-size: 2.5rem; margin-bottom: 1rem;">Monitor Response Time Comparison</h1>
+      <p style="color: var(--text-secondary); max-width: 600px; margin: 0 auto; line-height: 1.6;">
+        Compare gaming monitors to see if their pixel response times are fast enough for their refresh rates. A response time slower than the frame budget causes motion blur.
+      </p>
+    </div>
+
+    <div class="monitors-grid" id="monitors-container">
+      <!-- Monitor Cards Generated by JS -->
+    </div>
+
+    <div class="chart-container">
+      <canvas id="comparisonChart"></canvas>
+    </div>
+
+    <div class="content-section">
+      <h2>Real-World Panel Typical Response Times</h2>
+      <p>Advertised "1ms GTG" is often achieved using maximum overdrive settings that cause severe overshoot (inverse ghosting) and are unusable in reality. Here are typical, usable real-world GTG response times for modern gaming panels:</p>
+
+      <div class="panel-types-grid">
+        <div class="panel-card">
+          <h4>OLED / QD-OLED</h4>
+          <div class="stat">&lt; 0.1ms</div>
+          <div class="desc">Near-instant pixel transitions. Effectively zero response-time blur. Perfect for high refresh rates.</div>
+        </div>
+        <div class="panel-card">
+          <h4>Fast TN</h4>
+          <div class="stat">~1.0ms - 2.5ms</div>
+          <div class="desc">Historically the fastest LCD tech. Great for competitive esports, but poor viewing angles and colors.</div>
+        </div>
+        <div class="panel-card">
+          <h4>Fast IPS</h4>
+          <div class="stat">~3.5ms - 6.0ms</div>
+          <div class="desc">Excellent balance of speed, color accuracy, and viewing angles. The standard for modern gaming.</div>
+        </div>
+        <div class="panel-card">
+          <h4>VA</h4>
+          <div class="stat">~5.0ms - 8.0ms+</div>
+          <div class="desc">Great contrast and deep blacks, but often suffers from slow dark-level transitions (black smearing).</div>
+        </div>
+      </div>
+
+      <h2>Methodology: Frame Budget vs Response Time</h2>
+      <p>
+        Every refresh rate has a strictly defined <strong>Frame Time Budget</strong>. This is the window of time the monitor has to draw a single frame before the GPU sends the next one.
+      </p>
+      <p style="font-family: var(--font-mono); background: var(--card-bg); padding: 1rem; border-radius: 6px; border: 1px solid var(--border-color); text-align: center;">
+        Frame Budget (ms) = 1000 / Refresh Rate (Hz)
+      </p>
+      <p>
+        For a 144Hz monitor, the budget is 6.94ms. If the pixel takes 8ms to transition (GTG), the next frame arrives before the pixel has finished changing color. This overlapping of frames is what your eye perceives as <strong>motion blur or ghosting</strong>.
+      </p>
+      <p>
+        <strong>The Rule of Thumb:</strong> For optimal clarity, the true average GTG response time should be significantly less than the frame budget—ideally consuming less than 80% of it.
+      </p>
+    </div>
+
+    <div class="faq-section">
+      <h2>Frequently Asked Questions</h2>
+
+      <div class="faq-item">
+        <h3>What is a frame time budget?</h3>
+        <p>A frame time budget is the amount of time a monitor has to display a single frame before the next frame is ready. It is calculated by dividing 1000 milliseconds by the monitor's refresh rate (e.g., 1000 / 144Hz = 6.94ms). If the pixel response time exceeds this budget, the monitor cannot fully transition colors before the next frame, causing motion blur or ghosting.</p>
+      </div>
+
+      <div class="faq-item">
+        <h3>What is GTG response time?</h3>
+        <p>GTG (Gray-to-Gray) response time measures how long it takes for a pixel to change from one shade of gray to another. It is the standard metric used by manufacturers to represent a monitor's speed, though real-world transitions between different colors can often take longer than the advertised GTG time.</p>
+      </div>
+
+      <div class="faq-item">
+        <h3>Is 1ms response time really 1ms?</h3>
+        <p>For most LCD panels (IPS, TN, VA), an advertised 1ms GTG response time is usually achieved using aggressive overdrive settings, which can cause inverse ghosting (overshoot artifacts). Real-world average response times for fast IPS and TN panels are typically closer to 3-6ms. OLED panels, however, can genuinely achieve response times under 0.1ms.</p>
+      </div>
+
+      <div class="faq-item">
+        <h3>Why is my monitor blurry during fast motion?</h3>
+        <p>Motion blur primarily occurs when a monitor's pixel response time is slower than its frame time budget, meaning the pixels are still transitioning when the next frame arrives. It can also be caused by sample-and-hold persistence, which is inherent to how modern displays hold an image on screen until the next refresh.</p>
+      </div>
+
+      <div class="faq-item">
+        <h3>Which panel type is best for competitive gaming?</h3>
+        <p>OLED panels are currently the best for competitive gaming due to their near-instantaneous response times (&lt;0.1ms), eliminating response-time-related motion blur. Fast TN panels (1-2ms) and Fast IPS panels (4-6ms) are also excellent choices, with IPS offering better color accuracy and viewing angles than TN.</p>
+      </div>
+    </div>
+  </div>
+
+  <script is:inline src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script is:inline>
+    const INITIAL_MONITORS = [
+      { name: "My Current IPS", hz: 144, ms: 5.5 },
+      { name: "Budget VA", hz: 165, ms: 7.2 },
+      { name: "Dream OLED", hz: 240, ms: 0.1 }
+    ];
+
+    const HZ_OPTIONS = [60, 75, 120, 144, 165, 240, 360, 480, 540];
+
+    let monitors = [...INITIAL_MONITORS];
+    let chartInstance = null;
+
+    function calculateStats(hz, ms) {
+      const budget = 1000 / hz;
+      const usagePercent = (ms / budget) * 100;
+
+      let status = 'good';
+      let message = 'Excellent Clarity';
+      let color = '#10b981';
+
+      if (usagePercent > 100) {
+        status = 'poor';
+        message = 'Severe Blur (Exceeds Budget)';
+        color = '#ef4444';
+      } else if (usagePercent > 80) {
+        status = 'warn';
+        message = 'Noticeable Blur';
+        color = '#f59e0b';
+      } else if (usagePercent > 50) {
+        status = 'warn';
+        message = 'Acceptable (Minor Blur)';
+        color = '#f59e0b';
+      }
+
+      return { budget, usagePercent, status, message, color };
+    }
+
+    function createCardsDOM() {
+      const container = document.getElementById('monitors-container');
+      container.innerHTML = '';
+
+      monitors.forEach((mon, index) => {
+        const card = document.createElement('div');
+        card.className = 'monitor-card';
+        card.dataset.index = index;
+
+        card.innerHTML = `
+          <div class="monitor-card-header">
+            Monitor ${index + 1}
+          </div>
+
+          <div class="input-group">
+            <label>Monitor Name / Type</label>
+            <input type="text" data-idx="${index}" data-field="name" class="monitor-input" placeholder="e.g. My IPS">
+          </div>
+
+          <div class="input-group">
+            <label>Refresh Rate</label>
+            <div class="input-wrapper">
+              <select data-idx="${index}" data-field="hz" class="monitor-input">
+                ${HZ_OPTIONS.map(hz => `<option value="${hz}">${hz} Hz</option>`).join('')}
+              </select>
+            </div>
+          </div>
+
+          <div class="input-group">
+            <label>Real-World Response Time</label>
+            <div class="input-wrapper">
+              <input type="number" min="0.01" step="0.1" data-idx="${index}" data-field="ms" class="monitor-input">
+              <span class="suffix">ms</span>
+            </div>
+          </div>
+
+          <div class="results-section">
+            <div class="result-row">
+              <span>Frame Budget:</span>
+              <span class="result-value stat-budget">0.00 ms</span>
+            </div>
+            <div class="result-row">
+              <span>Budget Consumed:</span>
+              <span class="result-value stat-consumed">0.0%</span>
+            </div>
+
+            <div class="budget-bar-container">
+              <div class="budget-bar-fill stat-bar"></div>
+            </div>
+
+            <div class="recommendation-badge stat-badge">
+              Status
+            </div>
+          </div>
+        `;
+        container.appendChild(card);
+
+        // Set initial values safely
+        card.querySelector('input[data-field="name"]').value = mon.name;
+        card.querySelector('select[data-field="hz"]').value = mon.hz;
+        card.querySelector('input[data-field="ms"]').value = mon.ms;
+      });
+
+      attachListeners();
+      updateAllStats();
+    }
+
+    function attachListeners() {
+      document.querySelectorAll('.monitor-input').forEach(input => {
+        // Listen to input and change events without destroying the DOM
+        input.addEventListener('input', (e) => {
+          const idx = parseInt(e.target.dataset.idx);
+          const field = e.target.dataset.field;
+
+          if (field === 'name') {
+            monitors[idx][field] = e.target.value;
+          } else {
+            // For numbers
+            const val = parseFloat(e.target.value);
+            if (!isNaN(val) && val > 0) {
+              monitors[idx][field] = val;
+            }
+          }
+
+          updateStats(idx);
+          updateChart();
+        });
+
+        // Update values on change to handle non-valid input gracefully
+        input.addEventListener('change', (e) => {
+          const idx = parseInt(e.target.dataset.idx);
+          const field = e.target.dataset.field;
+
+          if (field !== 'name') {
+            const val = parseFloat(e.target.value);
+            if (isNaN(val) || val <= 0) {
+              e.target.value = field === 'hz' ? 144 : 5.0; // fallback
+              monitors[idx][field] = field === 'hz' ? 144 : 5.0;
+              updateStats(idx);
+              updateChart();
+            }
+          }
+        });
+      });
+    }
+
+    function updateStats(idx) {
+      const mon = monitors[idx];
+      const stats = calculateStats(mon.hz, mon.ms);
+      const displayPercent = Math.min(stats.usagePercent, 100);
+
+      const card = document.querySelector(`.monitor-card[data-index="${idx}"]`);
+      if (!card) return;
+
+      const budgetEl = card.querySelector('.stat-budget');
+      const consumedEl = card.querySelector('.stat-consumed');
+      const barEl = card.querySelector('.stat-bar');
+      const badgeEl = card.querySelector('.stat-badge');
+
+      budgetEl.innerText = `${stats.budget.toFixed(2)} ms`;
+
+      consumedEl.innerText = `${stats.usagePercent.toFixed(1)}%`;
+      consumedEl.style.color = stats.color;
+
+      barEl.style.width = `${displayPercent}%`;
+      barEl.style.backgroundColor = stats.color;
+
+      badgeEl.innerText = stats.message;
+      badgeEl.className = `recommendation-badge rec-${stats.status} stat-badge`;
+    }
+
+    function updateAllStats() {
+      monitors.forEach((_, i) => updateStats(i));
+    }
+
+    function initChart() {
+      const ctx = document.getElementById('comparisonChart').getContext('2d');
+
+      Chart.defaults.color = '#9ca3af';
+      Chart.defaults.font.family = 'ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif';
+
+      chartInstance = new Chart(ctx, {
+        type: 'bar',
+        data: getChartData(),
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'top',
+              labels: { color: '#e5e7eb' }
+            },
+            title: {
+              display: true,
+              text: 'Response Time vs Frame Budget',
+              color: '#e5e7eb',
+              font: { size: 16 }
+            },
+            tooltip: {
+              callbacks: {
+                label: function(context) {
+                  return context.dataset.label + ': ' + context.parsed.y.toFixed(2) + ' ms';
+                }
+              }
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              title: { display: true, text: 'Time (ms)', color: '#9ca3af' },
+              grid: { color: '#374151' }
+            },
+            x: {
+              grid: { display: false }
+            }
+          }
+        }
+      });
+    }
+
+    function getChartData() {
+      return {
+        labels: monitors.map(m => m.name || 'Unnamed'),
+        datasets: [
+          {
+            label: 'Frame Budget (ms)',
+            data: monitors.map(m => 1000 / m.hz),
+            backgroundColor: 'rgba(147, 51, 234, 0.2)',
+            borderColor: '#9333EA',
+            borderWidth: 2,
+            borderRadius: 4
+          },
+          {
+            label: 'Response Time (ms)',
+            data: monitors.map(m => m.ms),
+            backgroundColor: monitors.map(m => {
+              const stats = calculateStats(m.hz, m.ms);
+              if (stats.status === 'poor') return 'rgba(239, 68, 68, 0.8)';
+              if (stats.status === 'warn') return 'rgba(245, 158, 11, 0.8)';
+              return 'rgba(16, 185, 129, 0.8)';
+            }),
+            borderColor: 'transparent',
+            borderWidth: 0,
+            borderRadius: 4
+          }
+        ]
+      };
+    }
+
+    function updateChart() {
+      if (chartInstance) {
+        chartInstance.data = getChartData();
+        chartInstance.update();
+      }
+    }
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', () => {
+      createCardsDOM();
+      initChart();
+    });
+  </script>
+</SiteLayout>
