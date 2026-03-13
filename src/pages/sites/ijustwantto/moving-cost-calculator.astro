@@ -1,0 +1,674 @@
+---
+import SiteLayout from '../../../layouts/SiteLayout.astro';
+
+const schema = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebApplication",
+      "name": "Moving Cost Calculator",
+      "url": "https://ijustwantto.live/moving-cost-calculator",
+      "description": "Estimate your moving costs for local, long-distance, and cross-country moves based on real industry data. Compare DIY, hybrid, and full-service options.",
+      "applicationCategory": "BusinessApplication",
+      "operatingSystem": "All",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      }
+    },
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "How much does a local move typically cost?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "A local move (under 50 miles) usually costs between $300 and $1,500 depending on the size of your home and whether you hire full-service movers or rent a truck."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What is the cheapest way to move cross-country?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "The cheapest way to move cross-country is typically renting a moving truck (DIY) or using a hybrid moving container service. Full-service movers offer convenience but come at a premium cost."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How much should I tip movers?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "It is standard to tip movers $20 to $50 per person for a full day's work, or roughly 10-15% of the total moving cost, depending on the complexity of the move."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Are packing materials included in the estimate?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Full-service moving estimates often include basic packing materials, but DIY and hybrid options require you to purchase boxes, tape, and bubble wrap separately, which can add $100 to $500 to your budget."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Does moving insurance cost extra?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Basic liability coverage is typically included by law (often $0.60 per pound), but full-value replacement insurance usually costs extra—generally 1% to 2% of the total value of your belongings."
+          }
+        }
+      ]
+    }
+  ]
+};
+---
+
+<SiteLayout
+  site="ijustwantto"
+  title="Moving Cost Calculator | I Just Want To"
+  description="Estimate your moving costs for local, long-distance, and cross-country moves. Compare DIY, hybrid, and full-service moving methods."
+  canonical="https://ijustwantto.live/moving-cost-calculator"
+  schema={schema}
+>
+  <style>
+    .calculator-container {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 2rem 1rem;
+    }
+
+    h1 {
+      font-size: 2.5rem;
+      color: var(--text-primary);
+      margin-bottom: 0.5rem;
+      text-align: center;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: var(--text-secondary);
+      margin-bottom: 3rem;
+    }
+
+    .calculator-grid {
+      display: grid;
+      grid-template-columns: 1fr 1.5fr;
+      gap: 2rem;
+      margin-bottom: 3rem;
+    }
+
+    @media (max-width: 768px) {
+      .calculator-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .calculator-card, .results-card {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 1.5rem;
+    }
+
+    .input-group {
+      margin-bottom: 1.5rem;
+    }
+
+    .input-group label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .input-group select, .input-group input {
+      width: 100%;
+      padding: 0.75rem;
+      border: 1px solid var(--border-color);
+      background-color: var(--bg-color);
+      color: var(--text-primary);
+      border-radius: 6px;
+      font-family: var(--font-ui), sans-serif;
+      font-size: 1rem;
+    }
+
+    .input-group select:focus, .input-group input:focus {
+      outline: none;
+      border-color: var(--accent-color);
+      box-shadow: 0 0 0 2px rgba(45, 184, 154, 0.2);
+    }
+
+    .distance-toggle {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+      background-color: var(--bg-color);
+      padding: 0.25rem;
+      border-radius: 8px;
+    }
+
+    .distance-btn {
+      flex: 1;
+      padding: 0.5rem;
+      text-align: center;
+      border: none;
+      background: none;
+      color: var(--text-secondary);
+      cursor: pointer;
+      border-radius: 6px;
+      font-weight: 500;
+      transition: all 0.2s;
+    }
+
+    .distance-btn.active {
+      background-color: var(--accent-color);
+      color: #fff;
+    }
+
+    .results-card h2 {
+      margin-top: 0;
+      margin-bottom: 1.5rem;
+      font-size: 1.5rem;
+      color: var(--text-primary);
+    }
+
+    .total-cost {
+      background-color: rgba(45, 184, 154, 0.1);
+      border: 1px solid var(--accent-color);
+      border-radius: 8px;
+      padding: 1.5rem;
+      text-align: center;
+      margin-bottom: 1.5rem;
+    }
+
+    .total-cost-label {
+      color: var(--text-secondary);
+      font-size: 0.875rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.5rem;
+    }
+
+    .total-cost-value {
+      font-size: 2.5rem;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .breakdown {
+      margin-bottom: 1.5rem;
+    }
+
+    .breakdown-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 0.75rem 0;
+      border-bottom: 1px solid var(--border-color);
+      color: var(--text-secondary);
+    }
+
+    .breakdown-row:last-child {
+      border-bottom: none;
+    }
+
+    .breakdown-row.total {
+      font-weight: 700;
+      color: var(--text-primary);
+      border-top: 2px solid var(--border-color);
+      margin-top: 0.5rem;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .stat-card {
+      background-color: var(--bg-color);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 1rem;
+      text-align: center;
+    }
+
+    .stat-card-value {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: var(--accent-color);
+      margin-bottom: 0.25rem;
+    }
+
+    .stat-card-label {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+    }
+
+    .comparison-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 1rem;
+      font-size: 0.9rem;
+    }
+
+    .comparison-table th, .comparison-table td {
+      padding: 0.75rem;
+      text-align: center;
+      border: 1px solid var(--border-color);
+    }
+
+    .comparison-table th {
+      background-color: var(--bg-color);
+      color: var(--text-primary);
+      font-weight: 600;
+    }
+
+    .comparison-table td {
+      color: var(--text-secondary);
+    }
+
+    .comparison-table tr.highlight {
+      background-color: rgba(45, 184, 154, 0.05);
+    }
+
+    .comparison-table tr.highlight td {
+      color: var(--text-primary);
+      font-weight: 600;
+    }
+
+    .faq-section {
+      margin-top: 4rem;
+    }
+
+    .faq-section h2 {
+      font-size: 2rem;
+      margin-bottom: 2rem;
+      text-align: center;
+    }
+
+    .faq-item {
+      margin-bottom: 1.5rem;
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 1.5rem;
+    }
+
+    .faq-item h3 {
+      font-size: 1.25rem;
+      margin-top: 0;
+      margin-bottom: 0.75rem;
+      color: var(--accent-color);
+    }
+
+    .faq-item p {
+      margin: 0;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+
+    .methodology {
+      margin-top: 4rem;
+      padding: 2rem;
+      background-color: var(--bg-color);
+      border-radius: 12px;
+      border: 1px dashed var(--border-color);
+    }
+
+    .methodology h2 {
+      margin-top: 0;
+      font-size: 1.5rem;
+    }
+
+    .methodology p {
+      color: var(--text-secondary);
+      line-height: 1.6;
+      font-size: 0.95rem;
+    }
+  </style>
+
+  <div class="calculator-container">
+    <h1>Moving Cost Calculator</h1>
+    <p class="subtitle">Estimate your moving expenses based on real industry data (2024-2026).</p>
+
+    <div class="calculator-grid">
+      <div class="calculator-card">
+        <div class="input-group">
+          <label for="moveType">Move Size</label>
+          <select id="moveType">
+            <option value="studio">Studio Apartment</option>
+            <option value="1bed">1 Bedroom Home</option>
+            <option value="2bed">2 Bedroom Home</option>
+            <option value="3bed">3 Bedroom Home</option>
+            <option value="4bed">4+ Bedroom Home</option>
+            <option value="office">Small Office</option>
+          </select>
+        </div>
+
+        <div class="input-group">
+          <label>Distance Category</label>
+          <div class="distance-toggle">
+            <button class="distance-btn active" data-dist="local">Local<br/><small>&lt;50 mi</small></button>
+            <button class="distance-btn" data-dist="long">Long Dist.<br/><small>50-500 mi</small></button>
+            <button class="distance-btn" data-dist="cross">Cross-Country<br/><small>500+ mi</small></button>
+          </div>
+        </div>
+
+        <div class="input-group">
+          <label for="distanceMiles">Exact Distance (miles)</label>
+          <input type="number" id="distanceMiles" value="25" min="1" max="5000">
+        </div>
+
+        <div class="input-group">
+          <label for="movingMethod">Moving Method</label>
+          <select id="movingMethod">
+            <option value="full">Full-Service Movers</option>
+            <option value="hybrid">Hybrid / Container</option>
+            <option value="diy">DIY Truck Rental</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="results-card">
+        <h2>Your Estimated Cost</h2>
+
+        <div class="total-cost">
+          <div class="total-cost-label">Estimated Range</div>
+          <div class="total-cost-value" id="estimatedTotal">$0 - $0</div>
+        </div>
+
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-card-value" id="costPerMile">$0.00</div>
+            <div class="stat-card-label">Avg. Cost Per Mile</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-card-value" id="estimatedWeight">0 lbs</div>
+            <div class="stat-card-label">Est. Weight</div>
+          </div>
+        </div>
+
+        <div class="breakdown">
+          <div class="total-cost-label" style="margin-bottom: 1rem;">Cost Breakdown</div>
+          <div class="breakdown-row">
+            <span>Base / Truck / Labor</span>
+            <span id="breakdownBase">$0</span>
+          </div>
+          <div class="breakdown-row">
+            <span>Mileage / Fuel</span>
+            <span id="breakdownMileage">$0</span>
+          </div>
+          <div class="breakdown-row">
+            <span>Packing Materials</span>
+            <span id="breakdownMaterials">$0</span>
+          </div>
+          <div class="breakdown-row">
+            <span>Insurance / Fees</span>
+            <span id="breakdownInsurance">$0</span>
+          </div>
+          <div class="breakdown-row total">
+            <span>Average Total</span>
+            <span id="breakdownTotal">$0</span>
+          </div>
+        </div>
+
+        <div class="total-cost-label" style="margin-bottom: 1rem; margin-top: 2rem;">Compare Methods</div>
+        <div style="overflow-x: auto;">
+          <table class="comparison-table">
+            <thead>
+              <tr>
+                <th>Method</th>
+                <th>Estimated Range</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr id="row-diy">
+                <td>DIY Truck Rental</td>
+                <td id="comp-diy">$0 - $0</td>
+              </tr>
+              <tr id="row-hybrid">
+                <td>Hybrid / Container</td>
+                <td id="comp-hybrid">$0 - $0</td>
+              </tr>
+              <tr id="row-full">
+                <td>Full-Service</td>
+                <td id="comp-full">$0 - $0</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <div class="faq-section">
+      <h2>Frequently Asked Questions</h2>
+
+      <div class="faq-item">
+        <h3>How much does a local move typically cost?</h3>
+        <p>A local move (under 50 miles) usually costs between $300 and $1,500 depending on the size of your home and whether you hire full-service movers or rent a truck. Moving a studio apartment locally can cost as little as $200 with a rental truck, whereas a 4-bedroom home using full-service movers can easily exceed $2,000.</p>
+      </div>
+
+      <div class="faq-item">
+        <h3>What is the cheapest way to move cross-country?</h3>
+        <p>The cheapest way to move cross-country is typically renting a moving truck (DIY) or using a hybrid moving container service. While DIY truck rentals offer the lowest base price, you must factor in fuel, tolls, and hotels. Hybrid containers offer a middle ground: you pack and load, while a company handles the long-distance transportation.</p>
+      </div>
+
+      <div class="faq-item">
+        <h3>How much should I tip movers?</h3>
+        <p>It is standard to tip movers $20 to $50 per person for a full day's work, or roughly 10-15% of the total moving cost, depending on the complexity of the move and the quality of service. For a half-day local move, $20 per mover is usually appropriate.</p>
+      </div>
+
+      <div class="faq-item">
+        <h3>Are packing materials included in the estimate?</h3>
+        <p>Full-service moving estimates often include basic packing materials if you opt for full packing services. However, standard full-service, DIY, and hybrid options typically require you to purchase boxes, tape, and bubble wrap separately, which can add $100 to $500+ to your budget depending on your home's size.</p>
+      </div>
+
+      <div class="faq-item">
+        <h3>Does moving insurance cost extra?</h3>
+        <p>Basic liability coverage is typically included by law (often $0.60 per pound per item), but this provides minimal protection. Full-value replacement insurance usually costs extra—generally 1% to 2% of the total value of your belongings declared for the move.</p>
+      </div>
+    </div>
+
+    <div class="methodology">
+      <h2>Methodology & Data Sources</h2>
+      <p>This calculator estimates moving costs based on aggregated data from major moving industry reports, van lines, truck rental companies, and container services between 2024 and 2026. The estimates account for baseline equipment costs, average labor rates, estimated fuel consumption, and standard packing material costs.</p>
+      <p>Please note that actual prices can vary significantly based on seasonality (moving during summer is typically more expensive), specific dates, exact locations, and the specific inventory being moved. These numbers are intended for budgeting purposes only.</p>
+    </div>
+  </div>
+
+  <script is:inline>
+    // Moving Cost Data Models
+    const weightMap = {
+      'studio': 1500,
+      '1bed': 3000,
+      '2bed': 5000,
+      '3bed': 7000,
+      '4bed': 10000,
+      'office': 4000
+    };
+
+    const materialCosts = {
+      'studio': 100,
+      '1bed': 150,
+      '2bed': 250,
+      '3bed': 350,
+      '4bed': 550,
+      'office': 200
+    };
+
+    function formatCurrency(amount) {
+      return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+        maximumFractionDigits: 0
+      }).format(amount);
+    }
+
+    function calculateCosts(size, distance, method) {
+      const weight = weightMap[size];
+      const materials = materialCosts[size];
+
+      let baseCost = 0;
+      let mileageCost = 0;
+      let insuranceFees = 0;
+
+      // Fuel assumptions for DIY
+      const fuelMpg = 10;
+      const fuelPrice = 3.80; // per gallon
+      const fuelCost = (distance / fuelMpg) * fuelPrice;
+
+      const sizeFactor = weight / 3000; // 1bed is baseline 1.0
+
+      if (method === 'diy') {
+        // DIY Truck Rental
+        let truckBase = 50;
+        let perMile = 1.00;
+
+        if (distance > 500) {
+          truckBase = 1200 * sizeFactor;
+          perMile = 0.50;
+        } else if (distance > 50) {
+          truckBase = 250 * sizeFactor;
+          perMile = 0.80;
+        }
+
+        baseCost = truckBase;
+        mileageCost = (distance * perMile) + fuelCost;
+        insuranceFees = 50 + (20 * sizeFactor);
+
+      } else if (method === 'hybrid') {
+        // Hybrid / Container
+        let containerBase = 300;
+        let deliveryFee = 100;
+        let perMile = 1.50;
+
+        if (distance > 500) {
+          containerBase = 1800 * sizeFactor;
+          deliveryFee = 300;
+          perMile = 1.20;
+        } else if (distance > 50) {
+          containerBase = 800 * sizeFactor;
+          deliveryFee = 200;
+          perMile = 1.80;
+        }
+
+        baseCost = containerBase + deliveryFee;
+        mileageCost = distance * perMile;
+        insuranceFees = 100 * sizeFactor;
+
+      } else {
+        // Full-Service
+        let laborHours = 4 + (sizeFactor * 4); // 4 hrs base, scales up
+        let laborRate = 120; // per hour for 2 men
+
+        if (sizeFactor > 1.5) laborRate = 180; // 3 men
+        if (sizeFactor > 2.5) laborRate = 240; // 4 men
+
+        baseCost = laborHours * laborRate;
+
+        let perMileLineHaul = 0.80 * sizeFactor;
+        if (distance > 500) {
+          perMileLineHaul = 0.70 * sizeFactor;
+        }
+
+        mileageCost = distance * perMileLineHaul;
+
+        // Add transportation base for long distance
+        if (distance > 50) baseCost += 500;
+        if (distance > 500) baseCost += 1500;
+
+        insuranceFees = 150 * sizeFactor;
+      }
+
+      const total = baseCost + mileageCost + materials + insuranceFees;
+      const lowRange = total * 0.85;
+      const highRange = total * 1.20;
+
+      return {
+        base: baseCost,
+        mileage: mileageCost,
+        materials: materials,
+        insurance: insuranceFees,
+        total: total,
+        low: lowRange,
+        high: highRange,
+        weight: weight
+      };
+    }
+
+    function updateUI() {
+      const size = document.getElementById('moveType').value;
+      let distance = parseFloat(document.getElementById('distanceMiles').value);
+      const method = document.getElementById('movingMethod').value;
+
+      if (isNaN(distance) || distance <= 0) {
+        distance = 10; // fallback
+      }
+
+      // Update active state of distance buttons based on input
+      const distanceBtns = document.querySelectorAll('.distance-btn');
+      distanceBtns.forEach(btn => btn.classList.remove('active'));
+      if (distance < 50) {
+        document.querySelector('[data-dist="local"]').classList.add('active');
+      } else if (distance < 500) {
+        document.querySelector('[data-dist="long"]').classList.add('active');
+      } else {
+        document.querySelector('[data-dist="cross"]').classList.add('active');
+      }
+
+      const results = calculateCosts(size, distance, method);
+
+      // Update Breakdown
+      document.getElementById('breakdownBase').innerText = formatCurrency(results.base);
+      document.getElementById('breakdownMileage').innerText = formatCurrency(results.mileage);
+      document.getElementById('breakdownMaterials').innerText = formatCurrency(results.materials);
+      document.getElementById('breakdownInsurance').innerText = formatCurrency(results.insurance);
+      document.getElementById('breakdownTotal').innerText = formatCurrency(results.total);
+
+      // Update Totals
+      document.getElementById('estimatedTotal').innerText = `${formatCurrency(results.low)} - ${formatCurrency(results.high)}`;
+      document.getElementById('costPerMile').innerText = formatCurrency(results.total / distance);
+      document.getElementById('estimatedWeight').innerText = new Intl.NumberFormat('en-US').format(results.weight) + ' lbs';
+
+      // Update Comparison Table
+      const methods = ['diy', 'hybrid', 'full'];
+      methods.forEach(m => {
+        const row = document.getElementById(`row-${m}`);
+        const cell = document.getElementById(`comp-${m}`);
+        const res = calculateCosts(size, distance, m);
+        cell.innerText = `${formatCurrency(res.low)} - ${formatCurrency(res.high)}`;
+
+        if (m === method) {
+          row.classList.add('highlight');
+        } else {
+          row.classList.remove('highlight');
+        }
+      });
+    }
+
+    // Event Listeners
+    document.getElementById('moveType').addEventListener('change', updateUI);
+    document.getElementById('distanceMiles').addEventListener('input', updateUI);
+    document.getElementById('movingMethod').addEventListener('change', updateUI);
+
+    document.querySelectorAll('.distance-btn').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const distType = e.currentTarget.dataset.dist;
+        const distInput = document.getElementById('distanceMiles');
+
+        if (distType === 'local') distInput.value = 25;
+        if (distType === 'long') distInput.value = 250;
+        if (distType === 'cross') distInput.value = 1500;
+
+        updateUI();
+      });
+    });
+
+    // Initial calculation
+    updateUI();
+  </script>
+</SiteLayout>
