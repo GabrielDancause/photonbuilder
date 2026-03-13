@@ -44,8 +44,11 @@ def extract(html_path, site, slug):
     # Strip header elements (standalone nav-like headers)
     content = re.sub(r'<header[^>]*>.*?</header>', '', content, flags=re.DOTALL)
     
-    # Strip footer elements
+    # Strip footer elements (all types)
     content = re.sub(r'<footer[^>]*>.*?</footer>', '', content, flags=re.DOTALL)
+    content = re.sub(r'<div\s+class="footer"[^>]*>.*?</div>\s*</div>', '', content, flags=re.DOTALL)
+    content = re.sub(r'<div\s+class="disclaimer"[^>]*>.*?</div>', '', content, flags=re.DOTALL)
+    content = re.sub(r'<div[^>]*>\s*©.*?(?:westmount|GAB Ventures).*?</div>', '', content, flags=re.DOTALL | re.IGNORECASE)
     
     # Strip nav.js references
     content = re.sub(r'<script[^>]*src=["\'][^"\']*nav\.js["\'][^>]*>\s*</script>', '', content)
