@@ -1,0 +1,704 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<!-- Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-G86C7NJG3F"></script>
+<script>window.dataLayer=window.dataLayer||[];function gtag(){dataLayer.push(arguments)}gtag('js',new Date());gtag('config','G-G86C7NJG3F');</script>
+    <meta charset="UTF-8">
+    <link rel="canonical" href="https://firemaths.info/coast-fire-calculator" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Coast FIRE Calculator — Find Your Coasting Number</title>
+    <meta name="description" content="Calculate your Coast FIRE number to find out when you can stop saving and let compounding do the rest to reach Financial Independence.">
+
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@graph": [
+        {
+          "@type": "WebApplication",
+          "name": "Coast FIRE Calculator",
+          "description": "Calculate your Coast FIRE number to see when compounding interest alone will fund your retirement.",
+          "url": "https://firemaths.info/coast-fire-calculator",
+          "applicationCategory": "FinanceApplication",
+          "operatingSystem": "Any"
+        },
+        {
+          "@type": "FAQPage",
+          "mainEntity": [
+            {
+              "@type": "Question",
+              "name": "What is Coast FIRE?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "Coast FIRE is the point where you have saved enough money that, even without making any future contributions, your investments will grow to reach your full Financial Independence (FIRE) number by your target retirement age."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "How is the Coast FIRE number calculated?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "The Coast FIRE number is calculated by taking your Full FIRE Number and discounting it backward to your current age using an expected real rate of return. The formula is: FIRE Number / (1 + Real Return)^Years."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "What is a 'Real' return rate?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "A real return rate is the expected growth rate of your investments after accounting for inflation. This allows you to project everything in 'today’s dollars,' making the numbers easier to understand compared to future inflated costs."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "Does hitting Coast FIRE mean I can retire now?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "No. Coast FIRE means you can stop saving for retirement. You still need to cover your current living expenses until you reach your target retirement age, often by taking a lower-stress or part-time job."
+              }
+            },
+            {
+              "@type": "Question",
+              "name": "What is the 4% Rule?",
+              "acceptedAnswer": {
+                "@type": "Answer",
+                "text": "The 4% Rule states that you can safely withdraw 4% of your starting portfolio value each year (adjusted for inflation) for 30 years without running out of money. It implies your FIRE Number is 25 times your annual expenses."
+              }
+            }
+          ]
+        }
+      ]
+    }
+    </script>
+
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: #0c0a00;
+            color: #e0d8c8;
+            line-height: 1.6;
+        }
+
+        .header {
+            text-align: center;
+            padding: 60px 24px 40px;
+            background: linear-gradient(180deg, #1a0f00 0%, #0c0a00 100%);
+            position: relative;
+            border-bottom: 1px solid #2a2010;
+        }
+        .header-content { position: relative; z-index: 1; }
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 900;
+            letter-spacing: -1px;
+            margin-bottom: 12px;
+            background: linear-gradient(135deg, #fff 0%, #D4A017 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        .header p {
+            color: #888;
+            font-size: 1.05rem;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 40px 24px;
+        }
+
+        .calculator-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+            margin-bottom: 40px;
+        }
+
+        .card {
+            background: #141008;
+            border: 2px solid #2a2010;
+            border-radius: 16px;
+            padding: 32px;
+        }
+
+        .input-group {
+            margin-bottom: 20px;
+        }
+        .input-group:last-child {
+            margin-bottom: 0;
+        }
+        .input-group label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: #e0d8c8;
+            margin-bottom: 8px;
+        }
+
+        .input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .prefix, .suffix {
+            position: absolute;
+            color: #888;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1rem;
+            pointer-events: none;
+        }
+        .prefix { left: 16px; }
+        .suffix { right: 16px; }
+
+        input[type="number"] {
+            width: 100%;
+            background: #0c0a00;
+            border: 1px solid #2a2010;
+            border-radius: 8px;
+            padding: 12px 16px;
+            color: #fff;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 1.1rem;
+            transition: border-color 0.2s;
+            -moz-appearance: textfield;
+        }
+        input[type="number"]::-webkit-outer-spin-button,
+        input[type="number"]::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+        input[type="number"]:focus {
+            outline: none;
+            border-color: #D4A017;
+        }
+
+        .input-wrapper.has-prefix input { padding-left: 32px; }
+        .input-wrapper.has-suffix input { padding-right: 32px; }
+
+        .results {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            height: 100%;
+        }
+
+        .result-box {
+            background: #0c0a00;
+            border: 1px solid #2a2010;
+            border-radius: 12px;
+            padding: 24px;
+            position: relative;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+        }
+
+        .result-box.highlight {
+            border-color: #D4A017;
+            background: linear-gradient(180deg, rgba(212,160,23,0.05) 0%, transparent 100%);
+        }
+
+        .result-box.success-box {
+            border-color: #22c55e;
+            background: linear-gradient(180deg, rgba(34,197,94,0.05) 0%, transparent 100%);
+            display: none;
+        }
+
+        .result-label {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: #888;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 8px;
+        }
+
+        .result-value {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 2.2rem;
+            font-weight: 600;
+            color: #fff;
+        }
+
+        .result-box.highlight .result-value {
+            color: #D4A017;
+        }
+
+        .result-box.success-box .result-value {
+            color: #22c55e;
+            font-family: 'Inter', sans-serif;
+            font-size: 1.5rem;
+            margin-bottom: 8px;
+        }
+
+        .result-sub {
+            font-size: 0.9rem;
+            color: #888;
+            margin-top: 4px;
+        }
+
+        .chart-container {
+            background: #141008;
+            border: 2px solid #2a2010;
+            border-radius: 16px;
+            padding: 32px;
+            margin-bottom: 40px;
+            height: 400px;
+        }
+
+        .table-container {
+            background: #141008;
+            border: 2px solid #2a2010;
+            border-radius: 16px;
+            padding: 32px;
+            margin-bottom: 60px;
+            overflow-x: auto;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            text-align: left;
+        }
+
+        th {
+            padding: 12px;
+            border-bottom: 1px solid #2a2010;
+            color: #888;
+            font-weight: 600;
+            font-size: 0.85rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        td {
+            padding: 12px;
+            border-bottom: 1px solid #2a2010;
+            color: #e0d8c8;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.95rem;
+        }
+
+        tr:last-child td {
+            border-bottom: none;
+        }
+
+        .content-section {
+            max-width: 800px;
+            margin: 0 auto 60px;
+        }
+
+        .content-section h2 {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: #fff;
+            margin: 40px 0 20px;
+        }
+
+        .content-section h3 {
+            font-size: 1.3rem;
+            font-weight: 600;
+            color: #D4A017;
+            margin: 30px 0 12px;
+        }
+
+        .content-section p {
+            color: #888;
+            margin-bottom: 16px;
+            font-size: 1.05rem;
+        }
+
+        .faq-item {
+            margin-bottom: 24px;
+            background: #141008;
+            border: 1px solid #2a2010;
+            border-radius: 12px;
+            padding: 24px;
+        }
+
+        .faq-item h3 {
+            margin: 0 0 12px 0;
+            color: #fff;
+            font-size: 1.1rem;
+        }
+
+        .faq-item p {
+            margin: 0;
+            font-size: 0.95rem;
+        }
+
+        @media (max-width: 768px) {
+            .calculator-grid { grid-template-columns: 1fr; }
+            .header h1 { font-size: 2rem; }
+            .card, .chart-container, .table-container { padding: 20px; }
+            .result-value { font-size: 1.8rem; }
+            .chart-container { height: 300px; }
+        }
+    </style>
+</head>
+<body>
+
+<main>
+    <div class="header">
+        <div class="header-content">
+            <h1>Coast FIRE Calculator</h1>
+            <p>Find out when your current investments will compound to cover your retirement without saving another dime.</p>
+        </div>
+    </div>
+
+    <div class="container">
+        <div class="calculator-grid">
+            <!-- Inputs -->
+            <div class="card">
+                <div class="input-group">
+                    <label for="currentAge">Current Age</label>
+                    <div class="input-wrapper">
+                        <input type="number" id="currentAge" value="30" min="0" max="100" step="1">
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label for="retireAge">Target Retirement Age</label>
+                    <div class="input-wrapper">
+                        <input type="number" id="retireAge" value="65" min="0" max="100" step="1">
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label for="savings">Current Investments</label>
+                    <div class="input-wrapper has-prefix">
+                        <span class="prefix">$</span>
+                        <input type="number" id="savings" value="100000" min="0" step="1000">
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label for="expenses">Annual Expenses in Retirement <span style="font-weight: normal; color: #888; font-size: 0.8rem;">(Today's $)</span></label>
+                    <div class="input-wrapper has-prefix">
+                        <span class="prefix">$</span>
+                        <input type="number" id="expenses" value="50000" min="0" step="1000">
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label for="returns">Expected Return <span style="font-weight: normal; color: #888; font-size: 0.8rem;">(Nominal)</span></label>
+                    <div class="input-wrapper has-suffix">
+                        <input type="number" id="returns" value="8" min="0" max="30" step="0.1">
+                        <span class="suffix">%</span>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label for="inflation">Expected Inflation</label>
+                    <div class="input-wrapper has-suffix">
+                        <input type="number" id="inflation" value="3" min="0" max="20" step="0.1">
+                        <span class="suffix">%</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Results -->
+            <div class="results">
+                <div class="result-box highlight">
+                    <div class="result-label">Coast FIRE Number</div>
+                    <div class="result-value" id="coastFireDisplay">$0</div>
+                    <div class="result-sub">What you need invested <b>today</b> to hit your FIRE goal by age <span id="retireAgeDisplay">65</span> with no further contributions.</div>
+                </div>
+
+                <div class="result-box">
+                    <div class="result-label">Full FIRE Number</div>
+                    <div class="result-value" id="fireNumberDisplay">$0</div>
+                    <div class="result-sub">Target portfolio value at retirement in today's dollars (25x expenses).</div>
+                </div>
+
+                <div class="result-box success-box" id="successBox">
+                    <div class="result-value">🎉 You are Coast FIRE!</div>
+                    <div class="result-sub" id="successSub">Your current investments of $0 will compound to reach your FIRE number by age 65.</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Chart -->
+        <div class="chart-container">
+            <canvas id="growthChart"></canvas>
+        </div>
+
+        <!-- Table -->
+        <div class="table-container">
+            <table id="projectionTable">
+                <thead>
+                    <tr>
+                        <th>Age</th>
+                        <th>Projected Value (Today's $)</th>
+                        <th>Coast Target for Age</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- JS fills this -->
+                </tbody>
+            </table>
+        </div>
+
+        <div class="content-section">
+            <h2>Methodology</h2>
+            <p>Coast FIRE is calculated by determining your Full FIRE Number (25 times your annual expenses, based on the 4% Rule) and discounting it back to your current age using an expected <b>real rate of return</b>.</p>
+            <p>We calculate the real return rate mathematically as: <code>((1 + Nominal Return) / (1 + Inflation)) - 1</code>. This approach is more accurate than simply subtracting inflation from the nominal return.</p>
+            <p>All values in the chart and table are shown in <b>Today's Dollars</b>. This is why the Full FIRE target line is flat instead of sloping upwards with inflation. It allows you to conceptualize your future purchasing power based on what money is worth to you right now.</p>
+        </div>
+
+        <div class="content-section">
+            <h2>Frequently Asked Questions</h2>
+
+            <div class="faq-item">
+                <h3>What is Coast FIRE?</h3>
+                <p>Coast FIRE is the milestone where your existing investments are large enough to compound and reach your full FIRE (Financial Independence, Retire Early) number by traditional retirement age, without requiring you to invest another dime.</p>
+            </div>
+
+            <div class="faq-item">
+                <h3>Can I stop working if I hit Coast FIRE?</h3>
+                <p>No. Coast FIRE means you can stop <em>saving</em> for retirement. You still need to generate enough income to cover your current day-to-day living expenses until you actually retire. Many people use this milestone to downshift to a lower-stress or part-time job.</p>
+            </div>
+
+            <div class="faq-item">
+                <h3>Why use 25x expenses for the FIRE Number?</h3>
+                <p>The 25x multiplier is derived from the "4% Rule," a rule of thumb based on the Trinity Study. It suggests that if you withdraw 4% of your starting portfolio value annually, adjusted for inflation, your money has a very high probability of lasting 30 years or more.</p>
+            </div>
+
+            <div class="faq-item">
+                <h3>Why is the FIRE number line flat on the chart?</h3>
+                <p>We calculate everything in "Real" (inflation-adjusted) terms. By viewing your future portfolio in today's purchasing power, your target number stays constant. If we used nominal terms, both your portfolio and your target would curve upwards steeply, making it harder to read the chart.</p>
+            </div>
+
+            <div class="faq-item">
+                <h3>What if my current investments are below the Coast FIRE number?</h3>
+                <p>If you haven't hit Coast FIRE yet, you simply need to keep contributing to your investments! The gap between your current savings and the Coast FIRE target shows roughly how much more you need to aggressively save before you can "coast."</p>
+            </div>
+        </div>
+    </div>
+</main>
+
+<script>
+    const inputs = ['currentAge', 'retireAge', 'savings', 'expenses', 'returns', 'inflation'];
+    let chartInstance = null;
+
+    // Formatter for currency
+    const formatCurrency = (val) => new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD', maximumFractionDigits: 0 }).format(val);
+
+    function updateCalculations() {
+        const currentAge = parseInt(document.getElementById('currentAge').value) || 0;
+        const retireAge = parseInt(document.getElementById('retireAge').value) || 0;
+        const savings = parseFloat(document.getElementById('savings').value) || 0;
+        const expenses = parseFloat(document.getElementById('expenses').value) || 0;
+        const nominalReturn = parseFloat(document.getElementById('returns').value) || 0;
+        const inflation = parseFloat(document.getElementById('inflation').value) || 0;
+
+        const yearsToRetirement = retireAge - currentAge;
+
+        // 1. Calculate Real Return
+        const realReturn = ((1 + (nominalReturn / 100)) / (1 + (inflation / 100))) - 1;
+
+        // 2. Full FIRE Number
+        const fireNumber = expenses * 25;
+
+        // 3. Coast FIRE Number (for current age)
+        let coastFireNumber = 0;
+        if (yearsToRetirement > 0) {
+            coastFireNumber = fireNumber / Math.pow(1 + realReturn, yearsToRetirement);
+        } else {
+            coastFireNumber = fireNumber;
+        }
+
+        // Update DOM displays
+        document.getElementById('fireNumberDisplay').innerText = formatCurrency(fireNumber);
+        document.getElementById('coastFireDisplay').innerText = formatCurrency(coastFireNumber);
+        document.getElementById('retireAgeDisplay').innerText = retireAge;
+
+        const successBox = document.getElementById('successBox');
+        if (savings >= coastFireNumber && yearsToRetirement > 0) {
+            successBox.style.display = 'block';
+            document.getElementById('successSub').innerText = `Your current investments of ${formatCurrency(savings)} will compound to reach your FIRE goal by age ${retireAge}.`;
+        } else {
+            successBox.style.display = 'none';
+        }
+
+        generateChartAndTable(currentAge, retireAge, savings, fireNumber, realReturn);
+    }
+
+    function generateChartAndTable(startAge, retireAge, currentSavings, fireNumber, realReturn) {
+        const labels = [];
+        const projectedValues = [];
+        const targetValues = [];
+        const coastTargets = [];
+
+        const tableBody = document.querySelector('#projectionTable tbody');
+        tableBody.innerHTML = '';
+
+        const years = Math.max(0, retireAge - startAge);
+        let currentProjected = currentSavings;
+
+        for (let i = 0; i <= years; i++) {
+            const age = startAge + i;
+            const yearsLeft = retireAge - age;
+
+            // Calculate what Coast FIRE number WOULD be at this specific age
+            let ageCoastTarget = fireNumber;
+            if (yearsLeft > 0) {
+                ageCoastTarget = fireNumber / Math.pow(1 + realReturn, yearsLeft);
+            }
+
+            labels.push(`Age ${age}`);
+            projectedValues.push(currentProjected);
+            targetValues.push(fireNumber);
+            coastTargets.push(ageCoastTarget);
+
+            // Determine status for table
+            let status = '';
+            if (currentProjected >= fireNumber) {
+                status = '<span style="color: #22c55e;">FIRE Reached!</span>';
+            } else if (currentProjected >= ageCoastTarget) {
+                status = '<span style="color: #3b82f6;">Coasting</span>';
+            } else {
+                status = '<span style="color: #ef4444;">Needs Funding</span>';
+            }
+
+            // Populate table row
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td>${age}</td>
+                <td style="${currentProjected >= ageCoastTarget ? 'color: #22c55e;' : ''}">${formatCurrency(currentProjected)}</td>
+                <td>${formatCurrency(ageCoastTarget)}</td>
+                <td>${status}</td>
+            `;
+            tableBody.appendChild(tr);
+
+            // Grow portfolio by real return for next year
+            currentProjected = currentProjected * (1 + realReturn);
+        }
+
+        renderChart(labels, projectedValues, targetValues, coastTargets);
+    }
+
+    function renderChart(labels, projected, target, coastTargets) {
+        const ctx = document.getElementById('growthChart').getContext('2d');
+
+        if (chartInstance) {
+            chartInstance.destroy();
+        }
+
+        Chart.defaults.color = '#888';
+        Chart.defaults.font.family = "'Inter', sans-serif";
+
+        chartInstance = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: labels,
+                datasets: [
+                    {
+                        label: 'Projected Portfolio Value',
+                        data: projected,
+                        borderColor: '#22c55e',
+                        backgroundColor: 'rgba(34, 197, 94, 0.1)',
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4
+                    },
+                    {
+                        label: 'Coast FIRE Target Path',
+                        data: coastTargets,
+                        borderColor: '#D4A017',
+                        borderDash: [5, 5],
+                        borderWidth: 2,
+                        fill: false,
+                        tension: 0.4
+                    },
+                    {
+                        label: 'Full FIRE Target',
+                        data: target,
+                        borderColor: '#ef4444',
+                        borderWidth: 2,
+                        fill: false,
+                        pointRadius: 0
+                    }
+                ]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                interaction: {
+                    mode: 'index',
+                    intersect: false,
+                },
+                plugins: {
+                    tooltip: {
+                        backgroundColor: '#141008',
+                        titleColor: '#e0d8c8',
+                        bodyColor: '#888',
+                        borderColor: '#2a2010',
+                        borderWidth: 1,
+                        padding: 12,
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.dataset.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                if (context.parsed.y !== null) {
+                                    label += new Intl.NumberFormat('en-CA', { style: 'currency', currency: 'CAD', maximumFractionDigits: 0 }).format(context.parsed.y);
+                                }
+                                return label;
+                            }
+                        }
+                    },
+                    legend: {
+                        position: 'top',
+                        labels: {
+                            color: '#e0d8c8',
+                            usePointStyle: true,
+                            boxWidth: 8
+                        }
+                    }
+                },
+                scales: {
+                    x: {
+                        grid: { color: '#2a2010', drawBorder: false },
+                        ticks: { color: '#888' }
+                    },
+                    y: {
+                        grid: { color: '#2a2010', drawBorder: false },
+                        ticks: {
+                            color: '#888',
+                            callback: function(value) {
+                                return '$' + (value / 1000) + 'k';
+                            }
+                        }
+                    }
+                }
+            }
+        });
+    }
+
+    // Add listeners
+    inputs.forEach(id => {
+        document.getElementById(id).addEventListener('input', updateCalculations);
+    });
+
+    // Initial calc
+    updateCalculations();
+</script>
+</body>
+</html>
