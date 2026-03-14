@@ -1,0 +1,270 @@
+---
+import SiteLayout from '../../../layouts/SiteLayout.astro';
+
+const schema = {
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "HTTP Status Code Reference",
+  "url": "https://siliconbased.dev/http-status",
+  "description": "Interactive HTTP status code reference tool with search, examples, and troubleshooting for all standard HTTP status codes.",
+  "applicationCategory": "DeveloperApplication",
+  "operatingSystem": "Any",
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "USD"
+  },
+  "author": {
+    "@type": "Organization",
+    "name": "GAB Ventures",
+    "url": "https://gab.ae"
+  }
+};
+
+const htmlContent = `<style>
+
+.page-content { font-family: 'Inter', -apple-system, sans-serif; background: #0a0b10; color: #e0e0e0; min-height: 100vh; display: flex; flex-direction: column; }
+code, pre, .mono { font-family: 'JetBrains Mono', monospace; }
+
+/* Hero Section */
+.hero { text-align: center; padding: 48px 24px 24px; background: linear-gradient(180deg, #0f1729 0%, #0a0b10 100%); }
+.hero h1 { font-size: 2.4rem; font-weight: 900; color: #fff; margin-bottom: 6px; }
+.hero h1 span { background: linear-gradient(135deg, #818cf8, #c084fc); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+.hero p { color: #888; font-size: 0.95rem; }
+
+/* Main Content */
+.main { max-width: 1200px; margin: 0 auto; padding: 24px 20px 80px; flex: 1; width: 100%; }
+
+/* UI Controls */
+.controls { display: flex; flex-direction: column; gap: 16px; margin-bottom: 32px; background: #111318; padding: 20px; border-radius: 12px; border: 1px solid #1e2030; }
+.search-bar { position: relative; width: 100%; }
+.search-bar input { width: 100%; padding: 14px 16px 14px 44px; background: #0a0b10; border: 1px solid #2a2d40; border-radius: 8px; color: #fff; font-family: 'Inter', sans-serif; font-size: 1rem; outline: none; transition: border-color 0.2s; }
+.search-bar input:focus { border-color: #818cf8; }
+.search-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); width: 20px; height: 20px; color: #888; }
+
+.filters { display: flex; gap: 8px; flex-wrap: wrap; }
+.filter-btn { background: #1e2030; border: 1px solid #2a2d40; color: #888; padding: 8px 16px; border-radius: 8px; font-size: 0.85rem; font-weight: 500; cursor: pointer; font-family: 'Inter', sans-serif; transition: all 0.15s; }
+.filter-btn:hover { background: #2a2d40; color: #ccc; }
+.filter-btn.active { background: #818cf8; color: #fff; border-color: #818cf8; }
+
+/* Status Cards Grid */
+.status-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 20px; }
+
+/* Status Card */
+.status-card { background: #111318; border: 1px solid #1e2030; border-radius: 12px; padding: 20px; display: flex; flex-direction: column; gap: 12px; transition: border-color 0.2s, transform 0.2s; position: relative; }
+.status-card:hover { border-color: #2a2d40; transform: translateY(-2px); }
+
+.card-header { display: flex; justify-content: space-between; align-items: flex-start; }
+.status-code { font-size: 2rem; font-weight: 800; font-family: 'JetBrains Mono', monospace; line-height: 1; margin-bottom: 4px; }
+.status-name { font-size: 1.1rem; font-weight: 600; color: #e0e0e0; }
+
+/* Status Category Colors */
+.cat-1xx .status-code { color: #60a5fa; } /* Info */
+.cat-2xx .status-code { color: #4ade80; } /* Success */
+.cat-3xx .status-code { color: #fbbf24; } /* Redirect */
+.cat-4xx .status-code { color: #f87171; } /* Client Error */
+.cat-5xx .status-code { color: #f43f5e; } /* Server Error */
+
+.copy-btn { background: #1e2030; border: 1px solid #2a2d40; color: #888; padding: 6px 12px; border-radius: 6px; font-size: 0.75rem; font-weight: 500; cursor: pointer; font-family: 'Inter', sans-serif; transition: all 0.15s; display: flex; align-items: center; gap: 6px; }
+.copy-btn:hover { background: #2a2d40; color: #ccc; }
+.copy-btn.copied { background: #1a3a1a; color: #4ade80; border-color: #2d5a2d; }
+.copy-btn svg { width: 14px; height: 14px; }
+
+.status-desc { font-size: 0.9rem; color: #888; line-height: 1.5; }
+
+/* Expandable Details */
+.card-details { margin-top: 12px; padding-top: 12px; border-top: 1px solid #1e2030; display: none; flex-direction: column; gap: 12px; }
+.status-card.expanded .card-details { display: flex; }
+
+.detail-section h4 { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px; color: #888; margin-bottom: 6px; font-weight: 600; }
+.detail-section p { font-size: 0.85rem; color: #ccc; line-height: 1.5; }
+.detail-section code { background: #0a0b10; padding: 2px 6px; border-radius: 4px; color: #818cf8; font-size: 0.8em; border: 1px solid #1e2030; }
+
+.expand-btn { background: none; border: none; color: #818cf8; font-size: 0.85rem; font-weight: 500; cursor: pointer; font-family: 'Inter', sans-serif; display: flex; align-items: center; gap: 6px; padding: 4px 0; width: fit-content; }
+.expand-btn:hover { text-decoration: underline; }
+.expand-btn svg { width: 16px; height: 16px; transition: transform 0.2s; }
+.status-card.expanded .expand-btn svg { transform: rotate(180deg); }
+
+.no-results { grid-column: 1 / -1; text-align: center; padding: 40px; color: #888; font-size: 1.1rem; background: #111318; border-radius: 12px; border: 1px dashed #2a2d40; }
+
+/* SEO Content */
+.seo-content { margin-top: 48px; border-top: 1px solid #1e2030; padding-top: 48px; color: #b0b8d0; font-size: 0.95rem; line-height: 1.6; }
+.seo-content h2 { color: #fff; font-size: 1.4rem; font-weight: 700; margin: 32px 0 16px; }
+.seo-content h2:first-child { margin-top: 0; }
+.seo-content h3 { color: #e0e0e0; font-size: 1.1rem; font-weight: 600; margin: 24px 0 12px; }
+.seo-content p { margin-bottom: 16px; }
+.seo-content ul { margin-bottom: 16px; padding-left: 24px; }
+.seo-content li { margin-bottom: 8px; }
+.seo-content code { background: #111318; padding: 2px 6px; border-radius: 4px; color: #818cf8; font-size: 0.85em; }
+
+/* Footer */
+.footer { text-align: center; padding: 40px 24px; font-size: 0.78rem; color: #555; border-top: 1px solid #151520; margin-top: auto; }
+.footer a { color: #818cf8; text-decoration: none; }
+.footer a:hover { text-decoration: underline; }
+
+/* Responsive */
+@media (max-width: 600px) {
+  .hero h1 { font-size: 2rem; }
+  .status-grid { grid-template-columns: 1fr; }
+}
+
+</style>
+<div class="page-content">
+<div class="hero">
+  <h1>HTTP Status Code <span>Reference</span></h1>
+  <p>Search, examples, and troubleshooting for HTTP response status codes.</p>
+</div>
+
+<div class="main">
+  <div class="controls">
+    <div class="search-bar">
+      <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+      <input type="text" id="searchInput" placeholder="Search by status code or name (e.g., 404, Not Found)...">
+    </div>
+    <div class="filters" id="categoryFilters">
+      <button class="filter-btn active" data-filter="all">All</button>
+      <button class="filter-btn" data-filter="1xx">1xx Info</button>
+      <button class="filter-btn" data-filter="2xx">2xx Success</button>
+      <button class="filter-btn" data-filter="3xx">3xx Redirect</button>
+      <button class="filter-btn" data-filter="4xx">4xx Client Error</button>
+      <button class="filter-btn" data-filter="5xx">5xx Server Error</button>
+    </div>
+  </div>
+
+  <div class="status-grid" id="statusGrid">
+    <!-- Status cards will be dynamically injected here -->
+  </div>
+
+  <div class="seo-content">
+    <h2>Understanding HTTP Status Codes</h2>
+    <p>HTTP status codes are three-digit numbers returned by a server in response to a client's request made to the server. They provide a quick way to understand whether a specific HTTP request has been successfully completed, and if not, why.</p>
+
+    <h3>Status Code Categories</h3>
+    <p>Status codes are divided into five distinct classes (or categories). The first digit of the status code defines its class of response:</p>
+    <ul>
+      <li><code>1xx</code> <strong>Informational responses (100–199):</strong> The request was received, continuing process. These are generally provisional responses.</li>
+      <li><code>2xx</code> <strong>Successful responses (200–299):</strong> The request was successfully received, understood, and accepted. (e.g., <code>200 OK</code>).</li>
+      <li><code>3xx</code> <strong>Redirection messages (300–399):</strong> Further action needs to be taken in order to complete the request. Usually used for URL redirects.</li>
+      <li><code>4xx</code> <strong>Client error responses (400–499):</strong> The request contains bad syntax or cannot be fulfilled. The error is on the client's side (e.g., <code>404 Not Found</code>).</li>
+      <li><code>5xx</code> <strong>Server error responses (500–599):</strong> The server failed to fulfill a valid request. The error is on the server's side (e.g., <code>500 Internal Server Error</code>).</li>
+    </ul>
+
+    <h2>Troubleshooting Common HTTP Errors</h2>
+    <p>When you encounter HTTP errors (4xx or 5xx), here are some general troubleshooting steps:</p>
+    <ul>
+      <li><strong>400 Bad Request:</strong> Check the URL for typos. Ensure the request payload or syntax is properly formatted.</li>
+      <li><strong>401 Unauthorized / 403 Forbidden:</strong> Verify your authentication credentials. Check if you have the necessary permissions to access the resource.</li>
+      <li><strong>404 Not Found:</strong> Double-check the URL. The resource may have been moved or deleted. If you own the site, check your routing or rewrite rules.</li>
+      <li><strong>500 Internal Server Error:</strong> Look into your server's error logs. This is a generic catch-all for unexpected server conditions, often caused by misconfigured software or code bugs.</li>
+      <li><strong>502 Bad Gateway / 504 Gateway Timeout:</strong> These often indicate network issues between servers (e.g., a reverse proxy like Nginx failing to reach the backend application). Check the health of your upstream servers.</li>
+    </ul>
+
+    <p>This reference tool runs entirely in your browser and works offline after the initial load, allowing developers to quickly look up status codes without relying on an internet connection.</p>
+  </div>
+</div>
+
+        <button class="copy-btn" onclick="copyCode(this, '\${item.code}')">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+          Copy
+        </button>
+      </div>
+      <div class="status-desc">\${item.desc}</div>
+      <button class="expand-btn" onclick="toggleDetails(this)">
+        Details
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"></polyline></svg>
+      </button>
+      <div class="card-details">
+        <div class="detail-section">
+          <h4>Category</h4>
+          <p>\${getCategoryName(item.cat)}</p>
+        </div>
+        <div class="detail-section">
+          <h4>Common Use Case</h4>
+          <p>\${getUseCase(item.code)}</p>
+        </div>
+      </div>
+    \`;
+    statusGrid.appendChild(card);
+  });
+}
+
+function getCategoryName(cat) {
+  switch(cat) {
+    case '1xx': return '1xx Informational - Request received, continuing process';
+    case '2xx': return '2xx Success - The action was successfully received, understood, and accepted';
+    case '3xx': return '3xx Redirection - Further action must be taken in order to complete the request';
+    case '4xx': return '4xx Client Error - The request contains bad syntax or cannot be fulfilled';
+    case '5xx': return '5xx Server Error - The server failed to fulfill an apparently valid request';
+    default: return 'Unknown Category';
+  }
+}
+
+function getUseCase(code) {
+  const useCases = {
+    200: "Standard response for successful HTTP requests. The actual response will depend on the request method used (GET, POST, etc.).",
+    201: "Commonly used in response to a POST request when a new resource is successfully created.",
+    204: "Often used with DELETE requests when the resource is deleted successfully but no response body is needed.",
+    301: "Used when a URL has moved permanently. Browsers and search engines will update their links.",
+    302: "Used when a URL is moved temporarily. Browsers will redirect, but search engines won't update their links.",
+    304: "Used for caching. Tells the client the resource hasn't changed, so it can use its cached version.",
+    400: "Often returned when a client sends invalid JSON/XML in a request body or misses required parameters.",
+    401: "Returned when authentication fails or hasn't been provided yet.",
+    403: "Returned when the user is authenticated but doesn't have permissions to perform the requested action.",
+    404: "Returned when a user navigates to a URL that doesn't exist on the server.",
+    405: "Returned when you try to POST to an endpoint that only accepts GET requests, for example.",
+    429: "Used in rate limiting APIs to tell the client they have sent too many requests in a given time period.",
+    500: "A generic error when the server code throws an unhandled exception or crashes.",
+    502: "Commonly seen when a reverse proxy (like Nginx) tries to forward a request to an upstream backend that is not running.",
+    503: "Used when a server is temporarily down for maintenance or is overloaded.",
+    504: "Used when a proxy waits too long for an upstream server to respond."
+  };
+  return useCases[code] || "Refer to the main description for general usage.";
+}
+
+function copyCode(btn, code) {
+  navigator.clipboard.writeText(code).then(() => {
+    const originalText = btn.innerHTML;
+    btn.innerHTML = \`<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg> Copied\`;
+    btn.classList.add('copied');
+    setTimeout(() => {
+      btn.innerHTML = originalText;
+      btn.classList.remove('copied');
+    }, 1500);
+  });
+}
+
+function toggleDetails(btn) {
+  const card = btn.closest('.status-card');
+  card.classList.toggle('expanded');
+}
+
+// Event Listeners
+searchInput.addEventListener('input', (e) => {
+  currentSearch = e.target.value;
+  renderStatusCards();
+});
+
+filterBtns.forEach(btn => {
+  btn.addEventListener('click', () => {
+    filterBtns.forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    currentFilter = btn.dataset.filter;
+    renderStatusCards();
+  });
+});
+
+// Initial render
+renderStatusCards();
+</script>
+</div>`;
+---
+
+<SiteLayout
+  site="siliconbased"
+  title="HTTP Status Code Reference | Search & Troubleshooting"
+  description="Interactive HTTP status code reference. Search, examples, troubleshooting, and definitions for all HTTP status codes. Free and offline-capable."
+  canonical="https://siliconbased.dev/http-status"
+  schema={schema}
+>
+  <Fragment set:html={htmlContent} />
+</SiteLayout>
