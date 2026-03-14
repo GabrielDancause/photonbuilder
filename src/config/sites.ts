@@ -1,8 +1,17 @@
+export interface SiteTheme {
+  bg: string;
+  cardBg: string;
+  border: string;
+  textPrimary: string;
+  textSecondary: string;
+}
+
 export interface SiteConfig {
   id: string;
   name: string;
   domain: string;
   accent: string;
+  theme: SiteTheme;
   gaId: string;
   nav: { label: string; href: string }[];
   footer: { text: string; gabVentures?: boolean };
@@ -14,6 +23,7 @@ export const sites: Record<string, SiteConfig> = {
     name: 'Fire Maths',
     domain: 'firemaths.info',
     accent: '#D4A017',
+    theme: { bg: '#0c0a00', cardBg: '#141008', border: '#2a2010', textPrimary: '#e0d8c8', textSecondary: '#888888' },
     gaId: 'G-ZSXFV0VP4L',
     nav: [
       { label: 'Tools', href: '/#tools' },
@@ -27,6 +37,7 @@ export const sites: Record<string, SiteConfig> = {
     name: 'Westmount Fundamentals',
     domain: 'westmountfundamentals.com',
     accent: '#4a8fe7',
+    theme: { bg: '#060a12', cardBg: '#0a1020', border: '#152040', textPrimary: '#c8d0de', textSecondary: '#94a3b8' },
     gaId: 'G-VYF72NSC1Q',
     nav: [
       { label: 'Studies', href: '/#studies' },
@@ -41,6 +52,7 @@ export const sites: Record<string, SiteConfig> = {
     name: 'Silicon Based',
     domain: 'siliconbased.dev',
     accent: '#818cf8',
+    theme: { bg: '#060a12', cardBg: '#0a1020', border: '#152040', textPrimary: '#e2e8f0', textSecondary: '#94a3b8' },
     gaId: 'G-T4PEJFWXCY',
     nav: [
       { label: 'Tools', href: '/#tools' },
@@ -54,6 +66,7 @@ export const sites: Record<string, SiteConfig> = {
     name: '28 Grams',
     domain: '28grams.vip',
     accent: '#C2185B',
+    theme: { bg: '#0a0b10', cardBg: '#111318', border: '#1e2030', textPrimary: '#e0e0e0', textSecondary: '#888888' },
     gaId: 'G-WGF4XXH1SP',
     nav: [
       { label: 'Tools', href: '/#tools' },
@@ -67,6 +80,7 @@ export const sites: Record<string, SiteConfig> = {
     name: 'Migrating Mammals',
     domain: 'migratingmammals.com',
     accent: '#C4956A',
+    theme: { bg: '#0a0806', cardBg: '#12100c', border: '#2a2418', textPrimary: '#e0d5c8', textSecondary: '#888888' },
     gaId: 'G-PGRXS7TCZV',
     nav: [
       { label: 'Tools', href: '/#tools' },
@@ -80,6 +94,7 @@ export const sites: Record<string, SiteConfig> = {
     name: 'Leeroy Jenkins',
     domain: 'leeroyjenkins.quest',
     accent: '#9333EA',
+    theme: { bg: '#08060e', cardBg: '#100e18', border: '#221e30', textPrimary: '#d8d0e8', textSecondary: '#888888' },
     gaId: 'G-W1KVQZVVWE',
     nav: [
       { label: 'Tools', href: '/#tools' },
@@ -93,6 +108,7 @@ export const sites: Record<string, SiteConfig> = {
     name: 'I Just Want To',
     domain: 'ijustwantto.live',
     accent: '#2DB89A',
+    theme: { bg: '#060c0a', cardBg: '#0c1410', border: '#1a2a24', textPrimary: '#c8e0d8', textSecondary: '#888888' },
     gaId: 'G-PRHBMYEWQC',
     nav: [
       { label: 'Tools', href: '/#tools' },
@@ -107,6 +123,7 @@ sites['hpv-research'] = {
   name: 'HPV Research',
   domain: 'hpvresearch.com',
   accent: '#10b981',
+  theme: { bg: '#060a12', cardBg: '#0a1020', border: '#152040', textPrimary: '#c8d0de', textSecondary: '#5a6a80' },
   gaId: 'G-CYV604162T',
   nav: [
     { label: 'Tools', href: '/#tools' },
@@ -121,6 +138,7 @@ sites['photonbuilder'] = {
   name: 'Photon Builder',
   domain: 'photonbuilder.com',
   accent: '#FF6B35',
+  theme: { bg: '#060a12', cardBg: '#0a1020', border: '#152040', textPrimary: '#e2e8f0', textSecondary: '#94a3b8' },
   gaId: 'G-CYV604162T',
   nav: [
     { label: 'Tools', href: '/#tools' },
@@ -136,6 +154,7 @@ sites['health'] = {
   name: 'Health Tools',
   domain: 'photonbuilder.com',
   accent: '#E05A5A',
+  theme: { bg: '#060a12', cardBg: '#0a1020', border: '#152040', textPrimary: '#e2e8f0', textSecondary: '#94a3b8' },
   gaId: 'G-CYV604162T',
   nav: [
     { label: 'Calculators', href: '/health/#tools' },
@@ -151,6 +170,7 @@ sites['montrealjobs'] = {
   name: 'Montreal Jobs',
   domain: 'montrealjobs.photonbuilder.com',
   accent: '#3B82F6',
+  theme: { bg: '#060a12', cardBg: '#0a1020', border: '#152040', textPrimary: '#e2e8f0', textSecondary: '#94a3b8' },
   gaId: 'G-CYV604162T',
   nav: [
     { label: 'Market', href: '/#market' },
