@@ -131,6 +131,21 @@ sites['photonbuilder'] = {
   footer: { text: '© 2026 Photon Builder', gabVentures: true },
 };
 
+sites['health'] = {
+  id: 'health',
+  name: 'Health Tools',
+  domain: 'photonbuilder.com',
+  accent: '#E05A5A',
+  gaId: 'G-G86C7NJG3F',
+  nav: [
+    { label: 'Calculators', href: '/health/#tools' },
+    { label: 'Studies', href: '/health/#studies' },
+    { label: 'Guides', href: '/health/#guides' },
+    { label: 'Lists', href: '/health/#lists' },
+  ],
+  footer: { text: '© 2026 Health Tools', gabVentures: true },
+};
+
 sites['montrealjobs'] = {
   id: 'montrealjobs',
   name: 'Montreal Jobs',

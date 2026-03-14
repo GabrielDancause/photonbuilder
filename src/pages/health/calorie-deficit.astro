@@ -1,12 +1,12 @@
 ---
-import SiteLayout from "../../../layouts/SiteLayout.astro";
+import SiteLayout from "../../layouts/SiteLayout.astro";
 
 const schema = {
   "@context": "https://schema.org",
   "@type": "WebApplication",
-  "name": "Water Intake Calculator",
-  "url": "https://ijustwantto.live/water-intake.html",
-  "description": "Calculate your daily water needs based on your weight, activity level, and climate. Results provided in glasses, liters, and ounces.",
+  "name": "Calorie Deficit Calculator",
+  "url": "https://photonbuilder.com/health/calorie-deficit.html",
+  "description": "Calculate your daily calorie deficit, weekly and monthly weight loss projections, and get healthy sustainable diet recommendations with safety warnings.",
   "applicationCategory": "HealthAndFitnessApplication",
   "operatingSystem": "Any",
   "offers": {
@@ -18,10 +18,10 @@ const schema = {
 ---
 
 <SiteLayout
-  site="ijustwantto"
-  title="Daily Water Intake Calculator | ijustwantto.live"
-  description="Calculate your daily water needs based on your weight, activity level, and climate. Get your recommended intake in glasses, liters, and ounces."
-  canonical="https://ijustwantto.live/water-intake" schema={schema}
+  site="health"
+  title="Calorie Deficit Calculator | ijustwantto.live"
+  description="Calculate your calorie deficit for weight loss. Get weekly and monthly weight loss projections, daily calorie goals, and important safety warnings to reach your goals sustainably."
+  canonical="https://photonbuilder.com/health/calorie-deficit" schema={schema}
 >
   <style>
 :root {
@@ -34,6 +34,10 @@ const schema = {
             --text-secondary: #888888;
             --font-ui: 'Inter', sans-serif;
             --font-mono: 'JetBrains Mono', monospace;
+            --warning-color: #eab308;
+            --warning-bg: rgba(234, 179, 8, 0.1);
+            --danger-color: #ef4444;
+            --danger-bg: rgba(239, 68, 68, 0.1);
         }
 
         * {
@@ -82,7 +86,7 @@ const schema = {
         }
 
         .form-group {
-            margin-bottom: 1.25rem;
+            margin-bottom: 1rem;
         }
 
         label {
@@ -101,25 +105,7 @@ const schema = {
 
         .form-col {
             flex: 1;
-            min-width: 200px;
-        }
-
-        .input-group {
-            display: flex;
-        }
-
-        .input-group input {
-            flex: 1;
-            border-top-right-radius: 0;
-            border-bottom-right-radius: 0;
-        }
-
-        .input-group select {
-            width: auto;
-            border-top-left-radius: 0;
-            border-bottom-left-radius: 0;
-            border-left: none;
-            padding-right: 2.5rem;
+            min-width: 140px;
         }
 
         input[type="number"],
@@ -148,6 +134,35 @@ const schema = {
             border-color: var(--accent-color);
         }
 
+        .radio-group {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .radio-label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: 400;
+            cursor: pointer;
+            padding: 0.75rem;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            flex: 1;
+            justify-content: center;
+            background-color: var(--bg-color);
+            transition: all 0.2s;
+        }
+
+        .radio-label:has(input:checked) {
+            border-color: var(--accent-color);
+            background-color: rgba(45, 184, 154, 0.1);
+        }
+
+        input[type="radio"] {
+            display: none;
+        }
+
         button.calculate-btn {
             width: 100%;
             background-color: var(--accent-color);
@@ -159,7 +174,7 @@ const schema = {
             font-weight: 600;
             cursor: pointer;
             transition: background-color 0.2s;
-            margin-top: 0.5rem;
+            margin-top: 1rem;
             font-family: var(--font-ui);
         }
 
@@ -275,6 +290,41 @@ const schema = {
             right: 0.5rem;
         }
 
+        .alert-box {
+            display: none;
+            border-radius: 8px;
+            padding: 1rem;
+            margin-top: 1.5rem;
+            font-size: 0.875rem;
+        }
+
+        .alert-box.active {
+            display: block;
+        }
+
+        .alert-warning {
+            background-color: var(--warning-bg);
+            border: 1px solid var(--warning-color);
+            color: var(--text-primary);
+        }
+
+        .alert-danger {
+            background-color: var(--danger-bg);
+            border: 1px solid var(--danger-color);
+            color: var(--text-primary);
+        }
+
+        .alert-title {
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .alert-warning .alert-title { color: var(--warning-color); }
+        .alert-danger .alert-title { color: var(--danger-color); }
+
         .seo-content {
             margin-top: 4rem;
         }
@@ -321,7 +371,7 @@ const schema = {
 
         @media (min-width: 640px) {
             .macros-grid {
-                grid-template-columns: repeat(3, 1fr);
+                grid-template-columns: repeat(2, 1fr);
             }
         }
   </style>
@@ -331,139 +381,144 @@ const schema = {
 
         <main>
             <div class="card">
-                <form id="waterForm">
+                <form id="deficitForm">
                     <div class="form-row">
                         <div class="form-group form-col">
-                            <label for="weight">Weight</label>
-                            <div class="input-group">
-                                <input type="number" id="weight" name="weight" required min="1" step="0.1" placeholder="e.g. 150">
-                                <select id="weightUnit" name="weightUnit">
-                                    <option value="lbs">lbs</option>
-                                    <option value="kg">kg</option>
-                                </select>
-                            </div>
+                            <label for="tdee">Maintenance Calories (TDEE)</label>
+                            <input type="number" id="tdee" name="tdee" required min="1000" max="6000" placeholder="e.g. 2500">
                         </div>
                         <div class="form-group form-col">
-                            <label for="activity">Daily Exercise (minutes)</label>
-                            <input type="number" id="activity" name="activity" required min="0" step="1" placeholder="e.g. 30" value="0">
+                            <label for="deficit">Daily Calorie Deficit</label>
+                            <input type="number" id="deficit" name="deficit" required min="100" max="2000" placeholder="e.g. 500">
                         </div>
                     </div>
 
                     <div class="form-group">
-                        <label for="climate">Climate / Environment</label>
-                        <select id="climate" name="climate">
-                            <option value="normal">Normal</option>
-                            <option value="hot">Hot or Humid</option>
-                            <option value="very_hot">Very Hot or Dry</option>
+                        <label for="unit">Weight Unit</label>
+                        <select id="unit" name="unit">
+                            <option value="kg">Kilograms (kg)</option>
+                            <option value="lbs">Pounds (lbs)</option>
                         </select>
                     </div>
 
-                    <button type="submit" class="calculate-btn">Calculate Water Intake</button>
+                    <button type="submit" class="calculate-btn">Calculate Projections</button>
                 </form>
 
                 <div id="results" class="results">
                     <div class="result-box">
-                        <div class="result-title">Daily Recommendation (Liters)</div>
+                        <div class="result-title">Daily Calorie Goal</div>
                         <div class="result-value">
-                            <span id="litersValue">0</span> L
-                            <button class="copy-btn" onclick="copyToClipboard('litersValue')" title="Copy">
+                            <span id="dailyGoal">0</span> kcal
+                            <button class="copy-btn" onclick="copyToClipboard('dailyGoal')" title="Copy">
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
                             </button>
                         </div>
                     </div>
 
+                    <div id="safetyWarning" class="alert-box alert-danger">
+                        <div class="alert-title">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg>
+                            Safety Warning
+                        </div>
+                        <p>Your daily calorie goal is below 1,200 kcal. Diets under 1,200 calories per day are generally not recommended without medical supervision, as it is difficult to meet nutritional needs.</p>
+                    </div>
+
                     <div class="macros-grid">
                         <div class="macro-card">
-                            <button class="copy-btn" onclick="copyToClipboard('glassesValue')" title="Copy">
+                            <button class="copy-btn" onclick="copyToClipboard('weeklyLoss')" title="Copy">
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
                             </button>
-                            <h3>Glasses</h3>
-                            <div class="value"><span id="glassesValue">0</span></div>
-                            <div class="desc">8 oz servings</div>
+                            <h3>Weekly Weight Loss</h3>
+                            <div class="value"><span id="weeklyLoss">0</span> <span class="unit-display">kg</span></div>
+                            <div class="desc"><span id="weeklyDeficit">0</span> kcal deficit/week</div>
                         </div>
                         <div class="macro-card">
-                            <button class="copy-btn" onclick="copyToClipboard('ouncesValue')" title="Copy">
+                            <button class="copy-btn" onclick="copyToClipboard('monthlyLoss')" title="Copy">
                                 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
                             </button>
-                            <h3>Ounces</h3>
-                            <div class="value"><span id="ouncesValue">0</span></div>
-                            <div class="desc">fl oz / day</div>
-                        </div>
-                        <div class="macro-card">
-                            <button class="copy-btn" onclick="copyToClipboard('mlValue')" title="Copy">
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-                            </button>
-                            <h3>Milliliters</h3>
-                            <div class="value"><span id="mlValue">0</span></div>
-                            <div class="desc">mL / day</div>
+                            <h3>Monthly Weight Loss</h3>
+                            <div class="value"><span id="monthlyLoss">0</span> <span class="unit-display">kg</span></div>
+                            <div class="desc"><span id="monthlyDeficit">0</span> kcal deficit/month</div>
                         </div>
                     </div>
                 </div>
             </div>
 
             <div class="seo-content">
-                <h2>How Much Water Should You Drink a Day?</h2>
-                <p>Hydration is essential for nearly every function in the human body. While the classic "8 glasses a day" rule is easy to remember, it isn't accurate for everyone. Your actual water needs vary based on your weight, how active you are, and the climate you live in.</p>
-                <p>This calculator estimates a baseline of 0.5 ounces of water per pound of body weight. So, a person weighing 150 lbs would need about 75 ounces of water daily just resting in a normal climate.</p>
+                <h2>Understanding Calorie Deficits</h2>
+                <p>A calorie deficit occurs when you consistently consume fewer calories than you expend. It is the fundamental biological requirement for weight loss. Your body needs a certain amount of energy (calories) to function, maintain its temperature, and power your physical activities. When you supply less energy than it needs, it turns to stored energy—primarily body fat—to make up the difference.</p>
+                <p>Before calculating your deficit, you need to know your Total Daily Energy Expenditure (TDEE), which is your maintenance calories. You can use our <a href="/bmr-calculator.html">BMR & TDEE Calculator</a> to find this number.</p>
 
-                <h2>Factors Affecting Hydration Needs</h2>
+                <h2>Healthy Deficit Rates</h2>
+                <p>While an aggressive deficit might seem like the fastest path to your goal, moderate and sustainable deficits are highly recommended to preserve muscle mass, maintain energy levels, and ensure long-term success.</p>
                 <ul>
-                    <li><strong>Exercise:</strong> When you sweat, you lose water quickly. We recommend adding 12 ounces of water to your daily total for every 30 minutes of exercise to replenish lost fluids.</li>
-                    <li><strong>Environment:</strong> Hot, humid, or extremely dry climates increase how much you perspire and how quickly moisture evaporates from your skin. You may need 15% to 30% more water in these conditions.</li>
-                    <li><strong>Health Conditions & Diet:</strong> Illnesses that cause fever, vomiting, or diarrhea increase water loss. Additionally, if you consume high-sodium foods, your body will require more water to process them.</li>
+                    <li><strong>Small Deficit (10-15% or 250 kcal/day):</strong> Ideal for athletes, those looking to retain maximum muscle mass, or individuals within 5-10 lbs of their goal weight. Yields about 0.5 lb (0.25 kg) loss per week.</li>
+                    <li><strong>Moderate Deficit (20-25% or 500 kcal/day):</strong> The gold standard for sustainable weight loss. Balances consistent progress with manageable hunger. Yields about 1 lb (0.5 kg) loss per week.</li>
+                    <li><strong>Aggressive Deficit (25-30% or 750-1000 kcal/day):</strong> Best suited for individuals with significant body fat to lose. This rate often requires careful macro tracking to ensure adequate protein and nutrient intake. Yields about 1.5-2 lbs (0.75-1 kg) loss per week.</li>
                 </ul>
 
-                <h2>Signs of Proper Hydration</h2>
-                <p>The easiest way to tell if you're drinking enough water is by checking the color of your urine. A pale yellow or clear color typically indicates good hydration, while dark yellow or amber means you need to drink more water. Other signs of dehydration include fatigue, headaches, dry mouth, and dizziness.</p>
+                <h2>Safety Guidelines & The 1,200 Calorie Rule</h2>
+                <p>It's crucial to prioritize your health while pursuing weight loss. Extreme deficits can lead to muscle loss, nutrient deficiencies, lowered immunity, and a slowed metabolism due to metabolic adaptation.</p>
+                <p>As a general medical guideline, <strong>women should not consume less than 1,200 calories per day, and men should not consume less than 1,500 calories per day</strong> without medical supervision. If your calculated deficit pushes your daily intake below these numbers, we strongly recommend reducing your deficit and increasing your daily activity to burn more calories instead of eating less.</p>
             </div>
         </main>
 
         
     </div>
   <script is:inline>
-document.getElementById('waterForm').addEventListener('submit', function(e) {
+document.getElementById('deficitForm').addEventListener('submit', function(e) {
             e.preventDefault();
 
-            let weight = parseFloat(document.getElementById('weight').value);
-            const weightUnit = document.getElementById('weightUnit').value;
-            const activityMins = parseFloat(document.getElementById('activity').value) || 0;
-            const climate = document.getElementById('climate').value;
+            const tdee = parseFloat(document.getElementById('tdee').value);
+            const deficit = parseFloat(document.getElementById('deficit').value);
+            const unit = document.getElementById('unit').value;
 
-            if (isNaN(weight)) {
+            if (isNaN(tdee) || isNaN(deficit)) {
                 return;
             }
 
-            // Convert kg to lbs for baseline calculation
-            if (weightUnit === 'kg') {
-                weight = weight * 2.20462;
+            // Calculations
+            const dailyGoal = tdee - deficit;
+            const weeklyDeficit = deficit * 7;
+            const monthlyDeficit = deficit * 30; // Approx 30 days
+
+            // Weight loss estimation
+            // 1 lb fat = 3500 kcal
+            // 1 kg fat = 7700 kcal
+            let weeklyLoss = 0;
+            let monthlyLoss = 0;
+
+            if (unit === 'kg') {
+                weeklyLoss = weeklyDeficit / 7700;
+                monthlyLoss = monthlyDeficit / 7700;
+            } else {
+                weeklyLoss = weeklyDeficit / 3500;
+                monthlyLoss = monthlyDeficit / 3500;
             }
 
-            // Base requirement: 0.5 oz per lb of body weight
-            let baseOunces = weight * 0.5;
+            // Update DOM
+            document.getElementById('dailyGoal').textContent = Math.round(dailyGoal).toLocaleString();
 
-            // Activity requirement: Add 12 oz per 30 mins of exercise
-            let activityOunces = (activityMins / 30) * 12;
+            document.getElementById('weeklyLoss').textContent = weeklyLoss.toFixed(2);
+            document.getElementById('weeklyDeficit').textContent = Math.round(weeklyDeficit).toLocaleString();
 
-            let totalOunces = baseOunces + activityOunces;
+            document.getElementById('monthlyLoss').textContent = monthlyLoss.toFixed(2);
+            document.getElementById('monthlyDeficit').textContent = Math.round(monthlyDeficit).toLocaleString();
 
-            // Climate adjustment
-            if (climate === 'hot') {
-                totalOunces = totalOunces * 1.15; // Add 15%
-            } else if (climate === 'very_hot') {
-                totalOunces = totalOunces * 1.30; // Add 30%
+            // Update units in UI
+            document.querySelectorAll('.unit-display').forEach(el => {
+                el.textContent = unit;
+            });
+
+            // Handle safety warning
+            const warningBox = document.getElementById('safetyWarning');
+            if (dailyGoal < 1200) {
+                warningBox.classList.add('active');
+            } else {
+                warningBox.classList.remove('active');
             }
 
-            // Calculate conversions
-            const totalLiters = totalOunces * 0.0295735;
-            const totalMl = totalLiters * 1000;
-            const totalGlasses = totalOunces / 8;
-
-            // Update UI
-            document.getElementById('litersValue').textContent = totalLiters.toFixed(2);
-            document.getElementById('ouncesValue').textContent = Math.round(totalOunces).toLocaleString();
-            document.getElementById('glassesValue').textContent = totalGlasses.toFixed(1);
-            document.getElementById('mlValue').textContent = Math.round(totalMl).toLocaleString();
-
+            // Show results with animation
             document.getElementById('results').classList.add('active');
         });
 
