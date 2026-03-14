@@ -1,0 +1,260 @@
+---
+import SiteLayout from "../../../layouts/SiteLayout.astro";
+
+const schema = [
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": "Interactive GIC Ladder Calculator",
+    "description": "Build a custom GIC ladder to visualize how your cash investments will mature over time, balancing high yields with rolling liquidity.",
+    "author": {
+      "@type": "Organization",
+      "name": "Fire Maths"
+    }
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "What is a GIC ladder?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "A GIC ladder is an investment strategy where you divide your cash into equal portions and invest them in GICs of varying lengths (e.g., 1-year, 2-year, 3-year). As each one matures, you either spend the cash or reinvest it at the longest term."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Why use a GIC ladder instead of a single 5-year GIC?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "A single 5-year GIC locks all your money up for five years. A ladder provides rolling liquidity. If you use a 5-year ladder, 20% of your money becomes available every single year, while you still earn the higher 5-year interest rate on the reinvested portions."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How do changing interest rates affect a GIC ladder?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "A ladder automatically dollar-cost averages your interest rates over time. If rates rise, you benefit quickly as your next maturing GIC is reinvested at the higher rate. If rates fall, you are protected because your longer-term GICs are locked in at the old, higher rates."
+        }
+      }
+    ]
+  }
+];
+---
+
+<SiteLayout site="firemaths" title="GIC Ladder Calculator: Build Your Cash Strategy" description="Use our interactive GIC Ladder Calculator to build a custom cash strategy. Balance high guaranteed returns with regular liquidity for early retirement." canonical="https://firemaths.info/gic-ladder-calculator" schema={schema}>
+  <div class="page-content">
+    <div class="hero">
+      <h1>GIC Ladder Calculator</h1>
+      <p>Balance High Yields with Rolling Liquidity</p>
+    </div>
+
+    <div class="card">
+      <p>If you have a large amount of cash—perhaps for a <a href="/cash-wedge-strategy">Cash Wedge Strategy</a> or a future down payment—putting it all in a single <a href="/best-gic-rates-2026">GIC</a> locks you in entirely. Putting it all in an <a href="/best-hysa-canada-2026">HYSA</a> means you miss out on higher guaranteed rates. The solution is the <strong>GIC Ladder</strong>.</p>
+    </div>
+
+    <h2>Build Your Ladder</h2>
+    <div class="card" id="calculator-container">
+      <div class="calc-grid">
+        <div class="input-group">
+          <label for="totalAmount">Total Cash to Invest ($)</label>
+          <input type="number" id="totalAmount" value="50000" min="1000" step="1000" />
+        </div>
+        <div class="input-group">
+          <label for="ladderLength">Ladder Length (Years)</label>
+          <select id="ladderLength">
+            <option value="3">3-Year Ladder</option>
+            <option value="4">4-Year Ladder</option>
+            <option value="5" selected>5-Year Ladder</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="rates-container">
+        <h3>Current Market Rates</h3>
+        <p style="font-size: 0.85rem;">(Adjust these to match current rates from your broker)</p>
+        <div class="rates-grid" id="rates-inputs">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+
+      <button id="calculateBtn" class="calc-btn">Calculate Ladder</button>
+
+      <div id="results" class="results-container" style="display: none;">
+        <h3>Your Ladder Strategy</h3>
+        <p>You will divide your <strong>$<span id="resTotal"></span></strong> into <span id="resRungs"></span> equal portions of <strong>$<span id="resPortion"></span></strong> each.</p>
+
+        <div class="table-container">
+          <table class="ladder-table">
+            <thead>
+              <tr>
+                <th>Term</th>
+                <th>Principal</th>
+                <th>Rate</th>
+                <th>Interest Earned</th>
+                <th>Maturity Value</th>
+              </tr>
+            </thead>
+            <tbody id="ladder-tbody">
+              <!-- Populated by JS -->
+            </tbody>
+          </table>
+        </div>
+
+        <div class="summary-box">
+          <p><strong>Total Interest (First Cycle):</strong> $<span id="resTotalInterest"></span></p>
+          <p><strong>Average Yield:</strong> <span id="resAvgYield"></span>%</p>
+        </div>
+      </div>
+    </div>
+
+    <h2>How the Ladder Works in Practice</h2>
+    <p>Let's say you build a 5-Year ladder. In exactly one year, your 1-Year GIC will mature.</p>
+    <p>At that point, you have two choices:</p>
+    <ol>
+      <li><strong>Spend the cash:</strong> If you are retired and need the money to live on, you withdraw it and spend it. Your ladder shrinks to a 4-year ladder.</li>
+      <li><strong>Reinvest the cash:</strong> If you don't need the money, you take the principal plus interest and buy a <em>brand new 5-Year GIC</em>. </li>
+    </ol>
+    <p>If you continue to reinvest, eventually you will own five separate 5-Year GICs, but one of them will mature every single year. This gives you the maximum 5-year interest rate, but with 1-year liquidity.</p>
+
+    <h2>Compare Your Options</h2>
+    <p>Before locking your money away, ensure a GIC is the right tool for the job. Depending on the size of your portfolio and your tax bracket, <a href="/treasury-bills-guide">Treasury Bills</a> or <a href="/money-market-funds-guide">Money Market Funds</a> might offer a more flexible solution. Read our <a href="/cash-savings-compared">Cash Savings Compared</a> guide for a complete breakdown.</p>
+  </div>
+
+  <script is:inline>
+    document.addEventListener('DOMContentLoaded', () => {
+      const ladderLengthSelect = document.getElementById('ladderLength');
+      const ratesInputsDiv = document.getElementById('rates-inputs');
+      const calculateBtn = document.getElementById('calculateBtn');
+      const resultsDiv = document.getElementById('results');
+
+      // Default rates mapping (Term -> Rate)
+      const defaultRates = {
+        1: 5.00,
+        2: 4.80,
+        3: 4.50,
+        4: 4.30,
+        5: 4.25
+      };
+
+      function renderRateInputs() {
+        const length = parseInt(ladderLengthSelect.value);
+        ratesInputsDiv.innerHTML = '';
+        for (let i = 1; i <= length; i++) {
+          const defaultRate = defaultRates[i] || 4.00;
+          const group = document.createElement('div');
+          group.className = 'rate-input-group';
+          group.innerHTML = `
+            <label>${i}-Year Rate (%)</label>
+            <input type="number" id="rate-${i}" value="${defaultRate}" step="0.05" min="0" />
+          `;
+          ratesInputsDiv.appendChild(group);
+        }
+      }
+
+      function calculateLadder() {
+        const totalAmount = parseFloat(document.getElementById('totalAmount').value);
+        const length = parseInt(ladderLengthSelect.value);
+
+        if (isNaN(totalAmount) || totalAmount <= 0) {
+          alert("Please enter a valid total amount.");
+          return;
+        }
+
+        const portion = totalAmount / length;
+        const tbody = document.getElementById('ladder-tbody');
+        tbody.innerHTML = '';
+
+        let totalInterest = 0;
+        let weightedYieldSum = 0;
+
+        for (let i = 1; i <= length; i++) {
+          const rateInput = document.getElementById(`rate-${i}`);
+          const rate = parseFloat(rateInput.value) / 100;
+
+          // Simple interest calculation for GICs (paid at maturity or compounded annually, assuming simple for visual clarity of the first cycle)
+          // To be precise, if compounded annually: Amount = P * (1 + r)^t
+          const maturityValue = portion * Math.pow((1 + rate), i);
+          const interestEarned = maturityValue - portion;
+
+          totalInterest += interestEarned;
+          weightedYieldSum += (rate * 100);
+
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td>Year ${i}</td>
+            <td>$${portion.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+            <td>${(rate * 100).toFixed(2)}%</td>
+            <td>$${interestEarned.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+            <td>$${maturityValue.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2})}</td>
+          `;
+          tbody.appendChild(tr);
+        }
+
+        const avgYield = weightedYieldSum / length;
+
+        document.getElementById('resTotal').innerText = totalAmount.toLocaleString();
+        document.getElementById('resRungs').innerText = length;
+        document.getElementById('resPortion').innerText = portion.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        document.getElementById('resTotalInterest').innerText = totalInterest.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
+        document.getElementById('resAvgYield').innerText = avgYield.toFixed(2);
+
+        resultsDiv.style.display = 'block';
+      }
+
+      ladderLengthSelect.addEventListener('change', renderRateInputs);
+      calculateBtn.addEventListener('click', calculateLadder);
+
+      // Initial render
+      renderRateInputs();
+    });
+  </script>
+
+  <style is:inline>
+    .page-content { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem; }
+    .hero { text-align: center; padding: 3rem 0 2rem; }
+    .hero h1 { font-size: 2.2rem; font-weight: 800; margin-bottom: 0.5rem; }
+    .hero p { color: var(--text-secondary); }
+    .card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem; margin: 1.5rem 0; }
+    h2 { margin-top: 2rem; margin-bottom: 1rem; color: var(--text-primary); }
+    h3 { margin-top: 1.5rem; margin-bottom: 0.75rem; color: var(--text-primary); }
+    p { margin-bottom: 1rem; line-height: 1.6; color: var(--text-secondary); }
+    ul, ol { margin-bottom: 1.5rem; padding-left: 1.5rem; color: var(--text-secondary); }
+    li { margin-bottom: 0.5rem; }
+    a { color: var(--accent-color); text-decoration: none; font-weight: 600; }
+    a:hover { text-decoration: underline; }
+
+    /* Calculator Styles */
+    .calc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem; }
+    .input-group { display: flex; flex-direction: column; }
+    .input-group label { margin-bottom: 0.5rem; font-weight: 600; color: var(--text-primary); font-size: 0.9rem; }
+    .input-group input, .input-group select { padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 8px; background: color-mix(in srgb, var(--card-bg) 50%, transparent); color: var(--text-primary); font-size: 1rem; }
+
+    .rates-container { background: color-mix(in srgb, var(--bg-color) 50%, transparent); padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; border: 1px solid var(--border-color); }
+    .rates-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 1rem; margin-top: 1rem; }
+    .rate-input-group { display: flex; flex-direction: column; }
+    .rate-input-group label { font-size: 0.8rem; margin-bottom: 0.25rem; color: var(--text-secondary); }
+    .rate-input-group input { padding: 0.5rem; border: 1px solid var(--border-color); border-radius: 6px; background: var(--card-bg); color: var(--text-primary); }
+
+    .calc-btn { width: 100%; padding: 1rem; background: var(--accent-color); color: #fff; border: none; border-radius: 8px; font-size: 1.1rem; font-weight: 700; cursor: pointer; transition: opacity 0.2s; }
+    .calc-btn:hover { opacity: 0.9; }
+
+    .results-container { margin-top: 2rem; border-top: 1px solid var(--border-color); padding-top: 1.5rem; }
+    .table-container { overflow-x: auto; margin-bottom: 1.5rem; }
+    .ladder-table { width: 100%; border-collapse: collapse; text-align: left; }
+    .ladder-table th, .ladder-table td { padding: 0.75rem; border-bottom: 1px solid var(--border-color); }
+    .ladder-table th { color: var(--accent-color); font-weight: 600; font-size: 0.9rem; }
+    .ladder-table td { color: var(--text-secondary); font-size: 0.95rem; }
+
+    .summary-box { background: color-mix(in srgb, var(--accent-color) 10%, transparent); padding: 1rem; border-radius: 8px; border: 1px solid color-mix(in srgb, var(--accent-color) 30%, transparent); }
+    .summary-box p { margin: 0.25rem 0; color: var(--text-primary); }
+
+    @media (max-width: 600px) {
+      .calc-grid { grid-template-columns: 1fr; }
+      .rates-grid { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</SiteLayout>
