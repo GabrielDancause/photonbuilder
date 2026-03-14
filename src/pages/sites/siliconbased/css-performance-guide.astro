@@ -1,0 +1,192 @@
+---
+import SiteLayout from "../../../layouts/SiteLayout.astro";
+
+const schema = {
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "CSS Performance Optimization Guide",
+  "description": "Learn how to optimize CSS for web performance. Cover Critical CSS, removing unused CSS, containment, and avoiding layout thrashing.",
+  "author": {
+    "@type": "Organization",
+    "name": "siliconbased.dev"
+  },
+  "mainEntity": {
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "What is Critical CSS?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Critical CSS is the minimum set of CSS required to render the 'above-the-fold' content of a webpage. By inlining this CSS in the <head>, the browser can render the initial view immediately without waiting for external stylesheet files to download."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Why is CSS render-blocking?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "CSS is considered render-blocking because the browser will not display any processed content until it has constructed both the DOM (from HTML) and the CSSOM (from CSS). This prevents the page from flashing unstyled content."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "What is Layout Thrashing?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Layout thrashing occurs when JavaScript repeatedly reads layout properties (like offsetWidth) and then modifies the DOM or styles within the same frame. This forces the browser to recalculate layouts synchronously, causing massive performance drops."
+        }
+      }
+    ]
+  }
+};
+---
+
+<SiteLayout
+  site="siliconbased"
+  title="CSS Performance Optimization Guide"
+  description="Master CSS performance: Critical CSS, uncss, will-change, and layout thrashing."
+  canonical="https://siliconbased.dev/css-performance-guide"
+  schema={schema}
+>
+  <div class="page-content">
+    <div class="hero">
+      <h1>CSS Performance Optimization Guide</h1>
+      <p>Stop rendering bottlenecks. Optimize your stylesheets for blazing fast First Contentful Paint.</p>
+    </div>
+
+    <div class="content">
+      <p>While often overshadowed by JavaScript, poorly optimized CSS is a primary cause of slow initial rendering. CSS is a render-blocking resource; the browser will halt all visual rendering until it has downloaded, parsed, and constructed the CSS Object Model (CSSOM). For a full overview, see our <a href="/web-performance-guide">main Web Performance Guide</a>.</p>
+
+      <h2>1. Critical CSS</h2>
+      <p>Critical CSS is the technique of extracting the CSS needed to style the "above-the-fold" content (what the user sees immediately upon load) and inlining it directly in the <code>&lt;head&gt;</code> of the HTML document.</p>
+
+      <div class="card">
+        <h3>How it improves performance:</h3>
+        <p>Instead of waiting for an external <code>style.css</code> file to download over the network (which blocks rendering), the browser immediately parses the inline styles and renders the LCP (Largest Contentful Paint) element instantly.</p>
+
+        <p>The rest of the CSS (for below-the-fold content) is then loaded asynchronously:</p>
+        <pre><code>&lt;!-- Inline Critical CSS --&gt;
+&lt;style&gt;
+  body &#123; font-family: sans-serif; &#125;
+  .hero &#123; background: blue; padding: 2rem; &#125;
+&lt;/style&gt;
+
+&lt;!-- Asynchronously load the rest --&gt;
+&lt;link rel="preload" href="full-styles.css" as="style" onload="this.onload=null;this.rel='stylesheet'"&gt;
+&lt;noscript&gt;&lt;link rel="stylesheet" href="full-styles.css"&gt;&lt;/noscript&gt;</code></pre>
+      </div>
+
+      <h2>2. Removing Unused CSS</h2>
+      <p>Shipping CSS rules that are never used on the current page wastes bandwidth and CPU parsing time. This is common when using large UI frameworks like Bootstrap or Foundation.</p>
+      <ul>
+        <li><strong>PurgeCSS:</strong> A tool that analyzes your content (HTML, JSX, Vue templates) and your CSS files, and strips out any selectors that don't match.</li>
+        <li><strong>Tailwind CSS JIT:</strong> Modern utility frameworks like Tailwind use a Just-In-Time compiler. They don't generate a massive CSS file and strip it down; instead, they <em>only</em> generate the specific classes you use in your HTML, resulting in incredibly small stylesheets (often &lt; 10KB).</li>
+      </ul>
+
+      <h2>3. CSS Containment (<code>contain</code>)</h2>
+      <p>The CSS <code>contain</code> property allows you to tell the browser that a specific element and its children are independent of the rest of the document tree. This isolates layout, style, and paint calculations.</p>
+
+      <div class="card">
+        <p>If you have a complex sidebar that updates frequently via JavaScript, adding containment prevents those updates from triggering layout recalculations for the entire main page.</p>
+        <pre><code>.sidebar &#123;
+  /* Tells the browser this element won't affect outside layout */
+  contain: layout style;
+&#125;</code></pre>
+      </div>
+
+      <h2>4. Selector Performance</h2>
+      <p>Browsers parse CSS selectors from <strong>right to left</strong>. Complex, deeply nested selectors take longer to match against the DOM tree.</p>
+
+      <div class="card">
+        <h3>Bad (Slow)</h3>
+        <pre><code>/* The browser finds all &lt;a&gt; tags, then checks if they are inside a &lt;ul&gt;, then an &lt;nav&gt;, then a .header */
+.header nav ul li a &#123; color: blue; &#125;</code></pre>
+
+        <h3>Good (Fast)</h3>
+        <pre><code>/* The browser instantly finds elements with this specific class */
+.nav-link &#123; color: blue; &#125;</code></pre>
+        <p>This is why methodologies like BEM (Block Element Modifier) or Utility-First CSS are highly performant—they rely almost entirely on flat, single-class selectors.</p>
+      </div>
+
+      <h2>5. Animation and <code>will-change</code></h2>
+      <p>Animating layout properties like <code>width</code>, <code>margin</code>, or <code>top</code>/<code>left</code> is incredibly expensive because it forces the browser to recalculate the layout for every frame of the animation.</p>
+      <p><strong>Rule of thumb:</strong> Only animate <code>transform</code> (translate, scale, rotate) and <code>opacity</code>. These properties can be offloaded to the GPU.</p>
+
+      <h3>The <code>will-change</code> property</h3>
+      <p>If you have an element that is <em>going</em> to be animated via JS or hover, you can hint to the browser using <code>will-change: transform</code>. This prompts the browser to create a new layer for the element, preventing paint flashing.</p>
+      <pre><code>.dropdown-menu &#123;
+  will-change: transform, opacity;
+  transition: transform 0.3s, opacity 0.3s;
+&#125;</code></pre>
+      <p><em>Warning: Overusing <code>will-change</code> will exhaust device memory. Only apply it to elements that are actively or frequently animating.</em></p>
+
+      <h2>6. Avoiding Layout Thrashing</h2>
+      <p>Layout thrashing is a JavaScript problem caused by how the browser handles CSS updates. It occurs when your code repeatedly reads a layout property (which forces the browser to calculate the layout synchronously) and then writes a new style (which invalidates the layout).</p>
+
+      <div class="card">
+        <h3>Bad (Layout Thrashing)</h3>
+        <pre><code>// In a loop, we read layout (offsetWidth) then immediately write style (width).
+// The browser must recalculate layout 100 times.
+for (let i = 0; i &lt; 100; i++) &#123;
+  const w = elements[i].offsetWidth;
+  elements[i].style.width = w + 10 + 'px';
+&#125;</code></pre>
+
+        <h3>Good (Batched DOM updates)</h3>
+        <pre><code>// Read all layouts first
+const widths = [];
+for (let i = 0; i &lt; 100; i++) &#123;
+  widths.push(elements[i].offsetWidth);
+&#125;
+
+// Write all styles second
+for (let i = 0; i &lt; 100; i++) &#123;
+  elements[i].style.width = widths[i] + 10 + 'px';
+&#125;</code></pre>
+      </div>
+
+      <div class="faq-section">
+        <h2>Frequently Asked Questions</h2>
+        <div class="faq-item">
+          <h3>What is Critical CSS?</h3>
+          <p>Critical CSS is the minimum set of CSS required to render the 'above-the-fold' content of a webpage. By inlining this CSS in the <code>&lt;head&gt;</code>, the browser can render the initial view immediately without waiting for external stylesheet files to download, significantly improving the Largest Contentful Paint (LCP) score.</p>
+        </div>
+        <div class="faq-item">
+          <h3>Why is CSS render-blocking?</h3>
+          <p>CSS is considered render-blocking because the browser will not display any processed content until it has constructed both the DOM (from HTML) and the CSSOM (from CSS). This behavior is intentional; it prevents the page from displaying a messy, unstyled flash of content before the styles are applied.</p>
+        </div>
+        <div class="faq-item">
+          <h3>What is Layout Thrashing?</h3>
+          <p>Layout thrashing occurs when JavaScript repeatedly reads layout properties (like <code>offsetWidth</code> or <code>scrollTop</code>) and then modifies the DOM or styles within the same animation frame. This forces the browser to recalculate layouts synchronously over and over, causing massive performance drops and visual stuttering.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <style is:inline>
+    .page-content { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem; color: var(--text-primary); }
+    .hero { text-align: center; padding: 3rem 0 2rem; border-bottom: 1px solid var(--border-color); margin-bottom: 2rem; }
+    .hero h1 { font-size: 2.2rem; font-weight: 800; margin-bottom: 0.5rem; color: #fff; }
+    .hero p { color: var(--text-secondary); font-size: 1.1rem; }
+
+    .content h2 { font-size: 1.8rem; margin-top: 2.5rem; margin-bottom: 1rem; color: #fff; }
+    .content h3 { font-size: 1.3rem; margin-top: 1.5rem; margin-bottom: 0.5rem; color: #fff; }
+    .content p { line-height: 1.7; margin-bottom: 1rem; color: #d1d5db; }
+    .content ul { margin-bottom: 1.5rem; padding-left: 1.5rem; color: #d1d5db; line-height: 1.7; }
+    .content li { margin-bottom: 0.5rem; }
+
+    .card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem; margin: 1.5rem 0; }
+
+    .content a { color: var(--accent-color); text-decoration: none; font-weight: 500; }
+    .content a:hover { text-decoration: underline; }
+
+    pre { background: #0f172a; padding: 1rem; border-radius: 8px; overflow-x: auto; border: 1px solid var(--border-color); margin-bottom: 1rem; }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 0.9em; color: #e2e8f0; }
+    p code, li code { background: #1e293b; padding: 0.2rem 0.4rem; border-radius: 4px; }
+
+    .faq-section { margin-top: 4rem; padding-top: 2rem; border-top: 1px solid var(--border-color); }
+    .faq-item { margin-bottom: 2rem; }
+    .faq-item h3 { font-size: 1.2rem; margin-bottom: 0.5rem; margin-top: 0; }
+  </style>
+</SiteLayout>

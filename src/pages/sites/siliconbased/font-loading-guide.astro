@@ -1,0 +1,212 @@
+---
+import SiteLayout from "../../../layouts/SiteLayout.astro";
+
+const schema = {
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "Web Font Loading Strategies",
+  "description": "Optimize web font loading to eliminate FOIT, reduce FOUT, and improve Core Web Vitals using font-display, preloading, and subsetting.",
+  "author": {
+    "@type": "Organization",
+    "name": "siliconbased.dev"
+  },
+  "mainEntity": {
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "What is FOIT in web fonts?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "FOIT stands for Flash of Invisible Text. It occurs when the browser hides the text while waiting for a custom web font to download. This ruins the user experience and severely hurts your LCP score."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "What is font-display: swap?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "font-display: swap is a CSS property that tells the browser to immediately render text using a fallback system font, and then 'swap' the custom font in once it has finished downloading."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Why should I preload fonts?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Preloading critical fonts using <link rel='preload'> tells the browser to start downloading the font file immediately, before the CSS is even parsed. This reduces the time users spend looking at fallback fonts or invisible text."
+        }
+      }
+    ]
+  }
+};
+---
+
+<SiteLayout
+  site="siliconbased"
+  title="Web Font Loading Strategies"
+  description="Eliminate FOIT and optimize font delivery for better web performance."
+  canonical="https://siliconbased.dev/font-loading-guide"
+  schema={schema}
+>
+  <div class="page-content">
+    <div class="hero">
+      <h1>Web Font Loading Strategies</h1>
+      <p>Stop invisible text and layout shifts. Learn how to load custom fonts without ruining performance.</p>
+    </div>
+
+    <div class="content">
+      <p>Custom fonts are a cornerstone of web design, but they are often the biggest culprit behind poor <a href="/web-performance-guide">Web Performance</a> scores. They block rendering, cause text to be invisible, and trigger massive layout shifts when they finally load.</p>
+
+      <h2>The Problems: FOIT and FOUT</h2>
+      <div class="card">
+        <h3>FOIT (Flash of Invisible Text)</h3>
+        <p>By default, most browsers will hide text for up to 3 seconds while waiting for a custom font to download. If the user is on a slow connection, they are left staring at a blank page. This destroys your Largest Contentful Paint (LCP).</p>
+
+        <h3>FOUT (Flash of Unstyled Text)</h3>
+        <p>If the browser shows a fallback system font first, and then the custom font loads, the text will suddenly change appearance. If the new font is wider or taller, it pushes content down the page, ruining your Cumulative Layout Shift (CLS) score.</p>
+      </div>
+
+      <h2>Interactive Font Strategy Selector</h2>
+      <p>Use this tool to find the right <code>font-display</code> strategy for your specific use case.</p>
+
+      <div class="interactive-tool card">
+        <div class="controls">
+          <label>What is the priority of this font?</label>
+          <select id="strategySelector">
+            <option value="default">-- Select a Priority --</option>
+            <option value="critical">Critical (e.g., Brand Logo, Main Heading)</option>
+            <option value="body">Important but not blocking (e.g., Body Text)</option>
+            <option value="icon">Icon Font (Must load exactly as requested)</option>
+            <option value="optional">Nice to have (e.g., purely decorative font)</option>
+          </select>
+        </div>
+
+        <div id="strategyResult" class="strategy-result" style="display: none;">
+          <h3>Recommended CSS:</h3>
+          <pre><code id="codeResult"></code></pre>
+          <p id="descResult"></p>
+        </div>
+      </div>
+
+      <h2>Core Font Loading Techniques</h2>
+
+      <h3>1. <code>font-display</code></h3>
+      <p>The <code>font-display</code> property inside your <code>@font-face</code> declaration controls how the font is applied.</p>
+      <ul>
+        <li><code>swap</code>: Shows the fallback font immediately. Swaps to the custom font when ready. (Best for body text).</li>
+        <li><code>optional</code>: Gives the font a tiny window (100ms) to load. If it misses the window, the browser uses the fallback font for this page load and caches the custom font for the next visit. (Best for decorative fonts).</li>
+        <li><code>block</code>: Hides text for up to 3 seconds. (Rarely recommended, except for icon fonts).</li>
+      </ul>
+
+      <h3>2. Preloading Critical Fonts</h3>
+      <p>If a font is critical (like your main hero text), don't wait for the browser to parse the HTML, then download the CSS, then parse the CSS to discover the font. Tell the browser to download it immediately using a preload link in your <code>&lt;head&gt;</code>.</p>
+      <pre><code>&lt;link rel="preload" href="/fonts/inter-bold.woff2" as="font" type="font/woff2" crossorigin&gt;</code></pre>
+      <p><em>Warning: Only preload 1 or 2 critical fonts. Preloading too many assets clogs the network and delays the initial HTML render.</em></p>
+
+      <h3>3. Subsetting Fonts</h3>
+      <p>A standard font file might contain characters for English, Greek, Cyrillic, and hundreds of special symbols, resulting in a 300KB file. If your site is only in English, you can "subset" the font to only include Latin characters, reducing the file size to 20KB or 30KB.</p>
+      <p>Tools like <code>glyphhanger</code> or Google Fonts' API parameter (<code>&amp;text=Hello</code>) allow you to generate subsetted font files.</p>
+
+      <h3>4. WOFF2 Format</h3>
+      <p>Always use the WOFF2 format. It offers ~30% better compression than standard WOFF and is supported by all modern browsers. You can provide WOFF as a fallback for older browsers, but ditch TTF and EOT.</p>
+
+      <h2>The Ultimate Fallback: System Font Stacks</h2>
+      <p>The fastest font is the one you don't have to download. Modern operating systems have excellent, highly readable default fonts (San Francisco on macOS/iOS, Segoe UI on Windows, Roboto on Android). You can leverage these instantly using the system font stack.</p>
+      <pre><code>body &#123;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+&#125;</code></pre>
+
+      <div class="faq-section">
+        <h2>Frequently Asked Questions</h2>
+        <div class="faq-item">
+          <h3>What is FOIT in web fonts?</h3>
+          <p>FOIT stands for Flash of Invisible Text. It occurs when the browser hides the text while waiting for a custom web font to download. This ruins the user experience and severely hurts your LCP score.</p>
+        </div>
+        <div class="faq-item">
+          <h3>What is font-display: swap?</h3>
+          <p><code>font-display: swap</code> is a CSS property that tells the browser to immediately render text using a fallback system font, and then "swap" the custom font in once it has finished downloading. This prevents FOIT.</p>
+        </div>
+        <div class="faq-item">
+          <h3>Why should I preload fonts?</h3>
+          <p>Preloading critical fonts using <code>&lt;link rel="preload"&gt;</code> tells the browser to start downloading the font file immediately, before the CSS is even parsed. This reduces the time users spend looking at fallback fonts or invisible text.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script is:inline>
+    const strategyData = {
+      critical: {
+        code: "@font-face {\n  font-family: 'BrandFont';\n  src: url('/font.woff2') format('woff2');\n  font-display: swap;\n}\n\n<!-- In <head> -->\n<link rel=\"preload\" href=\"/font.woff2\" as=\"font\" type=\"font/woff2\" crossorigin>",
+        desc: "For critical text like a Hero headline, use 'swap' to ensure it's readable immediately, but ALSO preload the font in the HTML head so the swap happens as fast as possible, minimizing layout shifts."
+      },
+      body: {
+        code: "@font-face {\n  font-family: 'BodyText';\n  src: url('/font.woff2') format('woff2');\n  font-display: swap;\n}",
+        desc: "For general reading text, use 'swap'. The user can start reading immediately in a system font. When the custom font loads, it swaps in. Do NOT preload body fonts, as it wastes bandwidth needed for critical assets."
+      },
+      icon: {
+        code: "@font-face {\n  font-family: 'Icons';\n  src: url('/icons.woff2') format('woff2');\n  font-display: block;\n}",
+        desc: "Icon fonts (like FontAwesome) MUST use 'block'. If you use 'swap', the browser might render weird fallback characters (like 'A' or square boxes) before the icon font loads. 'block' hides the text until the icons are ready."
+      },
+      optional: {
+        code: "@font-face {\n  font-family: 'Decorative';\n  src: url('/font.woff2') format('woff2');\n  font-display: optional;\n}",
+        desc: "For purely decorative fonts, use 'optional'. The browser gives the font ~100ms to load. If it's not ready, it aborts the custom font for this page view, leaving the fallback. The font finishes downloading in the background and is cached for the next page load. Zero layout shifts."
+      }
+    };
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const selector = document.getElementById('strategySelector');
+      const resultPanel = document.getElementById('strategyResult');
+      const codeRes = document.getElementById('codeResult');
+      const descRes = document.getElementById('descResult');
+
+      selector.addEventListener('change', (e) => {
+        const val = e.target.value;
+        if (val === 'default' || !strategyData[val]) {
+          resultPanel.style.display = 'none';
+          return;
+        }
+
+        codeRes.textContent = strategyData[val].code;
+        descRes.textContent = strategyData[val].desc;
+        resultPanel.style.display = 'block';
+      });
+    });
+  </script>
+
+  <style is:inline>
+    .page-content { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem; color: var(--text-primary); }
+    .hero { text-align: center; padding: 3rem 0 2rem; border-bottom: 1px solid var(--border-color); margin-bottom: 2rem; }
+    .hero h1 { font-size: 2.2rem; font-weight: 800; margin-bottom: 0.5rem; color: #fff; }
+    .hero p { color: var(--text-secondary); font-size: 1.1rem; }
+
+    .content h2 { font-size: 1.8rem; margin-top: 2.5rem; margin-bottom: 1rem; color: #fff; }
+    .content h3 { font-size: 1.3rem; margin-top: 1.5rem; margin-bottom: 0.5rem; color: #fff; }
+    .content p { line-height: 1.7; margin-bottom: 1rem; color: #d1d5db; }
+    .content ul { margin-bottom: 1.5rem; padding-left: 1.5rem; color: #d1d5db; line-height: 1.7; }
+    .content li { margin-bottom: 0.5rem; }
+
+    .card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem; margin: 1.5rem 0; }
+
+    .content a { color: var(--accent-color); text-decoration: none; font-weight: 500; }
+    .content a:hover { text-decoration: underline; }
+
+    pre { background: #0f172a; padding: 1rem; border-radius: 8px; overflow-x: auto; border: 1px solid var(--border-color); margin-bottom: 1rem; }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 0.9em; color: #e2e8f0; }
+    p code, li code { background: #1e293b; padding: 0.2rem 0.4rem; border-radius: 4px; }
+
+    .interactive-tool { margin: 2rem 0; }
+    .controls label { display: block; font-weight: 600; color: #fff; margin-bottom: 0.5rem; }
+    .controls select { width: 100%; padding: 0.75rem; background: #0f172a; border: 1px solid var(--border-color); color: #fff; border-radius: 6px; font-size: 1rem; outline: none; }
+    .controls select:focus { border-color: var(--accent-color); }
+
+    .strategy-result { margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border-color); animation: fadeIn 0.3s ease; }
+    .strategy-result h3 { margin-top: 0; color: var(--accent-color); font-size: 1.1rem; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+
+    .faq-section { margin-top: 4rem; padding-top: 2rem; border-top: 1px solid var(--border-color); }
+    .faq-item { margin-bottom: 2rem; }
+    .faq-item h3 { font-size: 1.2rem; margin-bottom: 0.5rem; margin-top: 0; }
+  </style>
+</SiteLayout>
