@@ -1,0 +1,195 @@
+---
+import SiteLayout from "../../../layouts/SiteLayout.astro";
+
+const schema = [
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": "What are WebSockets? Real-time Communication",
+    "description": "A complete guide to WebSockets, real-time bidirectional communication, and how they compare to Server-Sent Events (SSE) and long polling.",
+    "author": {
+      "@type": "Organization",
+      "name": "siliconbased.dev"
+    }
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "What is the difference between WebSockets and HTTP?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "HTTP is unidirectional and stateless; the client must request data, and the server responds. WebSockets create a persistent, bidirectional connection over a single TCP socket, allowing both the server and client to send data at any time without constant polling."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "When should I use Server-Sent Events (SSE) instead of WebSockets?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Use SSE when you only need one-way communication from the server to the client (e.g., live sports scores, stock tickers, or ChatGPT typing streams). WebSockets are better for two-way communication (e.g., chat applications or multiplayer games)."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Are WebSockets secure?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes, if implemented correctly. WebSockets should be used over TLS (using the wss:// protocol instead of ws://). However, WebSockets do not handle authentication natively, so you must implement ticket-based auth or validate cookies during the initial handshake."
+        }
+      }
+    ]
+  }
+];
+---
+
+<SiteLayout site="siliconbased" title="What are WebSockets? Real-time web explained" description="A complete guide to WebSockets, real-time bidirectional communication, and how they compare to Server-Sent Events (SSE) and long polling." canonical="https://siliconbased.dev/what-is-websocket" schema={schema}>
+  <div class="page-content">
+    <div class="breadcrumb">
+      <a href="/web-dev-glossary">← Back to Web Dev Glossary</a>
+    </div>
+
+    <div class="hero">
+      <h1>What are WebSockets?</h1>
+      <p>Building real-time applications: WebSockets vs SSE vs Long Polling.</p>
+    </div>
+
+    <div class="content-body">
+      <p>The HTTP protocol was built for document retrieval: a client asks for a page, and the server sends it. This request-response cycle works perfectly for reading articles, but it falls apart when trying to build real-time applications like chat rooms, multiplayer games, or live financial dashboards.</p>
+
+      <p>If you need the server to push new data to the client <em>immediately</em> when it happens, you need a different protocol. Enter <strong>WebSockets</strong>.</p>
+
+      <h2>The Problem with HTTP for Real-Time</h2>
+      <p>Before WebSockets, developers used "hacks" to simulate real-time behavior over HTTP:</p>
+
+      <ul>
+        <li><strong>Short Polling:</strong> The client sends an HTTP request every 3 seconds asking, "Is there new data?". This is incredibly inefficient, wasting server resources and battery life on empty responses.</li>
+        <li><strong>Long Polling:</strong> The client sends an HTTP request. If the server has no new data, it <em>holds the connection open</em> until data arrives. Once data is sent, the client immediately opens a new long-polling connection. While better than short polling, it still incurs HTTP overhead for every message.</li>
+      </ul>
+
+      <h2>How WebSockets Work</h2>
+      <p>WebSocket is a distinct computer communications protocol, providing full-duplex (two-way) communication channels over a single TCP connection.</p>
+
+      <p>It starts with an HTTP request. The client sends a standard HTTP GET request with an <code>Upgrade: websocket</code> header. If the server supports it, it responds with an HTTP 101 Switching Protocols status. The HTTP connection is then "upgraded" to a WebSocket connection.</p>
+
+      <p>From that point on, the connection remains open. Both the client and the server can send lightweight message frames to each other at any time, with almost zero overhead.</p>
+
+      <div class="code-block">
+        <pre><code>// Client-side JavaScript
+const socket = new WebSocket('wss://api.example.com/chat');
+
+// Listen for messages from the server
+socket.addEventListener('message', (event) => &#123;
+  console.log('Message from server:', event.data);
+&#125;);
+
+// Send a message to the server
+socket.send(JSON.stringify(&#123; text: "Hello server!" &#125;));</code></pre>
+      </div>
+
+      <h2>WebSockets vs. Server-Sent Events (SSE)</h2>
+      <p>While WebSockets are powerful, they are often overkill. If you are building a live dashboard, stock ticker, or streaming text from an AI model (like ChatGPT), the client rarely needs to send high-frequency data back to the server. The server just needs to push data to the client.</p>
+
+      <p>In these cases, <strong>Server-Sent Events (SSE)</strong> is often a better choice.</p>
+
+      <div class="card">
+        <table style="width: 100%; text-align: left; border-collapse: collapse;">
+          <thead>
+            <tr>
+              <th style="padding-bottom: 10px; border-bottom: 1px solid var(--border-color);">Feature</th>
+              <th style="padding-bottom: 10px; border-bottom: 1px solid var(--border-color);">WebSockets</th>
+              <th style="padding-bottom: 10px; border-bottom: 1px solid var(--border-color);">SSE</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="padding: 10px 0; border-bottom: 1px solid var(--border-color);"><strong>Direction</strong></td>
+              <td style="padding: 10px 0; border-bottom: 1px solid var(--border-color);">Bidirectional (Two-way)</td>
+              <td style="padding: 10px 0; border-bottom: 1px solid var(--border-color);">Unidirectional (Server to Client)</td>
+            </tr>
+            <tr>
+              <td style="padding: 10px 0; border-bottom: 1px solid var(--border-color);"><strong>Protocol</strong></td>
+              <td style="padding: 10px 0; border-bottom: 1px solid var(--border-color);"><code>ws://</code> or <code>wss://</code></td>
+              <td style="padding: 10px 0; border-bottom: 1px solid var(--border-color);">Standard HTTP/HTTPS</td>
+            </tr>
+            <tr>
+              <td style="padding: 10px 0; border-bottom: 1px solid var(--border-color);"><strong>Data Format</strong></td>
+              <td style="padding: 10px 0; border-bottom: 1px solid var(--border-color);">Text or Binary</td>
+              <td style="padding: 10px 0; border-bottom: 1px solid var(--border-color);">Text (UTF-8) only</td>
+            </tr>
+            <tr>
+              <td style="padding: 10px 0; border-bottom: 1px solid var(--border-color);"><strong>Reconnection</strong></td>
+              <td style="padding: 10px 0; border-bottom: 1px solid var(--border-color);">Must be implemented manually</td>
+              <td style="padding: 10px 0; border-bottom: 1px solid var(--border-color);">Built-in automatic reconnection</td>
+            </tr>
+            <tr>
+              <td style="padding: 10px 0;"><strong>Best For</strong></td>
+              <td style="padding: 10px 0;">Chat, multiplayer games, collaborative editing</td>
+              <td style="padding: 10px 0;">News feeds, stock tickers, AI text streaming</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2>Challenges of WebSockets</h2>
+      <p>Implementing WebSockets at scale introduces significant architectural challenges:</p>
+
+      <ul>
+        <li><strong>State Management:</strong> HTTP is stateless. Any server can handle any request. WebSockets are stateful. The server must keep the TCP connection open in memory. If you have 100,000 active chat users, you must maintain 100,000 open connections.</li>
+        <li><strong>Load Balancing:</strong> Because connections are persistent, traditional HTTP load balancers struggle. You must use specialized tools or Layer 4 (TCP) load balancing.</li>
+        <li><strong>Scaling Horizontally:</strong> If User A is connected to Server 1, and User B is connected to Server 2, how do they chat? Your servers must communicate with each other, typically using a Pub/Sub system like Redis to broadcast messages across the cluster.</li>
+      </ul>
+
+      <p>Because of these complexities, many developers opt for managed real-time services like Pusher, Ably, or Socket.io (which provides fallbacks and reconnection logic automatically).</p>
+
+      <div class="related-clusters">
+        <h3>Continue Reading</h3>
+        <div class="cluster-links">
+          <a href="/what-is-graphql" class="cluster-link">
+            <h4>GraphQL Subscriptions</h4>
+            <p>How GraphQL utilizes WebSockets to push real-time data updates.</p>
+          </a>
+          <a href="/what-is-edge-computing" class="cluster-link">
+            <h4>Edge Computing</h4>
+            <p>Terminating WebSocket connections at the edge for lower latency.</p>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <style is:inline>
+    .page-content { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem; }
+    .hero { text-align: center; padding: 3rem 0 2rem; border-bottom: 1px solid var(--border-color); margin-bottom: 2rem; }
+    .hero h1 { font-size: 2.5rem; font-weight: 800; margin-bottom: 0.5rem; color: var(--text-primary); }
+    .hero p { color: var(--text-secondary); font-size: 1.1rem; max-width: 600px; margin: 0 auto; }
+
+    .breadcrumb { margin-bottom: 1rem; }
+    .breadcrumb a { color: var(--accent-color); text-decoration: none; font-size: 0.9rem; font-weight: 600; }
+    .breadcrumb a:hover { text-decoration: underline; }
+
+    .content-body { color: var(--text-secondary); line-height: 1.7; font-size: 1.05rem; }
+    .content-body h2 { color: var(--text-primary); font-size: 1.8rem; margin-top: 2.5rem; margin-bottom: 1rem; }
+    .content-body h3 { color: var(--text-primary); font-size: 1.3rem; margin-top: 1.5rem; margin-bottom: 0.5rem; }
+    .content-body p { margin-bottom: 1.2rem; }
+
+    .content-body ul, .content-body ol { margin-bottom: 1.5rem; padding-left: 1.5rem; }
+    .content-body li { margin-bottom: 0.5rem; }
+    .content-body strong { color: var(--text-primary); }
+
+    .code-block { background: #0d1117; border: 1px solid var(--border-color); border-radius: 8px; padding: 1rem; margin: 1.5rem 0; overflow-x: auto; }
+    .code-block pre { margin: 0; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 0.9rem; color: #c9d1d9; }
+
+    .card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem; margin: 2rem 0; overflow-x: auto; }
+
+    .related-clusters { margin-top: 4rem; border-top: 1px solid var(--border-color); padding-top: 2rem; }
+    .related-clusters h3 { color: var(--text-primary); margin-bottom: 1.5rem; }
+    .cluster-links { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1rem; }
+    .cluster-link { display: block; padding: 1.25rem; border: 1px solid var(--border-color); border-radius: 8px; text-decoration: none; transition: all 0.2s ease; background: color-mix(in srgb, var(--card-bg) 50%, transparent); }
+    .cluster-link:hover { border-color: var(--accent-color); transform: translateY(-2px); background: var(--card-bg); }
+    .cluster-link h4 { color: var(--accent-color); font-size: 1.1rem; margin-top: 0; margin-bottom: 0.5rem; }
+    .cluster-link p { color: var(--text-secondary); font-size: 0.9rem; margin: 0; line-height: 1.4; }
+  </style>
+</SiteLayout>
