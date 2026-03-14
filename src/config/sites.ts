@@ -14,7 +14,7 @@ export const sites: Record<string, SiteConfig> = {
     name: 'Fire Maths',
     domain: 'firemaths.info',
     accent: '#D4A017',
-    gaId: 'G-G86C7NJG3F',
+    gaId: 'G-ZSXFV0VP4L',
     nav: [
       { label: 'Tools', href: '/#tools' },
       { label: 'Studies', href: '/#studies' },
@@ -41,7 +41,7 @@ export const sites: Record<string, SiteConfig> = {
     name: 'Silicon Based',
     domain: 'siliconbased.dev',
     accent: '#818cf8',
-    gaId: 'G-G86C7NJG3F',
+    gaId: 'G-T4PEJFWXCY',
     nav: [
       { label: 'Tools', href: '/#tools' },
       { label: 'Studies', href: '/#studies' },
@@ -54,7 +54,7 @@ export const sites: Record<string, SiteConfig> = {
     name: '28 Grams',
     domain: '28grams.vip',
     accent: '#C2185B',
-    gaId: 'G-G86C7NJG3F',
+    gaId: 'G-WGF4XXH1SP',
     nav: [
       { label: 'Tools', href: '/#tools' },
       { label: 'Guides', href: '/#guides' },
@@ -67,7 +67,7 @@ export const sites: Record<string, SiteConfig> = {
     name: 'Migrating Mammals',
     domain: 'migratingmammals.com',
     accent: '#C4956A',
-    gaId: 'G-G86C7NJG3F',
+    gaId: 'G-PGRXS7TCZV',
     nav: [
       { label: 'Tools', href: '/#tools' },
       { label: 'Guides', href: '/#guides' },
@@ -80,7 +80,7 @@ export const sites: Record<string, SiteConfig> = {
     name: 'Leeroy Jenkins',
     domain: 'leeroyjenkins.quest',
     accent: '#9333EA',
-    gaId: 'G-G86C7NJG3F',
+    gaId: 'G-W1KVQZVVWE',
     nav: [
       { label: 'Tools', href: '/#tools' },
       { label: 'Guides', href: '/#guides' },
@@ -93,7 +93,7 @@ export const sites: Record<string, SiteConfig> = {
     name: 'I Just Want To',
     domain: 'ijustwantto.live',
     accent: '#2DB89A',
-    gaId: 'G-G86C7NJG3F',
+    gaId: 'G-PRHBMYEWQC',
     nav: [
       { label: 'Tools', href: '/#tools' },
       { label: 'Guides', href: '/#guides' },
@@ -107,7 +107,7 @@ sites['hpv-research'] = {
   name: 'HPV Research',
   domain: 'hpvresearch.com',
   accent: '#10b981',
-  gaId: 'G-G86C7NJG3F',
+  gaId: 'G-CYV604162T',
   nav: [
     { label: 'Tools', href: '/#tools' },
     { label: 'Studies', href: '/#studies' },
@@ -121,7 +121,7 @@ sites['photonbuilder'] = {
   name: 'Photon Builder',
   domain: 'photonbuilder.com',
   accent: '#FF6B35',
-  gaId: 'G-G86C7NJG3F',
+  gaId: 'G-CYV604162T',
   nav: [
     { label: 'Tools', href: '/#tools' },
     { label: 'Guides', href: '/#guides' },
@@ -136,7 +136,7 @@ sites['health'] = {
   name: 'Health Tools',
   domain: 'photonbuilder.com',
   accent: '#E05A5A',
-  gaId: 'G-G86C7NJG3F',
+  gaId: 'G-CYV604162T',
   nav: [
     { label: 'Calculators', href: '/health/#tools' },
     { label: 'Studies', href: '/health/#studies' },
@@ -151,7 +151,7 @@ sites['montrealjobs'] = {
   name: 'Montreal Jobs',
   domain: 'montrealjobs.photonbuilder.com',
   accent: '#3B82F6',
-  gaId: 'G-G86C7NJG3F',
+  gaId: 'G-CYV604162T',
   nav: [
     { label: 'Market', href: '/#market' },
     { label: 'Jobs', href: '/#jobs' },
