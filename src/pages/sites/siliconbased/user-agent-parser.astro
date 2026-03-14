@@ -21,7 +21,226 @@ const schema = {
   }
 };
 
-const htmlContent = `<style>
+const htmlBody = `<div class="page-content">
+<div class="hero">
+  <h1>User Agent <span>Parser</span></h1>
+  <p>Instantly parse user agent strings to extract browser, OS, device, and bot details.</p>
+</div>
+
+<div class="main">
+  <div class="tool-card">
+    <div class="tool-header">
+      <h3>Parse User Agent String</h3>
+    </div>
+    <div class="tool-body">
+      <div class="textarea-wrapper">
+        <label class="textarea-label" for="uaInput">User Agent String</label>
+        <textarea class="input-area" id="uaInput" placeholder="Enter a User Agent string to parse..." spellcheck="false"></textarea>
+      </div>
+
+      <div class="actions-row">
+        <button class="btn btn-primary" id="useMyUABtn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
+          Use My User Agent
+        </button>
+        <button class="btn" id="copyResultBtn">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+          Copy Results (JSON)
+        </button>
+      </div>
+
+      <div class="parse-results" id="parseResults">
+        <div class="result-item">
+          <div class="result-label">Browser</div>
+          <div class="result-value" id="resBrowser">-</div>
+        </div>
+        <div class="result-item">
+          <div class="result-label">Operating System</div>
+          <div class="result-value" id="resOS">-</div>
+        </div>
+        <div class="result-item">
+          <div class="result-label">Device Type</div>
+          <div class="result-value" id="resDevice">-</div>
+        </div>
+        <div class="result-item">
+          <div class="result-label">Bot / Crawler</div>
+          <div class="result-value" id="resBot">-</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="seo-content">
+    <h2>What is a User Agent?</h2>
+    <p>A <strong>User Agent</strong> (UA) string is a snippet of text that a web browser (or any other application) sends to the web server it connects to. This string contains information about the application type, operating system, software vendor, and software revision.</p>
+    <p>Web servers use this information to serve different versions of a web page based on the device, such as sending a mobile-optimized layout when a mobile phone is detected, or for analytical purposes to understand what browsers their users are running.</p>
+
+    <h2>Why parse User Agent strings?</h2>
+    <p>Parsing UA strings allows developers to extract meaningful data from the raw text. Common use cases include:</p>
+    <ul>
+      <li><strong>Analytics & Logging:</strong> Determining the breakdown of operating systems (Windows, macOS, iOS, Android) and browsers (Chrome, Safari, Firefox) visiting a site.</li>
+      <li><strong>Feature Detection Support:</strong> While feature detection is generally preferred over browser sniffing, UA parsing is sometimes necessary to apply workarounds for specific legacy browser bugs.</li>
+      <li><strong>Bot Detection:</strong> Identifying automated crawlers (like Googlebot or Bingbot) and malicious scrapers to filter out non-human traffic from analytics or apply rate limiting.</li>
+    </ul>
+
+    <h2>Client-Side Security & Privacy</h2>
+    <p>This User Agent Parser runs <strong>completely within your web browser</strong>. When you paste a user agent string to analyze it or click "Use My User Agent", the data is parsed locally using JavaScript. It is never transmitted to an external server or stored in a database. Because it is a zero-dependency vanilla JS tool, it also works completely offline after the initial page load.</p>
+  </div>
+
+</div>
+
+</div>`
+---
+
+<SiteLayout
+  site="siliconbased"
+  title="User Agent Parser | Free Online Tool"
+  description="Parse user agent strings instantly. Detect browser, operating system, device type, and identify bots. Free, secure, and works offline."
+  canonical="https://siliconbased.dev/user-agent-parser"
+  schema={schema}
+>
+  <Fragment set:html={htmlBody} />
+
+  <script is:inline>
+// Elements
+const uaInput = document.getElementById('uaInput');
+const useMyUABtn = document.getElementById('useMyUABtn');
+const copyResultBtn = document.getElementById('copyResultBtn');
+
+const resBrowser = document.getElementById('resBrowser');
+const resOS = document.getElementById('resOS');
+const resDevice = document.getElementById('resDevice');
+const resBot = document.getElementById('resBot');
+
+let currentParsedJSON = '{}';
+
+// Lightweight User Agent Parser Logic
+function parseUserAgent(ua) {
+  if (!ua || ua.trim() === '') {
+    return {
+      browser: '-',
+      os: '-',
+      device: '-',
+      bot: '-'
+    };
+  }
+
+  const result = {
+    browser: 'Unknown',
+    os: 'Unknown',
+    device: 'Desktop',
+    bot: 'No'
+  };
+
+  // Bot Detection
+  const botRegex = /(bot|crawler|spider|slurp|yahoo|googlebot|bingbot|yandexbot|duckduckbot|baiduspider|curl|wget)/i;
+  if (botRegex.test(ua)) {
+    result.bot = 'Yes (Bot/Crawler)';
+    result.device = 'Server/Bot';
+  }
+
+  // Device Detection
+  if (/(tablet|ipad|playbook|silk)|(android(?!.*mobi))/i.test(ua)) {
+    result.device = 'Tablet';
+  } else if (/Mobile|iP(hone|od)|Android|BlackBerry|IEMobile|Kindle|Silk-Accelerated|(hpw|web)OS|Opera M(obi|ini)/.test(ua)) {
+    result.device = 'Mobile';
+  }
+
+  // OS Detection
+  if (/windows nt 10/i.test(ua)) result.os = 'Windows 10/11';
+  else if (/windows nt 6.3/i.test(ua)) result.os = 'Windows 8.1';
+  else if (/windows nt 6.2/i.test(ua)) result.os = 'Windows 8';
+  else if (/windows nt 6.1/i.test(ua)) result.os = 'Windows 7';
+  else if (/windows nt/i.test(ua)) result.os = 'Windows (Older)';
+  else if (/mac os x/i.test(ua)) {
+    const match = ua.match(/mac os x (\\d+(_|\\.)\\d+(_|\\.)?\\d*)/i);
+    result.os = match ? `macOS ${match[1].replace(/_/g, '.')}` : 'macOS';
+  }
+  else if (/android/i.test(ua)) {
+    const match = ua.match(/android\\s([0-9\\.]*)/i);
+    result.os = match ? `Android ${match[1]}` : 'Android';
+  }
+  else if (/ios|iphone|ipad|ipod/i.test(ua)) {
+    const match = ua.match(/os (\\d+(_|\\.)\\d+(_|\\.)?\\d*)/i);
+    result.os = match ? `iOS ${match[1].replace(/_/g, '.')}` : 'iOS';
+  }
+  else if (/linux/i.test(ua)) result.os = 'Linux';
+  else if (/cros/i.test(ua)) result.os = 'Chrome OS';
+
+  // Browser Detection
+  if (/edg/i.test(ua)) {
+    const match = ua.match(/edg\\/(\\d+)/i);
+    result.browser = match ? `Edge ${match[1]}` : 'Edge';
+  } else if (/opr|opera/i.test(ua)) {
+    const match = ua.match(/(opr|opera)\\/(\\d+)/i);
+    result.browser = match ? `Opera ${match[2]}` : 'Opera';
+  } else if (/chrome/i.test(ua)) {
+    const match = ua.match(/chrome\\/(\\d+)/i);
+    result.browser = match ? `Chrome ${match[1]}` : 'Chrome';
+  } else if (/safari/i.test(ua) && !/chrome/i.test(ua)) {
+    const match = ua.match(/version\\/(\\d+(\\.\\d+)?)/i);
+    result.browser = match ? `Safari ${match[1]}` : 'Safari';
+  } else if (/firefox|fxios/i.test(ua)) {
+    const match = ua.match(/(firefox|fxios)\\/(\\d+)/i);
+    result.browser = match ? `Firefox ${match[2]}` : 'Firefox';
+  } else if (/trident/i.test(ua) || /msie/i.test(ua)) {
+    result.browser = 'Internet Explorer';
+  } else if (result.bot !== 'No') {
+    const match = ua.match(/(googlebot|bingbot|yandexbot|duckduckbot|baiduspider|slurp|curl|wget)[\\/\\s]?(\\d+\\.\\d+|\\d+)?/i);
+    if (match) {
+        result.browser = match[1] + (match[2] ? ` ${match[2]}` : '');
+    } else {
+        result.browser = 'Bot/Crawler';
+    }
+  }
+
+  return result;
+}
+
+function updateUI() {
+  const parsed = parseUserAgent(uaInput.value);
+  currentParsedJSON = JSON.stringify(parsed, null, 2);
+
+  resBrowser.textContent = parsed.browser;
+  resOS.textContent = parsed.os;
+  resDevice.textContent = parsed.device;
+  resBot.textContent = parsed.bot;
+
+  // Highlight bot text if yes
+  if (parsed.bot !== 'No' && parsed.bot !== '-') {
+    resBot.style.color = '#ef4444'; // Red for bot
+  } else {
+    resBot.style.color = '#e0e0e0';
+  }
+}
+
+// Event Listeners
+uaInput.addEventListener('input', updateUI);
+
+useMyUABtn.addEventListener('click', () => {
+  uaInput.value = navigator.userAgent;
+  updateUI();
+});
+
+copyResultBtn.addEventListener('click', () => {
+  if (!currentParsedJSON || currentParsedJSON === '{}') return;
+  navigator.clipboard.writeText(currentParsedJSON).then(() => {
+    const originalText = copyResultBtn.innerHTML;
+    copyResultBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg> Copied JSON!';
+    copyResultBtn.classList.add('copied');
+    setTimeout(() => {
+      copyResultBtn.innerHTML = originalText;
+      copyResultBtn.classList.remove('copied');
+    }, 2000);
+  });
+});
+
+// Init
+uaInput.value = navigator.userAgent;
+updateUI();
+</script>
+
+  <style>
 
 .page-content { font-family: 'Inter', -apple-system, sans-serif; background: #0a0b10; color: #e0e0e0; min-height: 100vh; display: flex; flex-direction: column; }
 code, pre, .mono { font-family: 'JetBrains Mono', monospace; }
@@ -90,221 +309,4 @@ code, pre, .mono { font-family: 'JetBrains Mono', monospace; }
 }
 
 </style>
-<div class="page-content">
-<div class="hero">
-  <h1>User Agent <span>Parser</span></h1>
-  <p>Instantly parse user agent strings to extract browser, OS, device, and bot details.</p>
-</div>
-
-<div class="main">
-  <div class="tool-card">
-    <div class="tool-header">
-      <h3>Parse User Agent String</h3>
-    </div>
-    <div class="tool-body">
-      <div class="textarea-wrapper">
-        <label class="textarea-label" for="uaInput">User Agent String</label>
-        <textarea class="input-area" id="uaInput" placeholder="Enter a User Agent string to parse..." spellcheck="false"></textarea>
-      </div>
-
-      <div class="actions-row">
-        <button class="btn btn-primary" id="useMyUABtn">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path><circle cx="12" cy="7" r="4"></circle></svg>
-          Use My User Agent
-        </button>
-        <button class="btn" id="copyResultBtn">
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-          Copy Results (JSON)
-        </button>
-      </div>
-
-      <div class="parse-results" id="parseResults">
-        <div class="result-item">
-          <div class="result-label">Browser</div>
-          <div class="result-value" id="resBrowser">-</div>
-        </div>
-        <div class="result-item">
-          <div class="result-label">Operating System</div>
-          <div class="result-value" id="resOS">-</div>
-        </div>
-        <div class="result-item">
-          <div class="result-label">Device Type</div>
-          <div class="result-value" id="resDevice">-</div>
-        </div>
-        <div class="result-item">
-          <div class="result-label">Bot / Crawler</div>
-          <div class="result-value" id="resBot">-</div>
-        </div>
-      </div>
-    </div>
-  </div>
-
-  <div class="seo-content">
-    <h2>What is a User Agent?</h2>
-    <p>A <strong>User Agent</strong> (UA) string is a snippet of text that a web browser (or any other application) sends to the web server it connects to. This string contains information about the application type, operating system, software vendor, and software revision.</p>
-    <p>Web servers use this information to serve different versions of a web page based on the device, such as sending a mobile-optimized layout when a mobile phone is detected, or for analytical purposes to understand what browsers their users are running.</p>
-
-    <h2>Why parse User Agent strings?</h2>
-    <p>Parsing UA strings allows developers to extract meaningful data from the raw text. Common use cases include:</p>
-    <ul>
-      <li><strong>Analytics & Logging:</strong> Determining the breakdown of operating systems (Windows, macOS, iOS, Android) and browsers (Chrome, Safari, Firefox) visiting a site.</li>
-      <li><strong>Feature Detection Support:</strong> While feature detection is generally preferred over browser sniffing, UA parsing is sometimes necessary to apply workarounds for specific legacy browser bugs.</li>
-      <li><strong>Bot Detection:</strong> Identifying automated crawlers (like Googlebot or Bingbot) and malicious scrapers to filter out non-human traffic from analytics or apply rate limiting.</li>
-    </ul>
-
-    <h2>Client-Side Security & Privacy</h2>
-    <p>This User Agent Parser runs <strong>completely within your web browser</strong>. When you paste a user agent string to analyze it or click "Use My User Agent", the data is parsed locally using JavaScript. It is never transmitted to an external server or stored in a database. Because it is a zero-dependency vanilla JS tool, it also works completely offline after the initial page load.</p>
-  </div>
-
-</div>
-
-<script>
-// Elements
-const uaInput = document.getElementById('uaInput');
-const useMyUABtn = document.getElementById('useMyUABtn');
-const copyResultBtn = document.getElementById('copyResultBtn');
-
-const resBrowser = document.getElementById('resBrowser');
-const resOS = document.getElementById('resOS');
-const resDevice = document.getElementById('resDevice');
-const resBot = document.getElementById('resBot');
-
-let currentParsedJSON = '{}';
-
-// Lightweight User Agent Parser Logic
-function parseUserAgent(ua) {
-  if (!ua || ua.trim() === '') {
-    return {
-      browser: '-',
-      os: '-',
-      device: '-',
-      bot: '-'
-    };
-  }
-
-  const result = {
-    browser: 'Unknown',
-    os: 'Unknown',
-    device: 'Desktop',
-    bot: 'No'
-  };
-
-  // Bot Detection
-  const botRegex = /(bot|crawler|spider|slurp|yahoo|googlebot|bingbot|yandexbot|duckduckbot|baiduspider|curl|wget)/i;
-  if (botRegex.test(ua)) {
-    result.bot = 'Yes (Bot/Crawler)';
-    result.device = 'Server/Bot';
-  }
-
-  // Device Detection
-  if (/(tablet|ipad|playbook|silk)|(android(?!.*mobi))/i.test(ua)) {
-    result.device = 'Tablet';
-  } else if (/Mobile|iP(hone|od)|Android|BlackBerry|IEMobile|Kindle|Silk-Accelerated|(hpw|web)OS|Opera M(obi|ini)/.test(ua)) {
-    result.device = 'Mobile';
-  }
-
-  // OS Detection
-  if (/windows nt 10/i.test(ua)) result.os = 'Windows 10/11';
-  else if (/windows nt 6.3/i.test(ua)) result.os = 'Windows 8.1';
-  else if (/windows nt 6.2/i.test(ua)) result.os = 'Windows 8';
-  else if (/windows nt 6.1/i.test(ua)) result.os = 'Windows 7';
-  else if (/windows nt/i.test(ua)) result.os = 'Windows (Older)';
-  else if (/mac os x/i.test(ua)) {
-    const match = ua.match(/mac os x (\\d+(_|\\.)\\d+(_|\\.)?\\d*)/i);
-    result.os = match ? \`macOS \${match[1].replace(/_/g, '.')}\` : 'macOS';
-  }
-  else if (/android/i.test(ua)) {
-    const match = ua.match(/android\\s([0-9\\.]*)/i);
-    result.os = match ? \`Android \${match[1]}\` : 'Android';
-  }
-  else if (/ios|iphone|ipad|ipod/i.test(ua)) {
-    const match = ua.match(/os (\\d+(_|\\.)\\d+(_|\\.)?\\d*)/i);
-    result.os = match ? \`iOS \${match[1].replace(/_/g, '.')}\` : 'iOS';
-  }
-  else if (/linux/i.test(ua)) result.os = 'Linux';
-  else if (/cros/i.test(ua)) result.os = 'Chrome OS';
-
-  // Browser Detection
-  if (/edg/i.test(ua)) {
-    const match = ua.match(/edg\\/(\\d+)/i);
-    result.browser = match ? \`Edge \${match[1]}\` : 'Edge';
-  } else if (/opr|opera/i.test(ua)) {
-    const match = ua.match(/(opr|opera)\\/(\\d+)/i);
-    result.browser = match ? \`Opera \${match[2]}\` : 'Opera';
-  } else if (/chrome/i.test(ua)) {
-    const match = ua.match(/chrome\\/(\\d+)/i);
-    result.browser = match ? \`Chrome \${match[1]}\` : 'Chrome';
-  } else if (/safari/i.test(ua) && !/chrome/i.test(ua)) {
-    const match = ua.match(/version\\/(\\d+(\\.\\d+)?)/i);
-    result.browser = match ? \`Safari \${match[1]}\` : 'Safari';
-  } else if (/firefox|fxios/i.test(ua)) {
-    const match = ua.match(/(firefox|fxios)\\/(\\d+)/i);
-    result.browser = match ? \`Firefox \${match[2]}\` : 'Firefox';
-  } else if (/trident/i.test(ua) || /msie/i.test(ua)) {
-    result.browser = 'Internet Explorer';
-  } else if (result.bot !== 'No') {
-    const match = ua.match(/(googlebot|bingbot|yandexbot|duckduckbot|baiduspider|slurp|curl|wget)[\\/\\s]?(\\d+\\.\\d+|\\d+)?/i);
-    if (match) {
-        result.browser = match[1] + (match[2] ? \` \${match[2]}\` : '');
-    } else {
-        result.browser = 'Bot/Crawler';
-    }
-  }
-
-  return result;
-}
-
-function updateUI() {
-  const parsed = parseUserAgent(uaInput.value);
-  currentParsedJSON = JSON.stringify(parsed, null, 2);
-
-  resBrowser.textContent = parsed.browser;
-  resOS.textContent = parsed.os;
-  resDevice.textContent = parsed.device;
-  resBot.textContent = parsed.bot;
-
-  // Highlight bot text if yes
-  if (parsed.bot !== 'No' && parsed.bot !== '-') {
-    resBot.style.color = '#ef4444'; // Red for bot
-  } else {
-    resBot.style.color = '#e0e0e0';
-  }
-}
-
-// Event Listeners
-uaInput.addEventListener('input', updateUI);
-
-useMyUABtn.addEventListener('click', () => {
-  uaInput.value = navigator.userAgent;
-  updateUI();
-});
-
-copyResultBtn.addEventListener('click', () => {
-  if (!currentParsedJSON || currentParsedJSON === '{}') return;
-  navigator.clipboard.writeText(currentParsedJSON).then(() => {
-    const originalText = copyResultBtn.innerHTML;
-    copyResultBtn.innerHTML = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg> Copied JSON!';
-    copyResultBtn.classList.add('copied');
-    setTimeout(() => {
-      copyResultBtn.innerHTML = originalText;
-      copyResultBtn.classList.remove('copied');
-    }, 2000);
-  });
-});
-
-// Init
-uaInput.value = navigator.userAgent;
-updateUI();
-</script>
-</div>`;
----
-
-<SiteLayout
-  site="siliconbased"
-  title="User Agent Parser | Free Online Tool"
-  description="Parse user agent strings instantly. Detect browser, operating system, device type, and identify bots. Free, secure, and works offline."
-  canonical="https://siliconbased.dev/user-agent-parser"
-  schema={schema}
->
-  <Fragment set:html={htmlContent} />
 </SiteLayout>

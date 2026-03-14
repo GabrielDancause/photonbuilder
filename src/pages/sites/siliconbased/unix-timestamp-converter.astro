@@ -73,7 +73,410 @@ const schema = {
   ]
 };
 
-const htmlContent = `<style>
+const htmlBody = `<div class="page-content">
+<main>
+        <h1>Unix Timestamp Converter</h1>
+
+        <div class="card live-timestamp-container">
+            <h2 style="margin-top: 0; border: none;">Current Unix Timestamp</h2>
+            <div class="timestamp-controls">
+                <button id="btn-sec" class="active" onclick="setLiveUnit('sec')">Seconds</button>
+                <button id="btn-ms" onclick="setLiveUnit('ms')">Milliseconds</button>
+                <button id="btn-us" onclick="setLiveUnit('us')">Microseconds</button>
+            </div>
+            <div class="live-timestamp" id="live-time">1700000000</div>
+            <p style="color: var(--text-muted); font-size: 0.875rem;">
+                Live updating. <a href="#" style="color: var(--accent-color);" onclick="copyLive(); return false;">Click to copy</a>
+            </p>
+        </div>
+
+        <div class="grid">
+            <!-- Timestamp to Date -->
+            <div class="card">
+                <h2>Timestamp to Date</h2>
+                <div class="form-group">
+                    <label>Unix Timestamp</label>
+                    <input type="number" id="ts-input" class="mono" placeholder="e.g. 1700000000">
+                </div>
+                <div class="form-group">
+                    <label>Input Unit</label>
+                    <select id="ts-unit">
+                        <option value="s">Seconds (s)</option>
+                        <option value="ms">Milliseconds (ms)</option>
+                        <option value="us">Microseconds (μs)</option>
+                    </select>
+                </div>
+                <button onclick="convertTsToDate()">Convert to Date</button>
+
+                <div class="result-box" id="ts-result" style="display: none;">
+                    <div class="result-row">
+                        <span class="result-label">Local Time</span>
+                        <span class="result-val mono" id="res-local">-</span>
+                    </div>
+                    <div class="result-row">
+                        <span class="result-label">UTC / GMT</span>
+                        <span class="result-val mono" id="res-utc">-</span>
+                    </div>
+                    <div class="result-row">
+                        <span class="result-label">Relative</span>
+                        <span class="result-val" id="res-rel">-</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Date to Timestamp -->
+            <div class="card">
+                <h2>Date to Timestamp</h2>
+                <div class="form-group">
+                    <label>Date & Time (Local)</label>
+                    <input type="datetime-local" id="date-input" step="1">
+                </div>
+                <div class="form-group">
+                    <label>Timezone</label>
+                    <select id="tz-input">
+                        <option value="local">Local Timezone</option>
+                        <option value="UTC">UTC / GMT</option>
+                    </select>
+                </div>
+                <button onclick="convertDateToTs()">Convert to Timestamp</button>
+
+                <div class="result-box" id="date-result" style="display: none;">
+                    <div class="result-row">
+                        <span class="result-label">Seconds</span>
+                        <span class="result-val mono" id="res-sec">-</span>
+                    </div>
+                    <div class="result-row">
+                        <span class="result-label">Milliseconds</span>
+                        <span class="result-val mono" id="res-milli">-</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Date Diff -->
+        <div class="card">
+            <h2>Date Difference Calculator</h2>
+            <div class="grid" style="margin-bottom: 1rem;">
+                <div class="form-group">
+                    <label>Start Date/Time</label>
+                    <input type="datetime-local" id="diff-start" step="1">
+                </div>
+                <div class="form-group">
+                    <label>End Date/Time</label>
+                    <input type="datetime-local" id="diff-end" step="1">
+                </div>
+            </div>
+            <button onclick="calculateDiff()">Calculate Difference</button>
+            <div class="result-box" id="diff-result" style="display: none;">
+                <div class="result-row">
+                    <span class="result-label">Difference</span>
+                    <span class="result-val mono" id="res-diff-total">-</span>
+                </div>
+                <div class="result-row">
+                    <span class="result-label">In Seconds</span>
+                    <span class="result-val mono" id="res-diff-sec">-</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Common Timestamps -->
+        <div class="card">
+            <h2>Common Epoch Timestamps</h2>
+            <div style="overflow-x: auto;">
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Event</th>
+                            <th>Timestamp</th>
+                            <th>Date (UTC)</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>The Unix Epoch</td>
+                            <td>0</td>
+                            <td>1970-01-01 00:00:00</td>
+                        </tr>
+                        <tr>
+                            <td>1 Billion Seconds</td>
+                            <td>1000000000</td>
+                            <td>2001-09-09 01:46:40</td>
+                        </tr>
+                        <tr>
+                            <td>1234567890 Day</td>
+                            <td>1234567890</td>
+                            <td>2009-02-13 23:31:30</td>
+                        </tr>
+                        <tr>
+                            <td>Y2K38 Problem (Max 32-bit int)</td>
+                            <td>2147483647</td>
+                            <td>2038-01-19 03:14:07</td>
+                        </tr>
+                        <tr>
+                            <td>9999-12-31</td>
+                            <td>253402300799</td>
+                            <td>9999-12-31 23:59:59</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Code Snippets -->
+        <div class="card">
+            <h2>Get Current Timestamp in Code</h2>
+            <div class="code-grid">
+                <div class="code-snippet">
+                    <div class="code-lang">JavaScript / Node.js</div>
+                    <code>Math.floor(Date.now() / 1000)</code>
+                </div>
+                <div class="code-snippet">
+                    <div class="code-lang">Python</div>
+                    <code>import time<br>int(time.time())</code>
+                </div>
+                <div class="code-snippet">
+                    <div class="code-lang">Java</div>
+                    <code>System.currentTimeMillis() / 1000L</code>
+                </div>
+                <div class="code-snippet">
+                    <div class="code-lang">C#</div>
+                    <code>DateTimeOffset.UtcNow.ToUnixTimeSeconds()</code>
+                </div>
+                <div class="code-snippet">
+                    <div class="code-lang">PHP</div>
+                    <code>time()</code>
+                </div>
+                <div class="code-snippet">
+                    <div class="code-lang">Ruby</div>
+                    <code>Time.now.to_i</code>
+                </div>
+                <div class="code-snippet">
+                    <div class="code-lang">Go</div>
+                    <code>time.Now().Unix()</code>
+                </div>
+                <div class="code-snippet">
+                    <div class="code-lang">Rust</div>
+                    <code>use std::time::{SystemTime, UNIX_EPOCH};<br>SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs()</code>
+                </div>
+                <div class="code-snippet">
+                    <div class="code-lang">C++ (C++11)</div>
+                    <code>#include &lt;chrono&gt;<br>std::chrono::duration_cast&lt;std::chrono::seconds&gt;(std::chrono::system_clock::now().time_since_epoch()).count()</code>
+                </div>
+                <div class="code-snippet">
+                    <div class="code-lang">Swift</div>
+                    <code>Int(Date().timeIntervalSince1970)</code>
+                </div>
+            </div>
+        </div>
+
+        <!-- FAQ -->
+        <div class="card">
+            <h2>Frequently Asked Questions</h2>
+
+            <div class="faq-item">
+                <div class="faq-q">What is a unix timestamp converter?</div>
+                <div class="faq-a">A unix timestamp converter is a tool that translates the number of seconds (or milliseconds) since January 1, 1970 (the Unix epoch) into a human-readable date and time, and vice versa.</div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-q">How does an epoch converter work?</div>
+                <div class="faq-a">An epoch converter takes a numeric timestamp representing the Unix epoch and applies timezone offsets and date algorithms to output a formatted string, such as YYYY-MM-DD HH:MM:SS.</div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-q">How to convert timestamp to date?</div>
+                <div class="faq-a">To convert a timestamp to a date, you can use our tool above. Simply paste the Unix timestamp into the "Timestamp to Date" input field, and it will instantly show the equivalent human-readable date in your local timezone and UTC.</div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-q">What is the current unix timestamp?</div>
+                <div class="faq-a">The current unix timestamp constantly updates every second. It represents the exact number of seconds that have elapsed since midnight on January 1, 1970, UTC.</div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-q">Why do we use epoch time?</div>
+                <div class="faq-a">Epoch time provides a single, simple number to represent a specific point in time, independent of timezones or daylight saving time, making it highly efficient for computers to store, sort, and calculate time differences.</div>
+            </div>
+        </div>
+
+    </main>
+
+    
+
+    </div>`
+---
+
+<SiteLayout
+  site="siliconbased"
+  title="Unix Timestamp Converter & Epoch Time Calculator"
+  description="1.7 billion seconds have passed since the beginning of time! Uncover the hidden milestones of epoch time and decode past, present, and future instantly."
+  canonical="https://siliconbased.dev/unix-timestamp-converter"
+  schema={schema}
+>
+  <Fragment set:html={htmlBody} />
+
+  <script is:inline>
+        // Live Timestamp Logic
+        let liveUnit = 'sec';
+        const liveEl = document.getElementById('live-time');
+
+        function updateLive() {
+            const now = Date.now();
+            let val;
+            if (liveUnit === 'sec') {
+                val = Math.floor(now / 1000);
+            } else if (liveUnit === 'ms') {
+                val = now;
+            } else if (liveUnit === 'us') {
+                // Microseconds are approximated by multiplying ms by 1000
+                // We could use performance.now() for more precision but for a simple display this works
+                val = now * 1000 + Math.floor(performance.now() % 1 * 1000);
+            }
+            liveEl.innerText = val;
+        }
+
+        function setLiveUnit(unit) {
+            liveUnit = unit;
+            document.getElementById('btn-sec').classList.remove('active');
+            document.getElementById('btn-ms').classList.remove('active');
+            document.getElementById('btn-us').classList.remove('active');
+            document.getElementById('btn-' + unit).classList.add('active');
+            updateLive();
+        }
+
+        setInterval(updateLive, 10);
+        updateLive();
+
+        function copyLive() {
+            navigator.clipboard.writeText(liveEl.innerText);
+            alert("Copied: " + liveEl.innerText);
+        }
+
+        // Relative Time Formatter
+        function getRelativeTime(date) {
+            const now = new Date();
+            const diffSecs = Math.round((now - date) / 1000);
+            const absDiff = Math.abs(diffSecs);
+
+            let val, unit;
+            if (absDiff < 60) { val = absDiff; unit = 'second'; }
+            else if (absDiff < 3600) { val = Math.floor(absDiff / 60); unit = 'minute'; }
+            else if (absDiff < 86400) { val = Math.floor(absDiff / 3600); unit = 'hour'; }
+            else if (absDiff < 2592000) { val = Math.floor(absDiff / 86400); unit = 'day'; }
+            else if (absDiff < 31536000) { val = Math.floor(absDiff / 2592000); unit = 'month'; }
+            else { val = Math.floor(absDiff / 31536000); unit = 'year'; }
+
+            if (val !== 1) unit += 's';
+
+            if (diffSecs > 0) return `${val} ${unit} ago`;
+            if (diffSecs < 0) return `in ${val} ${unit}`;
+            return 'just now';
+        }
+
+        // Timestamp to Date
+        function convertTsToDate() {
+            const input = document.getElementById('ts-input').value;
+            const unit = document.getElementById('ts-unit').value;
+            if (!input) return;
+
+            let ms = parseFloat(input);
+            if (unit === 's') ms *= 1000;
+            if (unit === 'us') ms /= 1000;
+
+            const date = new Date(ms);
+
+            if (isNaN(date.getTime())) {
+                alert("Invalid timestamp");
+                return;
+            }
+
+            document.getElementById('res-local').innerText = date.toLocaleString();
+            document.getElementById('res-utc').innerText = date.toUTCString();
+            document.getElementById('res-rel').innerText = getRelativeTime(date);
+            document.getElementById('ts-result').style.display = 'block';
+        }
+
+        // Date to Timestamp
+        function convertDateToTs() {
+            const input = document.getElementById('date-input').value;
+            const tz = document.getElementById('tz-input').value;
+            if (!input) return;
+
+            let date;
+            if (tz === 'UTC') {
+                date = new Date(input + 'Z');
+            } else {
+                date = new Date(input);
+            }
+
+            if (isNaN(date.getTime())) {
+                alert("Invalid date");
+                return;
+            }
+
+            const ms = date.getTime();
+            document.getElementById('res-sec').innerText = Math.floor(ms / 1000);
+            document.getElementById('res-milli').innerText = ms;
+            document.getElementById('date-result').style.display = 'block';
+        }
+
+        // Date Diff
+        function calculateDiff() {
+            const startStr = document.getElementById('diff-start').value;
+            const endStr = document.getElementById('diff-end').value;
+            if (!startStr || !endStr) return;
+
+            const start = new Date(startStr);
+            const end = new Date(endStr);
+
+            if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+                alert("Invalid dates");
+                return;
+            }
+
+            let diffMs = Math.abs(end - start);
+            const diffSec = Math.floor(diffMs / 1000);
+
+            const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
+            diffMs -= days * (1000 * 60 * 60 * 24);
+            const hours = Math.floor(diffMs / (1000 * 60 * 60));
+            diffMs -= hours * (1000 * 60 * 60);
+            const mins = Math.floor(diffMs / (1000 * 60));
+            diffMs -= mins * (1000 * 60);
+            const secs = Math.floor(diffMs / 1000);
+
+            let diffStr = [];
+            if (days > 0) diffStr.push(`${days} days`);
+            if (hours > 0) diffStr.push(`${hours} hours`);
+            if (mins > 0) diffStr.push(`${mins} mins`);
+            if (secs > 0 || diffStr.length === 0) diffStr.push(`${secs} secs`);
+
+            document.getElementById('res-diff-total').innerText = diffStr.join(', ');
+            document.getElementById('res-diff-sec').innerText = diffSec;
+            document.getElementById('diff-result').style.display = 'block';
+        }
+
+        // Pre-fill date inputs with current local time
+        window.addEventListener('DOMContentLoaded', () => {
+            const now = new Date();
+            // Format for datetime-local: YYYY-MM-DDThh:mm:ss
+            const tzOffset = now.getTimezoneOffset() * 60000; // offset in milliseconds
+            const localISOTime = (new Date(now - tzOffset)).toISOString().slice(0, -1);
+
+            const dtLocal = localISOTime.substring(0, 19);
+            const inputDate = document.getElementById('date-input');
+            if(inputDate) inputDate.value = dtLocal;
+
+            const diffStart = document.getElementById('diff-start');
+            if(diffStart) diffStart.value = dtLocal;
+
+            // set input value to current ts
+            const tsInput = document.getElementById('ts-input');
+            if(tsInput) tsInput.value = Math.floor(now.getTime() / 1000);
+        });
+    </script>
+
+  <style>
 
         .page-content {
             --bg-color: #060a12;
@@ -86,6 +489,7 @@ const htmlContent = `<style>
             --font-mono: 'JetBrains Mono', monospace;
         }
 
+        * {
             box-sizing: border-box;
             margin: 0;
             padding: 0;
@@ -411,405 +815,4 @@ const htmlContent = `<style>
         }
     
 </style>
-<div class="page-content">
-<main>
-        <h1>Unix Timestamp Converter</h1>
-
-        <div class="card live-timestamp-container">
-            <h2 style="margin-top: 0; border: none;">Current Unix Timestamp</h2>
-            <div class="timestamp-controls">
-                <button id="btn-sec" class="active" onclick="setLiveUnit('sec')">Seconds</button>
-                <button id="btn-ms" onclick="setLiveUnit('ms')">Milliseconds</button>
-                <button id="btn-us" onclick="setLiveUnit('us')">Microseconds</button>
-            </div>
-            <div class="live-timestamp" id="live-time">1700000000</div>
-            <p style="color: var(--text-muted); font-size: 0.875rem;">
-                Live updating. <a href="#" style="color: var(--accent-color);" onclick="copyLive(); return false;">Click to copy</a>
-            </p>
-        </div>
-
-        <div class="grid">
-            <!-- Timestamp to Date -->
-            <div class="card">
-                <h2>Timestamp to Date</h2>
-                <div class="form-group">
-                    <label>Unix Timestamp</label>
-                    <input type="number" id="ts-input" class="mono" placeholder="e.g. 1700000000">
-                </div>
-                <div class="form-group">
-                    <label>Input Unit</label>
-                    <select id="ts-unit">
-                        <option value="s">Seconds (s)</option>
-                        <option value="ms">Milliseconds (ms)</option>
-                        <option value="us">Microseconds (μs)</option>
-                    </select>
-                </div>
-                <button onclick="convertTsToDate()">Convert to Date</button>
-
-                <div class="result-box" id="ts-result" style="display: none;">
-                    <div class="result-row">
-                        <span class="result-label">Local Time</span>
-                        <span class="result-val mono" id="res-local">-</span>
-                    </div>
-                    <div class="result-row">
-                        <span class="result-label">UTC / GMT</span>
-                        <span class="result-val mono" id="res-utc">-</span>
-                    </div>
-                    <div class="result-row">
-                        <span class="result-label">Relative</span>
-                        <span class="result-val" id="res-rel">-</span>
-                    </div>
-                </div>
-            </div>
-
-            <!-- Date to Timestamp -->
-            <div class="card">
-                <h2>Date to Timestamp</h2>
-                <div class="form-group">
-                    <label>Date & Time (Local)</label>
-                    <input type="datetime-local" id="date-input" step="1">
-                </div>
-                <div class="form-group">
-                    <label>Timezone</label>
-                    <select id="tz-input">
-                        <option value="local">Local Timezone</option>
-                        <option value="UTC">UTC / GMT</option>
-                    </select>
-                </div>
-                <button onclick="convertDateToTs()">Convert to Timestamp</button>
-
-                <div class="result-box" id="date-result" style="display: none;">
-                    <div class="result-row">
-                        <span class="result-label">Seconds</span>
-                        <span class="result-val mono" id="res-sec">-</span>
-                    </div>
-                    <div class="result-row">
-                        <span class="result-label">Milliseconds</span>
-                        <span class="result-val mono" id="res-milli">-</span>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <!-- Date Diff -->
-        <div class="card">
-            <h2>Date Difference Calculator</h2>
-            <div class="grid" style="margin-bottom: 1rem;">
-                <div class="form-group">
-                    <label>Start Date/Time</label>
-                    <input type="datetime-local" id="diff-start" step="1">
-                </div>
-                <div class="form-group">
-                    <label>End Date/Time</label>
-                    <input type="datetime-local" id="diff-end" step="1">
-                </div>
-            </div>
-            <button onclick="calculateDiff()">Calculate Difference</button>
-            <div class="result-box" id="diff-result" style="display: none;">
-                <div class="result-row">
-                    <span class="result-label">Difference</span>
-                    <span class="result-val mono" id="res-diff-total">-</span>
-                </div>
-                <div class="result-row">
-                    <span class="result-label">In Seconds</span>
-                    <span class="result-val mono" id="res-diff-sec">-</span>
-                </div>
-            </div>
-        </div>
-
-        <!-- Common Timestamps -->
-        <div class="card">
-            <h2>Common Epoch Timestamps</h2>
-            <div style="overflow-x: auto;">
-                <table>
-                    <thead>
-                        <tr>
-                            <th>Event</th>
-                            <th>Timestamp</th>
-                            <th>Date (UTC)</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        <tr>
-                            <td>The Unix Epoch</td>
-                            <td>0</td>
-                            <td>1970-01-01 00:00:00</td>
-                        </tr>
-                        <tr>
-                            <td>1 Billion Seconds</td>
-                            <td>1000000000</td>
-                            <td>2001-09-09 01:46:40</td>
-                        </tr>
-                        <tr>
-                            <td>1234567890 Day</td>
-                            <td>1234567890</td>
-                            <td>2009-02-13 23:31:30</td>
-                        </tr>
-                        <tr>
-                            <td>Y2K38 Problem (Max 32-bit int)</td>
-                            <td>2147483647</td>
-                            <td>2038-01-19 03:14:07</td>
-                        </tr>
-                        <tr>
-                            <td>9999-12-31</td>
-                            <td>253402300799</td>
-                            <td>9999-12-31 23:59:59</td>
-                        </tr>
-                    </tbody>
-                </table>
-            </div>
-        </div>
-
-        <!-- Code Snippets -->
-        <div class="card">
-            <h2>Get Current Timestamp in Code</h2>
-            <div class="code-grid">
-                <div class="code-snippet">
-                    <div class="code-lang">JavaScript / Node.js</div>
-                    <code>Math.floor(Date.now() / 1000)</code>
-                </div>
-                <div class="code-snippet">
-                    <div class="code-lang">Python</div>
-                    <code>import time<br>int(time.time())</code>
-                </div>
-                <div class="code-snippet">
-                    <div class="code-lang">Java</div>
-                    <code>System.currentTimeMillis() / 1000L</code>
-                </div>
-                <div class="code-snippet">
-                    <div class="code-lang">C#</div>
-                    <code>DateTimeOffset.UtcNow.ToUnixTimeSeconds()</code>
-                </div>
-                <div class="code-snippet">
-                    <div class="code-lang">PHP</div>
-                    <code>time()</code>
-                </div>
-                <div class="code-snippet">
-                    <div class="code-lang">Ruby</div>
-                    <code>Time.now.to_i</code>
-                </div>
-                <div class="code-snippet">
-                    <div class="code-lang">Go</div>
-                    <code>time.Now().Unix()</code>
-                </div>
-                <div class="code-snippet">
-                    <div class="code-lang">Rust</div>
-                    <code>use std::time::{SystemTime, UNIX_EPOCH};<br>SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs()</code>
-                </div>
-                <div class="code-snippet">
-                    <div class="code-lang">C++ (C++11)</div>
-                    <code>#include &lt;chrono&gt;<br>std::chrono::duration_cast&lt;std::chrono::seconds&gt;(std::chrono::system_clock::now().time_since_epoch()).count()</code>
-                </div>
-                <div class="code-snippet">
-                    <div class="code-lang">Swift</div>
-                    <code>Int(Date().timeIntervalSince1970)</code>
-                </div>
-            </div>
-        </div>
-
-        <!-- FAQ -->
-        <div class="card">
-            <h2>Frequently Asked Questions</h2>
-
-            <div class="faq-item">
-                <div class="faq-q">What is a unix timestamp converter?</div>
-                <div class="faq-a">A unix timestamp converter is a tool that translates the number of seconds (or milliseconds) since January 1, 1970 (the Unix epoch) into a human-readable date and time, and vice versa.</div>
-            </div>
-
-            <div class="faq-item">
-                <div class="faq-q">How does an epoch converter work?</div>
-                <div class="faq-a">An epoch converter takes a numeric timestamp representing the Unix epoch and applies timezone offsets and date algorithms to output a formatted string, such as YYYY-MM-DD HH:MM:SS.</div>
-            </div>
-
-            <div class="faq-item">
-                <div class="faq-q">How to convert timestamp to date?</div>
-                <div class="faq-a">To convert a timestamp to a date, you can use our tool above. Simply paste the Unix timestamp into the "Timestamp to Date" input field, and it will instantly show the equivalent human-readable date in your local timezone and UTC.</div>
-            </div>
-
-            <div class="faq-item">
-                <div class="faq-q">What is the current unix timestamp?</div>
-                <div class="faq-a">The current unix timestamp constantly updates every second. It represents the exact number of seconds that have elapsed since midnight on January 1, 1970, UTC.</div>
-            </div>
-
-            <div class="faq-item">
-                <div class="faq-q">Why do we use epoch time?</div>
-                <div class="faq-a">Epoch time provides a single, simple number to represent a specific point in time, independent of timezones or daylight saving time, making it highly efficient for computers to store, sort, and calculate time differences.</div>
-            </div>
-        </div>
-
-    </main>
-
-    
-
-    <script>
-        // Live Timestamp Logic
-        let liveUnit = 'sec';
-        const liveEl = document.getElementById('live-time');
-
-        function updateLive() {
-            const now = Date.now();
-            let val;
-            if (liveUnit === 'sec') {
-                val = Math.floor(now / 1000);
-            } else if (liveUnit === 'ms') {
-                val = now;
-            } else if (liveUnit === 'us') {
-                // Microseconds are approximated by multiplying ms by 1000
-                // We could use performance.now() for more precision but for a simple display this works
-                val = now * 1000 + Math.floor(performance.now() % 1 * 1000);
-            }
-            liveEl.innerText = val;
-        }
-
-        function setLiveUnit(unit) {
-            liveUnit = unit;
-            document.getElementById('btn-sec').classList.remove('active');
-            document.getElementById('btn-ms').classList.remove('active');
-            document.getElementById('btn-us').classList.remove('active');
-            document.getElementById('btn-' + unit).classList.add('active');
-            updateLive();
-        }
-
-        setInterval(updateLive, 10);
-        updateLive();
-
-        function copyLive() {
-            navigator.clipboard.writeText(liveEl.innerText);
-            alert("Copied: " + liveEl.innerText);
-        }
-
-        // Relative Time Formatter
-        function getRelativeTime(date) {
-            const now = new Date();
-            const diffSecs = Math.round((now - date) / 1000);
-            const absDiff = Math.abs(diffSecs);
-
-            let val, unit;
-            if (absDiff < 60) { val = absDiff; unit = 'second'; }
-            else if (absDiff < 3600) { val = Math.floor(absDiff / 60); unit = 'minute'; }
-            else if (absDiff < 86400) { val = Math.floor(absDiff / 3600); unit = 'hour'; }
-            else if (absDiff < 2592000) { val = Math.floor(absDiff / 86400); unit = 'day'; }
-            else if (absDiff < 31536000) { val = Math.floor(absDiff / 2592000); unit = 'month'; }
-            else { val = Math.floor(absDiff / 31536000); unit = 'year'; }
-
-            if (val !== 1) unit += 's';
-
-            if (diffSecs > 0) return \`\${val} \${unit} ago\`;
-            if (diffSecs < 0) return \`in \${val} \${unit}\`;
-            return 'just now';
-        }
-
-        // Timestamp to Date
-        function convertTsToDate() {
-            const input = document.getElementById('ts-input').value;
-            const unit = document.getElementById('ts-unit').value;
-            if (!input) return;
-
-            let ms = parseFloat(input);
-            if (unit === 's') ms *= 1000;
-            if (unit === 'us') ms /= 1000;
-
-            const date = new Date(ms);
-
-            if (isNaN(date.getTime())) {
-                alert("Invalid timestamp");
-                return;
-            }
-
-            document.getElementById('res-local').innerText = date.toLocaleString();
-            document.getElementById('res-utc').innerText = date.toUTCString();
-            document.getElementById('res-rel').innerText = getRelativeTime(date);
-            document.getElementById('ts-result').style.display = 'block';
-        }
-
-        // Date to Timestamp
-        function convertDateToTs() {
-            const input = document.getElementById('date-input').value;
-            const tz = document.getElementById('tz-input').value;
-            if (!input) return;
-
-            let date;
-            if (tz === 'UTC') {
-                date = new Date(input + 'Z');
-            } else {
-                date = new Date(input);
-            }
-
-            if (isNaN(date.getTime())) {
-                alert("Invalid date");
-                return;
-            }
-
-            const ms = date.getTime();
-            document.getElementById('res-sec').innerText = Math.floor(ms / 1000);
-            document.getElementById('res-milli').innerText = ms;
-            document.getElementById('date-result').style.display = 'block';
-        }
-
-        // Date Diff
-        function calculateDiff() {
-            const startStr = document.getElementById('diff-start').value;
-            const endStr = document.getElementById('diff-end').value;
-            if (!startStr || !endStr) return;
-
-            const start = new Date(startStr);
-            const end = new Date(endStr);
-
-            if (isNaN(start.getTime()) || isNaN(end.getTime())) {
-                alert("Invalid dates");
-                return;
-            }
-
-            let diffMs = Math.abs(end - start);
-            const diffSec = Math.floor(diffMs / 1000);
-
-            const days = Math.floor(diffMs / (1000 * 60 * 60 * 24));
-            diffMs -= days * (1000 * 60 * 60 * 24);
-            const hours = Math.floor(diffMs / (1000 * 60 * 60));
-            diffMs -= hours * (1000 * 60 * 60);
-            const mins = Math.floor(diffMs / (1000 * 60));
-            diffMs -= mins * (1000 * 60);
-            const secs = Math.floor(diffMs / 1000);
-
-            let diffStr = [];
-            if (days > 0) diffStr.push(\`\${days} days\`);
-            if (hours > 0) diffStr.push(\`\${hours} hours\`);
-            if (mins > 0) diffStr.push(\`\${mins} mins\`);
-            if (secs > 0 || diffStr.length === 0) diffStr.push(\`\${secs} secs\`);
-
-            document.getElementById('res-diff-total').innerText = diffStr.join(', ');
-            document.getElementById('res-diff-sec').innerText = diffSec;
-            document.getElementById('diff-result').style.display = 'block';
-        }
-
-        // Pre-fill date inputs with current local time
-        window.addEventListener('DOMContentLoaded', () => {
-            const now = new Date();
-            // Format for datetime-local: YYYY-MM-DDThh:mm:ss
-            const tzOffset = now.getTimezoneOffset() * 60000; // offset in milliseconds
-            const localISOTime = (new Date(now - tzOffset)).toISOString().slice(0, -1);
-
-            const dtLocal = localISOTime.substring(0, 19);
-            const inputDate = document.getElementById('date-input');
-            if(inputDate) inputDate.value = dtLocal;
-
-            const diffStart = document.getElementById('diff-start');
-            if(diffStart) diffStart.value = dtLocal;
-
-            // set input value to current ts
-            const tsInput = document.getElementById('ts-input');
-            if(tsInput) tsInput.value = Math.floor(now.getTime() / 1000);
-        });
-    </script>
-</div>`;
----
-
-<SiteLayout
-  site="siliconbased"
-  title="Unix Timestamp Converter & Epoch Time Calculator"
-  description="1.7 billion seconds have passed since the beginning of time! Uncover the hidden milestones of epoch time and decode past, present, and future instantly."
-  canonical="https://siliconbased.dev/unix-timestamp-converter"
-  schema={schema}
->
-  <Fragment set:html={htmlContent} />
 </SiteLayout>

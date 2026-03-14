@@ -60,7 +60,177 @@ const schema = {
   ]
 };
 
-const htmlContent = `<style>
+const htmlBody = `<div class="page-content">
+<div class="hero">
+    <h1>Cloud Hosting Price Comparison 2026</h1>
+    <p>We analyzed pricing across major hosting platforms for static sites, serverless functions, and databases to find the cheapest options.</p>
+
+    <div class="stats" id="hero-stats">
+      <!-- Populated by JS -->
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="controls">
+      <input type="text" id="searchInput" placeholder="Search providers...">
+      <select id="sortSelect">
+        <option value="provider">Sort by Name</option>
+        <option value="bandwidthPerGBUSD">Sort by Bandwidth Cost</option>
+        <option value="paidStartUSD">Sort by Paid Tier Start</option>
+      </select>
+    </div>
+
+    <div class="table-container">
+      <table id="pricingTable">
+        <thead>
+          <tr>
+            <th data-sort="provider">Provider ↕</th>
+            <th data-sort="freeTierBandwidthGB">Free Bandwidth ↕</th>
+            <th data-sort="freeTierBuildsMin">Free Builds ↕</th>
+            <th data-sort="paidStartUSD">Paid Start ↕</th>
+            <th data-sort="bandwidthPerGBUSD">Bandwidth / GB ↕</th>
+            <th>Functions</th>
+            <th>Custom Domains</th>
+          </tr>
+        </thead>
+        <tbody id="tableBody">
+          <!-- Populated by JS -->
+        </tbody>
+      </table>
+    </div>
+
+    <div class="text-content">
+      <h2>Methodology</h2>
+      <p>Data was collected directly from official provider pricing pages in 2026. Free tier limits and paid tier starting prices were extracted. Where exact numbers for certain limits (like edge locations or function execution times) were not transparently listed, they were marked as null to prioritize accurate data over estimates.</p>
+
+      <h2>Frequently Asked Questions</h2>
+
+      <div class="faq-item">
+        <h3>Which cloud provider has the best free tier?</h3>
+        <p>Cloudflare Pages generally offers the best free tier for static hosting due to unmetered bandwidth. Vercel and Netlify offer excellent developer experiences but have stricter limits (typically 100GB/mo).</p>
+      </div>
+
+      <div class="faq-item">
+        <h3>How much does AWS bandwidth cost?</h3>
+        <p>AWS charges roughly $0.09 to $0.15 per GB for outbound data transfer depending on the service (like CloudFront or EC2) and region.</p>
+      </div>
+
+      <div class="faq-item">
+        <h3>Do Vercel and Netlify charge for bandwidth?</h3>
+        <p>Yes. While both provide a generous free allowance, their overage rates for bandwidth are substantially higher than underlying infrastructure providers like AWS or DigitalOcean.</p>
+      </div>
+
+      <div class="faq-item">
+        <h3>Are custom domains free on hosting platforms?</h3>
+        <p>Yes. The standard across almost all platforms (Vercel, Netlify, Cloudflare, Fly.io, etc.) is to include custom domain support even on free tiers.</p>
+      </div>
+
+      <div class="faq-item">
+        <h3>Which platform is cheapest for edge functions?</h3>
+        <p>Cloudflare Workers offers a very competitive pricing model with a generous free tier (100k requests/day) and low costs at scale compared to traditional serverless offerings.</p>
+      </div>
+    </div>
+  </div>
+
+  
+        <div class="stat-box">
+          <div class="stat-num">\${zeroBandwidthCost}</div>
+          <div class="stat-label">Zero Egress Fees</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-num">\${freeCustomDomains}</div>
+          <div class="stat-label">Free Custom Domains</div>
+        </div>
+      \`;
+    };
+
+    // Render Table
+    const renderTable = (data) => {
+      const tbody = document.getElementById('tableBody');
+      tbody.innerHTML = '';
+
+      data.forEach(item => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = \`
+          <td class="provider-name">\${item.provider}</td>
+          <td>\${formatNull(item.freeTierBandwidthGB, '{} GB')}</td>
+          <td>\${formatNull(item.freeTierBuildsMin, '{}')}</td>
+          <td>\${formatNull(item.paidStartUSD, '\${}')}</td>
+          <td>\${formatNull(item.bandwidthPerGBUSD, '\${}')}</td>
+          <td>\${formatBool(item.functionsIncluded)}</td>
+          <td>\${formatBool(item.customDomains)}</td>
+        \`;
+        tbody.appendChild(tr);
+      });
+    };
+
+    // State
+    let currentData = [...pricingData];
+    let sortCol = 'provider';
+    let sortAsc = true;
+
+    // Sort Logic
+    const sortData = (col, asc) => {
+      currentData.sort((a, b) => {
+        let valA = a[col];
+        let valB = b[col];
+
+        if (valA === null) valA = asc ? Infinity : -Infinity;
+        if (valB === null) valB = asc ? Infinity : -Infinity;
+
+        if (valA < valB) return asc ? -1 : 1;
+        if (valA > valB) return asc ? 1 : -1;
+        return 0;
+      });
+      renderTable(currentData);
+    };
+
+    // Event Listeners
+    document.getElementById('searchInput').addEventListener('input', (e) => {
+      const term = e.target.value.toLowerCase();
+      currentData = pricingData.filter(p =>
+        p.provider.toLowerCase().includes(term)
+      );
+      sortData(sortCol, sortAsc);
+    });
+
+    document.getElementById('sortSelect').addEventListener('change', (e) => {
+      sortCol = e.target.value;
+      sortAsc = true;
+      sortData(sortCol, sortAsc);
+    });
+
+    document.querySelectorAll('th[data-sort]').forEach(th => {
+      th.addEventListener('click', () => {
+        const col = th.getAttribute('data-sort');
+        if (sortCol === col) {
+          sortAsc = !sortAsc;
+        } else {
+          sortCol = col;
+          sortAsc = true;
+        }
+        sortData(sortCol, sortAsc);
+      });
+    });
+
+    // Init
+    renderStats();
+    sortData(sortCol, sortAsc);
+
+  </script>
+</div>`
+---
+
+<SiteLayout
+  site="siliconbased"
+  title="Cloud Hosting Price Comparison 2026"
+  description="Compare pricing across major hosting platforms for static sites, serverless functions, and databases. Find the cheapest option for your use case."
+  canonical="https://siliconbased.dev/hosting-pricing"
+  schema={schema}
+>
+  <Fragment set:html={htmlBody} />
+
+  <style>
 
     .page-content {
       --bg: #0a0b10;
@@ -269,173 +439,4 @@ const htmlContent = `<style>
     .badge.null { background: rgba(255, 255, 255, 0.1); color: #888; }
   
 </style>
-<div class="page-content">
-<div class="hero">
-    <h1>Cloud Hosting Price Comparison 2026</h1>
-    <p>We analyzed pricing across major hosting platforms for static sites, serverless functions, and databases to find the cheapest options.</p>
-
-    <div class="stats" id="hero-stats">
-      <!-- Populated by JS -->
-    </div>
-  </div>
-
-  <div class="container">
-    <div class="controls">
-      <input type="text" id="searchInput" placeholder="Search providers...">
-      <select id="sortSelect">
-        <option value="provider">Sort by Name</option>
-        <option value="bandwidthPerGBUSD">Sort by Bandwidth Cost</option>
-        <option value="paidStartUSD">Sort by Paid Tier Start</option>
-      </select>
-    </div>
-
-    <div class="table-container">
-      <table id="pricingTable">
-        <thead>
-          <tr>
-            <th data-sort="provider">Provider ↕</th>
-            <th data-sort="freeTierBandwidthGB">Free Bandwidth ↕</th>
-            <th data-sort="freeTierBuildsMin">Free Builds ↕</th>
-            <th data-sort="paidStartUSD">Paid Start ↕</th>
-            <th data-sort="bandwidthPerGBUSD">Bandwidth / GB ↕</th>
-            <th>Functions</th>
-            <th>Custom Domains</th>
-          </tr>
-        </thead>
-        <tbody id="tableBody">
-          <!-- Populated by JS -->
-        </tbody>
-      </table>
-    </div>
-
-    <div class="text-content">
-      <h2>Methodology</h2>
-      <p>Data was collected directly from official provider pricing pages in 2026. Free tier limits and paid tier starting prices were extracted. Where exact numbers for certain limits (like edge locations or function execution times) were not transparently listed, they were marked as null to prioritize accurate data over estimates.</p>
-
-      <h2>Frequently Asked Questions</h2>
-
-      <div class="faq-item">
-        <h3>Which cloud provider has the best free tier?</h3>
-        <p>Cloudflare Pages generally offers the best free tier for static hosting due to unmetered bandwidth. Vercel and Netlify offer excellent developer experiences but have stricter limits (typically 100GB/mo).</p>
-      </div>
-
-      <div class="faq-item">
-        <h3>How much does AWS bandwidth cost?</h3>
-        <p>AWS charges roughly $0.09 to $0.15 per GB for outbound data transfer depending on the service (like CloudFront or EC2) and region.</p>
-      </div>
-
-      <div class="faq-item">
-        <h3>Do Vercel and Netlify charge for bandwidth?</h3>
-        <p>Yes. While both provide a generous free allowance, their overage rates for bandwidth are substantially higher than underlying infrastructure providers like AWS or DigitalOcean.</p>
-      </div>
-
-      <div class="faq-item">
-        <h3>Are custom domains free on hosting platforms?</h3>
-        <p>Yes. The standard across almost all platforms (Vercel, Netlify, Cloudflare, Fly.io, etc.) is to include custom domain support even on free tiers.</p>
-      </div>
-
-      <div class="faq-item">
-        <h3>Which platform is cheapest for edge functions?</h3>
-        <p>Cloudflare Workers offers a very competitive pricing model with a generous free tier (100k requests/day) and low costs at scale compared to traditional serverless offerings.</p>
-      </div>
-    </div>
-  </div>
-
-  
-        <div class="stat-box">
-          <div class="stat-num">\${zeroBandwidthCost}</div>
-          <div class="stat-label">Zero Egress Fees</div>
-        </div>
-        <div class="stat-box">
-          <div class="stat-num">\${freeCustomDomains}</div>
-          <div class="stat-label">Free Custom Domains</div>
-        </div>
-      \`;
-    };
-
-    // Render Table
-    const renderTable = (data) => {
-      const tbody = document.getElementById('tableBody');
-      tbody.innerHTML = '';
-
-      data.forEach(item => {
-        const tr = document.createElement('tr');
-        tr.innerHTML = \`
-          <td class="provider-name">\${item.provider}</td>
-          <td>\${formatNull(item.freeTierBandwidthGB, '{} GB')}</td>
-          <td>\${formatNull(item.freeTierBuildsMin, '{}')}</td>
-          <td>\${formatNull(item.paidStartUSD, '\${}')}</td>
-          <td>\${formatNull(item.bandwidthPerGBUSD, '\${}')}</td>
-          <td>\${formatBool(item.functionsIncluded)}</td>
-          <td>\${formatBool(item.customDomains)}</td>
-        \`;
-        tbody.appendChild(tr);
-      });
-    };
-
-    // State
-    let currentData = [...pricingData];
-    let sortCol = 'provider';
-    let sortAsc = true;
-
-    // Sort Logic
-    const sortData = (col, asc) => {
-      currentData.sort((a, b) => {
-        let valA = a[col];
-        let valB = b[col];
-
-        if (valA === null) valA = asc ? Infinity : -Infinity;
-        if (valB === null) valB = asc ? Infinity : -Infinity;
-
-        if (valA < valB) return asc ? -1 : 1;
-        if (valA > valB) return asc ? 1 : -1;
-        return 0;
-      });
-      renderTable(currentData);
-    };
-
-    // Event Listeners
-    document.getElementById('searchInput').addEventListener('input', (e) => {
-      const term = e.target.value.toLowerCase();
-      currentData = pricingData.filter(p =>
-        p.provider.toLowerCase().includes(term)
-      );
-      sortData(sortCol, sortAsc);
-    });
-
-    document.getElementById('sortSelect').addEventListener('change', (e) => {
-      sortCol = e.target.value;
-      sortAsc = true;
-      sortData(sortCol, sortAsc);
-    });
-
-    document.querySelectorAll('th[data-sort]').forEach(th => {
-      th.addEventListener('click', () => {
-        const col = th.getAttribute('data-sort');
-        if (sortCol === col) {
-          sortAsc = !sortAsc;
-        } else {
-          sortCol = col;
-          sortAsc = true;
-        }
-        sortData(sortCol, sortAsc);
-      });
-    });
-
-    // Init
-    renderStats();
-    sortData(sortCol, sortAsc);
-
-  </script>
-</div>`;
----
-
-<SiteLayout
-  site="siliconbased"
-  title="Cloud Hosting Price Comparison 2026"
-  description="Compare pricing across major hosting platforms for static sites, serverless functions, and databases. Find the cheapest option for your use case."
-  canonical="https://siliconbased.dev/hosting-pricing"
-  schema={schema}
->
-  <Fragment set:html={htmlContent} />
 </SiteLayout>

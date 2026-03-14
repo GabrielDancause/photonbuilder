@@ -21,7 +21,208 @@ const schema = {
   }
 };
 
-const htmlContent = `<style>
+const htmlBody = `<div class="page-content">
+<div class="hero">
+  <h1>ASCII Reference Table</h1>
+  <p>Interactive table of standard ASCII and Unicode characters. Search and copy instantly.</p>
+</div>
+
+<div class="main">
+
+  <div class="input-section">
+    <div class="search-input-wrapper">
+      <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
+      <input type="text" id="searchInput" class="search-input" autocomplete="off" spellcheck="false" placeholder="Search by char, dec, hex, oct, or description...">
+    </div>
+  </div>
+
+  <div class="table-container">
+    <div class="table-header">
+      <div class="th-cell">Char</div>
+      <div class="th-cell">Decimal</div>
+      <div class="th-cell">Hexadecimal</div>
+      <div class="th-cell">Octal</div>
+      <div class="th-cell">Description</div>
+      <div class="th-cell">Copy</div>
+    </div>
+    <div class="table-body" id="tableBody">
+      <!-- Rows will be injected here via JS -->
+    </div>
+  </div>
+
+  <div class="seo-content">
+    <h2>What is ASCII?</h2>
+    <p>ASCII stands for <strong>American Standard Code for Information Interchange</strong>. It is a character encoding standard for electronic communication. ASCII codes represent text in computers, telecommunications equipment, and other devices. Most modern character-encoding schemes are based on ASCII, although they support many additional characters.</p>
+
+    <h2>The Standard ASCII Table (0-127)</h2>
+    <p>The standard ASCII table consists of 128 characters (numbered 0 to 127):</p>
+    <ul>
+      <li><strong>Control Characters (0-31 & 127):</strong> These are non-printable characters originally used to control hardware devices such as printers and teletype machines. Examples include Null (<code>0</code>), Line Feed (<code>10</code>), and Carriage Return (<code>13</code>).</li>
+      <li><strong>Printable Characters (32-126):</strong> These represent letters, digits, punctuation marks, and a few miscellaneous symbols. This includes the space character (<code>32</code>), numbers 0-9 (<code>48-57</code>), uppercase letters A-Z (<code>65-90</code>), and lowercase letters a-z (<code>97-122</code>).</li>
+    </ul>
+
+    <h2>How to Read the Table</h2>
+    <p>Our interactive table allows you to view the different numeric representations of each character:</p>
+    <ul>
+      <li><strong>Char:</strong> The visual representation of the character (or a badge for control characters).</li>
+      <li><strong>Decimal (Base 10):</strong> The standard numeric value used in most programming contexts.</li>
+      <li><strong>Hexadecimal (Base 16):</strong> Commonly used in computing, often prefixed with <code>0x</code> or used in URL encoding (e.g., <code>%20</code> for space).</li>
+      <li><strong>Octal (Base 8):</strong> Older base-8 system, sometimes seen in legacy permissions or escape sequences.</li>
+      <li><strong>Description:</strong> The official name or common usage of the character.</li>
+    </ul>
+
+    <h2>Client-Side Performance</h2>
+    <p>This ASCII reference tool is built to be fast and reliable. The entire table is generated dynamically using JavaScript and runs 100% locally in your browser. There are no external database queries or API calls, meaning it works perfectly offline and responds instantly to your searches.</p>
+  </div>
+
+</div>
+
+</div>`
+---
+
+<SiteLayout
+  site="siliconbased"
+  title="ASCII Reference Table | Free Interactive Tool"
+  description="Interactive ASCII and Unicode character table. Instantly search and copy characters, decimal, hex, and octal values. Free, works offline, zero dependencies."
+  canonical="https://siliconbased.dev/ascii-table"
+  schema={schema}
+>
+  <Fragment set:html={htmlBody} />
+
+  <script is:inline>
+// Data for ASCII 0-127
+const asciiData = [];
+const controlChars = {
+  0: "NUL (Null)", 1: "SOH (Start of Heading)", 2: "STX (Start of Text)", 3: "ETX (End of Text)",
+  4: "EOT (End of Transmission)", 5: "ENQ (Enquiry)", 6: "ACK (Acknowledge)", 7: "BEL (Bell)",
+  8: "BS (Backspace)", 9: "TAB (Horizontal Tab)", 10: "LF (Line Feed)", 11: "VT (Vertical Tab)",
+  12: "FF (Form Feed)", 13: "CR (Carriage Return)", 14: "SO (Shift Out)", 15: "SI (Shift In)",
+  16: "DLE (Data Link Escape)", 17: "DC1 (Device Control 1)", 18: "DC2 (Device Control 2)",
+  19: "DC3 (Device Control 3)", 20: "DC4 (Device Control 4)", 21: "NAK (Negative Ack)",
+  22: "SYN (Synchronous Idle)", 23: "ETB (End of Trans. Block)", 24: "CAN (Cancel)",
+  25: "EM (End of Medium)", 26: "SUB (Substitute)", 27: "ESC (Escape)",
+  28: "FS (File Separator)", 29: "GS (Group Separator)", 30: "RS (Record Separator)",
+  31: "US (Unit Separator)", 32: "Space", 127: "DEL (Delete)"
+};
+
+for (let i = 0; i < 128; i++) {
+  const isCtrl = i < 32 || i === 127;
+  const char = isCtrl ? (i === 127 ? 'DEL' : Object.keys(controlChars).find(k => parseInt(k) === i) !== undefined ? controlChars[i].split(' ')[0] : 'CTRL') : String.fromCharCode(i);
+  const desc = isCtrl ? controlChars[i] : (i === 32 ? "Space" : `Printable character '${char}'`);
+
+  asciiData.push({
+    dec: i,
+    hex: i.toString(16).toUpperCase().padStart(2, '0'),
+    oct: i.toString(8).padStart(3, '0'),
+    char: char,
+    desc: desc,
+    isCtrl: isCtrl
+  });
+}
+
+const tableBody = document.getElementById('tableBody');
+const searchInput = document.getElementById('searchInput');
+
+function renderTable(data) {
+  tableBody.innerHTML = '';
+
+  if (data.length === 0) {
+    tableBody.innerHTML = '<div class="empty-state">No matching ASCII characters found.</div>';
+    return;
+  }
+
+  data.forEach(item => {
+    const row = document.createElement('div');
+    row.className = 'tr-row';
+
+    // Char display
+    let charDisplay = item.isCtrl
+      ? `<span class="ctrl-badge">${item.char}</span>`
+      : item.char;
+
+    // HTML Entity mapping for certain chars to prevent layout breaking
+    let safeChar = item.char;
+    if (!item.isCtrl) {
+      if (item.char === '<') safeChar = '&lt;';
+      if (item.char === '>') safeChar = '&gt;';
+      if (item.char === '&') safeChar = '&amp;';
+    }
+
+    row.innerHTML = `
+      <div class="td-cell char-cell" data-label="Char">${item.isCtrl ? charDisplay : safeChar}</div>
+      <div class="td-cell dec-cell" data-label="Dec">
+        <span class="val-container" data-copy="${item.dec}">${item.dec}</span>
+      </div>
+      <div class="td-cell hex-cell" data-label="Hex">
+        <span class="val-container" data-copy="${item.hex}">${item.hex}</span>
+      </div>
+      <div class="td-cell oct-cell" data-label="Oct">
+        <span class="val-container" data-copy="${item.oct}">${item.oct}</span>
+      </div>
+      <div class="td-cell desc-cell" data-label="Desc">${item.desc}</div>
+      <div class="td-cell copy-btn-cell">
+        <button class="copy-row-btn" data-copy-all="${item.dec}" title="Copy Decimal Value">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+        </button>
+      </div>
+    `;
+
+    tableBody.appendChild(row);
+  });
+
+  attachCopyListeners();
+}
+
+function attachCopyListeners() {
+  const valContainers = document.querySelectorAll('.val-container');
+  valContainers.forEach(container => {
+    container.addEventListener('click', (e) => {
+      const text = container.getAttribute('data-copy');
+      navigator.clipboard.writeText(text).then(() => {
+        container.classList.add('copied');
+        setTimeout(() => container.classList.remove('copied'), 1500);
+      });
+    });
+  });
+
+  const copyBtns = document.querySelectorAll('.copy-row-btn');
+  copyBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const text = btn.getAttribute('data-copy-all');
+      navigator.clipboard.writeText(text).then(() => {
+        btn.classList.add('copied');
+        setTimeout(() => btn.classList.remove('copied'), 1500);
+      });
+    });
+  });
+}
+
+function filterData(query) {
+  if (!query) return asciiData;
+  query = query.toLowerCase();
+
+  return asciiData.filter(item => {
+    return (
+      item.char.toLowerCase().includes(query) ||
+      item.dec.toString().includes(query) ||
+      item.hex.toLowerCase().includes(query) ||
+      item.oct.includes(query) ||
+      item.desc.toLowerCase().includes(query)
+    );
+  });
+}
+
+searchInput.addEventListener('input', (e) => {
+  const query = e.target.value.trim();
+  const filtered = filterData(query);
+  renderTable(filtered);
+});
+
+// Initial render
+renderTable(asciiData);
+</script>
+
+  <style>
 
 .page-content { font-family: 'Inter', -apple-system, sans-serif; background: #0a0b10; color: #e0e0e0; min-height: 100vh; display: flex; flex-direction: column; }
 code, pre, .mono { font-family: 'JetBrains Mono', monospace; }
@@ -114,203 +315,4 @@ code, pre, .mono { font-family: 'JetBrains Mono', monospace; }
 }
 
 </style>
-<div class="page-content">
-<div class="hero">
-  <h1>ASCII Reference Table</h1>
-  <p>Interactive table of standard ASCII and Unicode characters. Search and copy instantly.</p>
-</div>
-
-<div class="main">
-
-  <div class="input-section">
-    <div class="search-input-wrapper">
-      <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
-      <input type="text" id="searchInput" class="search-input" autocomplete="off" spellcheck="false" placeholder="Search by char, dec, hex, oct, or description...">
-    </div>
-  </div>
-
-  <div class="table-container">
-    <div class="table-header">
-      <div class="th-cell">Char</div>
-      <div class="th-cell">Decimal</div>
-      <div class="th-cell">Hexadecimal</div>
-      <div class="th-cell">Octal</div>
-      <div class="th-cell">Description</div>
-      <div class="th-cell">Copy</div>
-    </div>
-    <div class="table-body" id="tableBody">
-      <!-- Rows will be injected here via JS -->
-    </div>
-  </div>
-
-  <div class="seo-content">
-    <h2>What is ASCII?</h2>
-    <p>ASCII stands for <strong>American Standard Code for Information Interchange</strong>. It is a character encoding standard for electronic communication. ASCII codes represent text in computers, telecommunications equipment, and other devices. Most modern character-encoding schemes are based on ASCII, although they support many additional characters.</p>
-
-    <h2>The Standard ASCII Table (0-127)</h2>
-    <p>The standard ASCII table consists of 128 characters (numbered 0 to 127):</p>
-    <ul>
-      <li><strong>Control Characters (0-31 & 127):</strong> These are non-printable characters originally used to control hardware devices such as printers and teletype machines. Examples include Null (<code>0</code>), Line Feed (<code>10</code>), and Carriage Return (<code>13</code>).</li>
-      <li><strong>Printable Characters (32-126):</strong> These represent letters, digits, punctuation marks, and a few miscellaneous symbols. This includes the space character (<code>32</code>), numbers 0-9 (<code>48-57</code>), uppercase letters A-Z (<code>65-90</code>), and lowercase letters a-z (<code>97-122</code>).</li>
-    </ul>
-
-    <h2>How to Read the Table</h2>
-    <p>Our interactive table allows you to view the different numeric representations of each character:</p>
-    <ul>
-      <li><strong>Char:</strong> The visual representation of the character (or a badge for control characters).</li>
-      <li><strong>Decimal (Base 10):</strong> The standard numeric value used in most programming contexts.</li>
-      <li><strong>Hexadecimal (Base 16):</strong> Commonly used in computing, often prefixed with <code>0x</code> or used in URL encoding (e.g., <code>%20</code> for space).</li>
-      <li><strong>Octal (Base 8):</strong> Older base-8 system, sometimes seen in legacy permissions or escape sequences.</li>
-      <li><strong>Description:</strong> The official name or common usage of the character.</li>
-    </ul>
-
-    <h2>Client-Side Performance</h2>
-    <p>This ASCII reference tool is built to be fast and reliable. The entire table is generated dynamically using JavaScript and runs 100% locally in your browser. There are no external database queries or API calls, meaning it works perfectly offline and responds instantly to your searches.</p>
-  </div>
-
-</div>
-
-<script>
-// Data for ASCII 0-127
-const asciiData = [];
-const controlChars = {
-  0: "NUL (Null)", 1: "SOH (Start of Heading)", 2: "STX (Start of Text)", 3: "ETX (End of Text)",
-  4: "EOT (End of Transmission)", 5: "ENQ (Enquiry)", 6: "ACK (Acknowledge)", 7: "BEL (Bell)",
-  8: "BS (Backspace)", 9: "TAB (Horizontal Tab)", 10: "LF (Line Feed)", 11: "VT (Vertical Tab)",
-  12: "FF (Form Feed)", 13: "CR (Carriage Return)", 14: "SO (Shift Out)", 15: "SI (Shift In)",
-  16: "DLE (Data Link Escape)", 17: "DC1 (Device Control 1)", 18: "DC2 (Device Control 2)",
-  19: "DC3 (Device Control 3)", 20: "DC4 (Device Control 4)", 21: "NAK (Negative Ack)",
-  22: "SYN (Synchronous Idle)", 23: "ETB (End of Trans. Block)", 24: "CAN (Cancel)",
-  25: "EM (End of Medium)", 26: "SUB (Substitute)", 27: "ESC (Escape)",
-  28: "FS (File Separator)", 29: "GS (Group Separator)", 30: "RS (Record Separator)",
-  31: "US (Unit Separator)", 32: "Space", 127: "DEL (Delete)"
-};
-
-for (let i = 0; i < 128; i++) {
-  const isCtrl = i < 32 || i === 127;
-  const char = isCtrl ? (i === 127 ? 'DEL' : Object.keys(controlChars).find(k => parseInt(k) === i) !== undefined ? controlChars[i].split(' ')[0] : 'CTRL') : String.fromCharCode(i);
-  const desc = isCtrl ? controlChars[i] : (i === 32 ? "Space" : \`Printable character '\${char}'\`);
-
-  asciiData.push({
-    dec: i,
-    hex: i.toString(16).toUpperCase().padStart(2, '0'),
-    oct: i.toString(8).padStart(3, '0'),
-    char: char,
-    desc: desc,
-    isCtrl: isCtrl
-  });
-}
-
-const tableBody = document.getElementById('tableBody');
-const searchInput = document.getElementById('searchInput');
-
-function renderTable(data) {
-  tableBody.innerHTML = '';
-
-  if (data.length === 0) {
-    tableBody.innerHTML = '<div class="empty-state">No matching ASCII characters found.</div>';
-    return;
-  }
-
-  data.forEach(item => {
-    const row = document.createElement('div');
-    row.className = 'tr-row';
-
-    // Char display
-    let charDisplay = item.isCtrl
-      ? \`<span class="ctrl-badge">\${item.char}</span>\`
-      : item.char;
-
-    // HTML Entity mapping for certain chars to prevent layout breaking
-    let safeChar = item.char;
-    if (!item.isCtrl) {
-      if (item.char === '<') safeChar = '&lt;';
-      if (item.char === '>') safeChar = '&gt;';
-      if (item.char === '&') safeChar = '&amp;';
-    }
-
-    row.innerHTML = \`
-      <div class="td-cell char-cell" data-label="Char">\${item.isCtrl ? charDisplay : safeChar}</div>
-      <div class="td-cell dec-cell" data-label="Dec">
-        <span class="val-container" data-copy="\${item.dec}">\${item.dec}</span>
-      </div>
-      <div class="td-cell hex-cell" data-label="Hex">
-        <span class="val-container" data-copy="\${item.hex}">\${item.hex}</span>
-      </div>
-      <div class="td-cell oct-cell" data-label="Oct">
-        <span class="val-container" data-copy="\${item.oct}">\${item.oct}</span>
-      </div>
-      <div class="td-cell desc-cell" data-label="Desc">\${item.desc}</div>
-      <div class="td-cell copy-btn-cell">
-        <button class="copy-row-btn" data-copy-all="\${item.dec}" title="Copy Decimal Value">
-          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-        </button>
-      </div>
-    \`;
-
-    tableBody.appendChild(row);
-  });
-
-  attachCopyListeners();
-}
-
-function attachCopyListeners() {
-  const valContainers = document.querySelectorAll('.val-container');
-  valContainers.forEach(container => {
-    container.addEventListener('click', (e) => {
-      const text = container.getAttribute('data-copy');
-      navigator.clipboard.writeText(text).then(() => {
-        container.classList.add('copied');
-        setTimeout(() => container.classList.remove('copied'), 1500);
-      });
-    });
-  });
-
-  const copyBtns = document.querySelectorAll('.copy-row-btn');
-  copyBtns.forEach(btn => {
-    btn.addEventListener('click', () => {
-      const text = btn.getAttribute('data-copy-all');
-      navigator.clipboard.writeText(text).then(() => {
-        btn.classList.add('copied');
-        setTimeout(() => btn.classList.remove('copied'), 1500);
-      });
-    });
-  });
-}
-
-function filterData(query) {
-  if (!query) return asciiData;
-  query = query.toLowerCase();
-
-  return asciiData.filter(item => {
-    return (
-      item.char.toLowerCase().includes(query) ||
-      item.dec.toString().includes(query) ||
-      item.hex.toLowerCase().includes(query) ||
-      item.oct.includes(query) ||
-      item.desc.toLowerCase().includes(query)
-    );
-  });
-}
-
-searchInput.addEventListener('input', (e) => {
-  const query = e.target.value.trim();
-  const filtered = filterData(query);
-  renderTable(filtered);
-});
-
-// Initial render
-renderTable(asciiData);
-</script>
-</div>`;
----
-
-<SiteLayout
-  site="siliconbased"
-  title="ASCII Reference Table | Free Interactive Tool"
-  description="Interactive ASCII and Unicode character table. Instantly search and copy characters, decimal, hex, and octal values. Free, works offline, zero dependencies."
-  canonical="https://siliconbased.dev/ascii-table"
-  schema={schema}
->
-  <Fragment set:html={htmlContent} />
 </SiteLayout>
