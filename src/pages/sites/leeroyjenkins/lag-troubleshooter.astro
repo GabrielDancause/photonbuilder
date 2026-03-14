@@ -1,0 +1,290 @@
+---
+import SiteLayout from "../../../layouts/SiteLayout.astro";
+
+const schema = {
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "Interactive Game Lag Troubleshooter & Fixer",
+  "description": "Diagnose the root cause of your lag. Our interactive decision tree will determine if your issue is ISP routing, WiFi interference, or hardware bottlenecks.",
+  "mainEntity": {
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "How do I know if my lag is from my internet or my PC?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Internet lag (latency) usually causes 'rubber-banding', teleporting players, and delayed hit registration. PC lag (hardware bottlenecks) causes the game itself to stutter, freeze, or experience huge drops in Framerate (FPS)."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Why does my ping spike randomly?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Random ping spikes (jitter) are usually caused by WiFi interference, background downloads on your PC, or bufferbloat—which happens when someone else on your network streams video or downloads large files."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Can a bad router cause lag?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes. An old, overheating router, or a router without Quality of Service (QoS) enabled, will struggle to prioritize gaming traffic, leading to massive lag spikes even on fast internet connections."
+        }
+      }
+    ]
+  }
+};
+---
+
+<SiteLayout
+  site="leeroyjenkins"
+  title="Interactive Game Lag Troubleshooter & Fixer"
+  description="Stop guessing why you're lagging. Use our interactive diagnostic decision tree to find the root cause of your high ping, packet loss, or stuttering."
+  canonical="https://leeroyjenkins.quest/lag-troubleshooter"
+  schema={schema}
+>
+  <div class="page-content">
+    <div class="hero">
+      <h1>Interactive Game Lag Troubleshooter</h1>
+      <p>Stop guessing. Answer a few questions to diagnose the root cause of your lag and find the exact fix.</p>
+    </div>
+
+    <!-- Interactive Tool -->
+    <div class="card tool-container">
+      <div id="diagnostic-app" class="diagnostic-app">
+        <!-- Start Screen -->
+        <div id="step-start" class="diag-step active">
+          <h2>Let's find the problem.</h2>
+          <p>What kind of lag are you experiencing right now?</p>
+          <div class="btn-group">
+            <button class="diag-btn" onclick="goToStep('step-stutter')">The game is stuttering / freezing / dropping frames.</button>
+            <button class="diag-btn" onclick="goToStep('step-ping-type')">Players are teleporting / hit registration is delayed / rubber-banding.</button>
+            <button class="diag-btn" onclick="goToStep('step-disconnect')">I keep getting disconnected entirely.</button>
+          </div>
+        </div>
+
+        <!-- Stutter Path -->
+        <div id="step-stutter" class="diag-step" style="display:none;">
+          <h2>Hardware Lag (FPS Drops)</h2>
+          <p>This is usually a hardware bottleneck, not a network issue. When the game stutters, what is happening to your FPS (Frames Per Second) counter?</p>
+          <div class="btn-group">
+            <button class="diag-btn" onclick="showResult('result-gpu')">My FPS drops massively during fights.</button>
+            <button class="diag-btn" onclick="showResult('result-ram')">My FPS is fine, but the game freezes for a second randomly.</button>
+          </div>
+          <button class="text-btn" onclick="goToStep('step-start')">Start Over</button>
+        </div>
+
+        <!-- Ping Type Path -->
+        <div id="step-ping-type" class="diag-step" style="display:none;">
+          <h2>Network Lag</h2>
+          <p>Look at your in-game ping number. How is it behaving?</p>
+          <div class="btn-group">
+            <button class="diag-btn" onclick="goToStep('step-high-ping')">It is constantly high (e.g., stuck at 150ms).</button>
+            <button class="diag-btn" onclick="goToStep('step-spikes')">It is usually low, but randomly spikes to 200ms+.</button>
+            <button class="diag-btn" onclick="showResult('result-packetloss')">My ping is low, but I'm getting packet loss icons (red squares).</button>
+          </div>
+          <button class="text-btn" onclick="goToStep('step-start')">Start Over</button>
+        </div>
+
+        <!-- Constant High Ping Path -->
+        <div id="step-high-ping" class="diag-step" style="display:none;">
+          <h2>Constant High Ping</h2>
+          <p>Is your ping high in <em>every</em> game you play, or just one specific game?</p>
+          <div class="btn-group">
+            <button class="diag-btn" onclick="showResult('result-isp-routing')">Just one specific game.</button>
+            <button class="diag-btn" onclick="goToStep('step-background')">Every game I play.</button>
+          </div>
+          <button class="text-btn" onclick="goToStep('step-start')">Start Over</button>
+        </div>
+
+        <!-- Ping Spikes Path -->
+        <div id="step-spikes" class="diag-step" style="display:none;">
+          <h2>Ping Spikes (Jitter)</h2>
+          <p>Are you playing on a WiFi connection or a hardwired Ethernet cable?</p>
+          <div class="btn-group">
+            <button class="diag-btn" onclick="showResult('result-wifi')">WiFi.</button>
+            <button class="diag-btn" onclick="goToStep('step-background')">Ethernet Cable.</button>
+          </div>
+          <button class="text-btn" onclick="goToStep('step-start')">Start Over</button>
+        </div>
+
+        <!-- Background / QoS Check -->
+        <div id="step-background" class="diag-step" style="display:none;">
+          <h2>Bandwidth Check</h2>
+          <p>Is anyone else in your house streaming Netflix/YouTube, or downloading large files while you play?</p>
+          <div class="btn-group">
+            <button class="diag-btn" onclick="showResult('result-bufferbloat')">Yes.</button>
+            <button class="diag-btn" onclick="showResult('result-isp-node')">No, I am the only one using the internet.</button>
+          </div>
+          <button class="text-btn" onclick="goToStep('step-start')">Start Over</button>
+        </div>
+
+        <!-- Disconnects -->
+        <div id="step-disconnect" class="diag-step" style="display:none;">
+          <h2>Disconnections</h2>
+          <p>Are you getting a "Strict NAT" error, or simply dropping out of the server mid-game?</p>
+          <div class="btn-group">
+            <button class="diag-btn" onclick="showResult('result-nat')">NAT Type / Party Join Errors.</button>
+            <button class="diag-btn" onclick="showResult('result-isp-node')">Dropping mid-game.</button>
+          </div>
+          <button class="text-btn" onclick="goToStep('step-start')">Start Over</button>
+        </div>
+
+
+        <!-- RESULTS -->
+        <div id="result-gpu" class="diag-step result-panel" style="display:none;">
+          <h3 class="result-title">Diagnosis: GPU/CPU Bottleneck</h3>
+          <p>Your network is fine. Your PC is struggling to render the game. Lower your graphics settings, update your graphics drivers, and ensure your PC isn't overheating. Cap your framerate to a number your PC can hit consistently.</p>
+          <button class="diag-btn" onclick="goToStep('step-start')">Start Over</button>
+        </div>
+
+        <div id="result-ram" class="diag-step result-panel" style="display:none;">
+          <h3 class="result-title">Diagnosis: RAM / Drive Hitching</h3>
+          <p>Micro-stutters usually occur when the game runs out of RAM, or is trying to load assets from a slow Hard Drive (HDD). Ensure the game is installed on an SSD, and close memory-heavy background apps like Chrome.</p>
+          <button class="diag-btn" onclick="goToStep('step-start')">Start Over</button>
+        </div>
+
+        <div id="result-packetloss" class="diag-step result-panel" style="display:none;">
+          <h3 class="result-title">Diagnosis: Packet Loss</h3>
+          <p>Data is literally being dropped before it reaches the server. If you are on WiFi, move to Ethernet immediately. If you are already on Ethernet, the cable may be damaged, your modem may be failing, or the lines outside your house are degraded. Call your ISP for a line check.</p>
+          <a href="/wifi-vs-ethernet-gaming" class="resource-link">Read our WiFi vs. Ethernet Guide →</a>
+          <button class="diag-btn" onclick="goToStep('step-start')">Start Over</button>
+        </div>
+
+        <div id="result-isp-routing" class="diag-step result-panel" style="display:none;">
+          <h3 class="result-title">Diagnosis: Bad ISP Peering (Routing)</h3>
+          <p>Your ISP is taking a terrible, indirect route to that specific game's server. To fix this, you can use a Gaming VPN or Proxy (like ExitLag) to force a more direct route.</p>
+          <a href="/vpn-gaming-guide" class="resource-link">Read our Gaming VPN Guide →</a>
+          <button class="diag-btn" onclick="goToStep('step-start')">Start Over</button>
+        </div>
+
+        <div id="result-wifi" class="diag-step result-panel" style="display:none;">
+          <h3 class="result-title">Diagnosis: WiFi Interference (Jitter)</h3>
+          <p>WiFi is subject to interference from walls, microwaves, and neighbor's routers. This causes your ping to spike randomly. You must switch to a wired Ethernet connection, or at least a MoCA/Powerline adapter.</p>
+          <a href="/wifi-vs-ethernet-gaming" class="resource-link">Take the Network Upgrade Quiz →</a>
+          <button class="diag-btn" onclick="goToStep('step-start')">Start Over</button>
+        </div>
+
+        <div id="result-bufferbloat" class="diag-step result-panel" style="display:none;">
+          <h3 class="result-title">Diagnosis: Bufferbloat</h3>
+          <p>Your router's queue is filling up with large video/download packets, forcing your small gaming packets to wait in line. You need to log into your router and enable QoS (Quality of Service) to prioritize your gaming device.</p>
+          <a href="/router-settings-guide" class="resource-link">Read our Router QoS Guide →</a>
+          <button class="diag-btn" onclick="goToStep('step-start')">Start Over</button>
+        </div>
+
+        <div id="result-isp-node" class="diag-step result-panel" style="display:none;">
+          <h3 class="result-title">Diagnosis: ISP Node Congestion / Bad Line</h3>
+          <p>If you are hardwired, no one else is on the network, and your ping is still spiking or disconnecting, the issue is outside your house. Your ISP's neighborhood node is over-provisioned, or the physical cable outside is damaged. You must contact your ISP.</p>
+          <button class="diag-btn" onclick="goToStep('step-start')">Start Over</button>
+        </div>
+
+        <div id="result-nat" class="diag-step result-panel" style="display:none;">
+          <h3 class="result-title">Diagnosis: Blocked Ports (Strict NAT)</h3>
+          <p>Your router's firewall is blocking incoming connections from the game server. You need to log into your router and either enable UPnP or manually port forward the specific ports for your game.</p>
+          <a href="/port-forwarding-guide" class="resource-link">Use our Port Forwarding Tool →</a>
+          <button class="diag-btn" onclick="goToStep('step-start')">Start Over</button>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Article Content -->
+    <div class="article-content">
+      <p>If you have identified your problem but want a holistic view of how everything connects, read our <a href="/network-optimization-guide">Ultimate Network Optimization Guide</a>.</p>
+
+      <h2>The Three Types of Lag</h2>
+      <p>Gamers tend to use the word "lag" to describe any performance issue. However, properly diagnosing the issue requires understanding that there are three distinct types of lag, each with completely different causes and solutions.</p>
+
+      <h3>1. Hardware Lag (Stuttering & Low FPS)</h3>
+      <p>This has absolutely nothing to do with your internet. If you try to run Cyberpunk 2077 on a 5-year-old laptop, the game will "lag". This is actually your CPU and GPU struggling to render the frames fast enough. </p>
+      <ul>
+        <li><strong>Symptoms:</strong> The game feels choppy when you turn the camera. The FPS counter drops below 60. The audio might desync.</li>
+        <li><strong>The Fix:</strong> Lower your graphics settings, turn on DLSS/FSR, ensure nothing is overheating, or upgrade your PC components.</li>
+      </ul>
+
+      <h3>2. Latency Lag (High Ping)</h3>
+      <p>This is the time it takes for data to travel from your PC to the server and back. </p>
+      <ul>
+        <li><strong>Symptoms:</strong> The game runs smoothly on your screen (high FPS), but your actions feel delayed. You shoot, and a quarter-second later, the enemy takes damage. You run behind a wall, but still die.</li>
+        <li><strong>The Fix:</strong> Ensure you are playing on the server region closest to you geographically. If you are, the issue is likely your ISP's routing, which might be fixed with a <a href="/vpn-gaming-guide">Gaming VPN</a>.</li>
+      </ul>
+
+      <h3>3. Jitter and Packet Loss</h3>
+      <p>This is the most frustrating type of lag. Your average ping might be good, but the connection is unstable.</p>
+      <ul>
+        <li><strong>Symptoms:</strong> Rubber-banding (you walk forward, then teleport backward). Players freeze in place and then suddenly speed up. You see red connection warning icons on the side of your screen.</li>
+        <li><strong>The Fix:</strong> This is almost always caused by playing on a <a href="/wifi-vs-ethernet-gaming">WiFi connection</a>. The wireless signal is being interrupted. You must switch to an Ethernet cable. If you are already on a cable, you are likely experiencing <a href="/router-settings-guide">Bufferbloat</a> because someone else on the network is downloading a large file.</li>
+      </ul>
+
+      <h2>A Note on "Snake Oil" Fixes</h2>
+      <p>When desperate to fix lag, many gamers turn to software solutions that promise miraculous results. Be incredibly wary of:</p>
+      <ul>
+        <li><strong>"Game Booster" Software:</strong> These programs usually just close background apps like Spotify or Chrome. They do not magically fix your internet connection. You can close those apps yourself for free via Task Manager.</li>
+        <li><strong>Registry Tweaks:</strong> Changing TCPAckFrequency or TCpNoDelay in the Windows Registry was a valid fix 15 years ago in the World of Warcraft days. Modern games and operating systems handle this automatically. Changing registry keys now is more likely to break your system than fix your ping.</li>
+      </ul>
+
+      <p>Focus on the hardware fundamentals: an Ethernet connection, a properly configured router, and a healthy PC.</p>
+    </div>
+  </div>
+
+  <script is:inline>
+    function goToStep(stepId) {
+      // Hide all steps
+      document.querySelectorAll('.diag-step').forEach(el => {
+        el.style.display = 'none';
+      });
+      // Show target step
+      document.getElementById(stepId).style.display = 'block';
+    }
+
+    function showResult(resultId) {
+      // Hide all steps
+      document.querySelectorAll('.diag-step').forEach(el => {
+        el.style.display = 'none';
+      });
+      // Show target result
+      document.getElementById(resultId).style.display = 'block';
+    }
+  </script>
+
+  <style is:inline>
+    .page-content { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem; }
+    .hero { text-align: center; padding: 3rem 0 2rem; border-bottom: 1px solid var(--border-color); margin-bottom: 2rem; }
+    .hero h1 { font-size: 2.8rem; font-weight: 800; margin-bottom: 1rem; color: #fff; line-height: 1.2; }
+    .hero p { color: var(--text-secondary); font-size: 1.2rem; max-width: 600px; margin: 0 auto; }
+
+    .card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 2.5rem; margin: 2rem 0; }
+
+    .diagnostic-app { text-align: center; min-height: 350px; display: flex; flex-direction: column; justify-content: center; }
+
+    .diag-step h2 { color: #fff; font-size: 1.8rem; margin-bottom: 1rem; margin-top: 0; }
+    .diag-step p { color: #e2e8f0; font-size: 1.2rem; margin-bottom: 2rem; max-width: 600px; margin-left: auto; margin-right: auto; line-height: 1.5; }
+
+    .btn-group { display: flex; flex-direction: column; gap: 1rem; max-width: 500px; margin: 0 auto 2rem auto; }
+
+    .diag-btn { background: #0f172a; border: 1px solid var(--accent-color); color: #fff; padding: 1.2rem; border-radius: 8px; font-size: 1.1rem; font-weight: 600; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 6px rgba(0,0,0,0.1); line-height: 1.4; }
+    .diag-btn:hover { background: var(--accent-color); transform: translateY(-2px); box-shadow: 0 6px 12px rgba(147, 51, 234, 0.2); }
+
+    .text-btn { background: transparent; border: none; color: #64748b; text-decoration: underline; cursor: pointer; font-size: 1rem; transition: color 0.2s; }
+    .text-btn:hover { color: #fff; }
+
+    .result-panel { background: rgba(16, 185, 129, 0.05); border: 1px solid #10b981; border-radius: 12px; padding: 3rem 2rem; }
+    .result-panel .result-title { color: #10b981; font-size: 1.6rem; margin-top: 0; margin-bottom: 1rem; font-weight: 800; }
+    .result-panel p { color: #e2e8f0; font-size: 1.15rem; margin-bottom: 2rem; }
+
+    .resource-link { display: inline-block; background: var(--accent-color); color: #fff; text-decoration: none; padding: 0.8rem 1.5rem; border-radius: 6px; font-weight: 700; margin-bottom: 2rem; transition: background 0.2s; }
+    .resource-link:hover { background: color-mix(in srgb, var(--accent-color) 80%, white); }
+
+    .article-content { color: #e2e8f0; font-size: 1.1rem; line-height: 1.7; margin-top: 3rem; }
+    .article-content h2 { font-size: 1.8rem; color: #fff; margin-top: 2.5rem; margin-bottom: 1rem; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; }
+    .article-content h3 { font-size: 1.3rem; color: var(--accent-color); margin-top: 1.5rem; margin-bottom: 0.8rem; }
+    .article-content p { margin-bottom: 1.5rem; }
+    .article-content ul, .article-content ol { margin-bottom: 1.5rem; padding-left: 1.5rem; }
+    .article-content li { margin-bottom: 0.5rem; }
+    .article-content a { color: var(--accent-color); text-decoration: none; border-bottom: 1px dotted var(--accent-color); }
+    .article-content a:hover { color: #fff; border-bottom-style: solid; }
+    .article-content strong { color: #fff; font-weight: 700; }
+  </style>
+</SiteLayout>
