@@ -41,6 +41,8 @@ export default {
       'www.leeroyjenkins.quest': 'leeroyjenkins',
       'ijustwantto.live': 'ijustwantto',
       'www.ijustwantto.live': 'ijustwantto',
+      'thenookienook.com': 'nookienook',
+      'www.thenookienook.com': 'nookienook',
       'montrealjobs.photonbuilder.com': 'montrealjobs',
     };
 

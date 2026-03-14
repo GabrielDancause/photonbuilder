@@ -165,6 +165,21 @@ sites['health'] = {
   footer: { text: '© 2026 Health Tools', gabVentures: true },
 };
 
+sites['nookienook'] = {
+  id: 'nookienook',
+  name: 'The Nookie Nook',
+  domain: 'thenookienook.com',
+  accent: '#E84393',
+  theme: { bg: '#0c0610', cardBg: '#140e1a', border: '#2a1e34', textPrimary: '#e8ddf0', textSecondary: '#a090b0' },
+  gaId: 'G-G86C7NJG3F',
+  nav: [
+    { label: 'Guides', href: '/#guides' },
+    { label: 'Tools', href: '/#tools' },
+    { label: 'Studies', href: '/#studies' },
+  ],
+  footer: { text: '© 2026 The Nookie Nook · Educational content only. Not medical advice.', gabVentures: true },
+};
+
 sites['montrealjobs'] = {
   id: 'montrealjobs',
   name: 'Montreal Jobs',
