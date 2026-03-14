@@ -171,7 +171,7 @@ sites['nookienook'] = {
   domain: 'thenookienook.com',
   accent: '#E84393',
   theme: { bg: '#0c0610', cardBg: '#140e1a', border: '#2a1e34', textPrimary: '#e8ddf0', textSecondary: '#a090b0' },
-  gaId: 'G-G86C7NJG3F',
+  gaId: 'G-LQFGTRMFYR',
   nav: [
     { label: 'Guides', href: '/#guides' },
     { label: 'Tools', href: '/#tools' },
