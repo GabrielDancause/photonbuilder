@@ -1,0 +1,120 @@
+---
+import SiteLayout from "../../../layouts/SiteLayout.astro";
+const schema = [
+  {
+    "@type": "Article",
+    "headline": "Free APIs Guide",
+    "author": {
+      "@type": "Person",
+      "name": "SiliconBased Editorial"
+    }
+  },
+  {
+    "@type": "FAQPage",
+    "mainEntity": [
+
+      {
+        "@type": "Question",
+        "name": "What does a 429 status code mean?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "A 429 status code means 'Too Many Requests'. It indicates that you have exceeded the rate limit set by the API provider."
+        }
+      },
+
+      {
+        "@type": "Question",
+        "name": "How do I avoid API rate limits?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "To avoid rate limits, implement response caching, process requests through a queue, and respect the headers provided by the API (like X-RateLimit-Remaining)."
+        }
+      },
+
+      {
+        "@type": "Question",
+        "name": "What is exponential backoff?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Exponential backoff is a strategy where you progressively increase the wait time between retry attempts after failing a request (e.g., waiting 1s, then 2s, then 4s)."
+        }
+      }
+    ]
+  }
+];
+---
+<SiteLayout site="siliconbased" title="API Rate Limiting Guide" description="Understanding limits, caching, queuing." canonical="https://siliconbased.dev/api-rate-limit-guide" schema={schema}>
+  <div class="page-content">
+    <div class="hero">
+      <h1>API Rate Limiting Guide</h1>
+      <p>Understanding limits, caching, queuing.</p>
+    </div>
+    <div class="article-body">
+
+    <h2>Mastering API Rate Limiting</h2>
+    <p>When interacting with free third-party APIs, rate limiting is the primary constraint developers face. API providers implement rate limits to prevent abuse, manage server load, and ensure fair usage across all consumers.</p>
+
+    <h3>Understanding the Metrics</h3>
+    <p>Rate limits are typically enforced using a combination of metrics:</p>
+    <ul>
+      <li><strong>Requests per Second (RPS):</strong> Prevents burst traffic that could spike server CPU usage.</li>
+      <li><strong>Requests per Minute/Hour/Day:</strong> Enforces broader usage quotas.</li>
+      <li><strong>Concurrent Connections:</strong> Limits the number of open connections a single client can maintain.</li>
+    </ul>
+
+    <h3>How to Handle 429 Responses</h3>
+    <p>When you exceed a rate limit, the API will return an HTTP status code <code>429 Too Many Requests</code>. Your application must be designed to handle this gracefully.</p>
+
+    <div class="card">
+      <h4>Exponential Backoff Strategy</h4>
+      <p>Never retry a failed request immediately. Instead, implement exponential backoff. Wait 1 second before the first retry. If it fails again, wait 2 seconds, then 4, then 8, up to a maximum threshold. Introduce a random "jitter" to the wait time to prevent multiple clients from retrying simultaneously.</p>
+    </div>
+
+    <h3>Proactive Rate Limit Management</h3>
+    <p>Do not wait for a 429 response. Be proactive:</p>
+
+    <h4>1. Read the Response Headers</h4>
+    <p>Well-designed APIs include metadata in the response headers:</p>
+    <pre><code>
+X-RateLimit-Limit: 100
+X-RateLimit-Remaining: 24
+X-RateLimit-Reset: 1614556800
+    </code></pre>
+    <p>Your application logic should read <code>X-RateLimit-Remaining</code> and pause execution if the value approaches zero.</p>
+
+    <h4>2. Implement Caching</h4>
+    <p>The best way to respect rate limits is to make fewer requests. Implement caching strategies (like Redis or in-memory LRU caches) for data that changes infrequently. For example, do not fetch a user's GitHub profile data on every page load; cache it for an hour.</p>
+
+    <h4>3. Use Message Queues</h4>
+    <p>If you need to process a large batch of items (e.g., geocoding 10,000 addresses), place the jobs in a queue (like RabbitMQ or AWS SQS). A worker process can then pull jobs from the queue at a controlled pace (e.g., 5 requests per second) that safely aligns with the API's limits.</p>
+
+    <p><em>Return to the <a href="/best-free-apis-2026">Best Free APIs 2026</a> overview.</em></p>
+    <h2>Related Guides</h2>
+    <ul>
+      <li><a href="/free-auth-services">Free Auth Services</a></li>
+      <li><a href="/free-database-services">Free Database Services</a></li>
+    </ul>
+
+
+    </div>
+  </div>
+  <script is:inline>
+    console.log("Loaded API Rate Limiting Guide");
+  </script>
+  <style is:inline>
+    .page-content { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem; color: var(--text-primary); }
+    .hero { text-align: center; padding: 3rem 0 2rem; }
+    .hero h1 { font-size: 2.2rem; font-weight: 800; margin-bottom: 0.5rem; }
+    .hero p { color: var(--text-secondary); font-size: 1.1rem; }
+    .card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem; margin: 1.5rem 0; }
+    .article-body h2 { color: var(--accent-color); font-size: 1.8rem; margin-top: 2.5rem; margin-bottom: 1rem; }
+    .article-body h3 { font-size: 1.4rem; margin-top: 1.5rem; margin-bottom: 0.75rem; }
+    .article-body p { line-height: 1.7; margin-bottom: 1.2rem; color: var(--text-secondary); }
+    .article-body ul { margin-bottom: 1.2rem; padding-left: 1.5rem; color: var(--text-secondary); }
+    .article-body li { margin-bottom: 0.5rem; }
+    .article-body a { color: var(--accent-color); text-decoration: none; font-weight: 500; }
+    .article-body a:hover { text-decoration: underline; }
+    .article-body pre { background: #0c1218; padding: 1rem; border-radius: 8px; overflow-x: auto; border: 1px solid var(--border-color); }
+    .article-body code { font-family: monospace; color: #e0e8f0; }
+  </style>
+</SiteLayout>
