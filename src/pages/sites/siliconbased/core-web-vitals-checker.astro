@@ -1,0 +1,370 @@
+---
+import SiteLayout from "../../../layouts/SiteLayout.astro";
+
+const schema = {
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "Core Web Vitals Impact Checker",
+  "description": "Interactive tool to understand how different web development concepts and techniques affect Core Web Vitals (LCP, FID/INP, CLS).",
+  "author": {
+    "@type": "Organization",
+    "name": "siliconbased.dev"
+  },
+  "mainEntity": {
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "What is considered a good LCP score?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "A good Largest Contentful Paint (LCP) score is 2.5 seconds or less. This means the largest visual element on your page (like a hero image or heading) is fully rendered within 2.5 seconds of the page starting to load."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "What is the difference between FID and INP?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "First Input Delay (FID) measures the delay before the browser can begin processing the first user interaction. Interaction to Next Paint (INP) is the newer metric that measures the overall responsiveness to all interactions during the entire page lifecycle, not just the first one."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How do I fix Cumulative Layout Shift (CLS)?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "To fix CLS, ensure all images and iframes have explicit width and height attributes, never dynamically inject content above existing content without user interaction, and ensure web fonts don't cause text to resize drastically upon loading."
+        }
+      }
+    ]
+  }
+};
+---
+
+<SiteLayout
+  site="siliconbased"
+  title="Core Web Vitals Impact Checker"
+  description="Interactive tool to analyze how your code affects LCP, INP, and CLS."
+  canonical="https://siliconbased.dev/core-web-vitals-checker"
+  schema={schema}
+>
+  <div class="page-content">
+    <div class="hero">
+      <h1>Core Web Vitals Impact Checker</h1>
+      <p>Select a web technology or technique to see how it impacts your Core Web Vitals and get an improvement checklist.</p>
+    </div>
+
+    <div class="content">
+      <p>Google's Core Web Vitals are the industry standard metrics for measuring user experience. They quantify how fast a page loads, how quickly it becomes interactive, and how visually stable it is during loading.</p>
+      <p>Return to our <a href="/web-performance-guide">main Web Performance Guide</a> to understand the full context of these metrics.</p>
+
+      <div class="interactive-tool card">
+        <div class="controls">
+          <label for="conceptSelector">Select a concept to analyze:</label>
+          <select id="conceptSelector">
+            <option value="default">-- Select a Concept --</option>
+            <option value="largeHero">Large Unoptimized Hero Image</option>
+            <option value="customFonts">Custom Web Fonts (FOUT/FOIT)</option>
+            <option value="heavyJs">Heavy Third-Party JavaScript (Analytics, Ads)</option>
+            <option value="clientSideRendering">Client-Side Rendering (CSR) React App</option>
+            <option value="dynamicAds">Dynamic Ads Injected at Top of Page</option>
+            <option value="unSizedImages">Images without Width/Height Attributes</option>
+          </select>
+        </div>
+
+        <div id="resultsPanel" class="results-panel" style="display: none;">
+          <h3 id="resultTitle">Concept Analysis</h3>
+          <p id="resultDesc" class="result-desc"></p>
+
+          <div class="metrics-grid">
+            <div class="metric-card" id="lcpCard">
+              <div class="metric-header">
+                <span class="metric-name">LCP</span>
+                <span class="metric-impact" id="lcpImpact"></span>
+              </div>
+              <p class="metric-detail" id="lcpDetail"></p>
+            </div>
+            <div class="metric-card" id="inpCard">
+              <div class="metric-header">
+                <span class="metric-name">INP / FID</span>
+                <span class="metric-impact" id="inpImpact"></span>
+              </div>
+              <p class="metric-detail" id="inpDetail"></p>
+            </div>
+            <div class="metric-card" id="clsCard">
+              <div class="metric-header">
+                <span class="metric-name">CLS</span>
+                <span class="metric-impact" id="clsImpact"></span>
+              </div>
+              <p class="metric-detail" id="clsDetail"></p>
+            </div>
+          </div>
+
+          <div class="checklist-box">
+            <h4>Optimization Checklist</h4>
+            <ul id="checklistItems" class="checklist">
+              <!-- Checklist populated by JS -->
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <h2>Understanding the Metrics</h2>
+
+      <div class="metric-explanation card">
+        <h3><span class="metric-icon">⏱️</span> Largest Contentful Paint (LCP)</h3>
+        <p>LCP measures loading performance. It marks the point in the page load timeline when the page's main content has likely loaded.</p>
+        <div class="thresholds">
+          <div class="threshold good">Good: &le; 2.5s</div>
+          <div class="threshold needs-improvement">Needs Improvement: &le; 4.0s</div>
+          <div class="threshold poor">Poor: &gt; 4.0s</div>
+        </div>
+        <p><strong>Primary factors affecting LCP:</strong> Slow server response times, render-blocking JavaScript and CSS, slow resource load times, and client-side rendering constraints.</p>
+      </div>
+
+      <div class="metric-explanation card">
+        <h3><span class="metric-icon">🖱️</span> Interaction to Next Paint (INP)</h3>
+        <p>INP is replacing First Input Delay (FID) as the primary interactivity metric. INP observes the latency of all interactions a user has with the page, reporting a single value which all (or nearly all) interactions were below.</p>
+        <div class="thresholds">
+          <div class="threshold good">Good: &le; 200ms</div>
+          <div class="threshold needs-improvement">Needs Improvement: &le; 500ms</div>
+          <div class="threshold poor">Poor: &gt; 500ms</div>
+        </div>
+        <p><strong>Primary factors affecting INP:</strong> Long-running JavaScript tasks on the main thread, complex DOM manipulations, and heavy third-party scripts that block user input.</p>
+      </div>
+
+      <div class="metric-explanation card">
+        <h3><span class="metric-icon">📐</span> Cumulative Layout Shift (CLS)</h3>
+        <p>CLS measures visual stability. It quantifies how much unexpected layout shift occurs during the lifespan of the page. A layout shift occurs anytime a visible element changes its position from one rendered frame to the next.</p>
+        <div class="thresholds">
+          <div class="threshold good">Good: &le; 0.1</div>
+          <div class="threshold needs-improvement">Needs Improvement: &le; 0.25</div>
+          <div class="threshold poor">Poor: &gt; 0.25</div>
+        </div>
+        <p><strong>Primary factors affecting CLS:</strong> Images without dimensions, ads/embeds without reserved space, dynamically injected content, and web fonts causing FOUT/FOIT.</p>
+      </div>
+
+      <p>By understanding how different technologies interact with these metrics, you can make informed architectural decisions. For example, if you know that a heavy client-side React app will likely struggle with LCP, you can plan to implement Server-Side Rendering (SSR) or Static Site Generation (SSG) early in the project.</p>
+
+      <p>Similarly, recognizing that dynamic ad networks often ruin CLS allows you to pre-allocate exact dimensions for ad slots using CSS, preserving the user experience.</p>
+
+      <div class="faq-section">
+        <h2>Frequently Asked Questions</h2>
+        <div class="faq-item">
+          <h3>What is considered a good LCP score?</h3>
+          <p>A good Largest Contentful Paint (LCP) score is 2.5 seconds or less. This means the largest visual element on your page is fully rendered within 2.5 seconds of the initial request.</p>
+        </div>
+        <div class="faq-item">
+          <h3>What is the difference between FID and INP?</h3>
+          <p>First Input Delay (FID) only measures the delay of the <em>first</em> user interaction. Interaction to Next Paint (INP) measures the responsiveness to <em>all</em> interactions throughout the page's lifecycle, providing a more comprehensive view of interactivity.</p>
+        </div>
+        <div class="faq-item">
+          <h3>How do I fix Cumulative Layout Shift (CLS)?</h3>
+          <p>Ensure all <code>&lt;img&gt;</code>, <code>&lt;iframe&gt;</code>, and <code>&lt;video&gt;</code> elements have explicit <code>width</code> and <code>height</code> attributes. Avoid injecting dynamic content above existing content. Pre-allocate space for ads, and use <code>font-display: optional</code> or <code>swap</code> with matched fallback fonts to prevent text resizing layout shifts.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script is:inline>
+    const data = {
+      largeHero: {
+        title: "Large Unoptimized Hero Image",
+        desc: "A 2MB PNG or high-res JPEG acting as the main visual element at the top of the page.",
+        lcp: { impact: "High Negative", detail: "The browser must download massive amounts of data before the main content is visible. This directly destroys LCP times.", class: "negative" },
+        inp: { impact: "Low", detail: "Image decoding can cause minor main thread work, but generally doesn't block interactions heavily.", class: "neutral" },
+        cls: { impact: "Medium Negative", detail: "If the image lacks width/height attributes, it will push content down once it finally loads.", class: "negative" },
+        checklist: [
+          "Convert the image to WebP or AVIF format.",
+          "Use a compression tool like Squoosh or ImageOptim.",
+          "Add <link rel=\"preload\"> for the hero image in the document head.",
+          "Ensure explicit width and height attributes are set on the <img> tag."
+        ]
+      },
+      customFonts: {
+        title: "Custom Web Fonts (FOUT/FOIT)",
+        desc: "Loading multiple heavy Google Fonts or custom font files without proper loading strategies.",
+        lcp: { impact: "Medium Negative", detail: "Text is often the LCP element. If the text is invisible while waiting for the font (FOIT), LCP is delayed until the font loads.", class: "negative" },
+        inp: { impact: "None", detail: "Font loading does not block the main thread for interactivity.", class: "positive" },
+        cls: { impact: "High Negative", detail: "When the custom font swaps in (FOUT), its different x-height or character width can shift all subsequent text and layout.", class: "negative" },
+        checklist: [
+          "Use font-display: swap in your @font-face declaration.",
+          "Preload critical fonts using <link rel=\"preload\" as=\"font\" crossorigin>.",
+          "Use a system font stack (e.g., system-ui) if custom fonts aren't strictly necessary.",
+          "Subset fonts to remove unused characters and reduce file size."
+        ]
+      },
+      heavyJs: {
+        title: "Heavy Third-Party JavaScript",
+        desc: "Multiple analytics trackers, advertising scripts, chat widgets, and A/B testing tools loaded synchronously.",
+        lcp: { impact: "High Negative", detail: "Synchronous scripts block the browser from parsing HTML and rendering the LCP element.", class: "negative" },
+        inp: { impact: "High Negative", detail: "These scripts execute on the main thread. If a user tries to click a button while a script is running, the interaction is delayed.", class: "negative" },
+        cls: { impact: "Low", detail: "Usually doesn't affect CLS unless the scripts dynamically inject DOM elements.", class: "neutral" },
+        checklist: [
+          "Load all third-party scripts using the 'defer' or 'async' attribute.",
+          "Delay loading non-critical scripts (like chat widgets) until after user interaction.",
+          "Use a tag manager to consolidate and manage script execution.",
+          "Audit scripts regularly and remove unused trackers."
+        ]
+      },
+      clientSideRendering: {
+        title: "Client-Side Rendering (CSR) React App",
+        desc: "A Single Page Application where the server sends an empty HTML shell and JavaScript renders the entire UI.",
+        lcp: { impact: "High Negative", detail: "The browser must download the HTML, download the JS bundle, parse the JS, execute the JS, make API calls, and FINALLY render the LCP element. This chain takes a long time.", class: "negative" },
+        inp: { impact: "Medium Negative", detail: "Hydration and initial rendering can monopolize the main thread, delaying initial interactivity.", class: "negative" },
+        cls: { impact: "Medium Negative", detail: "If components render asynchronously without reserved space (e.g., loading spinners replacing data), layout shifts occur.", class: "negative" },
+        checklist: [
+          "Implement Server-Side Rendering (SSR) or Static Site Generation (SSG) (e.g., Next.js, Astro).",
+          "Implement aggressive code splitting so the initial JS bundle is tiny.",
+          "Preload critical API data or inline it into the HTML document.",
+          "Use skeletons to reserve space for asynchronous components."
+        ]
+      },
+      dynamicAds: {
+        title: "Dynamic Ads Injected at Top of Page",
+        desc: "An ad network script that asynchronously injects a banner ad above the main content after the page has started rendering.",
+        lcp: { impact: "Medium Negative", detail: "The ad script execution can delay the rendering of the main LCP element.", class: "negative" },
+        inp: { impact: "Medium Negative", detail: "Ad networks often run heavy JS that blocks the main thread.", class: "negative" },
+        cls: { impact: "Very High Negative", detail: "The worst offender for CLS. The ad pushes all content down, causing massive, disorienting layout shifts for the user.", class: "negative" },
+        checklist: [
+          "Statically reserve space for the ad slot using CSS min-height.",
+          "Never insert dynamic content above existing content without a user interaction.",
+          "If an ad doesn't fill the slot, collapse the slot gracefully or show a fallback, but do so before the user scrolls."
+        ]
+      },
+      unSizedImages: {
+        title: "Images without Width/Height Attributes",
+        desc: "Standard <img> tags used without explicitly defining the width and height attributes in the HTML.",
+        lcp: { impact: "Low", detail: "Does not directly slow down the loading of the image itself.", class: "neutral" },
+        inp: { impact: "None", detail: "Does not affect main thread interactivity.", class: "positive" },
+        cls: { impact: "Very High Negative", detail: "The browser doesn't know how much space to allocate. When the image downloads, it suddenly expands, pushing down all subsequent text and layout.", class: "negative" },
+        checklist: [
+          "Always include width=\"X\" and height=\"Y\" attributes on <img> tags.",
+          "Set CSS to img { max-width: 100%; height: auto; } to ensure they remain responsive within their container.",
+          "Use CSS aspect-ratio properties for complex responsive layouts."
+        ]
+      }
+    };
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const selector = document.getElementById('conceptSelector');
+      const panel = document.getElementById('resultsPanel');
+
+      const title = document.getElementById('resultTitle');
+      const desc = document.getElementById('resultDesc');
+
+      const lcpImpact = document.getElementById('lcpImpact');
+      const lcpDetail = document.getElementById('lcpDetail');
+      const lcpCard = document.getElementById('lcpCard');
+
+      const inpImpact = document.getElementById('inpImpact');
+      const inpDetail = document.getElementById('inpDetail');
+      const inpCard = document.getElementById('inpCard');
+
+      const clsImpact = document.getElementById('clsImpact');
+      const clsDetail = document.getElementById('clsDetail');
+      const clsCard = document.getElementById('clsCard');
+
+      const checklistList = document.getElementById('checklistItems');
+
+      selector.addEventListener('change', (e) => {
+        const val = e.target.value;
+        if (val === 'default' || !data[val]) {
+          panel.style.display = 'none';
+          return;
+        }
+
+        const d = data[val];
+
+        title.textContent = d.title;
+        desc.textContent = d.desc;
+
+        // LCP
+        lcpImpact.textContent = d.lcp.impact;
+        lcpDetail.textContent = d.lcp.detail;
+        lcpCard.className = `metric-card ${d.lcp.class}`;
+
+        // INP
+        inpImpact.textContent = d.inp.impact;
+        inpDetail.textContent = d.inp.detail;
+        inpCard.className = `metric-card ${d.inp.class}`;
+
+        // CLS
+        clsImpact.textContent = d.cls.impact;
+        clsDetail.textContent = d.cls.detail;
+        clsCard.className = `metric-card ${d.cls.class}`;
+
+        // Checklist
+        checklistList.innerHTML = d.checklist.map(item => `<li><span class="check-icon">✓</span> ${item}</li>`).join('');
+
+        panel.style.display = 'block';
+      });
+    });
+  </script>
+
+  <style is:inline>
+    .page-content { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem; color: var(--text-primary); }
+    .hero { text-align: center; padding: 3rem 0 2rem; border-bottom: 1px solid var(--border-color); margin-bottom: 2rem; }
+    .hero h1 { font-size: 2.2rem; font-weight: 800; margin-bottom: 0.5rem; color: #fff; }
+    .hero p { color: var(--text-secondary); font-size: 1.1rem; }
+
+    .content h2 { font-size: 1.8rem; margin-top: 2.5rem; margin-bottom: 1rem; color: #fff; }
+    .content h3 { font-size: 1.3rem; margin-top: 1.5rem; margin-bottom: 0.5rem; color: #fff; }
+    .content p { line-height: 1.7; margin-bottom: 1rem; color: #d1d5db; }
+
+    .card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem; margin: 1.5rem 0; }
+
+    .content a { color: var(--accent-color); text-decoration: none; font-weight: 500; }
+    .content a:hover { text-decoration: underline; }
+
+    /* Tool Specific Styles */
+    .interactive-tool { margin: 2.5rem 0; padding: 2rem; }
+    .controls label { display: block; font-weight: 600; color: #fff; margin-bottom: 0.5rem; font-size: 1.1rem; }
+    .controls select { width: 100%; padding: 1rem; background: #0f172a; border: 2px solid var(--border-color); color: #fff; border-radius: 8px; font-size: 1.05rem; outline: none; transition: border-color 0.2s; cursor: pointer; }
+    .controls select:focus { border-color: var(--accent-color); }
+
+    .results-panel { margin-top: 2rem; padding-top: 2rem; border-top: 1px solid var(--border-color); animation: fadeIn 0.4s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+    .results-panel h3 { margin-top: 0; color: var(--accent-color); }
+    .result-desc { font-style: italic; color: #94a3b8; margin-bottom: 1.5rem; }
+
+    .metrics-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+
+    .metric-card { background: #0f172a; border: 1px solid var(--border-color); border-radius: 8px; padding: 1.2rem; transition: all 0.2s; }
+    .metric-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.8rem; border-bottom: 1px solid rgba(255,255,255,0.05); padding-bottom: 0.5rem; }
+    .metric-name { font-weight: 700; color: #fff; }
+    .metric-impact { font-size: 0.85rem; font-weight: 600; padding: 0.2rem 0.6rem; border-radius: 12px; }
+    .metric-detail { font-size: 0.9rem; line-height: 1.5; margin: 0; color: #cbd5e1; }
+
+    .metric-card.negative { border-color: rgba(239, 68, 68, 0.4); }
+    .metric-card.negative .metric-impact { background: rgba(239, 68, 68, 0.15); color: #fca5a5; }
+
+    .metric-card.neutral { border-color: rgba(234, 179, 8, 0.4); }
+    .metric-card.neutral .metric-impact { background: rgba(234, 179, 8, 0.15); color: #fde047; }
+
+    .metric-card.positive { border-color: rgba(34, 197, 94, 0.4); }
+    .metric-card.positive .metric-impact { background: rgba(34, 197, 94, 0.15); color: #86efac; }
+
+    .checklist-box { background: #0c1218; border: 1px solid var(--border-color); border-radius: 8px; padding: 1.5rem; }
+    .checklist-box h4 { margin-top: 0; margin-bottom: 1rem; color: #fff; font-size: 1.1rem; }
+    .checklist { list-style: none; padding: 0; margin: 0; }
+    .checklist li { margin-bottom: 0.8rem; display: flex; align-items: flex-start; gap: 0.5rem; color: #d1d5db; line-height: 1.5; }
+    .checklist li:last-child { margin-bottom: 0; }
+    .check-icon { color: var(--accent-color); font-weight: bold; }
+
+    /* Explanations */
+    .metric-explanation { border-left: 4px solid var(--accent-color); }
+    .metric-icon { display: inline-block; margin-right: 0.5rem; }
+    .thresholds { display: flex; gap: 0.5rem; margin: 1rem 0; flex-wrap: wrap; }
+    .threshold { padding: 0.3rem 0.8rem; border-radius: 4px; font-size: 0.85rem; font-weight: 600; border: 1px solid; }
+    .threshold.good { background: rgba(34, 197, 94, 0.1); color: #4ade80; border-color: rgba(34, 197, 94, 0.3); }
+    .threshold.needs-improvement { background: rgba(234, 179, 8, 0.1); color: #facc15; border-color: rgba(234, 179, 8, 0.3); }
+    .threshold.poor { background: rgba(239, 68, 68, 0.1); color: #f87171; border-color: rgba(239, 68, 68, 0.3); }
+
+    .faq-section { margin-top: 4rem; padding-top: 2rem; border-top: 1px solid var(--border-color); }
+    .faq-item { margin-bottom: 2rem; }
+    .faq-item h3 { font-size: 1.2rem; margin-bottom: 0.5rem; margin-top: 0; }
+  </style>
+</SiteLayout>
