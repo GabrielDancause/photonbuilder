@@ -1,0 +1,371 @@
+---
+import SiteLayout from "../../../layouts/SiteLayout.astro";
+
+export const meta = {
+  title: "Dead by Daylight Stat Tracker | Calculate Kill & Survival Rates",
+  description: "Calculate your Dead by Daylight (DBD) kill rates as Killer or survival rates as Survivor. Do you actually escape more than you think?",
+  category: "tool",
+  published: "2026-03-15",
+};
+
+const schema = [
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": "Dead by Daylight Stat Tracker | Calculate Kill & Survival Rates",
+    "description": "Calculate your Dead by Daylight (DBD) kill rates as Killer or survival rates as Survivor. Do you actually escape more than you think?",
+    "author": {
+      "@type": "Organization",
+      "name": "SiliconBased.dev"
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "SiliconBased.dev"
+    },
+    "datePublished": "2026-03-15"
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "How is the Killer kill rate calculated in Dead by Daylight?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "The kill rate is calculated by taking your total number of kills and dividing it by the total number of survivors you have faced. Since there are 4 survivors in every match, the formula is: (Total Kills / (Matches Played × 4)) × 100."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "What is considered a 'good' kill rate in DBD?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "According to official statistics released by the developers, the average kill rate across all killers usually hovers between 50% and 60%. Achieving a kill rate consistently above 60% generally indicates strong performance and map control."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Does escaping through the hatch count towards my survival rate?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes. When calculating your personal survival rate, an escape through the hatch counts just as much as an escape through the exit gates. Both outcomes result in surviving the trial."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Why do Killers track average kills per match?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Average kills per match (a number between 0 and 4) provides a more tangible metric than a pure percentage. In the community, a '2K' (2 kills) is often considered a tie, while a '3K' or '4K' is considered a definitive win."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Does DBD have an official public stat tracking API?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Unlike some competitive games, Dead by Daylight does not currently have an open, public API that allows third-party sites to automatically pull detailed, match-by-match player statistics, which is why manual tracking calculators remain popular."
+        }
+      }
+    ]
+  }
+];
+---
+<SiteLayout site="siliconbased" title={meta.title} description={meta.description} canonical="https://siliconbased.dev/dbd-stat-tracker" schema={schema}>
+  <div class="page-content">
+    <div class="hero">
+      <h1>DBD Stat Tracker & Calculator</h1>
+      <p class="subtitle">Manually calculate your true kill rates, survival rates, and match statistics in Dead by Daylight.</p>
+    </div>
+
+    <div class="calculator-container">
+      <div class="tabs">
+        <button class="tab-btn active" data-role="killer">Killer Stats</button>
+        <button class="tab-btn" data-role="survivor">Survivor Stats</button>
+      </div>
+
+      <!-- Killer Form -->
+      <div id="killer-form" class="role-form active">
+        <div class="input-grid">
+          <div class="input-group">
+            <label for="killer-matches">Total Matches Played</label>
+            <input type="number" id="killer-matches" value="" placeholder="e.g. 100" min="1" step="1">
+          </div>
+          <div class="input-group">
+            <label for="total-kills">Total Kills (0-4 per match)</label>
+            <input type="number" id="total-kills" value="" placeholder="e.g. 250" min="0" step="1">
+          </div>
+        </div>
+        <div class="results-grid">
+          <div class="result-card">
+            <h3>Average Kills per Match</h3>
+            <div class="result-value" id="avg-kills">--</div>
+            <p class="result-subtext">Out of 4</p>
+          </div>
+          <div class="result-card">
+            <h3>Kill Rate</h3>
+            <div class="result-value" id="kill-rate">--</div>
+            <p class="result-subtext">Percentage of survivors killed</p>
+          </div>
+        </div>
+        <div id="killer-error" class="error-text" style="display: none;">Please enter valid numbers. Total kills cannot exceed 4 times the number of matches.</div>
+      </div>
+
+      <!-- Survivor Form -->
+      <div id="survivor-form" class="role-form">
+        <div class="input-grid">
+          <div class="input-group">
+            <label for="survivor-matches">Total Matches Played</label>
+            <input type="number" id="survivor-matches" value="" placeholder="e.g. 100" min="1" step="1">
+          </div>
+          <div class="input-group">
+            <label for="total-escapes">Total Escapes (Through exit or hatch)</label>
+            <input type="number" id="total-escapes" value="" placeholder="e.g. 45" min="0" step="1">
+          </div>
+        </div>
+        <div class="results-grid">
+          <div class="result-card">
+            <h3>Survival Rate</h3>
+            <div class="result-value" id="survival-rate">--</div>
+            <p class="result-subtext">Percentage of matches escaped</p>
+          </div>
+          <div class="result-card">
+            <h3>Death Rate</h3>
+            <div class="result-value" id="death-rate">--</div>
+            <p class="result-subtext">Percentage of matches sacrificed</p>
+          </div>
+        </div>
+        <div id="survivor-error" class="error-text" style="display: none;">Please enter valid numbers. Escapes cannot exceed total matches.</div>
+      </div>
+    </div>
+
+    <div class="explainer">
+      <h2>Understanding Your Dead by Daylight Stats</h2>
+      <div style="background: var(--card-bg); padding: 1rem; border-radius: 8px; border: 1px solid var(--border-color); margin-bottom: 2rem;">
+        <p style="margin: 0; font-weight: 600;">Stressed about an upcoming final exam?</p>
+        <p style="margin: 0.5rem 0 0; color: var(--text-secondary);">Check out our <a href="/exam-calculator" style="color: var(--accent-color); text-decoration: underline;">Final Exam Grade Calculator</a> to see exactly what you need to score to hit your target class grade.</p>
+      </div>
+      <p>
+        In the asymmetrical horror world of Dead by Daylight (DBD), evaluating your true performance can often feel subjective. When playing as a Killer, does a match with only two sacrifices count as a win, a loss, or a draw? When playing as a Survivor, does an agonizing streak of face-camping killers mean you are actually bad at the game, or is your long-term survival rate higher than you realize? Because the game lacks an easily accessible, hyper-detailed match history in the post-game lobby, players must rely on external tools like our <strong>DBD stat tracker</strong> to quantify their true skill and measure their improvement over time.
+      </p>
+
+      <h3>Analyzing Killer Performance: The Kill Rate</h3>
+      <p>
+        For Killer mains, the ultimate metric of success is the Kill Rate. While bloodpoints, emblems, and pip progression are important for leveling up, they do not accurately reflect your lethality. A Killer who continuously hooks different survivors but fails to secure sacrifices might earn a high emblem score but effectively "lose" the match. The community generally agrees that kills are the purest measure of victory.
+      </p>
+      <p>
+        The mathematics behind the Killer calculator rely on a simple but critical baseline: there are exactly four survivors in every standard trial. Therefore, the maximum number of potential kills is equal to your total matches multiplied by four. To calculate your <strong>Kill Rate percentage</strong>, the formula is:
+      </p>
+      <div class="formula-block">
+        <code>Kill Rate = [ Total Kills / (Total Matches × 4) ] × 100</code>
+      </div>
+      <p>
+        For example, if you play 100 matches, you have faced 400 total survivors. If you secured 250 kills across those matches, your Kill Rate is 62.5%. According to data occasionally released by Behaviour Interactive (the developers of DBD), the game is theoretically balanced to achieve a Kill Rate averaging around 50% to 60%.
+      </p>
+      <p>
+        Additionally, the calculator outputs your <strong>Average Kills per Match</strong>, which is simply your total kills divided by your total matches. A result of 2.0 indicates an exact tie (a standard "2K"). A result approaching 3.0 or higher indicates you are consistently dominating your trials and securing definitive wins. Tracking these metrics separately for different killers (e.g., comparing your Nurse stats against your Trapper stats) is the best way to determine which killers actually suit your playstyle.
+      </p>
+
+      <h3>Analyzing Survivor Performance: Survival & Death Rates</h3>
+      <p>
+        Playing Survivor is a fundamentally different experience. It is a team game where individual success is heavily reliant on the altruism and skill of three other strangers. Because of this, Survivor statistics can be incredibly volatile in the short term. You might play a flawless game looping the killer for five generators, only to be sacrificed at the end due to a teammate's mistake.
+      </p>
+      <p>
+        This volatility makes using a <strong>stat tracker</strong> even more crucial for Survivor mains. Over a large enough sample size of matches, the variance of bad teammates normalizes, and your true <strong>Survival Rate</strong> emerges. The formula is straightforward:
+      </p>
+      <div class="formula-block">
+        <code>Survival Rate = (Total Escapes / Total Matches) × 100</code>
+      </div>
+      <p>
+        Unlike the Killer metric, where a 50% kill rate is average, Survivor survival rates are often lower. Because a killer securing a 60% kill rate mathematically means survivors are dying 60% of the time, an average, balanced survival rate often sits closer to 40%. This is an essential psychological baseline. If your survival rate is 45%, you might feel like you are dying constantly, but mathematically, you are actually performing above average.
+      </p>
+
+      <h3>Why Manual Tracking Matters</h3>
+      <p>
+        Unlike highly competitive esports titles that feature robust public APIs (allowing sites to instantly pull every bullet fired or step taken), Dead by Daylight's technical infrastructure is more closed. While you can view total lifetime stats on platforms like Steam (such as total bloodpoints earned or lifetime escapes), these lifetime numbers are largely useless for tracking recent improvement. Your lifetime escape rate includes the hundreds of matches you played years ago when you were still learning the game.
+      </p>
+      <p>
+        By utilizing a manual calculator, you can track discrete "sessions" or "seasons." By recording your stats over your last 50 matches, you capture a snapshot of your current skill level, reflecting your understanding of the latest map reworks, perk adjustments, and meta shifts. Consistent tracking transforms the chaotic, often frustrating experience of Dead by Daylight into a measurable journey of steady improvement.
+      </p>
+    </div>
+
+    <section class="faq-section">
+      <h2>Frequently Asked Questions</h2>
+      <details>
+        <summary>How is the Killer kill rate calculated in Dead by Daylight?</summary>
+        <div class="faq-content">
+          <p>The kill rate is calculated by taking your total number of kills and dividing it by the total number of survivors you have faced. Since there are 4 survivors in every match, the formula is: (Total Kills / (Matches Played × 4)) × 100.</p>
+        </div>
+      </details>
+      <details>
+        <summary>What is considered a "good" kill rate in DBD?</summary>
+        <div class="faq-content">
+          <p>According to official statistics released by the developers, the average kill rate across all killers usually hovers between 50% and 60%. Achieving a kill rate consistently above 60% generally indicates strong performance and map control.</p>
+        </div>
+      </details>
+      <details>
+        <summary>Does escaping through the hatch count towards my survival rate?</summary>
+        <div class="faq-content">
+          <p>Yes. When calculating your personal survival rate, an escape through the hatch counts just as much as an escape through the exit gates. Both outcomes result in surviving the trial.</p>
+        </div>
+      </details>
+      <details>
+        <summary>Why do Killers track average kills per match?</summary>
+        <div class="faq-content">
+          <p>Average kills per match (a number between 0 and 4) provides a more tangible metric than a pure percentage. In the community, a "2K" (2 kills) is often considered a tie, while a "3K" or "4K" is considered a definitive win.</p>
+        </div>
+      </details>
+      <details>
+        <summary>Does DBD have an official public stat tracking API?</summary>
+        <div class="faq-content">
+          <p>Unlike some competitive games, Dead by Daylight does not currently have an open, public API that allows third-party sites to automatically pull detailed, match-by-match player statistics, which is why manual tracking calculators remain popular.</p>
+        </div>
+      </details>
+    </section>
+  </div>
+
+  <script is:inline>
+    document.addEventListener('DOMContentLoaded', () => {
+      // Tab Switching Logic
+      const tabBtns = document.querySelectorAll('.tab-btn');
+      const roleForms = document.querySelectorAll('.role-form');
+
+      tabBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+          // Remove active class from all
+          tabBtns.forEach(b => b.classList.remove('active'));
+          roleForms.forEach(f => f.classList.remove('active'));
+
+          // Add active class to clicked
+          btn.classList.add('active');
+          const targetId = `${btn.dataset.role}-form`;
+          document.getElementById(targetId).classList.add('active');
+        });
+      });
+
+      // Killer Calculator
+      const killerMatchesInput = document.getElementById('killer-matches');
+      const totalKillsInput = document.getElementById('total-kills');
+      const avgKillsOutput = document.getElementById('avg-kills');
+      const killRateOutput = document.getElementById('kill-rate');
+      const killerError = document.getElementById('killer-error');
+
+      function calculateKiller() {
+        const matches = parseInt(killerMatchesInput.value, 10);
+        const kills = parseInt(totalKillsInput.value, 10);
+
+        if (killerMatchesInput.value === '' && totalKillsInput.value === '') {
+          killerError.style.display = 'none';
+          avgKillsOutput.textContent = '--';
+          killRateOutput.textContent = '--';
+          return;
+        }
+
+        if (isNaN(matches) || isNaN(kills) || matches < 1 || kills < 0 || kills > (matches * 4)) {
+          killerError.style.display = 'block';
+          avgKillsOutput.textContent = '--';
+          killRateOutput.textContent = '--';
+          return;
+        }
+
+        killerError.style.display = 'none';
+
+        const avgKills = kills / matches;
+        const killRate = (kills / (matches * 4)) * 100;
+
+        avgKillsOutput.textContent = avgKills.toFixed(2);
+        killRateOutput.textContent = killRate.toFixed(1) + '%';
+      }
+
+      [killerMatchesInput, totalKillsInput].forEach(input => {
+        input.addEventListener('input', calculateKiller);
+      });
+
+      // Survivor Calculator
+      const survivorMatchesInput = document.getElementById('survivor-matches');
+      const totalEscapesInput = document.getElementById('total-escapes');
+      const survivalRateOutput = document.getElementById('survival-rate');
+      const deathRateOutput = document.getElementById('death-rate');
+      const survivorError = document.getElementById('survivor-error');
+
+      function calculateSurvivor() {
+        const matches = parseInt(survivorMatchesInput.value, 10);
+        const escapes = parseInt(totalEscapesInput.value, 10);
+
+        if (survivorMatchesInput.value === '' && totalEscapesInput.value === '') {
+          survivorError.style.display = 'none';
+          survivalRateOutput.textContent = '--';
+          deathRateOutput.textContent = '--';
+          return;
+        }
+
+        if (isNaN(matches) || isNaN(escapes) || matches < 1 || escapes < 0 || escapes > matches) {
+          survivorError.style.display = 'block';
+          survivalRateOutput.textContent = '--';
+          deathRateOutput.textContent = '--';
+          return;
+        }
+
+        survivorError.style.display = 'none';
+
+        const survivalRate = (escapes / matches) * 100;
+        const deathRate = 100 - survivalRate;
+
+        survivalRateOutput.textContent = survivalRate.toFixed(1) + '%';
+        deathRateOutput.textContent = deathRate.toFixed(1) + '%';
+      }
+
+      [survivorMatchesInput, totalEscapesInput].forEach(input => {
+        input.addEventListener('input', calculateSurvivor);
+      });
+    });
+  </script>
+
+  <style is:inline>
+    .page-content { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem; }
+    .hero { text-align: center; padding: 3rem 0 2rem; }
+    .hero h1 { font-size: 2.2rem; font-weight: 800; margin-bottom: 0.5rem; }
+    .subtitle { color: var(--text-secondary); font-size: 1.1rem; }
+
+    .calculator-container { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 2rem; margin: 2rem 0; }
+
+    .tabs { display: flex; gap: 1rem; margin-bottom: 2rem; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem; }
+    .tab-btn { background: transparent; color: var(--text-secondary); border: 1px solid transparent; padding: 0.5rem 1.5rem; border-radius: 8px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+    .tab-btn:hover { color: var(--text-primary); background: var(--bg-color); }
+    .tab-btn.active { background: var(--accent-color); color: white; border-color: var(--accent-color); }
+
+    .role-form { display: none; }
+    .role-form.active { display: block; }
+
+    .input-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
+    .input-group { display: flex; flex-direction: column; gap: 0.5rem; }
+    label { font-weight: 600; font-size: 0.95rem; }
+
+    input { background: var(--bg-color); color: var(--text-primary); border: 1px solid var(--border-color); padding: 0.75rem 1rem; border-radius: 8px; width: 100%; font-size: 1rem; }
+    input:focus { outline: none; border-color: var(--accent-color); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-color) 20%, transparent); }
+
+    .results-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; }
+
+    .result-card { background: color-mix(in srgb, var(--accent-color) 10%, transparent); border: 1px solid var(--accent-color); border-radius: 12px; padding: 1.5rem; margin: 0; text-align: center; display: flex; flex-direction: column; justify-content: center; }
+    .result-card h3 { font-size: 1rem; margin: 0 0 0.5rem 0; font-weight: 600; }
+    .result-value { font-size: 2.5rem; font-weight: 800; color: var(--accent-color); margin: 0.5rem 0; word-break: break-word; }
+    .result-subtext { font-size: 0.85rem; color: var(--text-secondary); margin: 0; }
+
+    .error-text { color: #ef4444; margin-top: 1rem; text-align: center; font-weight: 500; }
+
+    .explainer { line-height: 1.7; margin-top: 3rem; }
+    .explainer h2 { font-size: 1.8rem; margin: 2rem 0 1rem; }
+    .explainer h3 { font-size: 1.4rem; margin: 1.5rem 0 1rem; }
+    .explainer p { margin-bottom: 1rem; color: var(--text-secondary); }
+    .explainer ul { margin-bottom: 1.5rem; padding-left: 1.5rem; color: var(--text-secondary); }
+    .explainer li { margin-bottom: 0.5rem; }
+
+    .faq-section { margin-top: 3rem; }
+    .faq-section h2 { font-size: 1.8rem; margin-bottom: 1.5rem; }
+    .faq-section details { margin: 1rem 0; padding: 1rem; background: var(--card-bg); border-radius: 8px; border: 1px solid var(--border-color); }
+    .faq-section summary { font-weight: 600; cursor: pointer; }
+    .faq-content { margin-top: 1rem; color: var(--text-secondary); line-height: 1.6; }
+    .faq-content p { margin: 0; }
+  </style>
+</SiteLayout>
