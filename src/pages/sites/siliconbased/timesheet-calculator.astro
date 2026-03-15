@@ -1,0 +1,608 @@
+---
+import SiteLayout from "../../../layouts/SiteLayout.astro";
+
+export const meta = {
+  title: "Timesheet Calculator",
+  description: "Calculate your total work hours, factor in unpaid breaks, and estimate your gross pay with our precise timesheet calculator. No sign-up required.",
+  category: "tool",
+  published: "2024-05-15"
+};
+
+const schema = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "How do you calculate total hours worked?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "To calculate total hours worked, find the difference between your clock-in time and clock-out time. Then, subtract any unpaid break time from that total."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How are minutes converted to decimals for payroll?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "For payroll, minutes are divided by 60 to get a decimal. For example, 15 minutes is 15/60 = 0.25 hours, 30 minutes is 0.5 hours, and 45 minutes is 0.75 hours."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What is gross pay?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Gross pay is your total earnings before any taxes or deductions are taken out. It is calculated by multiplying your total hours worked by your hourly rate."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Should breaks be deducted from timesheets?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "It depends on labor laws and employer policies. Typically, short breaks (15 minutes) are paid, while longer meal breaks (30+ minutes) are unpaid and should be deducted from your total hours."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How is overtime calculated?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "In the US, under federal law, overtime is generally calculated as 1.5 times the regular hourly rate for any hours worked over 40 in a standard workweek."
+          }
+        }
+      ]
+    },
+    {
+      "@type": "Article",
+      "headline": meta.title,
+      "description": meta.description,
+      "datePublished": meta.published,
+      "author": {
+        "@type": "Organization",
+        "name": "SiliconBased"
+      }
+    }
+  ]
+};
+---
+
+<SiteLayout site="siliconbased" title={meta.title} description={meta.description} canonical="https://siliconbased.dev/timesheet-calculator" schema={schema}>
+  <div class="page-content">
+    <div class="hero">
+      <h1>Timesheet Calculator</h1>
+      <p class="subtitle">Quickly calculate your total hours and gross pay for the week.</p>
+    </div>
+
+    <div class="calculator-container">
+      <div class="global-settings">
+        <div class="input-group">
+          <label for="hourly-rate">Hourly Rate ($)</label>
+          <input type="number" id="hourly-rate" placeholder="e.g. 15.00" min="0" step="0.01">
+        </div>
+      </div>
+
+      <div class="timesheet-grid">
+        <div class="grid-header">
+          <div class="col-day">Day</div>
+          <div class="col-time">Time In</div>
+          <div class="col-time">Time Out</div>
+          <div class="col-break">Break (mins)</div>
+          <div class="col-total">Total Hours</div>
+        </div>
+
+        <div id="timesheet-rows">
+          <!-- Populated by JS -->
+        </div>
+      </div>
+
+      <div class="results-section">
+        <div class="results-grid">
+          <div class="result-card">
+            <div class="result-label">Total Hours</div>
+            <div class="result-value" id="total-hours-result">0.00</div>
+          </div>
+          <div class="result-card" id="pay-card" style="display: none;">
+            <div class="result-label">Estimated Gross Pay</div>
+            <div class="result-value" id="total-pay-result">$0.00</div>
+            <div class="result-subtext">Before taxes & deductions</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="explainer">
+      <h2>Understanding Your Timesheet</h2>
+      <p>
+        Whether you're an hourly employee double-checking your paycheck, a freelancer tracking billable hours, or a small business owner managing payroll, accuracy in your timesheet is crucial. A simple error of just 15 minutes a day can add up to dozens of unpaid hours over a year. Our <strong>timesheet calculator</strong> is designed to provide quick, accurate calculations for your weekly hours and estimated gross pay.
+      </p>
+
+      <h3>How to Calculate Hours Worked</h3>
+      <p>
+        Calculating your total hours worked isn't as simple as counting the hours you were in the building. It requires converting your clock-in and clock-out times into decimal formats, calculating the duration of your shift, and properly deducting unpaid breaks.
+      </p>
+
+      <h4>1. The 24-Hour Clock Conversion</h4>
+      <p>
+        The first step in calculating duration is converting your standard 12-hour AM/PM times into a 24-hour format (military time). This prevents mathematical errors when crossing the noon threshold.
+      </p>
+      <ul>
+        <li>For AM times, the hour remains the same (e.g., 9:00 AM is 09:00).</li>
+        <li>For PM times, add 12 to the hour (e.g., 5:00 PM becomes 17:00).</li>
+      </ul>
+
+      <h4>2. Converting Minutes to Decimals</h4>
+      <p>
+        This is where most mistakes happen. Payroll systems do not process time in minutes; they process time in hundredths of an hour (decimals). You cannot simply write down "8.30" for 8 hours and 30 minutes, because 30 minutes is <em>half</em> an hour, meaning the correct decimal is 8.5.
+      </p>
+      <p>
+        To convert minutes to a decimal, divide the minutes by 60.
+      </p>
+      <div class="formula-box">
+        <code>Decimal Hours = Minutes / 60</code>
+      </div>
+      <p>
+        Common conversions include:
+      </p>
+      <ul>
+        <li>15 minutes = 0.25 hours</li>
+        <li>30 minutes = 0.50 hours</li>
+        <li>45 minutes = 0.75 hours</li>
+      </ul>
+
+      <h4>3. Subtracting Unpaid Breaks</h4>
+      <p>
+        Under the Fair Labor Standards Act (FLSA) in the United States, short breaks (usually 5 to 20 minutes) are considered compensable work hours. However, bona fide meal periods (typically 30 minutes or more) where the employee is completely relieved of duty do not count as work time.
+      </p>
+      <p>
+        When calculating your timesheet, you must deduct these unpaid breaks from your total shift duration.
+      </p>
+
+      <h3>Step-by-Step Example Calculation</h3>
+      <p>
+        Let's walk through a typical workday to see the math in action:
+      </p>
+      <ul>
+        <li><strong>Clock-In:</strong> 8:30 AM</li>
+        <li><strong>Clock-Out:</strong> 5:15 PM</li>
+        <li><strong>Unpaid Lunch:</strong> 45 minutes</li>
+      </ul>
+
+      <p><strong>Step 1: Convert to 24-hour time</strong></p>
+      <ul>
+        <li>8:30 AM = 08:30</li>
+        <li>5:15 PM = 17:15</li>
+      </ul>
+
+      <p><strong>Step 2: Calculate total elapsed time</strong></p>
+      <p>First, subtract the hours: 17 - 8 = 9 hours.<br>
+      Then, subtract the minutes: 15 - 30 = -15 minutes.<br>
+      Since we have a negative minute value, we borrow 1 hour (60 minutes) from the hour total.<br>
+      9 hours becomes 8 hours.<br>
+      -15 minutes + 60 minutes = 45 minutes.<br>
+      The total shift duration is 8 hours and 45 minutes.</p>
+
+      <p><strong>Step 3: Convert to decimal</strong></p>
+      <p>45 minutes / 60 = 0.75 hours. The total duration is <strong>8.75 hours</strong>.</p>
+
+      <p><strong>Step 4: Deduct the break</strong></p>
+      <p>The unpaid break was 45 minutes. We convert this to decimal: 45 / 60 = 0.75 hours.<br>
+      Now, subtract the break from the total duration: 8.75 hours - 0.75 hours = <strong>8.00 billable hours</strong>.</p>
+
+      <h3>Calculating Gross Pay</h3>
+      <p>
+        Gross pay is the total amount of money you earn before taxes, insurance premiums, retirement contributions, or other deductions are withheld from your paycheck.
+      </p>
+      <div class="formula-box">
+        <code>Gross Pay = Total Billable Hours × Hourly Rate</code>
+      </div>
+      <p>
+        If you worked 40 hours in a week and your hourly rate is $18.50, your gross pay is:
+      </p>
+      <p>
+        <code>40 × $18.50 = $740.00</code>
+      </p>
+
+      <h4>What About Overtime?</h4>
+      <p>
+        It is important to note that our calculator currently provides a straight-time gross pay estimate. It does not automatically calculate time-and-a-half for overtime hours. Federal law in the US mandates that non-exempt employees receive 1.5 times their regular rate of pay for any hours worked over 40 in a single workweek. Some states, like California, also have daily overtime laws (e.g., overtime pay for any hours worked beyond 8 in a single day). If you work overtime, your actual gross pay will be higher than a straight-time calculation.
+      </p>
+
+      <h3>Tips for Accurate Time Tracking</h3>
+      <ul>
+        <li><strong>Track daily, not weekly:</strong> Memory fades. If you wait until Friday to fill out your timesheet for Monday, you are likely to guess incorrectly, which can shortchange you or your employer.</li>
+        <li><strong>Be precise:</strong> Don't round to the nearest hour if your employer tracks time by the minute or quarter-hour. If you clocked out at 5:08 PM, write down 5:08 PM.</li>
+        <li><strong>Understand your employer's rounding policy:</strong> The FLSA allows employers to round employee time to the nearest quarter hour (15-minute increments), provided that the rounding averages out and doesn't continually disadvantage the employee. For example, clocking in at 8:07 AM could be rounded to 8:00 AM, while clocking in at 8:08 AM could be rounded to 8:15 AM.</li>
+      </ul>
+    </div>
+
+    <section class="faq-section">
+      <h2>Frequently Asked Questions</h2>
+      <details>
+        <summary>How do you calculate total hours worked?</summary>
+        <p>To calculate total hours worked, find the difference between your clock-in time and clock-out time. First convert the times to a 24-hour clock. Then subtract the start time from the end time. Finally, subtract any unpaid break time (converted to decimals) from that total duration.</p>
+      </details>
+      <details>
+        <summary>How are minutes converted to decimals for payroll?</summary>
+        <p>For payroll, minutes must be divided by 60 to calculate the decimal equivalent of an hour. For example, 15 minutes is 15/60 = 0.25 hours, 30 minutes is 0.5 hours, and 45 minutes is 0.75 hours. You cannot simply use minutes as the decimal (e.g., 8 hours and 30 minutes is 8.5, not 8.30).</p>
+      </details>
+      <details>
+        <summary>What is gross pay?</summary>
+        <p>Gross pay is your total earnings before any taxes, garnishments, or deductions are taken out. It is calculated by multiplying your total hours worked by your hourly rate.</p>
+      </details>
+      <details>
+        <summary>Should breaks be deducted from timesheets?</summary>
+        <p>It depends on labor laws and employer policies. Under federal law in the US, short breaks (typically 5-20 minutes) must be paid. However, longer, bona fide meal breaks (30+ minutes) where you are fully relieved of duties are typically unpaid and should be deducted from your total work hours.</p>
+      </details>
+      <details>
+        <summary>How is overtime calculated?</summary>
+        <p>In the US, under federal law, overtime is generally calculated as time-and-a-half (1.5 times the regular hourly rate) for any hours worked over 40 in a standard workweek. Some states also have laws mandating overtime pay for hours worked beyond a certain threshold in a single day.</p>
+      </details>
+    </section>
+  </div>
+
+  <script is:inline>
+    document.addEventListener('DOMContentLoaded', () => {
+      const rowsContainer = document.getElementById('timesheet-rows');
+      const hourlyRateInput = document.getElementById('hourly-rate');
+      const totalHoursResult = document.getElementById('total-hours-result');
+      const totalPayResult = document.getElementById('total-pay-result');
+      const payCard = document.getElementById('pay-card');
+
+      const days = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday'];
+
+      function renderRows() {
+        days.forEach(day => {
+          const row = document.createElement('div');
+          row.className = 'grid-row';
+
+          row.innerHTML = '<div class="col-day label-day">' + day + '</div>' +
+            '<div class="col-time"><input type="time" class="time-in" aria-label="' + day + ' Time In"></div>' +
+            '<div class="col-time"><input type="time" class="time-out" aria-label="' + day + ' Time Out"></div>' +
+            '<div class="col-break"><input type="number" class="break-mins" min="0" placeholder="0" aria-label="' + day + ' Break Minutes"></div>' +
+            '<div class="col-total"><span class="row-total">0.00</span></div>';
+
+          rowsContainer.appendChild(row);
+
+          row.querySelectorAll('input').forEach(input => {
+            input.addEventListener('input', calculateTotal);
+          });
+        });
+      }
+
+      function parseTime(timeStr) {
+        if (!timeStr) return null;
+        const [hours, minutes] = timeStr.split(':').map(Number);
+        return { hours, minutes };
+      }
+
+      function calculateRowTotal(row) {
+        const timeInStr = row.querySelector('.time-in').value;
+        const timeOutStr = row.querySelector('.time-out').value;
+        const breakMinsStr = row.querySelector('.break-mins').value;
+        const totalSpan = row.querySelector('.row-total');
+
+        if (!timeInStr || !timeOutStr) {
+          totalSpan.textContent = '0.00';
+          return 0;
+        }
+
+        const tIn = parseTime(timeInStr);
+        const tOut = parseTime(timeOutStr);
+        const breakMins = parseInt(breakMinsStr) || 0;
+
+        let inMinutes = tIn.hours * 60 + tIn.minutes;
+        let outMinutes = tOut.hours * 60 + tOut.minutes;
+
+        if (outMinutes < inMinutes) {
+          // Crosses midnight
+          outMinutes += 24 * 60;
+        }
+
+        let totalMinutes = outMinutes - inMinutes - breakMins;
+
+        if (totalMinutes < 0) totalMinutes = 0;
+
+        const hoursDecimal = totalMinutes / 60;
+        totalSpan.textContent = hoursDecimal.toFixed(2);
+
+        if (hoursDecimal > 0) {
+          totalSpan.classList.add('has-value');
+        } else {
+          totalSpan.classList.remove('has-value');
+        }
+
+        return hoursDecimal;
+      }
+
+      function calculateTotal() {
+        const rows = document.querySelectorAll('.grid-row');
+        let totalHours = 0;
+
+        rows.forEach(row => {
+          totalHours += calculateRowTotal(row);
+        });
+
+        totalHoursResult.textContent = totalHours.toFixed(2);
+
+        const rate = parseFloat(hourlyRateInput.value);
+        if (!isNaN(rate) && rate > 0) {
+          payCard.style.display = 'block';
+          const totalPay = totalHours * rate;
+          totalPayResult.textContent = '$' + totalPay.toFixed(2);
+        } else {
+          payCard.style.display = 'none';
+        }
+      }
+
+      hourlyRateInput.addEventListener('input', calculateTotal);
+
+      renderRows();
+      calculateTotal();
+    });
+  </script>
+
+  <style is:inline>
+    .page-content {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem;
+    }
+
+    .hero {
+      text-align: center;
+      padding: 3rem 0 2rem;
+    }
+
+    .hero h1 {
+      font-size: 2.2rem;
+      font-weight: 800;
+      margin-bottom: 0.5rem;
+      color: var(--accent-color);
+    }
+
+    .subtitle {
+      color: var(--text-secondary);
+      font-size: 1.1rem;
+    }
+
+    .calculator-container {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 2rem;
+      margin: 2rem 0;
+    }
+
+    .global-settings {
+      margin-bottom: 2rem;
+      max-width: 300px;
+    }
+
+    .input-group label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    input {
+      background: var(--bg-color);
+      color: var(--text-primary);
+      border: 1px solid var(--border-color);
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      width: 100%;
+      font-size: 1rem;
+    }
+
+    input:focus {
+      outline: none;
+      border-color: var(--accent-color);
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-color) 20%, transparent);
+    }
+
+    .timesheet-grid {
+      width: 100%;
+      overflow-x: auto;
+    }
+
+    .grid-header {
+      display: flex;
+      gap: 1rem;
+      padding-bottom: 0.75rem;
+      border-bottom: 2px solid var(--border-color);
+      margin-bottom: 1rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      min-width: 600px;
+    }
+
+    .grid-row {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+      margin-bottom: 1rem;
+      min-width: 600px;
+    }
+
+    .col-day { width: 120px; flex-shrink: 0; }
+    .col-time { flex: 1; min-width: 130px; }
+    .col-break { flex: 1; min-width: 100px; }
+    .col-total { width: 100px; flex-shrink: 0; text-align: right; font-weight: 600; font-family: monospace; font-size: 1.1rem; }
+
+    .label-day {
+      font-weight: 500;
+      color: var(--text-primary);
+    }
+
+    .row-total {
+      color: var(--text-secondary);
+    }
+
+    .row-total.has-value {
+      color: var(--accent-color);
+    }
+
+    .results-section {
+      margin-top: 2rem;
+      padding-top: 2rem;
+      border-top: 1px solid var(--border-color);
+    }
+
+    .results-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1.5rem;
+    }
+
+    .result-card {
+      background: color-mix(in srgb, var(--accent-color) 10%, transparent);
+      border: 1px solid var(--accent-color);
+      border-radius: 12px;
+      padding: 1.5rem;
+      text-align: center;
+    }
+
+    .result-label {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+
+    .result-value {
+      font-size: 3rem;
+      font-weight: 800;
+      color: var(--accent-color);
+      line-height: 1.2;
+    }
+
+    .result-subtext {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      margin-top: 0.5rem;
+    }
+
+    .explainer {
+      margin: 4rem 0;
+      line-height: 1.7;
+    }
+
+    .explainer h2, .explainer h3, .explainer h4 {
+      color: var(--accent-color);
+      margin-top: 2rem;
+    }
+
+    .explainer h4 {
+      color: var(--text-primary);
+      font-size: 1.1rem;
+    }
+
+    .formula-box {
+      background: var(--bg-color);
+      padding: 1rem;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+      font-family: monospace;
+      margin: 1rem 0;
+      text-align: center;
+      overflow-x: auto;
+    }
+
+    .faq-section details {
+      margin: 1rem 0;
+      padding: 1.25rem;
+      background: var(--card-bg);
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+    }
+
+    .faq-section summary {
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 1.1rem;
+      color: var(--text-primary);
+    }
+
+    .faq-section p {
+      margin-top: 1rem;
+      margin-bottom: 0;
+      color: var(--text-secondary);
+    }
+
+    @media (max-width: 768px) {
+      .grid-header {
+        display: none;
+      }
+
+      .timesheet-grid {
+        overflow-x: visible;
+      }
+
+      .grid-row {
+        min-width: 100%;
+        flex-direction: column;
+        background: var(--bg-color);
+        padding: 1rem;
+        border-radius: 8px;
+        border: 1px solid var(--border-color);
+        gap: 0.75rem;
+        align-items: stretch;
+      }
+
+      .col-day {
+        width: 100%;
+        font-weight: 700;
+        font-size: 1.1rem;
+        border-bottom: 1px solid var(--border-color);
+        padding-bottom: 0.5rem;
+      }
+
+      .col-time, .col-break {
+        display: flex;
+        align-items: center;
+      }
+
+      .col-time::before, .col-break::before {
+        content: "Time In";
+        width: 100px;
+        font-weight: 600;
+        font-size: 0.9rem;
+        color: var(--text-secondary);
+      }
+
+      .grid-row .col-time:nth-child(3)::before {
+        content: "Time Out";
+      }
+
+      .col-break::before {
+        content: "Break (min)";
+      }
+
+      .col-total {
+        width: 100%;
+        text-align: left;
+        margin-top: 0.5rem;
+        padding-top: 0.5rem;
+        border-top: 1px dashed var(--border-color);
+        display: flex;
+        justify-content: space-between;
+      }
+
+      .col-total::before {
+        content: "Daily Total";
+        font-family: var(--font-ui);
+        font-weight: 600;
+        font-size: 0.9rem;
+        color: var(--text-secondary);
+      }
+
+      .result-value {
+        font-size: 2.5rem;
+      }
+    }
+  </style>
+</SiteLayout>
