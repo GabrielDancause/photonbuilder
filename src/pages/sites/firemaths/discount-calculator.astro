@@ -1,0 +1,463 @@
+---
+import SiteLayout from "../../../layouts/SiteLayout.astro";
+
+export const meta = {
+  title: "Discount Calculator & Price Saver",
+  description: "Stop guessing how much you're saving. Calculate exact discounts, final prices, and total savings instantly before you check out.",
+  category: "tool",
+  published: "2024-05-15",
+};
+
+const schema = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "How do you calculate a discount?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "To calculate a discount, multiply the original price by the discount percentage (as a decimal). For example, a 20% discount on a $50 item is $50 × 0.20 = $10. Subtract the $10 from the original price to get the final price of $40."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How do I find the original price after a discount?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Divide the final price by (1 minus the discount percentage). For example, if you paid $40 after a 20% discount, the original price is $40 ÷ (1 - 0.20) = $40 ÷ 0.80 = $50."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Are double discounts calculated additively?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "No. Double discounts (like '20% off plus an extra 10% off') are applied sequentially, not added together. A 20% + 10% discount on $100 means you first deduct $20 to get $80, and then take 10% off the $80 (which is $8), resulting in a final price of $72 (a total discount of 28%, not 30%)."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What is the formula for percentage decrease?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "The formula to find the percentage decrease (or discount percentage) is: ((Original Price - Final Price) ÷ Original Price) × 100."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Does this calculator include sales tax?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Sales tax is typically calculated on the final discounted price. You can calculate your discount first, and then apply your local sales tax percentage to the final price."
+      }
+    }
+  ]
+};
+---
+
+<SiteLayout site="firemaths" title={meta.title} description={meta.description} canonical="https://firemaths.info/discount-calculator" schema={schema}>
+  <div class="page-content">
+    <div class="hero">
+      <h1>Discount Calculator</h1>
+      <p class="subtitle">Instantly calculate final price, savings, or original price.</p>
+    </div>
+
+    <div class="calculator-container">
+      <div class="calc-tabs">
+        <button class="tab-btn active" data-tab="find-price">Find Final Price</button>
+        <button class="tab-btn" data-tab="find-original">Find Original Price</button>
+        <button class="tab-btn" data-tab="find-discount">Find Discount %</button>
+      </div>
+
+      <!-- Tab 1: Find Final Price -->
+      <div id="find-price" class="tab-content active">
+        <div class="input-grid">
+          <div class="input-group">
+            <label for="price-original">Original Price</label>
+            <div class="input-wrapper">
+              <span class="prefix">$</span>
+              <input type="number" id="price-original" class="calc-input price-mode" placeholder="0.00" step="0.01" min="0" />
+            </div>
+            <div id="price-original-error" class="error-msg"></div>
+          </div>
+          <div class="input-group">
+            <label for="price-discount">Discount (%)</label>
+            <div class="input-wrapper">
+              <input type="number" id="price-discount" class="calc-input price-mode" placeholder="20" step="1" min="0" max="100" />
+              <span class="suffix">%</span>
+            </div>
+            <div id="price-discount-error" class="error-msg"></div>
+          </div>
+        </div>
+        <div class="result-card multi-result">
+          <div class="result-box">
+            <div class="calc-result-label">Final Price</div>
+            <div id="price-final-result" class="result-value">$0.00</div>
+          </div>
+          <div class="result-box highlighted">
+            <div class="calc-result-label">You Save</div>
+            <div id="price-saved-result" class="result-value positive">$0.00</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Tab 2: Find Original Price -->
+      <div id="find-original" class="tab-content">
+        <div class="input-grid">
+          <div class="input-group">
+            <label for="orig-final">Final Price</label>
+            <div class="input-wrapper">
+              <span class="prefix">$</span>
+              <input type="number" id="orig-final" class="calc-input orig-mode" placeholder="0.00" step="0.01" min="0" />
+            </div>
+            <div id="orig-final-error" class="error-msg"></div>
+          </div>
+          <div class="input-group">
+            <label for="orig-discount">Discount (%)</label>
+            <div class="input-wrapper">
+              <input type="number" id="orig-discount" class="calc-input orig-mode" placeholder="20" step="1" min="0" max="99.9" />
+              <span class="suffix">%</span>
+            </div>
+            <div id="orig-discount-error" class="error-msg"></div>
+          </div>
+        </div>
+        <div class="result-card">
+          <div class="calc-result-label">Original Price Was</div>
+          <div id="orig-result" class="result-value">$0.00</div>
+          <div id="orig-saved-text" class="range-info-text">You saved $0.00</div>
+        </div>
+      </div>
+
+      <!-- Tab 3: Find Discount % -->
+      <div id="find-discount" class="tab-content">
+        <div class="input-grid">
+          <div class="input-group">
+            <label for="perc-original">Original Price</label>
+            <div class="input-wrapper">
+              <span class="prefix">$</span>
+              <input type="number" id="perc-original" class="calc-input perc-mode" placeholder="0.00" step="0.01" min="0" />
+            </div>
+            <div id="perc-original-error" class="error-msg"></div>
+          </div>
+          <div class="input-group">
+            <label for="perc-final">Final Price</label>
+            <div class="input-wrapper">
+              <span class="prefix">$</span>
+              <input type="number" id="perc-final" class="calc-input perc-mode" placeholder="0.00" step="0.01" min="0" />
+            </div>
+            <div id="perc-final-error" class="error-msg"></div>
+          </div>
+        </div>
+        <div class="result-card">
+          <div class="calc-result-label">Discount Percentage</div>
+          <div id="perc-result" class="result-value">0%</div>
+          <div id="perc-saved-text" class="range-info-text">You saved $0.00</div>
+        </div>
+      </div>
+
+      <div class="cross-link-banner">
+        <p>Tracking your health metrics? Check out our <a href="/a1c-calculator">A1C Calculator</a> to convert your blood sugar levels.</p>
+      </div>
+    </div>
+
+    <div class="explainer">
+      <h2>Understanding Discount Calculations</h2>
+
+      <p>Whether you are a savvy shopper hunting for the best Black Friday deals, a business owner pricing inventory for a clearance sale, or a student solving math problems, understanding how to accurately calculate discounts, markdowns, and savings is an essential financial skill. While the basic concept of "percent off" seems straightforward, the underlying mathematics can sometimes be tricky, particularly when dealing with compounding discounts or trying to reverse-engineer an original price.</p>
+
+      <p>Our interactive Discount Calculator is designed to eliminate the guesswork. It allows you to approach discount calculations from three different angles: calculating the final price and total savings, finding the original price if you only know the final cost and the discount percentage, or determining the actual percentage discount you received when comparing two prices.</p>
+
+      <h3>How to Calculate a Final Price</h3>
+      <p>The most common scenario you will encounter is knowing the original retail price of an item and the percentage discount being offered. To calculate the final price you will pay, you first need to determine the monetary value of the discount itself. You do this by converting the discount percentage into a decimal (by dividing it by 100) and then multiplying it by the original price.</p>
+
+      <p>For example, if you want to buy a jacket that originally costs $120 and it is on sale for 25% off:</p>
+      <ul>
+        <li>First, convert 25% to a decimal: 25 &divide; 100 = 0.25</li>
+        <li>Next, calculate the savings: $120 &times; 0.25 = $30</li>
+        <li>Finally, subtract the savings from the original price: $120 &minus; $30 = $90</li>
+      </ul>
+
+      <div class="highlight-box formula-box">
+        <strong>Final Price = Original Price &minus; (Original Price &times; (Discount % &divide; 100))</strong>
+      </div>
+
+      <p>A faster shortcut is to calculate the percentage of the price you are <em>actually paying</em>. If an item is 25% off, you are paying 75% of its original value (100% &minus; 25%). Therefore, you can simply multiply $120 by 0.75 to get $90 directly.</p>
+
+      <h3>How to Find the Original Price</h3>
+      <p>Sometimes you might buy an item on sale, look at the receipt, and see the final price and the discount percentage, but the original price isn't listed. Or perhaps you want to verify that a store's "original price" tag is mathematically accurate. Reversing the discount calculation requires a different approach. You cannot simply add the percentage back onto the final price.</p>
+
+      <p>If you bought a laptop for $600 after a 20% discount, what was the original price? Since you received a 20% discount, the $600 represents 80% of the original price. To find the whole 100%, you divide the final price by the percentage you paid (as a decimal).</p>
+
+      <ul>
+        <li>Percentage paid: 100% &minus; 20% = 80% (or 0.80)</li>
+        <li>Original Price = $600 &divide; 0.80 = $750</li>
+      </ul>
+
+      <div class="highlight-box formula-box">
+        <strong>Original Price = Final Price &divide; (1 &minus; (Discount % &divide; 100))</strong>
+      </div>
+
+      <p>If you incorrectly tried to add 20% back onto the $600 ($600 &times; 1.20), you would get $720, which is incorrect. This is a common mathematical error.</p>
+
+      <h3>Calculating the Percentage Discount</h3>
+      <p>The third tab of our calculator helps you find the discount percentage when you know both the original starting price and the final sale price. This is particularly useful for analyzing historical pricing data or evaluating whether a "sale" is actually a good deal compared to the item's standard retail price.</p>
+
+      <p>To find the discount percentage, you first calculate the total monetary savings by subtracting the final price from the original price. Then, you divide those savings by the original price. Finally, multiply the result by 100 to convert the decimal back into a percentage.</p>
+
+      <p>If a television's original price is $1,000 and it is on sale for $850:</p>
+      <ul>
+        <li>Calculate total savings: $1,000 &minus; $850 = $150</li>
+        <li>Divide savings by original price: $150 &divide; $1,000 = 0.15</li>
+        <li>Convert to percentage: 0.15 &times; 100 = 15% discount</li>
+      </ul>
+
+      <div class="highlight-box formula-box">
+        <strong>Discount % = ((Original Price &minus; Final Price) &divide; Original Price) &times; 100</strong>
+      </div>
+
+      <h3>The Trap of Double Discounts</h3>
+      <p>Retailers frequently use promotional tactics like "Take an extra 20% off already reduced clearance items marked 50% off." A common consumer misconception is to add these percentages together, assuming they are receiving a 70% total discount. However, mathematically, discounts are applied sequentially, not cumulatively.</p>
+
+      <p>Let's look at a $100 item with a 50% discount and an additional 20% off:</p>
+      <ul>
+        <li>First discount (50% off): $100 &times; 0.50 = $50 final price after first discount.</li>
+        <li>Second discount (20% off): The 20% is applied to the new $50 price, not the original $100. So, $50 &times; 0.20 = $10 in additional savings.</li>
+        <li>Final Price: $50 &minus; $10 = $40.</li>
+      </ul>
+
+      <p>Paying $40 for a $100 item means your total effective discount is 60%, not the 70% you might have initially assumed. Being aware of how sequential discounts operate can help you make more informed purchasing decisions and avoid falling for deceptive marketing psychology.</p>
+    </div>
+
+    <section class="faq-section">
+      <h2>Frequently Asked Questions</h2>
+
+      <details>
+        <summary>How do you calculate a discount?</summary>
+        <p>To calculate a discount, multiply the original price by the discount percentage expressed as a decimal. For example, a 20% discount on a $50 item is $50 &times; 0.20 = $10. Subtract the $10 from the original price to get the final price of $40.</p>
+      </details>
+
+      <details>
+        <summary>How do I find the original price after a discount?</summary>
+        <p>To find the original price, divide the final sale price by (1 minus the discount percentage). For example, if you paid $40 after a 20% discount, the original price is $40 &divide; (1 - 0.20) = $40 &divide; 0.80 = $50.</p>
+      </details>
+
+      <details>
+        <summary>Are double discounts calculated additively?</summary>
+        <p>No, double discounts (like '20% off plus an extra 10% off') are applied sequentially. A 20% + 10% discount on a $100 item means you first deduct 20% ($20) to reach $80, and then take 10% off the $80 (which is $8), resulting in a final price of $72. Your total effective discount is 28%, not 30%.</p>
+      </details>
+
+      <details>
+        <summary>What is the formula for percentage decrease?</summary>
+        <p>The formula to find the percentage decrease (the discount percentage) is: ((Original Price - Final Price) &divide; Original Price) &times; 100.</p>
+      </details>
+
+      <details>
+        <summary>Does this calculator include sales tax?</summary>
+        <p>This calculator determines the pre-tax final price. Sales tax is typically calculated on the final discounted price of the item. You should calculate your discount first using our tool, and then apply your local sales tax percentage to that final discounted amount.</p>
+      </details>
+    </section>
+  </div>
+
+  <script is:inline>
+    document.addEventListener('DOMContentLoaded', () => {
+      // Tab Switching Logic
+      const tabs = document.querySelectorAll('.tab-btn');
+      const contents = document.querySelectorAll('.tab-content');
+
+      tabs.forEach(tab => {
+        tab.addEventListener('click', () => {
+          tabs.forEach(t => t.classList.remove('active'));
+          contents.forEach(c => c.classList.remove('active'));
+
+          tab.classList.add('active');
+          document.getElementById(tab.dataset.tab).classList.add('active');
+        });
+      });
+
+      // Formatter
+      const formatCurrency = (val) => {
+        return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(val);
+      };
+
+      // Tab 1: Find Final Price
+      const priceOrig = document.getElementById('price-original');
+      const priceDisc = document.getElementById('price-discount');
+      const priceFinalRes = document.getElementById('price-final-result');
+      const priceSavedRes = document.getElementById('price-saved-result');
+      const priceOrigErr = document.getElementById('price-original-error');
+      const priceDiscErr = document.getElementById('price-discount-error');
+
+      function calculateFinalPrice() {
+        const orig = parseFloat(priceOrig.value);
+        const disc = parseFloat(priceDisc.value);
+
+        priceOrigErr.textContent = '';
+        priceDiscErr.textContent = '';
+
+        if (isNaN(orig) || isNaN(disc) || orig < 0 || disc < 0 || disc > 100) {
+          if (orig < 0) priceOrigErr.textContent = 'Price cannot be negative';
+          if (disc < 0 || disc > 100) priceDiscErr.textContent = 'Discount must be 0-100%';
+          priceFinalRes.textContent = '$0.00';
+          priceSavedRes.textContent = '$0.00';
+          return;
+        }
+
+        const saved = orig * (disc / 100);
+        const final = orig - saved;
+
+        priceFinalRes.textContent = formatCurrency(final);
+        priceSavedRes.textContent = formatCurrency(saved);
+      }
+
+      document.querySelectorAll('.price-mode').forEach(input => {
+        input.addEventListener('input', calculateFinalPrice);
+      });
+
+      // Tab 2: Find Original Price
+      const origFinal = document.getElementById('orig-final');
+      const origDisc = document.getElementById('orig-discount');
+      const origRes = document.getElementById('orig-result');
+      const origSavedText = document.getElementById('orig-saved-text');
+      const origFinalErr = document.getElementById('orig-final-error');
+      const origDiscErr = document.getElementById('orig-discount-error');
+
+      function calculateOriginalPrice() {
+        const final = parseFloat(origFinal.value);
+        const disc = parseFloat(origDisc.value);
+
+        origFinalErr.textContent = '';
+        origDiscErr.textContent = '';
+
+        if (isNaN(final) || isNaN(disc) || final < 0 || disc < 0 || disc >= 100) {
+          if (final < 0) origFinalErr.textContent = 'Price cannot be negative';
+          if (disc < 0 || disc >= 100) origDiscErr.textContent = 'Discount must be 0-99.9%';
+          origRes.textContent = '$0.00';
+          origSavedText.textContent = 'You saved $0.00';
+          return;
+        }
+
+        const orig = final / (1 - (disc / 100));
+        const saved = orig - final;
+
+        origRes.textContent = formatCurrency(orig);
+        origSavedText.textContent = `You saved ${formatCurrency(saved)}`;
+      }
+
+      document.querySelectorAll('.orig-mode').forEach(input => {
+        input.addEventListener('input', calculateOriginalPrice);
+      });
+
+      // Tab 3: Find Discount %
+      const percOrig = document.getElementById('perc-original');
+      const percFinal = document.getElementById('perc-final');
+      const percRes = document.getElementById('perc-result');
+      const percSavedText = document.getElementById('perc-saved-text');
+      const percOrigErr = document.getElementById('perc-original-error');
+      const percFinalErr = document.getElementById('perc-final-error');
+
+      function calculateDiscountPercent() {
+        const orig = parseFloat(percOrig.value);
+        const final = parseFloat(percFinal.value);
+
+        percOrigErr.textContent = '';
+        percFinalErr.textContent = '';
+
+        if (isNaN(orig) || isNaN(final) || orig <= 0 || final < 0) {
+          if (orig <= 0) percOrigErr.textContent = 'Original price must be > 0';
+          if (final < 0) percFinalErr.textContent = 'Price cannot be negative';
+          percRes.textContent = '0%';
+          percSavedText.textContent = 'You saved $0.00';
+          return;
+        }
+
+        if (final > orig) {
+          percFinalErr.textContent = 'Final price must be less than original';
+          percRes.textContent = '0%';
+          percSavedText.textContent = 'You saved $0.00';
+          return;
+        }
+
+        const saved = orig - final;
+        const disc = (saved / orig) * 100;
+
+        percRes.textContent = `${disc.toFixed(2).replace(/\.00$/, '')}%`;
+        percSavedText.textContent = `You saved ${formatCurrency(saved)}`;
+      }
+
+      document.querySelectorAll('.perc-mode').forEach(input => {
+        input.addEventListener('input', calculateDiscountPercent);
+      });
+    });
+  </script>
+
+  <style is:inline>
+    .page-content { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem; }
+    .hero { text-align: center; padding: 3rem 0 2rem; }
+    .hero h1 { font-size: 2.2rem; font-weight: 800; margin-bottom: 0.5rem; color: var(--accent-color); }
+    .subtitle { color: var(--text-secondary); font-size: 1.1rem; }
+
+    .calculator-container { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 0; margin: 2rem 0; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); overflow: hidden; }
+
+    .calc-tabs { display: flex; background: rgba(0,0,0,0.1); border-bottom: 1px solid var(--border-color); }
+    .tab-btn { flex: 1; background: transparent; border: none; padding: 1rem; color: var(--text-secondary); font-weight: 600; cursor: pointer; transition: all 0.2s; border-radius: 0; font-size: 0.95rem; border-bottom: 2px solid transparent; }
+    .tab-btn:hover { background: rgba(255,255,255,0.05); color: var(--text-primary); }
+    .tab-btn.active { color: var(--accent-color); border-bottom-color: var(--accent-color); background: var(--card-bg); }
+
+    .tab-content { display: none; padding: 2rem; }
+    .tab-content.active { display: block; animation: fadeIn 0.3s ease; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
+
+    .input-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem; }
+    @media (max-width: 600px) { .input-grid { grid-template-columns: 1fr; } }
+
+    .input-group label { display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--text-primary); }
+    .input-wrapper { position: relative; display: flex; align-items: center; }
+
+    input { background: var(--bg-color); color: var(--text-primary); border: 1px solid var(--border-color); padding: 0.75rem 1rem; border-radius: 8px; width: 100%; font-size: 1.25rem; font-family: var(--font-mono, monospace); transition: border-color 0.2s; }
+    .input-wrapper .prefix + input { padding-left: 2rem; }
+    .input-wrapper input + .suffix { padding-right: 2.5rem; }
+    input:focus { outline: none; border-color: var(--accent-color); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-color) 20%, transparent); }
+
+    .prefix { position: absolute; left: 1rem; color: var(--text-secondary); font-weight: 500; pointer-events: none; }
+    .suffix { position: absolute; right: 1rem; color: var(--text-secondary); font-weight: 500; pointer-events: none; }
+
+    .error-msg { color: #ef4444; font-size: 0.875rem; margin-top: 0.5rem; min-height: 1.25rem; }
+
+    .result-card { background: color-mix(in srgb, var(--accent-color) 5%, transparent); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem; text-align: center; }
+    .result-card.multi-result { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; padding: 1rem; background: transparent; border: none; }
+    .result-box { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem; }
+    .result-box.highlighted { background: color-mix(in srgb, #22c55e 5%, transparent); border-color: rgba(34, 197, 94, 0.3); }
+
+    @media (max-width: 600px) { .result-card.multi-result { grid-template-columns: 1fr; } }
+
+    .calc-result-label { font-size: 0.9rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem; font-weight: 600; }
+    .result-value { font-size: 2.5rem; font-weight: 800; color: var(--text-primary); word-break: break-all; }
+    .result-value.positive { color: #22c55e; }
+    .range-info-text { margin-top: 0.5rem; color: var(--text-secondary); font-size: 0.95rem; }
+
+    .cross-link-banner { background: rgba(129, 140, 248, 0.1); border-left: 4px solid var(--accent-color); padding: 1rem 1.5rem; margin: 0 2rem 2rem; border-radius: 0 8px 8px 0; font-size: 0.95rem; }
+    @media (max-width: 600px) { .cross-link-banner { margin: 0 1rem 1rem; } }
+    .cross-link-banner a { color: var(--accent-color); font-weight: 600; text-decoration: none; }
+    .cross-link-banner a:hover { text-decoration: underline; }
+
+    .explainer { margin-top: 3rem; }
+    .explainer h2 { font-size: 1.8rem; margin-bottom: 1.5rem; color: var(--accent-color); }
+    .explainer h3 { font-size: 1.3rem; margin-top: 2rem; margin-bottom: 1rem; }
+    .explainer p { margin-bottom: 1.2rem; line-height: 1.7; color: var(--text-secondary); }
+    .explainer ul { margin-bottom: 1.5rem; padding-left: 1.5rem; color: var(--text-secondary); }
+    .explainer li { margin-bottom: 0.75rem; line-height: 1.6; }
+
+    .formula-box { font-family: var(--font-mono, monospace); text-align: center; font-size: 1.1rem; padding: 1rem; }
+
+    .faq-section { margin-top: 3rem; }
+    .faq-section h2 { font-size: 1.8rem; margin-bottom: 1.5rem; color: var(--accent-color); }
+    .faq-section details { margin: 1rem 0; padding: 1rem 1.5rem; background: var(--card-bg); border-radius: 8px; border: 1px solid var(--border-color); transition: all 0.2s; }
+    .faq-section details[open] { border-color: var(--accent-color); background: color-mix(in srgb, var(--accent-color) 2%, var(--card-bg)); }
+    .faq-section summary { font-weight: 600; cursor: pointer; font-size: 1.1rem; list-style-type: none; position: relative; padding-right: 1.5rem; color: var(--text-primary); }
+    .faq-section summary::-webkit-details-marker { display: none; }
+    .faq-section summary::after { content: '+'; position: absolute; right: 0; top: 50%; transform: translateY(-50%); font-size: 1.5rem; font-weight: 400; color: var(--accent-color); transition: transform 0.2s; }
+    .faq-section details[open] summary::after { content: '−'; }
+    .faq-section details p { margin-top: 1rem; margin-bottom: 0; color: var(--text-secondary); line-height: 1.6; }
+  </style>
+</SiteLayout>

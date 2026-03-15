@@ -1,0 +1,364 @@
+---
+import SiteLayout from "../../../layouts/SiteLayout.astro";
+
+export const meta = {
+  title: "Free Timecard & Payroll Calculator",
+  description: "Why do manual payroll math? Calculate total work hours, overtime, breaks, and gross pay instantly for your timesheet.",
+  category: "tool",
+  published: "2026-03-15",
+};
+
+const schema = [
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": meta.title,
+    "description": meta.description,
+    "author": {
+      "@type": "Organization",
+      "name": "ijustwantto.live"
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "ijustwantto.live"
+    },
+    "datePublished": meta.published
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "How do you calculate time card hours?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "To calculate time card hours, convert your clock-in and clock-out times to military time (24-hour format) or decimal hours. Subtract the clock-in time from the clock-out time, then subtract any unpaid break durations. Sum the daily totals for the entire pay period."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How is overtime calculated?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Under the Fair Labor Standards Act (FLSA) in the US, overtime is generally calculated as 1.5 times the regular hourly rate for any hours worked over 40 in a single workweek. Some states (like California) also require overtime pay for hours worked beyond 8 in a single day."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Are breaks included in total hours worked?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Short rest breaks (usually 5 to 20 minutes) are generally considered paid time and are included in total hours worked. Bona fide meal periods (typically 30 minutes or more) where the employee is completely relieved from duty are unpaid and should be subtracted from total hours."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How do you convert minutes to decimal hours?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "To convert minutes to decimal hours for payroll purposes, divide the number of minutes by 60. For example, 15 minutes is 0.25 hours (15/60), 30 minutes is 0.50 hours, and 45 minutes is 0.75 hours."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "What is the difference between gross pay and net pay?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Gross pay is the total amount of money earned before any deductions or taxes are taken out. Net pay (or 'take-home pay') is the amount left after subtracting all federal/state taxes, social security, medicare, and other deductions like insurance or retirement contributions."
+        }
+      }
+    ]
+  }
+];
+
+const days = ["Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday", "Sunday"];
+---
+
+<SiteLayout
+  site="ijustwantto"
+  title={meta.title}
+  description={meta.description}
+  canonical="https://ijustwantto.live/timecard-calculator"
+  schema={schema}
+>
+  <div class="page-content">
+    <div class="hero">
+      <h1>Free Timecard & Payroll Calculator</h1>
+      <p class="subtitle">Calculate daily hours, overtime, and gross pay instantly.</p>
+    </div>
+
+    <div class="calculator-container">
+      <div class="settings-grid">
+        <div class="input-group">
+          <label for="hourlyRate">Hourly Rate ($)</label>
+          <input type="number" id="hourlyRate" value="20.00" min="0" step="0.01" />
+        </div>
+        <div class="input-group">
+          <label for="otMultiplier">Overtime Multiplier</label>
+          <select id="otMultiplier">
+            <option value="1.5" selected>1.5x (Time and a half)</option>
+            <option value="2.0">2.0x (Double time)</option>
+            <option value="1.0">1.0x (No extra overtime pay)</option>
+          </select>
+        </div>
+        <div class="input-group">
+          <label for="otThreshold">Weekly OT Threshold (Hrs)</label>
+          <input type="number" id="otThreshold" value="40" min="0" step="1" />
+        </div>
+      </div>
+
+      <div class="timecard-table-wrapper">
+        <table class="timecard-table">
+          <thead>
+            <tr>
+              <th>Day</th>
+              <th>Clock In</th>
+              <th>Clock Out</th>
+              <th>Break (Min)</th>
+              <th>Total Hours</th>
+            </tr>
+          </thead>
+          <tbody id="timecardBody">
+            {days.map((day, i) => (
+              <tr data-day={i}>
+                <td class="day-label">{day}</td>
+                <td><input type="time" class="time-in" value={i < 5 ? "09:00" : ""} /></td>
+                <td><input type="time" class="time-out" value={i < 5 ? "17:00" : ""} /></td>
+                <td><input type="number" class="break-mins" value={i < 5 ? "30" : "0"} min="0" step="5" /></td>
+                <td class="daily-total">0.00</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="results-container">
+        <div class="result-card">
+          <p>Total Hours</p>
+          <div class="result-value" id="totalHours">0.00</div>
+          <div class="split-stats">
+            <span>Regular: <b id="regHours">0.00</b></span>
+            <span>Overtime: <b id="otHours">0.00</b></span>
+          </div>
+        </div>
+        <div class="result-card highlight">
+          <p>Estimated Gross Pay</p>
+          <div class="result-value" id="grossPay">$0.00</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="explainer">
+      <h2>How to Calculate Your Timecard and Payroll</h2>
+
+      <p>Whether you're an hourly employee filling out a timesheet, a freelancer billing a client, or a small business owner processing payroll, calculating work hours and gross pay accurately is essential. Our timecard calculator automates the math, handling tricky time conversions and overtime rules instantly.</p>
+
+      <h3>Understanding Decimal Hours</h3>
+      <p>The most common mistake when calculating payroll is treating minutes like decimal points. For example, working 8 hours and 30 minutes does not equal 8.30 hours. Because there are 60 minutes in an hour, you must convert minutes to a fraction of an hour (decimal format) before multiplying by an hourly wage.</p>
+
+      <p>The standard formula to convert minutes to decimals is:</p>
+      <pre><code>Decimal Hours = Minutes / 60</code></pre>
+
+      <p>Common conversions to remember:</p>
+      <ul>
+        <li>15 minutes = 0.25 hours</li>
+        <li>30 minutes = 0.50 hours</li>
+        <li>45 minutes = 0.75 hours</li>
+      </ul>
+
+      <h3>How Overtime Works (FLSA Rules)</h3>
+      <p>In the United States, the Fair Labor Standards Act (FLSA) requires that covered, nonexempt employees receive overtime pay for hours worked over 40 per workweek. The federal overtime rate is mandatory "time and a half" (1.5 times the regular hourly rate).</p>
+
+      <p>For example, if your base pay is $20.00 per hour, your overtime rate is $30.00 per hour ($20.00 x 1.5). If you work 45 hours in a week, you would be paid:</p>
+      <ul>
+        <li>40 hours at $20.00 = $800.00</li>
+        <li>5 hours at $30.00 = $150.00</li>
+        <li><strong>Total Gross Pay = $950.00</strong></li>
+      </ul>
+
+      <p><em>Note: Some states, like California, have stricter overtime laws that include daily overtime thresholds (e.g., working more than 8 hours in a single day). This calculator currently uses standard weekly overtime thresholds.</em></p>
+
+      <h3>Handling Meal Periods and Breaks</h3>
+      <p>Under federal law, short rest breaks (typically 5 to 20 minutes) must be counted as hours worked. However, bona fide meal periods (typically lasting at least 30 minutes), during which the employee is completely relieved from duty, are not considered work time and are therefore unpaid.</p>
+
+      <p>Our calculator allows you to enter the total unpaid break minutes for each day, which it will automatically subtract from the time elapsed between your Clock In and Clock Out entries.</p>
+
+      <p>Taking a break from tracking work and looking to track your gaming progress instead? Check out our <a href="/val-tracker">Valorant RR Tracker</a>.</p>
+    </div>
+
+    <section class="faq-section">
+      <h2>Frequently Asked Questions</h2>
+      <details>
+        <summary>How do you calculate time card hours?</summary>
+        <p>To calculate time card hours, convert your clock-in and clock-out times to military time (24-hour format) or decimal hours. Subtract the clock-in time from the clock-out time, then subtract any unpaid break durations. Sum the daily totals for the entire pay period.</p>
+      </details>
+      <details>
+        <summary>How is overtime calculated?</summary>
+        <p>Under the Fair Labor Standards Act (FLSA) in the US, overtime is generally calculated as 1.5 times the regular hourly rate for any hours worked over 40 in a single workweek. Some states (like California) also require overtime pay for hours worked beyond 8 in a single day.</p>
+      </details>
+      <details>
+        <summary>Are breaks included in total hours worked?</summary>
+        <p>Short rest breaks (usually 5 to 20 minutes) are generally considered paid time and are included in total hours worked. Bona fide meal periods (typically 30 minutes or more) where the employee is completely relieved from duty are unpaid and should be subtracted from total hours.</p>
+      </details>
+      <details>
+        <summary>How do you convert minutes to decimal hours?</summary>
+        <p>To convert minutes to decimal hours for payroll purposes, divide the number of minutes by 60. For example, 15 minutes is 0.25 hours (15/60), 30 minutes is 0.50 hours, and 45 minutes is 0.75 hours.</p>
+      </details>
+      <details>
+        <summary>What is the difference between gross pay and net pay?</summary>
+        <p>Gross pay is the total amount of money earned before any deductions or taxes are taken out. Net pay (or 'take-home pay') is the amount left after subtracting all federal/state taxes, social security, medicare, and other deductions like insurance or retirement contributions.</p>
+      </details>
+    </section>
+  </div>
+
+  <script is:inline>
+    document.addEventListener('DOMContentLoaded', () => {
+      const inputs = {
+        rate: document.getElementById('hourlyRate'),
+        otMultiplier: document.getElementById('otMultiplier'),
+        otThreshold: document.getElementById('otThreshold')
+      };
+
+      const tbody = document.getElementById('timecardBody');
+      const displays = {
+        totalHours: document.getElementById('totalHours'),
+        regHours: document.getElementById('regHours'),
+        otHours: document.getElementById('otHours'),
+        grossPay: document.getElementById('grossPay')
+      };
+
+      // Helper to convert time string "HH:MM" to decimal hours
+      function timeToDecimal(timeStr) {
+        if (!timeStr) return 0;
+        const [hours, minutes] = timeStr.split(':').map(Number);
+        return hours + (minutes / 60);
+      }
+
+      function calculate() {
+        let totalDecimalHours = 0;
+
+        // Calculate daily rows
+        const rows = tbody.querySelectorAll('tr');
+        rows.forEach(row => {
+          const timeInStr = row.querySelector('.time-in').value;
+          const timeOutStr = row.querySelector('.time-out').value;
+          const breakMins = parseFloat(row.querySelector('.break-mins').value) || 0;
+          const displayCell = row.querySelector('.daily-total');
+
+          if (timeInStr && timeOutStr) {
+            let tIn = timeToDecimal(timeInStr);
+            let tOut = timeToDecimal(timeOutStr);
+
+            // Handle overnight shifts (e.g. 22:00 to 06:00)
+            if (tOut < tIn) {
+              tOut += 24;
+            }
+
+            const grossHours = tOut - tIn;
+            const netHours = Math.max(0, grossHours - (breakMins / 60));
+
+            totalDecimalHours += netHours;
+            displayCell.textContent = netHours.toFixed(2);
+          } else {
+            displayCell.textContent = "0.00";
+          }
+        });
+
+        // Calculate pay
+        const rate = parseFloat(inputs.rate.value) || 0;
+        const otMult = parseFloat(inputs.otMultiplier.value) || 1.5;
+        const otThresh = parseFloat(inputs.otThreshold.value) || 40;
+
+        let regHours = totalDecimalHours;
+        let otHours = 0;
+
+        if (totalDecimalHours > otThresh) {
+          regHours = otThresh;
+          otHours = totalDecimalHours - otThresh;
+        }
+
+        const regPay = regHours * rate;
+        const otPay = otHours * (rate * otMult);
+        const totalPay = regPay + otPay;
+
+        // Update UI
+        displays.totalHours.textContent = totalDecimalHours.toFixed(2);
+        displays.regHours.textContent = regHours.toFixed(2);
+        displays.otHours.textContent = otHours.toFixed(2);
+        displays.grossPay.textContent = new Intl.NumberFormat('en-US', {
+          style: 'currency',
+          currency: 'USD'
+        }).format(totalPay);
+      }
+
+      // Attach event listeners
+      Object.values(inputs).forEach(input => {
+        input.addEventListener('input', calculate);
+        input.addEventListener('change', calculate);
+      });
+
+      tbody.querySelectorAll('input').forEach(input => {
+        input.addEventListener('input', calculate);
+        input.addEventListener('change', calculate);
+      });
+
+      // Initial calc
+      calculate();
+    });
+  </script>
+
+  <style is:inline>
+    .page-content { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem; }
+    .hero { text-align: center; padding: 3rem 0 2rem; }
+    .hero h1 { font-size: 2.2rem; font-weight: 800; margin-bottom: 0.5rem; }
+    .subtitle { color: var(--text-secondary); font-size: 1.1rem; }
+
+    .calculator-container { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 2rem; margin: 2rem 0; }
+
+    .settings-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; padding-bottom: 2rem; border-bottom: 1px solid var(--border-color); }
+
+    .input-group { display: flex; flex-direction: column; gap: 0.5rem; }
+    label { font-weight: 600; font-size: 0.95rem; color: var(--text-primary); }
+
+    input, select { background: var(--bg-color); color: var(--text-primary); border: 1px solid var(--border-color); padding: 0.75rem 1rem; border-radius: 8px; width: 100%; font-size: 1rem; }
+    input:focus, select:focus { outline: none; border-color: var(--accent-color); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-color) 20%, transparent); }
+
+    .timecard-table-wrapper { overflow-x: auto; margin-bottom: 2rem; }
+    .timecard-table { width: 100%; border-collapse: collapse; text-align: left; min-width: 600px; }
+    .timecard-table th { font-weight: 600; color: var(--text-secondary); padding: 0.75rem 0.5rem; border-bottom: 2px solid var(--border-color); }
+    .timecard-table td { padding: 0.5rem; border-bottom: 1px solid var(--border-color); }
+    .timecard-table .day-label { font-weight: 600; }
+    .timecard-table input[type="time"] { padding: 0.5rem; }
+    .timecard-table input[type="number"] { padding: 0.5rem; width: 100px; }
+    .daily-total { font-weight: 700; color: var(--accent-color); text-align: right; padding-right: 1rem !important; }
+
+    .results-container { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+    @media (max-width: 600px) { .results-container { grid-template-columns: 1fr; } }
+
+    .result-card { background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem; text-align: center; }
+    .result-card.highlight { background: color-mix(in srgb, var(--accent-color) 10%, transparent); border-color: var(--accent-color); }
+
+    .result-card p { margin: 0 0 0.5rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 1px; font-size: 0.85rem; }
+    .result-value { font-size: 2.5rem; font-weight: 800; color: var(--text-primary); line-height: 1; }
+    .highlight .result-value { color: var(--accent-color); }
+
+    .split-stats { display: flex; justify-content: space-around; margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border-color); font-size: 0.9rem; color: var(--text-secondary); }
+    .split-stats b { color: var(--text-primary); margin-left: 0.25rem; }
+
+    .explainer { margin-top: 3rem; line-height: 1.7; }
+    .explainer h2 { margin-top: 2rem; font-size: 1.8rem; }
+    .explainer h3 { margin-top: 1.5rem; font-size: 1.3rem; }
+    .explainer pre { background: var(--card-bg); padding: 1rem; border-radius: 8px; border: 1px solid var(--border-color); overflow-x: auto; font-family: monospace; }
+    .explainer ul { margin: 1rem 0; padding-left: 1.5rem; }
+    .explainer li { margin-bottom: 0.5rem; }
+    .explainer a { color: var(--accent-color); text-decoration: none; font-weight: 600; }
+    .explainer a:hover { text-decoration: underline; }
+
+    .faq-section { margin-top: 3rem; }
+    .faq-section h2 { margin-bottom: 1.5rem; }
+    .faq-section details { margin: 1rem 0; padding: 1.25rem; background: var(--card-bg); border-radius: 8px; border: 1px solid var(--border-color); }
+    .faq-section summary { font-weight: 600; cursor: pointer; font-size: 1.1rem; }
+    .faq-section p { margin: 1rem 0 0; color: var(--text-secondary); line-height: 1.6; }
+  </style>
+</SiteLayout>

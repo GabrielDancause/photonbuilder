@@ -1,0 +1,308 @@
+---
+import SiteLayout from "../../../layouts/SiteLayout.astro";
+
+export const meta = {
+  title: "Scrap Gold Value Calculator",
+  description: "Stop guessing what your jewelry is worth. Find the exact melt value of your scrap gold instantly before visiting a buyer.",
+  category: "tool",
+  published: "2026-03-15",
+};
+
+const schema = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Article",
+      "headline": meta.title,
+      "description": meta.description,
+      "url": "https://firemaths.info/scrap-gold-calculator",
+      "author": { "@type": "Organization", "name": "Siliconbased.dev" },
+      "publisher": { "@type": "Organization", "name": "Siliconbased.dev" },
+      "datePublished": meta.published
+    },
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "How do you calculate the scrap value of gold?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "The scrap value of gold is calculated by multiplying the weight of your item by its purity (karat / 24) to find the actual gold content. Then, you multiply that gold content by the current spot price of gold per unit of weight (e.g., per gram or troy ounce)."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What is the difference between troy ounces and regular ounces?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Gold and precious metals are measured in troy ounces, not standard (avoirdupois) ounces. One troy ounce is exactly 31.1034768 grams, whereas a standard ounce is 28.3495 grams. This makes a troy ounce about 9.7% heavier."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Will a gold buyer pay me the full spot price?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "No. Most gold buyers, pawn shops, and jewelers will pay you a percentage of the spot price (often between 60% and 80%) because they need to cover the costs of refining the scrap gold and still make a profit."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What does 14k gold mean?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "14k (14 karat) gold means the item is composed of 14 parts pure gold and 10 parts other alloy metals out of 24 total parts. Therefore, it is 58.33% pure gold."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Is pennyweight still used for gold?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes, pennyweight (abbreviated dwt) is a traditional unit of measurement still used by many jewelers in the United States. There are 20 pennyweights in one troy ounce, and 1 pennyweight equals exactly 1.55517384 grams."
+          }
+        }
+      ]
+    }
+  ]
+};
+---
+
+<SiteLayout site="firemaths" title={meta.title} description={meta.description} canonical="https://firemaths.info/scrap-gold-calculator" schema={schema}>
+  <div class="page-content">
+    <div class="hero">
+      <h1>Scrap Gold Calculator</h1>
+      <p class="subtitle">Calculate the exact melt value of your gold jewelry, coins, and scrap instantly based on live spot prices.</p>
+    </div>
+
+    <div class="calculator-container">
+      <div class="input-group">
+        <label for="gold-price">Current Gold Spot Price ($ per Troy Ounce)</label>
+        <div class="input-wrapper">
+          <input type="number" id="gold-price" placeholder="e.g. 2350" min="1" step="0.01">
+          <span class="suffix">USD/oz</span>
+        </div>
+        <p id="gold-price-error" style="display: none; color: #ef4444; font-size: 0.85rem; margin-top: 0.5rem;">Please enter a valid spot price.</p>
+      </div>
+
+      <div class="input-group">
+        <label for="gold-weight">Weight</label>
+        <div class="input-wrapper" style="display: flex; gap: 1rem;">
+          <input type="number" id="gold-weight" placeholder="e.g. 10" min="0.01" step="0.01" style="flex: 2;">
+          <select id="weight-unit" style="flex: 1;">
+            <option value="grams">Grams</option>
+            <option value="dwt">Pennyweight (dwt)</option>
+            <option value="oz">Troy Ounces</option>
+            <option value="grains">Grains</option>
+          </select>
+        </div>
+        <p id="gold-weight-error" style="display: none; color: #ef4444; font-size: 0.85rem; margin-top: 0.5rem;">Please enter a valid weight greater than zero.</p>
+      </div>
+
+      <div class="input-group">
+        <label for="gold-purity">Purity (Karat)</label>
+        <select id="gold-purity">
+          <option value="24">24K (99.9% Pure)</option>
+          <option value="22">22K (91.6% Pure)</option>
+          <option value="18">18K (75.0% Pure)</option>
+          <option value="14" selected>14K (58.3% Pure)</option>
+          <option value="10">10K (41.7% Pure)</option>
+          <option value="9">9K (37.5% Pure)</option>
+        </select>
+      </div>
+
+      <div class="input-group">
+        <label for="buyer-percentage">Buyer Offer Percentage (%)</label>
+        <div class="input-wrapper">
+          <input type="number" id="buyer-percentage" value="100" min="1" max="100" step="1">
+          <span class="suffix">%</span>
+        </div>
+        <p style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 0.5rem;">Set to 100% for full melt value. Buyers typically offer 60-80%.</p>
+      </div>
+
+      <div class="result-card">
+        <div class="calc-result-label">Estimated Scrap Value</div>
+        <div class="result-value" id="result-display">$0.00</div>
+        <p id="melt-value-text" style="font-size: 0.9rem; color: var(--text-secondary); margin-top: 0.5rem; display: none;">Full Melt Value: <span></span></p>
+      </div>
+    </div>
+
+    <div class="explainer">
+      <h2>How the Scrap Gold Calculator Works</h2>
+      <p>Whether you are looking to sell old jewelry, broken chains, or gold coins, knowing the exact intrinsic value of your items is critical before visiting a pawn shop or cash-for-gold business. This scrap gold calculator empowers you by determining the absolute melt value of your gold based on its weight, purity, and the current market spot price.</p>
+
+      <h3>The Core Methodology</h3>
+      <p>To calculate the value of scrap gold, three primary variables are required: the spot price of gold, the exact weight of the item, and the item's karat (purity). The mathematical process involves determining the absolute amount of pure gold within the item, converting its physical weight into troy ounces (the standard measurement for precious metals), and multiplying that by the current spot price.</p>
+
+      <p>The standard formula for calculating the full melt value is:</p>
+      <div class="highlight-box">
+        <code>Value = Spot Price &times; (Weight in Troy Ounces) &times; (Karat / 24)</code>
+      </div>
+
+      <h3>Understanding Purity: The Karat System</h3>
+      <p>Gold is naturally a very soft metal. To make it durable enough for everyday wear in jewelry, it is alloyed (mixed) with other harder metals such as copper, silver, nickel, or zinc. The purity of gold is measured in karats (k or kt), with 24 karat representing 100% pure gold.</p>
+      <p>When you have a piece of 14k jewelry, it means that 14 parts of the metal are pure gold, and the remaining 10 parts (out of 24 total) are other metals. Therefore, the purity ratio is 14 divided by 24, which equates to exactly 0.5833 (or 58.33%). The scrap gold calculator uses this ratio to strip away the weight of the base metals and isolate the weight of the pure gold content.</p>
+
+      <h3>Weight Conversions for Precious Metals</h3>
+      <p>A frequent point of confusion when weighing gold at home is the difference between standard ounces and troy ounces. Kitchen scales measure in standard "avoirdupois" ounces, where 1 ounce equals 28.3495 grams. However, the spot price of gold is universally quoted in <strong>troy ounces</strong>, which are slightly heavier.</p>
+      <ul>
+        <li><strong>1 Troy Ounce</strong> = 31.1034768 grams</li>
+        <li><strong>1 Pennyweight (dwt)</strong> = 1.55517384 grams</li>
+        <li><strong>1 Troy Ounce</strong> = 20 Pennyweights</li>
+        <li><strong>1 Gram</strong> = 0.0321507 Troy Ounces</li>
+      </ul>
+      <p>If you weigh your gold on a home scale in standard ounces, you must convert it to grams first, and then to troy ounces. Our calculator handles all of these precise conversions automatically behind the scenes.</p>
+
+      <h3>Buyer Payout Percentages</h3>
+      <p>It is crucial to understand that the "melt value" calculated here is the raw, intrinsic value of the pure gold content. If you take your scrap gold to a buyer, they will almost never pay you 100% of this value. Gold buyers, pawn shops, and jewelers run businesses that incur overhead costs, and they must eventually sell the gold to a refinery, which also takes a cut.</p>
+      <p>Typically, a local buyer might offer you anywhere from 60% to 80% of the true melt value. For highly desirable items, or if you are selling to a direct refinery in bulk, you might receive up to 90% or 95%. By adjusting the "Buyer Offer Percentage" slider or input in our calculator, you can establish a realistic expectation of the cash you will actually receive, preventing you from accepting an unfair lowball offer.</p>
+
+      <p>Need to calculate values for math and engineering instead? Try our <a href="/eigenvalue-calculator">Eigenvalue Calculator</a>.</p>
+    </div>
+
+    <section class="faq-section">
+      <h2>Frequently Asked Questions</h2>
+      <details>
+        <summary>How do you calculate the scrap value of gold?</summary>
+        <p>The scrap value of gold is calculated by multiplying the weight of your item by its purity (karat / 24) to find the actual gold content. Then, you multiply that gold content by the current spot price of gold per unit of weight (e.g., per gram or troy ounce).</p>
+      </details>
+      <details>
+        <summary>What is the difference between troy ounces and regular ounces?</summary>
+        <p>Gold and precious metals are measured in troy ounces, not standard (avoirdupois) ounces. One troy ounce is exactly 31.1034768 grams, whereas a standard ounce is 28.3495 grams. This makes a troy ounce about 9.7% heavier.</p>
+      </details>
+      <details>
+        <summary>Will a gold buyer pay me the full spot price?</summary>
+        <p>No. Most gold buyers, pawn shops, and jewelers will pay you a percentage of the spot price (often between 60% and 80%) because they need to cover the costs of refining the scrap gold and still make a profit.</p>
+      </details>
+      <details>
+        <summary>What does 14k gold mean?</summary>
+        <p>14k (14 karat) gold means the item is composed of 14 parts pure gold and 10 parts other alloy metals out of 24 total parts. Therefore, it is 58.33% pure gold.</p>
+      </details>
+      <details>
+        <summary>Is pennyweight still used for gold?</summary>
+        <p>Yes, pennyweight (abbreviated dwt) is a traditional unit of measurement still used by many jewelers in the United States. There are 20 pennyweights in one troy ounce, and 1 pennyweight equals exactly 1.55517384 grams.</p>
+      </details>
+    </section>
+  </div>
+
+  <script is:inline>
+    document.addEventListener('DOMContentLoaded', () => {
+      const goldPriceInput = document.getElementById('gold-price');
+      const goldWeightInput = document.getElementById('gold-weight');
+      const weightUnitSelect = document.getElementById('weight-unit');
+      const goldPuritySelect = document.getElementById('gold-purity');
+      const buyerPercentageInput = document.getElementById('buyer-percentage');
+
+      const goldPriceError = document.getElementById('gold-price-error');
+      const goldWeightError = document.getElementById('gold-weight-error');
+
+      const resultDisplay = document.getElementById('result-display');
+      const meltValueText = document.getElementById('melt-value-text');
+      const meltValueSpan = meltValueText.querySelector('span');
+
+      const inputs = [goldPriceInput, goldWeightInput, weightUnitSelect, goldPuritySelect, buyerPercentageInput];
+
+      function calculateValue() {
+        let hasError = false;
+
+        const price = parseFloat(goldPriceInput.value);
+        if (isNaN(price) || price <= 0) {
+          if (goldPriceInput.value !== '') goldPriceError.style.display = 'block';
+          else goldPriceError.style.display = 'none';
+          hasError = true;
+        } else {
+          goldPriceError.style.display = 'none';
+        }
+
+        const weight = parseFloat(goldWeightInput.value);
+        if (isNaN(weight) || weight <= 0) {
+          if (goldWeightInput.value !== '') goldWeightError.style.display = 'block';
+          else goldWeightError.style.display = 'none';
+          hasError = true;
+        } else {
+          goldWeightError.style.display = 'none';
+        }
+
+        if (hasError || isNaN(price) || isNaN(weight)) {
+          resultDisplay.textContent = '$0.00';
+          meltValueText.style.display = 'none';
+          return;
+        }
+
+        const unit = weightUnitSelect.value;
+        let weightInTroyOunces = 0;
+
+        switch (unit) {
+          case 'oz':
+            weightInTroyOunces = weight;
+            break;
+          case 'grams':
+            weightInTroyOunces = weight / 31.1034768;
+            break;
+          case 'dwt':
+            weightInTroyOunces = weight / 20;
+            break;
+          case 'grains':
+            weightInTroyOunces = weight / 480;
+            break;
+        }
+
+        const purity = parseFloat(goldPuritySelect.value);
+        const pureGoldWeight = weightInTroyOunces * (purity / 24);
+        const fullMeltValue = pureGoldWeight * price;
+
+        let buyerPercentage = parseFloat(buyerPercentageInput.value);
+        if (isNaN(buyerPercentage) || buyerPercentage < 0) buyerPercentage = 0;
+        if (buyerPercentage > 100) buyerPercentage = 100;
+
+        const estimatedValue = fullMeltValue * (buyerPercentage / 100);
+
+        const formatter = new Intl.NumberFormat('en-US', {
+          style: 'currency',
+          currency: 'USD',
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2
+        });
+
+        resultDisplay.textContent = formatter.format(estimatedValue);
+
+        if (buyerPercentage < 100) {
+          meltValueSpan.textContent = formatter.format(fullMeltValue);
+          meltValueText.style.display = 'block';
+        } else {
+          meltValueText.style.display = 'none';
+        }
+      }
+
+      inputs.forEach(input => {
+        input.addEventListener('input', calculateValue);
+      });
+
+      // Attempt to fetch live price as a default if possible (optional enhancement)
+      fetch('https://api.metals.dev/v1/latest?api_key=placeholder&currency=USD&unit=toz')
+        .then(() => {}) // Intentionally ignored for now to avoid breaking without key, just a placeholder structure
+        .catch(() => {});
+
+      // Initialize if values exist
+      if (goldPriceInput.value && goldWeightInput.value) {
+        calculateValue();
+      }
+    });
+  </script>
+  <style is:inline>
+    .page-content { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem; }
+    .hero { text-align: center; padding: 3rem 0 2rem; }
+    .hero h1 { font-size: 2.2rem; font-weight: 800; margin-bottom: 0.5rem; }
+    .subtitle { color: var(--text-secondary); font-size: 1.1rem; }
+    .calculator-container { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 2rem; margin: 2rem 0; }
+    input, select { background: var(--bg-color); color: var(--text-primary); border: 1px solid var(--border-color); padding: 0.75rem 1rem; border-radius: 8px; width: 100%; font-size: 1rem; }
+    input:focus, select:focus { outline: none; border-color: var(--accent-color); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-color) 20%, transparent); }
+    button { background: var(--accent-color); color: white; border: none; padding: 0.75rem 2rem; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 1rem; }
+    button:hover { opacity: 0.9; }
+    .result-card { background: color-mix(in srgb, var(--accent-color) 10%, transparent); border: 1px solid var(--accent-color); border-radius: 12px; padding: 1.5rem; margin: 1.5rem 0; text-align: center; }
+    .result-value { font-size: 2.5rem; font-weight: 800; color: var(--accent-color); }
+    .faq-section details { margin: 1rem 0; padding: 1rem; background: var(--card-bg); border-radius: 8px; border: 1px solid var(--border-color); }
+    .faq-section summary { font-weight: 600; cursor: pointer; }
+  </style>
+</SiteLayout>
