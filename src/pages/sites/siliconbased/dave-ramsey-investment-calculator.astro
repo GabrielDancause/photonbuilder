@@ -1,0 +1,296 @@
+---
+import SiteLayout from "../../../layouts/SiteLayout.astro";
+
+export const meta = {
+  title: "Dave Ramsey Investment Calculator | Model the 12% Return",
+  description: "Can you really get a 12% return on your investments? Use our Dave Ramsey Investment Calculator to model your potential wealth growth and see if the math actually adds up.",
+  category: "tool",
+  published: "2026-03-15",
+};
+
+const schema = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "What is the Dave Ramsey 12% rule?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "The Dave Ramsey 12% rule is based on his assertion that the S&P 500 has historically averaged a 12% annual return over its lifespan. He uses this 12% figure in his calculations to project the long-term growth of mutual fund investments."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Is a 12% return realistic?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Many financial advisors argue that a 12% annual return is overly optimistic for long-term planning, as it doesn't account for inflation. A more conservative, inflation-adjusted return of 7% to 9% is generally recommended for retirement modeling."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How does compound interest work?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Compound interest is the interest on a deposit calculated based on both the initial principal and the accumulated interest from previous periods. It essentially means you are earning interest on your interest, leading to exponential growth over time."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What are the 4 types of mutual funds Dave Ramsey recommends?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Dave Ramsey recommends dividing investments equally across four types of mutual funds: Growth and Income (large-cap), Growth (mid-cap), Aggressive Growth (small-cap), and International."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How much should I invest each month?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Dave Ramsey’s 'Baby Step 4' advises investing 15% of your gross household income into tax-advantaged retirement accounts, such as a 401(k) or Roth IRA."
+          }
+        }
+      ]
+    },
+    {
+      "@type": "Article",
+      "headline": meta.title,
+      "description": meta.description,
+      "datePublished": meta.published,
+      "author": {
+        "@type": "Organization",
+        "name": "SiliconBased"
+      }
+    }
+  ]
+};
+---
+
+<SiteLayout site="siliconbased" title={meta.title} description={meta.description} canonical="https://siliconbased.dev/dave-ramsey-investment-calculator" schema={schema}>
+  <div class="page-content">
+    <div class="hero">
+      <h1>Dave Ramsey Investment Calculator</h1>
+      <p class="subtitle">Model your portfolio growth based on the famous 12% return assumption.</p>
+    </div>
+
+    <div class="calculator-container">
+      <div class="calc-layout">
+        <div class="input-panel">
+          <div class="input-group">
+            <label for="initial-investment">Initial Investment ($)</label>
+            <input type="number" id="initial-investment" value="0" min="0" step="100">
+          </div>
+          <div class="input-group">
+            <label for="monthly-contribution">Monthly Contribution ($)</label>
+            <input type="number" id="monthly-contribution" value="500" min="0" step="50">
+          </div>
+          <div class="input-group">
+            <label for="years-to-grow">Years to Grow</label>
+            <input type="number" id="years-to-grow" value="30" min="1" max="100" step="1">
+          </div>
+          <div class="input-group">
+            <label for="expected-return">Expected Annual Return (%)</label>
+            <input type="number" id="expected-return" value="12" min="0" max="100" step="0.1">
+            <small class="helper-text">Dave Ramsey commonly uses 12% in his examples.</small>
+          </div>
+        </div>
+
+        <div class="results-panel">
+          <h3>Your Future Wealth</h3>
+
+          <div class="main-result">
+            <span class="label">Total Balance:</span>
+            <span class="value" id="res-total-balance">$0</span>
+          </div>
+
+          <div class="breakdown">
+            <div class="breakdown-item">
+              <span class="label">Total Contributions</span>
+              <span class="value" id="res-total-contributions">$0</span>
+            </div>
+            <div class="breakdown-item highlight">
+              <span class="label">Total Interest Earned</span>
+              <span class="value" id="res-total-interest">$0</span>
+            </div>
+          </div>
+
+          <p class="error-msg" id="calc-error"></p>
+        </div>
+      </div>
+    </div>
+
+    <script is:inline>
+      document.addEventListener('DOMContentLoaded', () => {
+        const initialInput = document.getElementById('initial-investment');
+        const monthlyInput = document.getElementById('monthly-contribution');
+        const yearsInput = document.getElementById('years-to-grow');
+        const returnInput = document.getElementById('expected-return');
+        const errorMsg = document.getElementById('calc-error');
+
+        const resBalance = document.getElementById('res-total-balance');
+        const resContributions = document.getElementById('res-total-contributions');
+        const resInterest = document.getElementById('res-total-interest');
+
+        const formatter = new Intl.NumberFormat('en-US', {
+          style: 'currency',
+          currency: 'USD',
+          maximumFractionDigits: 0
+        });
+
+        function calculate() {
+          errorMsg.textContent = '';
+
+          const initial = parseFloat(initialInput.value);
+          const monthly = parseFloat(monthlyInput.value);
+          const years = parseFloat(yearsInput.value);
+          const annualRate = parseFloat(returnInput.value);
+
+          if (isNaN(initial) || isNaN(monthly) || isNaN(years) || isNaN(annualRate) || years <= 0) {
+            errorMsg.textContent = 'Please enter valid numbers for all fields.';
+            resBalance.textContent = '$0';
+            resContributions.textContent = '$0';
+            resInterest.textContent = '$0';
+            return;
+          }
+
+          const months = years * 12;
+          const monthlyRate = (annualRate / 100) / 12;
+
+          let futureValue = initial;
+
+          for (let i = 0; i < months; i++) {
+            futureValue = (futureValue + monthly) * (1 + monthlyRate);
+          }
+
+          const totalContributions = initial + (monthly * months);
+          const totalInterest = futureValue - totalContributions;
+
+          resBalance.textContent = formatter.format(futureValue);
+          resContributions.textContent = formatter.format(totalContributions);
+          resInterest.textContent = formatter.format(totalInterest);
+        }
+
+        const inputs = document.querySelectorAll('.calculator-container input');
+        inputs.forEach(input => {
+          input.addEventListener('input', calculate);
+        });
+
+        calculate();
+      });
+    </script>
+
+    <style is:inline>
+      .page-content { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem; }
+      .hero { text-align: center; padding: 3rem 0 2rem; }
+      .hero h1 { font-size: 2.2rem; font-weight: 800; margin-bottom: 0.5rem; color: var(--accent-color); }
+      .subtitle { color: var(--text-secondary); font-size: 1.1rem; }
+
+      .calculator-container { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 2.5rem; margin: 2rem 0; }
+      .calc-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; }
+
+      @media (max-width: 768px) {
+        .calc-layout { grid-template-columns: 1fr; gap: 2rem; }
+        .calculator-container { padding: 1.5rem; }
+      }
+
+      .input-panel { display: flex; flex-direction: column; gap: 1.5rem; }
+      .input-group { display: flex; flex-direction: column; gap: 0.5rem; }
+      .input-group label { font-weight: 600; color: var(--text-primary); font-size: 1rem; }
+
+      input { background: var(--bg-color); color: var(--text-primary); border: 1px solid var(--border-color); padding: 0.8rem 1rem; border-radius: 8px; font-size: 1.1rem; font-family: monospace; transition: all 0.2s; }
+      input:focus { outline: none; border-color: var(--accent-color); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-color) 20%, transparent); }
+
+      .helper-text { font-size: 0.85rem; color: var(--text-secondary); margin-top: 0.25rem; }
+
+      .results-panel { background: color-mix(in srgb, var(--bg-color) 40%, transparent); border: 1px solid var(--border-color); border-radius: 12px; padding: 2rem; display: flex; flex-direction: column; justify-content: center; }
+      .results-panel h3 { margin-top: 0; margin-bottom: 2rem; text-align: center; color: var(--text-primary); font-size: 1.4rem; }
+
+      .main-result { text-align: center; margin-bottom: 2.5rem; padding-bottom: 2rem; border-bottom: 1px solid var(--border-color); }
+      .main-result .label { display: block; color: var(--text-secondary); font-size: 1.1rem; margin-bottom: 0.5rem; }
+      .main-result .value { display: block; font-size: 3rem; font-weight: 800; color: var(--accent-color); font-family: monospace; line-height: 1; }
+
+      .breakdown { display: flex; flex-direction: column; gap: 1.25rem; }
+      .breakdown-item { display: flex; justify-content: space-between; align-items: center; font-size: 1.05rem; }
+      .breakdown-item .label { color: var(--text-secondary); }
+      .breakdown-item .value { font-family: monospace; font-weight: 600; color: var(--text-primary); font-size: 1.15rem; }
+      .breakdown-item.highlight .label { color: var(--text-primary); font-weight: 600; }
+      .breakdown-item.highlight .value { color: #22c55e; } /* Green for interest */
+
+      .error-msg { color: #ef4444; font-size: 0.95rem; margin-top: 1.5rem; text-align: center; min-height: 1.2rem; }
+
+      .explainer { margin-top: 4rem; }
+      .explainer h2, .explainer h3 { color: var(--text-primary); margin-top: 2rem; margin-bottom: 1rem; }
+      .explainer p { margin-bottom: 1rem; line-height: 1.6; }
+      .explainer ul { margin-bottom: 1.5rem; padding-left: 1.5rem; }
+      .explainer a { color: var(--accent-color); text-decoration: none; }
+      .explainer a:hover { text-decoration: underline; }
+
+      .faq-section { margin-top: 3rem; }
+      .faq-section h2 { margin-bottom: 1.5rem; }
+      .faq-section details { margin: 1rem 0; padding: 1rem; background: var(--card-bg); border-radius: 8px; border: 1px solid var(--border-color); }
+      .faq-section summary { font-weight: 600; cursor: pointer; color: var(--text-primary); outline: none; }
+      .faq-section details p { margin-top: 1rem; margin-bottom: 0; color: var(--text-secondary); }
+    </style>
+
+    <div class="explainer">
+      <h2>Understanding the Dave Ramsey Investment Philosophy</h2>
+      <p>Personal finance personality Dave Ramsey is famous for his "Baby Steps" approach to getting out of debt and building wealth. When it comes to investing (Baby Step 4), Ramsey suggests putting 15% of your gross income into retirement accounts. But what often raises eyebrows in the financial community is the math he uses to project the growth of those investments: a steady 12% annual return.</p>
+      <p>Our Dave Ramsey Investment Calculator lets you model exactly what that 12% return looks like over time. By adjusting the initial investment, monthly contributions, and years to grow, you can see the staggering power of compound interest. But it's also important to understand the context and the criticism behind that 12% number.</p>
+
+      <h3>Where Does the 12% Number Come From?</h3>
+      <p>Ramsey asserts that a 12% average annual return is realistic because it aligns with the historical average of the S&P 500 index since its inception. By looking at long-term historical data, there are indeed periods where the market has averaged 12% or even higher. For Ramsey, this number serves as an optimistic baseline to encourage people to invest, showing them that becoming a millionaire is mathematically possible for average earners.</p>
+
+      <h3>The Reality of Market Returns</h3>
+      <p>While the 12% figure makes for great motivational math, many financial experts caution against using it for strict retirement planning. Here is why the 12% number is highly debated:</p>
+      <ul>
+        <li><strong>Inflation isn't accounted for:</strong> A 12% nominal return might feel great, but if inflation averages 3%, your "real" return in purchasing power is only 9%. When calculating future wealth to determine if you can afford to retire, real returns are what actually matter.</li>
+        <li><strong>Averages vs. Geometric Means:</strong> The math of average returns can be deceiving. If you have $100 and lose 50% in year one, you have $50. If you gain 50% in year two, you have $75. The average return of -50% and +50% is 0%, yet you've lost 25% of your money. The Compound Annual Growth Rate (CAGR) of the S&P 500 is historically closer to 10% before inflation, and 7% after inflation.</li>
+        <li><strong>Volatility Sequence of Returns:</strong> The market doesn't return exactly 12% every single year. It might drop 20% one year and go up 30% the next. If you happen to retire during a major downturn, an assumed flat 12% growth rate will severely overestimate your portfolio's survival.</li>
+      </ul>
+
+      <h3>Ramsey's Recommended Mutual Fund Mix</h3>
+      <p>To try and achieve these aggressive returns, Dave Ramsey recommends a specific asset allocation. He suggests avoiding single stocks and bonds entirely, and instead dividing your retirement investments evenly (25% each) across four types of mutual funds:</p>
+      <ul>
+        <li><strong>Growth and Income:</strong> These are typically large-cap funds investing in massive, stable companies that often pay dividends.</li>
+        <li><strong>Growth:</strong> These are mid-cap funds investing in medium-sized companies that are still expanding.</li>
+        <li><strong>Aggressive Growth:</strong> These are small-cap funds investing in smaller companies with high growth potential but higher risk.</li>
+        <li><strong>International:</strong> Funds that invest in companies outside of the United States to provide geographic diversification.</li>
+      </ul>
+
+      <h3>The Magic of Compound Interest</h3>
+      <p>Even if you adjust the return rate in our calculator down to a more conservative 8% or 10%, you will still see the incredible mechanics of compound interest at work. Compound interest is simply the concept of earning interest on your interest. Over long periods—like 20, 30, or 40 years—the vast majority of your wealth will not come from your monthly contributions, but from the exponential growth of the interest compounding upon itself.</p>
+      <p>This is why starting early is the most powerful financial decision you can make. A smaller monthly contribution started at age 25 will almost always outgrow a massive monthly contribution started at age 45.</p>
+
+      <h3>Calculate Your Next Move</h3>
+      <p>If you're looking to fund these investments, you need to know exactly how much you're earning. If you work hourly, use our <a href="/time-sheet-calculator">Time Sheet Calculator</a> to accurately calculate your weekly hours and gross pay. Once you know your income, you can confidently apply Ramsey's 15% rule to your investment budget.</p>
+    </div>
+
+    <section class="faq-section">
+      <h2>Frequently Asked Questions</h2>
+      <details>
+        <summary>What is the Dave Ramsey 12% rule?</summary>
+        <p>The Dave Ramsey 12% rule is based on his assertion that the S&P 500 has historically averaged a 12% annual return over its lifespan. He uses this 12% figure in his calculations to project the long-term growth of mutual fund investments.</p>
+      </details>
+      <details>
+        <summary>Is a 12% return realistic?</summary>
+        <p>Many financial advisors argue that a 12% annual return is overly optimistic for long-term planning, as it doesn't account for inflation. A more conservative, inflation-adjusted return of 7% to 9% is generally recommended for retirement modeling.</p>
+      </details>
+      <details>
+        <summary>How does compound interest work?</summary>
+        <p>Compound interest is the interest on a deposit calculated based on both the initial principal and the accumulated interest from previous periods. It essentially means you are earning interest on your interest, leading to exponential growth over time.</p>
+      </details>
+      <details>
+        <summary>What are the 4 types of mutual funds Dave Ramsey recommends?</summary>
+        <p>Dave Ramsey recommends dividing investments equally across four types of mutual funds: Growth and Income (large-cap), Growth (mid-cap), Aggressive Growth (small-cap), and International.</p>
+      </details>
+      <details>
+        <summary>How much should I invest each month?</summary>
+        <p>Dave Ramsey’s 'Baby Step 4' advises investing 15% of your gross household income into tax-advantaged retirement accounts, such as a 401(k) or Roth IRA.</p>
+      </details>
+    </section>
+  </div>
+</SiteLayout>
