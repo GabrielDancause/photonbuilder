@@ -1,0 +1,431 @@
+---
+import SiteLayout from "../../../layouts/SiteLayout.astro";
+
+export const meta = {
+  title: "R6 Siege Tracker & Ranked 2.0 Calculator",
+  description: "Why does your RP gain randomly plummet after 50 matches? Our breakdown reveals the hidden skill variables dictating your Ranked 2.0 climb.",
+  category: "tool",
+  published: "2026-03-15",
+};
+
+const schema = [
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": meta.title,
+    "description": meta.description,
+    "author": {
+      "@type": "Organization",
+      "name": "SiliconBased"
+    }
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "How does Ranked 2.0 calculate RP in Siege?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Ranked 2.0 uses a hidden Matchmaking Rating (MMR) separate from your visual Rank Points (RP). If your hidden MMR is higher than your current visual rank, the system awards more RP for wins and deducts less for losses to push you toward your 'true' rank. Once your visual rank aligns with your hidden MMR, RP gains and losses stabilize."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Does K/D affect RP gain in Rainbow Six Siege?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "No, your Kill/Death ratio does not directly impact RP or hidden MMR gains. Matchmaking and rank adjustments in Rainbow Six Siege are strictly based on win/loss outcomes and the comparative skill levels of the teams involved."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Why am I gaining only 10 RP per win?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "When you are gaining minimal RP (e.g., 10-15 per win) and losing roughly the same amount, it means your visual rank has caught up to your hidden MMR. To increase your RP gains again, you must consistently win against higher-rated opponents to raise your hidden MMR."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "What is a good K/D in Rainbow Six Siege?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "A K/D of 1.0 indicates you are getting exactly one kill for every death. In competitive play, anything above 1.0 is considered positive, with highly aggressive entry fraggers often aiming for 1.2 or higher. However, support players routinely hold K/Ds below 1.0 while heavily contributing to team wins."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Can I see my exact hidden MMR?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "No, Ubisoft does not expose the exact hidden MMR number to players in Ranked 2.0. You can only infer your hidden MMR relative to your visual rank by observing your average RP gains versus losses."
+        }
+      }
+    ]
+  }
+];
+---
+<SiteLayout site="siliconbased" title={meta.title} description={meta.description} canonical="https://siliconbased.dev/siege-tracker" schema={schema}>
+  <div class="page-content">
+    <div class="hero">
+      <h1>Rainbow Six Siege Tracker</h1>
+      <p class="subtitle">Calculate your Ranked 2.0 trajectory, K/D, and Win/Loss metrics</p>
+    </div>
+
+    <div class="calculator-container">
+      <div class="grid-layout">
+        <div class="input-group">
+          <label for="kills">Total Kills</label>
+          <input type="number" id="kills" min="0" placeholder="e.g. 450" />
+        </div>
+        <div class="input-group">
+          <label for="deaths">Total Deaths</label>
+          <input type="number" id="deaths" min="0" placeholder="e.g. 380" />
+        </div>
+        <div class="input-group">
+          <label for="wins">Total Wins</label>
+          <input type="number" id="wins" min="0" placeholder="e.g. 45" />
+        </div>
+        <div class="input-group">
+          <label for="losses">Total Losses</label>
+          <input type="number" id="losses" min="0" placeholder="e.g. 35" />
+        </div>
+        <div class="input-group">
+          <label for="currentRp">Current RP</label>
+          <input type="number" id="currentRp" min="0" placeholder="e.g. 2500" />
+        </div>
+        <div class="input-group">
+          <label for="rpGain">Avg RP per Win</label>
+          <input type="number" id="rpGain" min="0" placeholder="e.g. 35" />
+        </div>
+        <div class="input-group">
+          <label for="rpLoss">Avg RP per Loss</label>
+          <input type="number" id="rpLoss" min="0" placeholder="e.g. 20" />
+        </div>
+        <div class="input-group">
+          <label for="targetMatches">Matches to Forecast</label>
+          <input type="number" id="targetMatches" min="1" max="100" value="10" />
+        </div>
+      </div>
+
+      <div id="error-message" class="error-text"></div>
+
+      <div class="results-grid">
+        <div class="result-card">
+          <div class="result-label">K/D Ratio</div>
+          <div class="result-value" id="res-kd">0.00</div>
+        </div>
+        <div class="result-card">
+          <div class="result-label">Win/Loss %</div>
+          <div class="result-value" id="res-wl">0.0%</div>
+        </div>
+        <div class="result-card">
+          <div class="result-label">Forecasted RP</div>
+          <div class="result-value" id="res-forecast">N/A</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="explainer">
+      <h2>Understanding the Rainbow Six Siege Tracker and Ranked 2.0</h2>
+      <p>
+        The introduction of Ranked 2.0 fundamentally changed how progression works in Rainbow Six Siege. Gone are the days of placement matches immediately dictating your rank. Instead, every player begins at Copper V and must climb the ladder. But beneath this visible progression lies a complex, hidden mechanism designed to balance fairness with long-term engagement. This comprehensive guide unpacks the methodology behind our Siege tracker, the mathematics of Ranked 2.0, and how metrics like K/D and W/L actually impact your journey. If you're also interested in tracking assets in different domains, check out our <a href="/nfl-draft-tracker">NFL Draft Tracker</a>.
+      </p>
+
+      <h3>The Mechanics of Ranked 2.0</h3>
+      <p>
+        In Ranked 2.0, your rank is divided into two distinct metrics: your visible Rank Points (RP) and your hidden Matchmaking Rating (MMR), often referred to as your "Skill" value. The RP is what you and your friends see—Copper, Bronze, Silver, Gold, Platinum, Emerald, Diamond, and Champion. The hidden MMR, however, is what the game's servers use to find opponents and teammates of equal caliber.
+      </p>
+      <p>
+        When a season begins, your RP is reset to zero (Copper V), but your hidden MMR carries over from the previous season (with some normalization). This creates a discrepancy between where you visually start and where the game believes you belong. As you play matches, the system aggressively tries to pull your visible RP toward your hidden MMR. If your hidden MMR is equivalent to Gold II but you are currently in Bronze IV, you will receive substantial RP gains for wins (often 80-100 RP) and minimal penalties for losses (around 8-15 RP). This creates a "safety net" ensuring skilled players exit lower ranks rapidly.
+      </p>
+
+      <h3>The Convergence Point</h3>
+      <p>
+        As your visible rank climbs and approaches your hidden MMR, the RP gains will begin to shrink, and the RP losses will grow. The convergence point occurs when your visible rank matches your hidden MMR. At this stage, you might find yourself gaining 20 RP for a win and losing 20 RP for a loss. Many players refer to this as being "hardstuck." In reality, the system has simply determined that you have reached your statistically accurate skill bracket based on your recent match history.
+      </p>
+      <p>
+        To break past this convergence point, you must increase your hidden MMR. This is the most difficult phase of the Ranked 2.0 climb. Hidden MMR strictly responds to the outcome of a match (Win/Loss) and the relative strength of the opposing team. Defeating a team with a higher average hidden MMR than your own will net you a larger hidden MMR gain. Consistently achieving this will slowly raise your internal ceiling, thereby un-sticking your visible RP and allowing you to climb once again.
+      </p>
+
+      <h3>Kill/Death Ratio (K/D) and Its Real Value</h3>
+      <p>
+        A pervasive myth in the Rainbow Six Siege community is that individual performance metrics, particularly the Kill/Death (K/D) ratio, directly influence RP gains. This is unequivocally false. The ranking algorithm does not care if you dropped 15 kills in a match or zero; it only cares whether your team destroyed the final defuser or eliminated the opposing squad to secure the victory.
+      </p>
+      <p>
+        However, K/D remains a vital analytical tool, which is why our tracker prominently features it. Rainbow Six Siege is an asymmetric tactical shooter where eliminating the opposition is often the primary win condition. While a high K/D does not award extra RP, it strongly correlates with a higher probability of winning rounds.
+      </p>
+      <p>
+        When calculating K/D, the formula is simple: <strong>Total Kills / Total Deaths</strong>. A K/D above 1.0 means you are a net positive in terms of sheer attrition. But context matters deeply. An entry fragger playing Ash or Iana is expected to push engagements and ideally trade out positively. A support player running Thermite or Clash may sit at a 0.8 K/D but contribute massive utility by breaching reinforced walls or denying map control, directly facilitating the wins that actually boost MMR.
+      </p>
+
+      <h3>Win/Loss Percentage (W/L)</h3>
+      <p>
+        Your Win/Loss ratio is the purest reflection of your overall impact on the game. While K/D tracks lethal efficiency, W/L tracks objective success. Our calculator derives this by taking <strong>Total Wins / (Total Wins + Total Losses)</strong>. In a perfectly balanced matchmaking ecosystem, every player's W/L would eventually normalize toward 50% as they reach their exact skill ceiling.
+      </p>
+      <p>
+        Maintaining a W/L above 50% across a large sample size of matches is the only guaranteed way to climb in Ranked 2.0. Even if your RP gains and losses are exactly symmetrical (e.g., +25 / -25), a 55% win rate guarantees upward momentum over a long enough timeline.
+      </p>
+
+      <h3>Forecasting Your Trajectory</h3>
+      <p>
+        Our tracker includes a forecasting tool that estimates your RP after a specified number of upcoming matches. This uses a probabilistic model based on your historical W/L percentage and your current RP gain/loss trajectory.
+      </p>
+      <p>
+        The formula operates by calculating the expected value (EV) of a single match based on your inputted averages. If your win rate is 55%, your loss rate is 45%. We multiply the average RP gain by the win probability, and the average RP loss by the loss probability.
+        <br /><br />
+        <strong>Expected RP Change per Match = (Win% × Avg RP Gain) - (Loss% × Avg RP Loss)</strong>
+      </p>
+      <p>
+        By multiplying this expected change by the number of targeted matches, we can project your future rank bracket. Note that this is a linear approximation. In reality, as your rank increases, the system will dynamically compress your RP gains, meaning exponential growth is impossible without simultaneous hidden MMR growth.
+      </p>
+
+      <h3>Strategic Takeaways</h3>
+      <p>
+        Understanding these metrics shifts how you should approach your Ranked sessions. Stop fixating on preserving your K/D at the expense of a round win. A sacrificed life that burns 45 seconds off the attacker's clock or wastes crucial utility is infinitely more valuable to your hidden MMR than a meaningless flank kill in a 1v4 post-plant scenario. Focus on the aggregate win condition, communicate effectively with your squad, and let the mathematics of Ranked 2.0 handle the rest.
+      </p>
+    </div>
+
+    <section class="faq-section">
+      <h2>Frequently Asked Questions</h2>
+      <details>
+        <summary>How does Ranked 2.0 calculate RP in Siege?</summary>
+        <p>Ranked 2.0 uses a hidden Matchmaking Rating (MMR) separate from your visual Rank Points (RP). If your hidden MMR is higher than your current visual rank, the system awards more RP for wins and deducts less for losses to push you toward your 'true' rank. Once your visual rank aligns with your hidden MMR, RP gains and losses stabilize.</p>
+      </details>
+      <details>
+        <summary>Does K/D affect RP gain in Rainbow Six Siege?</summary>
+        <p>No, your Kill/Death ratio does not directly impact RP or hidden MMR gains. Matchmaking and rank adjustments in Rainbow Six Siege are strictly based on win/loss outcomes and the comparative skill levels of the teams involved.</p>
+      </details>
+      <details>
+        <summary>Why am I gaining only 10 RP per win?</summary>
+        <p>When you are gaining minimal RP (e.g., 10-15 per win) and losing roughly the same amount, it means your visual rank has caught up to your hidden MMR. To increase your RP gains again, you must consistently win against higher-rated opponents to raise your hidden MMR.</p>
+      </details>
+      <details>
+        <summary>What is a good K/D in Rainbow Six Siege?</summary>
+        <p>A K/D of 1.0 indicates you are getting exactly one kill for every death. In competitive play, anything above 1.0 is considered positive, with highly aggressive entry fraggers often aiming for 1.2 or higher. However, support players routinely hold K/Ds below 1.0 while heavily contributing to team wins.</p>
+      </details>
+      <details>
+        <summary>Can I see my exact hidden MMR?</summary>
+        <p>No, Ubisoft does not expose the exact hidden MMR number to players in Ranked 2.0. You can only infer your hidden MMR relative to your visual rank by observing your average RP gains versus losses.</p>
+      </details>
+    </section>
+  </div>
+
+  <script is:inline>
+    document.addEventListener('DOMContentLoaded', () => {
+      const inputs = ['kills', 'deaths', 'wins', 'losses', 'currentRp', 'rpGain', 'rpLoss', 'targetMatches'];
+      const elements = {};
+
+      inputs.forEach(id => {
+        elements[id] = document.getElementById(id);
+        if(elements[id]) {
+          elements[id].addEventListener('input', calculateStats);
+        }
+      });
+
+      const resKd = document.getElementById('res-kd');
+      const resWl = document.getElementById('res-wl');
+      const resForecast = document.getElementById('res-forecast');
+      const errorMsg = document.getElementById('error-message');
+
+      function calculateStats() {
+        errorMsg.textContent = '';
+
+        const kills = parseFloat(elements['kills'].value);
+        const deaths = parseFloat(elements['deaths'].value);
+        const wins = parseFloat(elements['wins'].value);
+        const losses = parseFloat(elements['losses'].value);
+        const currentRp = parseFloat(elements['currentRp'].value);
+        const rpGain = parseFloat(elements['rpGain'].value);
+        const rpLoss = parseFloat(elements['rpLoss'].value);
+        const targetMatches = parseFloat(elements['targetMatches'].value);
+
+        // K/D Calculation
+        if (!isNaN(kills) && !isNaN(deaths)) {
+          if (deaths === 0) {
+            resKd.textContent = kills > 0 ? "Perfect" : "0.00";
+          } else {
+            resKd.textContent = (kills / deaths).toFixed(2);
+          }
+        } else {
+          resKd.textContent = "0.00";
+        }
+
+        // W/L Calculation
+        let winRate = 0;
+        if (!isNaN(wins) && !isNaN(losses)) {
+          const totalMatches = wins + losses;
+          if (totalMatches > 0) {
+            winRate = wins / totalMatches;
+            resWl.textContent = (winRate * 100).toFixed(1) + "%";
+          } else {
+            resWl.textContent = "0.0%";
+          }
+        } else {
+          resWl.textContent = "0.0%";
+        }
+
+        // Forecast Calculation
+        if (!isNaN(currentRp) && !isNaN(rpGain) && !isNaN(rpLoss) && !isNaN(targetMatches) && targetMatches > 0) {
+          if (!isNaN(wins) && !isNaN(losses) && (wins + losses) > 0) {
+            const ev = (winRate * rpGain) - ((1 - winRate) * rpLoss);
+            const forecastedRp = currentRp + (ev * targetMatches);
+            resForecast.textContent = Math.round(forecastedRp).toLocaleString();
+          } else {
+            // Assume 50% win rate if no match history is provided
+            const ev = (0.5 * rpGain) - (0.5 * rpLoss);
+            const forecastedRp = currentRp + (ev * targetMatches);
+            resForecast.textContent = Math.round(forecastedRp).toLocaleString();
+            errorMsg.textContent = "Note: Forecasting assuming 50% win rate since no match history was provided.";
+          }
+        } else {
+          resForecast.textContent = "N/A";
+        }
+
+        // Basic validation
+        for (let key in elements) {
+          if (elements[key].value !== '' && parseFloat(elements[key].value) < 0) {
+            errorMsg.textContent = "Please enter positive numbers only.";
+          }
+        }
+      }
+    });
+  </script>
+
+  <style is:inline>
+    .page-content { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem; }
+    .hero { text-align: center; padding: 3rem 0 2rem; }
+    .hero h1 { font-size: 2.2rem; font-weight: 800; margin-bottom: 0.5rem; }
+    .subtitle { color: var(--text-secondary); font-size: 1.1rem; }
+
+    .calculator-container {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 2rem;
+      margin: 2rem 0;
+    }
+    .grid-layout {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+    .input-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+    .input-group label {
+      font-weight: 600;
+      font-size: 0.95rem;
+      color: var(--text-primary);
+    }
+    input, select {
+      background: var(--bg-color);
+      color: var(--text-primary);
+      border: 1px solid var(--border-color);
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      width: 100%;
+      font-size: 1rem;
+    }
+    input:focus, select:focus {
+      outline: none;
+      border-color: var(--accent-color);
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-color) 20%, transparent);
+    }
+
+    .error-text {
+      color: #ef4444;
+      font-size: 0.9rem;
+      margin-bottom: 1rem;
+      min-height: 1.2rem;
+      text-align: center;
+    }
+
+    .results-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+    }
+    .result-card {
+      background: color-mix(in srgb, var(--accent-color) 10%, transparent);
+      border: 1px solid var(--accent-color);
+      border-radius: 12px;
+      padding: 1.5rem;
+      text-align: center;
+    }
+    .result-label {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.5rem;
+    }
+    .result-value {
+      font-size: 2.5rem;
+      font-weight: 800;
+      color: var(--accent-color);
+    }
+
+    .explainer {
+      margin: 3rem 0;
+      line-height: 1.7;
+      color: var(--text-primary);
+    }
+    .explainer h2 {
+      font-size: 1.8rem;
+      margin-top: 2rem;
+      margin-bottom: 1rem;
+      font-weight: 700;
+    }
+    .explainer h3 {
+      font-size: 1.4rem;
+      margin-top: 1.5rem;
+      margin-bottom: 0.75rem;
+      font-weight: 600;
+    }
+    .explainer p {
+      margin-bottom: 1.25rem;
+    }
+    .explainer a {
+      color: var(--accent-color);
+      text-decoration: none;
+      font-weight: 600;
+    }
+    .explainer a:hover {
+      text-decoration: underline;
+    }
+
+    .faq-section {
+      margin-top: 3rem;
+    }
+    .faq-section h2 {
+      font-size: 1.8rem;
+      margin-bottom: 1.5rem;
+    }
+    .faq-section details {
+      margin: 1rem 0;
+      padding: 1.25rem;
+      background: var(--card-bg);
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+    }
+    .faq-section summary {
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 1.1rem;
+      outline: none;
+    }
+    .faq-section details p {
+      margin-top: 1rem;
+      margin-bottom: 0;
+      line-height: 1.6;
+      color: var(--text-secondary);
+    }
+  </style>
+</SiteLayout>

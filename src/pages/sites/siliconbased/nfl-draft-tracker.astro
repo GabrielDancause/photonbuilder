@@ -1,0 +1,506 @@
+---
+import SiteLayout from "../../../layouts/SiteLayout.astro";
+
+export const meta = {
+  title: "NFL Draft Tracker 2025: Trade Value Calculator",
+  description: "Are your team's GMs geniuses or getting fleeced? Use our dynamic NFL Draft trade value calculator based on the modern Jimmy Johnson chart to analyze every move.",
+  category: "tool",
+  published: "2026-03-15",
+};
+
+const schema = [
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": meta.title,
+    "description": meta.description,
+    "author": {
+      "@type": "Organization",
+      "name": "SiliconBased"
+    }
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "What is the Jimmy Johnson trade value chart?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "The Jimmy Johnson trade value chart is a numerical system created in the early 1990s by the Dallas Cowboys to assign standardized point values to every draft pick from 1 to 224. It provides a baseline for teams to negotiate draft-day trades fairly, ensuring that the total value of picks exchanged is roughly equal."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How is the modern NFL draft trade chart different?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "While the original Jimmy Johnson chart heavily overvalued the top 5 picks, modern analytics (like the Rich Hill or Fitzgerald-Spielberger models) flatten the curve. Modern charts recognize that hoarding multiple mid-round picks is often statistically more valuable than putting all your capital into a single top-10 selection, though elite quarterback prospects often break these models."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Why do NFL teams trade back in the draft?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Teams trade back to accumulate more total draft capital. Because the NFL draft is inherently unpredictable and essentially an educated guessing game, having more 'darts to throw' historically yields a deeper, more talented roster than relying on a few high picks."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How much is the number 1 overall pick worth?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "According to the traditional Jimmy Johnson chart, the 1st overall pick is worth exactly 3,000 points. However, in reality, its value fluctuates wildly based on the quarterback class. If a generational QB is available, teams will often pay a massive premium—sometimes exceeding 4,000 points in value—to move up to number 1."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Do compensatory picks have trade value?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes. Since 2017, the NFL has allowed teams to trade compensatory draft picks. These picks hold the standard point value associated with their exact overall slot at the end of rounds 3 through 7."
+        }
+      }
+    ]
+  }
+];
+---
+<SiteLayout site="siliconbased" title={meta.title} description={meta.description} canonical="https://siliconbased.dev/nfl-draft-tracker" schema={schema}>
+  <div class="page-content">
+    <div class="hero">
+      <h1>NFL Draft Trade Tracker 2025</h1>
+      <p class="subtitle">Evaluate blockbusters and draft-day steals using standardized trade value metrics.</p>
+    </div>
+
+    <div class="calculator-container">
+      <div class="trade-interface">
+        <div class="team-block">
+          <h3>Team 1 Receives</h3>
+          <p class="instruction">Enter exact overall pick numbers (1-259) separated by commas.</p>
+          <input type="text" id="team1-picks" placeholder="e.g. 1, 15, 64" />
+
+          <div class="future-picks">
+            <label>Add Future Capital (Points):</label>
+            <input type="number" id="team1-future" placeholder="e.g. 500" min="0" />
+          </div>
+
+          <div class="point-total">
+            Total Value: <span id="team1-total-val" class="highlight-val">0</span> pts
+          </div>
+        </div>
+
+        <div class="vs-divider">VS</div>
+
+        <div class="team-block">
+          <h3>Team 2 Receives</h3>
+          <p class="instruction">Enter exact overall pick numbers (1-259) separated by commas.</p>
+          <input type="text" id="team2-picks" placeholder="e.g. 9, 22, 45, 112" />
+
+          <div class="future-picks">
+            <label>Add Future Capital (Points):</label>
+            <input type="number" id="team2-future" placeholder="e.g. 0" min="0" />
+          </div>
+
+          <div class="point-total">
+            Total Value: <span id="team2-total-val" class="highlight-val">0</span> pts
+          </div>
+        </div>
+      </div>
+
+      <div id="trade-error" class="error-text"></div>
+
+      <div class="trade-verdict">
+        <div class="verdict-label">Trade Analysis</div>
+        <div class="verdict-text" id="verdict-output">Enter picks for both teams to analyze the trade.</div>
+        <div class="verdict-diff" id="verdict-diff"></div>
+      </div>
+    </div>
+
+    <div class="explainer">
+      <h2>The Methodology Behind NFL Draft Pick Valuation</h2>
+      <p>
+        The NFL Draft is a high-stakes marketplace where careers are defined and franchises are transformed. But how do General Managers know if they are getting a fair deal when swapping a top-10 pick for a haul of second and third-rounders? The answer lies in trade value charts. This tracker utilizes a smoothed, modernized adaptation of the traditional Jimmy Johnson chart to evaluate draft-day trades in real-time. If you want to dive into a different type of competitive math, explore our <a href="/siege-tracker">Rainbow Six Siege Tracker</a>.
+      </p>
+
+      <h3>The Origin: The Jimmy Johnson Chart</h3>
+      <p>
+        In the early 1990s, the Dallas Cowboys, led by head coach Jimmy Johnson and owner Jerry Jones, developed a points-based system to standardize the value of every draft pick from 1 to 224. They assigned an arbitrary baseline value of 3,000 points to the 1st overall pick. The 2nd pick was worth 2,600, the 3rd was 2,200, and the values decayed logarithmically down to 2 points for the final picks of the 7th round.
+      </p>
+      <p>
+        This chart revolutionized the league. It gave front offices a common currency. If Team A wanted the 1st overall pick (3,000 pts), Team B knew they could ask for the 4th pick (1,800 pts) and the 12th pick (1,200 pts) to make it a mathematically even swap. For decades, this exact numerical framework dictated nearly every draft-day transaction.
+      </p>
+
+      <h3>Modernizing the Math: The Rich Hill & Fitzgerald-Spielberger Models</h3>
+      <p>
+        As the NFL evolved into a heavily analytics-driven league, statisticians began to realize a major flaw in the original chart: it drastically overvalued the top of the draft. Historical data on player performance (using metrics like Approximate Value) proved that the 1st overall pick was rarely worth two top-15 picks in terms of actual on-field production over a 4-year rookie contract.
+      </p>
+      <p>
+        Modern charts, such as the Rich Hill model, flatten the curve. They distribute more point value into the 2nd, 3rd, and 4th rounds. Modern analytics dictate that the draft is inherently a lottery; therefore, accumulating a higher volume of top-100 picks is statistically safer and more efficient than placing all your capital on a single, highly volatile top-5 selection.
+      </p>
+
+      <h3>How Our NFL Draft Tracker Calculates Value</h3>
+      <p>
+        Our tracker uses an algorithmic decay formula to instantly approximate the traditional trade value of any given pick.
+      </p>
+      <p>
+        <strong>The Formula Breakdown:</strong><br />
+        For the top 10 picks, the value drops steeply. The 1st pick is 3000, and it drops by roughly 400, then 300, then 200 per slot.
+        As you reach the middle rounds, the decay rate slows down, creating a long tail. A 3rd round pick (e.g., pick 75) is worth roughly 215 points, while a 5th round pick (e.g., pick 150) is worth about 30 points.
+      </p>
+      <p>
+        When you enter comma-separated pick numbers into our calculator, the script parses the integers, filters out invalid entries (like pick 300), queries the underlying algorithmic chart for the point value of each pick, and sums the total.
+      </p>
+
+      <h3>Evaluating the "Winner" of a Trade</h3>
+      <p>
+        When our tracker outputs a difference in points, it evaluates the transaction objectively. A trade is considered "Fair" if the point difference is within a 5% margin of error.
+      </p>
+      <p>
+        However, context is critical. If a team gives up 2,500 points of value to receive only 2,200 points in return, the calculator will declare that they "lost" the trade. But in reality, if they are moving up to select a franchise-altering Quarterback, overpaying is practically mandatory. Because QB is the most valuable position in professional sports, teams moving into the top 5 to draft a signal-caller are routinely forced to pay a "QB Tax"—often an overpay of 20-30% above chart value.
+      </p>
+
+      <h3>Future Draft Capital</h3>
+      <p>
+        Evaluating future draft picks is notoriously difficult because you don't know exactly where that pick will land in the following year's order. The standard NFL front-office convention is to discount a future pick by one entire round. Therefore, a future 1st-round pick is valued as a mid-2nd round pick in the current year (roughly 400-500 points). A future 2nd is valued as a current 3rd, and so on. We provide a manual input field for future capital so you can add these flat valuations to blockbuster trades.
+      </p>
+    </div>
+
+    <section class="faq-section">
+      <h2>Frequently Asked Questions</h2>
+      <details>
+        <summary>What is the Jimmy Johnson trade value chart?</summary>
+        <p>The Jimmy Johnson trade value chart is a numerical system created in the early 1990s by the Dallas Cowboys to assign standardized point values to every draft pick from 1 to 224. It provides a baseline for teams to negotiate draft-day trades fairly, ensuring that the total value of picks exchanged is roughly equal.</p>
+      </details>
+      <details>
+        <summary>How is the modern NFL draft trade chart different?</summary>
+        <p>While the original Jimmy Johnson chart heavily overvalued the top 5 picks, modern analytics (like the Rich Hill or Fitzgerald-Spielberger models) flatten the curve. Modern charts recognize that hoarding multiple mid-round picks is often statistically more valuable than putting all your capital into a single top-10 selection, though elite quarterback prospects often break these models.</p>
+      </details>
+      <details>
+        <summary>Why do NFL teams trade back in the draft?</summary>
+        <p>Teams trade back to accumulate more total draft capital. Because the NFL draft is inherently unpredictable and essentially an educated guessing game, having more 'darts to throw' historically yields a deeper, more talented roster than relying on a few high picks.</p>
+      </details>
+      <details>
+        <summary>How much is the number 1 overall pick worth?</summary>
+        <p>According to the traditional Jimmy Johnson chart, the 1st overall pick is worth exactly 3,000 points. However, in reality, its value fluctuates wildly based on the quarterback class. If a generational QB is available, teams will often pay a massive premium—sometimes exceeding 4,000 points in value—to move up to number 1.</p>
+      </details>
+      <details>
+        <summary>Do compensatory picks have trade value?</summary>
+        <p>Yes. Since 2017, the NFL has allowed teams to trade compensatory draft picks. These picks hold the standard point value associated with their exact overall slot at the end of rounds 3 through 7.</p>
+      </details>
+    </section>
+  </div>
+
+  <script is:inline>
+    // Algorithmic approximation of the classic trade chart values
+    function getPickValue(pick) {
+      if (pick < 1 || pick > 259) return 0;
+
+      const exactValues = {
+        1: 3000, 2: 2600, 3: 2200, 4: 1800, 5: 1700,
+        6: 1600, 7: 1500, 8: 1400, 9: 1350, 10: 1300,
+        11: 1250, 12: 1200, 13: 1150, 14: 1100, 15: 1050,
+        16: 1000, 17: 950, 18: 900, 19: 875, 20: 850,
+        21: 800, 22: 780, 23: 760, 24: 740, 25: 720,
+        26: 700, 27: 680, 28: 660, 29: 640, 30: 620,
+        31: 600, 32: 590
+      };
+
+      if (exactValues[pick]) return exactValues[pick];
+
+      // Approximation for picks 33-259
+      if (pick <= 64) return Math.round(580 - ((pick - 33) * 11)); // R2 drops ~11 pts per pick
+      if (pick <= 96) return Math.round(265 - ((pick - 65) * 5));  // R3 drops ~5 pts per pick
+      if (pick <= 128) return Math.round(112 - ((pick - 97) * 2)); // R4 drops ~2 pts per pick
+      if (pick <= 160) return Math.round(44 - ((pick - 129) * 0.5)); // R5 drops ~0.5
+      if (pick <= 192) return Math.round(28 - ((pick - 161) * 0.4)); // R6
+      if (pick <= 259) return Math.round(15 - ((pick - 193) * 0.2)); // R7 and comp
+
+      return 0;
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const team1PicksInput = document.getElementById('team1-picks');
+      const team1FutureInput = document.getElementById('team1-future');
+      const team2PicksInput = document.getElementById('team2-picks');
+      const team2FutureInput = document.getElementById('team2-future');
+
+      const team1TotalEl = document.getElementById('team1-total-val');
+      const team2TotalEl = document.getElementById('team2-total-val');
+
+      const errorEl = document.getElementById('trade-error');
+      const verdictOutput = document.getElementById('verdict-output');
+      const verdictDiff = document.getElementById('verdict-diff');
+
+      function parsePicks(inputStr) {
+        if (!inputStr) return [];
+        return inputStr.split(',')
+          .map(s => parseInt(s.trim()))
+          .filter(n => !isNaN(n) && n > 0 && n <= 259);
+      }
+
+      function calculateTrade() {
+        errorEl.textContent = '';
+
+        const t1Picks = parsePicks(team1PicksInput.value);
+        const t2Picks = parsePicks(team2PicksInput.value);
+
+        const t1Future = parseInt(team1FutureInput.value) || 0;
+        const t2Future = parseInt(team2FutureInput.value) || 0;
+
+        // Check for invalid inputs (e.g. text instead of numbers)
+        if (team1PicksInput.value && t1Picks.length === 0 && !team1PicksInput.value.includes(',')) {
+           if(isNaN(parseInt(team1PicksInput.value))) errorEl.textContent = "Please enter valid pick numbers for Team 1.";
+        }
+        if (team2PicksInput.value && t2Picks.length === 0 && !team2PicksInput.value.includes(',')) {
+           if(isNaN(parseInt(team2PicksInput.value))) errorEl.textContent = "Please enter valid pick numbers for Team 2.";
+        }
+
+        let t1Total = t1Picks.reduce((sum, pick) => sum + getPickValue(pick), 0) + t1Future;
+        let t2Total = t2Picks.reduce((sum, pick) => sum + getPickValue(pick), 0) + t2Future;
+
+        team1TotalEl.textContent = t1Total.toLocaleString();
+        team2TotalEl.textContent = t2Total.toLocaleString();
+
+        if (t1Total === 0 && t2Total === 0) {
+          verdictOutput.textContent = "Enter picks for both teams to analyze the trade.";
+          verdictOutput.style.color = "var(--text-primary)";
+          verdictDiff.textContent = "";
+          return;
+        }
+
+        if (t1Total > 0 && t2Total === 0) {
+          verdictOutput.textContent = "Awaiting Team 2's return package...";
+          verdictOutput.style.color = "var(--text-secondary)";
+          verdictDiff.textContent = "";
+          return;
+        }
+
+        if (t2Total > 0 && t1Total === 0) {
+          verdictOutput.textContent = "Awaiting Team 1's return package...";
+          verdictOutput.style.color = "var(--text-secondary)";
+          verdictDiff.textContent = "";
+          return;
+        }
+
+        const diff = Math.abs(t1Total - t2Total);
+        const maxVal = Math.max(t1Total, t2Total);
+
+        // Fair threshold: within 5% of the total value
+        const isFair = diff <= (maxVal * 0.05);
+
+        if (isFair) {
+          verdictOutput.textContent = "Fair Trade!";
+          verdictOutput.style.color = "#10b981"; // green
+        } else if (t1Total > t2Total) {
+          verdictOutput.textContent = "Team 1 Wins the Trade";
+          verdictOutput.style.color = "var(--accent-color)";
+        } else {
+          verdictOutput.textContent = "Team 2 Wins the Trade";
+          verdictOutput.style.color = "var(--accent-color)";
+        }
+
+        verdictDiff.textContent = `Difference of ${diff.toLocaleString()} points`;
+      }
+
+      team1PicksInput.addEventListener('input', calculateTrade);
+      team1FutureInput.addEventListener('input', calculateTrade);
+      team2PicksInput.addEventListener('input', calculateTrade);
+      team2FutureInput.addEventListener('input', calculateTrade);
+    });
+  </script>
+
+  <style is:inline>
+    .page-content { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem; }
+    .hero { text-align: center; padding: 3rem 0 2rem; }
+    .hero h1 { font-size: 2.2rem; font-weight: 800; margin-bottom: 0.5rem; }
+    .subtitle { color: var(--text-secondary); font-size: 1.1rem; }
+
+    .calculator-container {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 2rem;
+      margin: 2rem 0;
+    }
+
+    .trade-interface {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    @media (min-width: 768px) {
+      .trade-interface {
+        flex-direction: row;
+        align-items: stretch;
+      }
+    }
+
+    .team-block {
+      flex: 1;
+      background: color-mix(in srgb, var(--bg-color) 50%, transparent);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 1.5rem;
+    }
+
+    .team-block h3 {
+      margin-top: 0;
+      margin-bottom: 0.5rem;
+      font-size: 1.2rem;
+      color: var(--accent-color);
+    }
+
+    .instruction {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      margin-bottom: 1rem;
+    }
+
+    .vs-divider {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 800;
+      font-size: 1.5rem;
+      color: var(--text-secondary);
+      padding: 1rem;
+    }
+
+    input {
+      background: var(--bg-color);
+      color: var(--text-primary);
+      border: 1px solid var(--border-color);
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      width: 100%;
+      font-size: 1rem;
+      margin-bottom: 1rem;
+    }
+    input:focus {
+      outline: none;
+      border-color: var(--accent-color);
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-color) 20%, transparent);
+    }
+
+    .future-picks {
+      margin-bottom: 1.5rem;
+    }
+    .future-picks label {
+      display: block;
+      font-size: 0.9rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+
+    .point-total {
+      font-size: 1.1rem;
+      font-weight: 600;
+      text-align: right;
+      padding-top: 1rem;
+      border-top: 1px dashed var(--border-color);
+    }
+
+    .highlight-val {
+      font-size: 1.5rem;
+      font-weight: 800;
+      color: var(--accent-color);
+    }
+
+    .error-text {
+      color: #ef4444;
+      font-size: 0.9rem;
+      margin-top: 1rem;
+      min-height: 1.2rem;
+      text-align: center;
+    }
+
+    .trade-verdict {
+      margin-top: 2rem;
+      padding: 1.5rem;
+      background: color-mix(in srgb, var(--accent-color) 10%, transparent);
+      border: 1px solid var(--accent-color);
+      border-radius: 8px;
+      text-align: center;
+    }
+
+    .verdict-label {
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-secondary);
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+
+    .verdict-text {
+      font-size: 1.8rem;
+      font-weight: 800;
+      margin-bottom: 0.5rem;
+    }
+
+    .verdict-diff {
+      font-size: 1rem;
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+
+    .explainer {
+      margin: 3rem 0;
+      line-height: 1.7;
+      color: var(--text-primary);
+    }
+    .explainer h2 {
+      font-size: 1.8rem;
+      margin-top: 2rem;
+      margin-bottom: 1rem;
+      font-weight: 700;
+    }
+    .explainer h3 {
+      font-size: 1.4rem;
+      margin-top: 1.5rem;
+      margin-bottom: 0.75rem;
+      font-weight: 600;
+    }
+    .explainer p {
+      margin-bottom: 1.25rem;
+    }
+    .explainer a {
+      color: var(--accent-color);
+      text-decoration: none;
+      font-weight: 600;
+    }
+    .explainer a:hover {
+      text-decoration: underline;
+    }
+
+    .faq-section {
+      margin-top: 3rem;
+    }
+    .faq-section h2 {
+      font-size: 1.8rem;
+      margin-bottom: 1.5rem;
+    }
+    .faq-section details {
+      margin: 1rem 0;
+      padding: 1.25rem;
+      background: var(--card-bg);
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+    }
+    .faq-section summary {
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 1.1rem;
+      outline: none;
+    }
+    .faq-section details p {
+      margin-top: 1rem;
+      margin-bottom: 0;
+      line-height: 1.6;
+      color: var(--text-secondary);
+    }
+  </style>
+</SiteLayout>
