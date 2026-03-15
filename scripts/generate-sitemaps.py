@@ -32,6 +32,7 @@ SITE_DOMAINS = {
     "sendnerds": "photonbuilder.com",
     "fixitwithducttape": "photonbuilder.com",
     "papyruspeople": "photonbuilder.com",
+    "eeniemeenie": "photonbuilder.com",
     "misc": "photonbuilder.com",
     "justonemoment": "photonbuilder.com",
     "bodycount": "health.example.com",

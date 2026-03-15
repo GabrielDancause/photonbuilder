@@ -233,3 +233,18 @@ sites['papyruspeople'] = {
   ],
   footer: { text: '© 2026 Papyrus People', gabVentures: true },
 };
+
+sites['eeniemeenie'] = {
+  id: 'eeniemeenie',
+  name: 'Eenie Meenie',
+  domain: 'photonbuilder.com',
+  accent: '#E040FB',
+  theme: { bg: '#0a060c', cardBg: '#140e18', border: '#2a1e34', textPrimary: '#e8e0f0', textSecondary: '#a090b8' },
+  gaId: 'G-CYV604162T',
+  nav: [
+    { label: 'Generators', href: '/eeniemeenie/#tools' },
+    { label: 'Spinners', href: '/eeniemeenie/#guides' },
+    { label: 'Roadmap', href: '/eeniemeenie/coming-soon' },
+  ],
+  footer: { text: '© 2026 Eenie Meenie', gabVentures: true },
+};
