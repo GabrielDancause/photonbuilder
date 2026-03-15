@@ -1,0 +1,401 @@
+---
+import SiteLayout from "../../../layouts/SiteLayout.astro";
+
+export const meta = {
+  title: "USPS Shipping Calculator | Estimate Priority & Ground Rates",
+  description: "Calculate USPS shipping rates instantly based on weight and zone. Are you overpaying for postage? Compare Priority Mail and Ground Advantage costs.",
+  category: "tool",
+  published: "2026-03-15",
+};
+
+const schema = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "How is USPS shipping cost calculated?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "USPS shipping costs are primarily determined by the weight of the package, the physical dimensions, and the distance it is traveling, which is divided into shipping 'Zones'."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What is the difference between Priority Mail and Ground Advantage?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Priority Mail is typically faster (1-3 business days) and includes $100 of insurance. USPS Ground Advantage is a more economical option for heavier packages that do not require expedited delivery (2-5 business days)."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What are USPS shipping zones?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Zones are geographical regions relative to the origin zip code, numbered 1 through 9. Zone 1 is local, while Zone 8 is the furthest domestic distance (e.g., East Coast to West Coast). Zone 9 includes US territories."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Do box dimensions matter for USPS?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes, for packages exceeding one cubic foot (1,728 cubic inches), USPS applies 'Dimensional Weight' pricing, which means you could be charged based on the size of the box rather than its actual physical weight if it is large but lightweight."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Is it cheaper to ship in my own box or a flat rate box?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "It depends on the weight and destination. Heavy items traveling far (high zones) are usually cheaper in a Flat Rate box. Light items, or heavy items traveling locally (low zones), are often cheaper using your own packaging and standard weight-based rates."
+          }
+        }
+      ]
+    },
+    {
+      "@type": "Article",
+      "headline": meta.title,
+      "description": meta.description,
+      "author": {
+        "@type": "Organization",
+        "name": "SiliconBased"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "SiliconBased",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://siliconbased.dev/logo.png"
+        }
+      },
+      "datePublished": meta.published
+    }
+  ]
+};
+---
+
+<SiteLayout site="siliconbased" title={meta.title} description={meta.description} canonical="https://siliconbased.dev/usps-shipping-calculator" schema={schema}>
+  <div class="page-content">
+    <div class="hero">
+      <h1>USPS Shipping Calculator</h1>
+      <p class="subtitle">Estimate domestic shipping rates based on weight and zone</p>
+    </div>
+
+    <div class="calculator-container" id="calculator">
+      <div class="input-grid">
+        <div class="input-group">
+          <label for="weight-lbs">Weight (Lbs)</label>
+          <div class="suffix-wrapper">
+            <input type="number" id="weight-lbs" min="0" max="70" step="1" value="1">
+            <span class="suffix">lbs</span>
+          </div>
+        </div>
+        <div class="input-group">
+          <label for="weight-oz">Weight (Oz)</label>
+          <div class="suffix-wrapper">
+            <input type="number" id="weight-oz" min="0" max="15.99" step="0.1" value="0">
+            <span class="suffix">oz</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="input-grid">
+        <div class="input-group">
+          <label for="zone">Shipping Zone</label>
+          <select id="zone">
+            <option value="12">Zone 1 & 2 (Local, up to 150 miles)</option>
+            <option value="3">Zone 3 (151 - 300 miles)</option>
+            <option value="4">Zone 4 (301 - 600 miles)</option>
+            <option value="5">Zone 5 (601 - 1,000 miles)</option>
+            <option value="6">Zone 6 (1,001 - 1,400 miles)</option>
+            <option value="7">Zone 7 (1,401 - 1,800 miles)</option>
+            <option value="8">Zone 8 (1,801+ miles)</option>
+          </select>
+        </div>
+        <div class="input-group">
+          <label>Package Type</label>
+          <select id="package-type">
+            <option value="custom">My Own Box</option>
+            <option value="flat-env">Flat Rate Envelope</option>
+            <option value="flat-small">Small Flat Rate Box</option>
+            <option value="flat-medium">Medium Flat Rate Box</option>
+            <option value="flat-large">Large Flat Rate Box</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="error-message" style="display:none; color: #ef4444; background: color-mix(in srgb, #ef4444 10%, transparent); border: 1px solid #ef4444; padding: 1rem; border-radius: 8px; margin-top: 1rem; text-align: center;">
+      </div>
+
+      <div class="rates-container" id="rates-display">
+        <div class="rate-card">
+          <h3>Priority Mail</h3>
+          <p>1-3 Business Days &bull; Includes $100 Insurance</p>
+          <div class="result-value" id="priority-rate">$0.00</div>
+        </div>
+        <div class="rate-card">
+          <h3>Ground Advantage</h3>
+          <p>2-5 Business Days &bull; Most Economical</p>
+          <div class="result-value" id="ground-rate">$0.00</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="explainer">
+      <h2>Understanding USPS Shipping Costs</h2>
+      <p>
+        Navigating the complex world of United States Postal Service (USPS) shipping rates can be daunting. Unlike a flat fee system, USPS pricing is dynamic, relying heavily on three primary factors: the physical weight of your package, its dimensional volume, and the distance it must travel (measured in "Zones"). Understanding how these variables interact is key to ensuring you don't overpay for postage.
+      </p>
+
+      <h3>Weight vs. Dimensional Weight</h3>
+      <p>
+        For most standard packages, the actual physical weight (measured in pounds and ounces) dictates the base cost. However, if you are shipping a large, lightweight item (like a pillow or a large plastic toy), you might be hit with <strong>Dimensional Weight (DIM weight)</strong> pricing.
+      </p>
+      <p>
+        USPS applies DIM weight pricing to packages that exceed one cubic foot (1,728 cubic inches) and are destined for Zones 5 through 9. To calculate DIM weight, you multiply the length, width, and height of the box (in inches) and divide by a divisor (currently 166 for USPS retail rates). The post office will charge you based on whichever is greater: the actual weight or the calculated DIM weight. Our calculator currently assumes standard box sizes under one cubic foot.
+      </p>
+
+      <h3>Demystifying Shipping Zones</h3>
+      <p>
+        Instead of calculating exact mileage between zip codes, USPS groups distances into Zones ranging from 1 to 9. The zone is entirely relative to your origin zip code.
+      </p>
+      <ul>
+        <li><strong>Zone 1 & 2:</strong> Local shipments, usually within a 150-mile radius.</li>
+        <li><strong>Zone 3 to 7:</strong> Progressively further distances across the country.</li>
+        <li><strong>Zone 8:</strong> The maximum domestic distance (e.g., shipping from New York to California, over 1,800 miles).</li>
+        <li><strong>Zone 9:</strong> Freely associated states and US territories like Guam or Puerto Rico.</li>
+      </ul>
+      <p>
+        A 5-pound box might cost $10 to ship to Zone 2, but that exact same box could cost $25 to ship to Zone 8. If you run an e-commerce business, understanding your customer distribution across these zones is critical for setting accurate shipping policies.
+      </p>
+
+      <h3>Priority Mail vs. Ground Advantage</h3>
+      <p>
+        USPS recently streamlined its services. The two primary options for domestic shipping are now Priority Mail and Ground Advantage (which replaced Retail Ground and First-Class Package Service).
+      </p>
+      <p>
+        <strong>Priority Mail</strong> is the premium domestic service. It promises delivery within 1 to 3 business days, includes free tracking, and comes with up to $100 of insurance included. It also gives you access to free USPS-branded packaging (like Flat Rate boxes).
+      </p>
+      <p>
+        <strong>USPS Ground Advantage</strong> is the economical choice. Delivery takes slightly longer (typically 2 to 5 business days), but the cost savings can be substantial, especially for heavier packages traveling to higher zones. It also includes $100 of insurance and tracking. If transit speed is not your primary concern, Ground Advantage is often the best choice for packages weighing under 70 lbs.
+      </p>
+
+      <h3>The Flat Rate Dilemma</h3>
+      <p>
+        USPS heavily markets its "If it fits, it ships" Flat Rate boxes. These charge a single, fixed rate regardless of weight (up to 70 lbs) or destination zone. While convenient, they are not always the cheapest option.
+      </p>
+      <p>
+        As a general rule: Flat Rate is excellent for heavy items traveling long distances (e.g., shipping a 10lb box of metal bolts to Zone 8). However, for light items (under 2 lbs) or items shipping locally (Zones 1-3), using your own custom box and paying the standard weight-based Priority or Ground rate is almost always significantly cheaper. Always compare the custom rate against the flat rate before purchasing postage.
+      </p>
+
+      <p>
+        More interested in mathematical logic? Check out our <a href="/limit-calculator">Limit Calculator</a>.
+      </p>
+    </div>
+
+    <section class="faq-section">
+      <h2>Frequently Asked Questions</h2>
+      <details>
+        <summary>How is USPS shipping cost calculated?</summary>
+        <p>USPS shipping costs are primarily determined by the physical weight of the package, the box dimensions (which dictate dimensional weight if over 1 cubic foot), and the distance the package is traveling, which USPS divides into numeric 'Zones' based on your origin zip code.</p>
+      </details>
+      <details>
+        <summary>What is the difference between Priority Mail and Ground Advantage?</summary>
+        <p>Priority Mail is a faster service (typically 1-3 business days) and gives you access to free USPS Flat Rate packaging. USPS Ground Advantage is a more economical option (2-5 business days) perfect for heavier packages where speed is less critical. Both include $100 of insurance and tracking.</p>
+      </details>
+      <details>
+        <summary>What are USPS shipping zones?</summary>
+        <p>Zones are geographical regions relative to the origin zip code, numbered 1 through 9. Zone 1 is local (within 50 miles), while Zone 8 is the furthest domestic distance in the contiguous US (e.g., East Coast to West Coast). The higher the zone, the more expensive the postage.</p>
+      </details>
+      <details>
+        <summary>Do box dimensions matter for USPS?</summary>
+        <p>Yes. For packages exceeding one cubic foot (1,728 cubic inches), USPS applies 'Dimensional Weight' pricing. This means if you ship a very large but lightweight box, you will be charged as if the box weighed more, based on its physical volume rather than its scale weight.</p>
+      </details>
+      <details>
+        <summary>Is it cheaper to ship in my own box or a flat rate box?</summary>
+        <p>It depends entirely on the weight and destination. Heavy items traveling far distances (high zones) are usually much cheaper in a Flat Rate box. Conversely, light items, or heavy items traveling locally (low zones), are often significantly cheaper using your own packaging and standard weight-based rates.</p>
+      </details>
+    </section>
+  </div>
+
+  <script is:inline>
+    document.addEventListener('DOMContentLoaded', () => {
+      const weightLbsInput = document.getElementById('weight-lbs');
+      const weightOzInput = document.getElementById('weight-oz');
+      const zoneSelect = document.getElementById('zone');
+      const packageTypeSelect = document.getElementById('package-type');
+
+      const priorityRateEl = document.getElementById('priority-rate');
+      const groundRateEl = document.getElementById('ground-rate');
+      const errorEl = document.getElementById('error-message');
+      const ratesDisplay = document.getElementById('rates-display');
+
+      // Realistic mock data for 2024 USPS Retail Rates (Simplified)
+      // Flat Rate Pricing
+      const flatRates = {
+        'flat-env': { priority: 9.85, ground: null }, // Ground Advantage doesn't really have flat rate envelopes in retail
+        'flat-small': { priority: 10.40, ground: null },
+        'flat-medium': { priority: 18.40, ground: null },
+        'flat-large': { priority: 24.75, ground: null }
+      };
+
+      // Simplified base rates for Custom Box (Zone, Lbs)
+      // Zone indexing: 12, 3, 4, 5, 6, 7, 8
+      const priorityBaseRates = {
+        12: { 1: 9.25, 2: 10.25, 3: 11.00, 4: 11.50, 5: 12.00, 10: 15.00, 20: 22.00, max: 2.00 },
+        3:  { 1: 9.60, 2: 10.80, 3: 11.75, 4: 12.50, 5: 13.50, 10: 17.50, 20: 26.00, max: 2.25 },
+        4:  { 1: 10.40, 2: 11.60, 3: 13.00, 4: 14.50, 5: 16.00, 10: 22.00, 20: 34.00, max: 2.75 },
+        5:  { 1: 11.00, 2: 13.00, 3: 15.00, 4: 17.50, 5: 20.00, 10: 30.00, 20: 48.00, max: 3.50 },
+        6:  { 1: 11.60, 2: 15.00, 3: 18.00, 4: 21.50, 5: 25.00, 10: 38.00, 20: 62.00, max: 4.50 },
+        7:  { 1: 12.30, 2: 17.00, 3: 21.00, 4: 26.00, 5: 31.00, 10: 48.00, 20: 78.00, max: 5.50 },
+        8:  { 1: 13.10, 2: 19.00, 3: 24.00, 4: 30.00, 5: 36.00, 10: 58.00, 20: 95.00, max: 6.50 },
+      };
+
+      const groundBaseRates = {
+        12: { 0.5: 5.00, 1: 6.00, 2: 7.00, 3: 8.00, 4: 8.75, 5: 9.50, 10: 12.50, 20: 19.00, max: 1.50 },
+        3:  { 0.5: 5.25, 1: 6.50, 2: 7.50, 3: 8.50, 4: 9.50, 5: 10.50, 10: 14.50, 20: 22.00, max: 1.75 },
+        4:  { 0.5: 5.50, 1: 7.00, 2: 8.25, 3: 9.50, 4: 10.75, 5: 12.00, 10: 18.00, 20: 28.00, max: 2.25 },
+        5:  { 0.5: 5.75, 1: 7.50, 2: 9.00, 3: 10.75, 4: 12.50, 5: 14.50, 10: 23.00, 20: 38.00, max: 2.75 },
+        6:  { 0.5: 6.00, 1: 8.00, 2: 10.00, 3: 12.50, 4: 15.00, 5: 17.50, 10: 29.00, 20: 50.00, max: 3.50 },
+        7:  { 0.5: 6.25, 1: 8.50, 2: 11.00, 3: 14.50, 4: 18.00, 5: 21.50, 10: 37.00, 20: 64.00, max: 4.50 },
+        8:  { 0.5: 6.50, 1: 9.00, 2: 12.00, 3: 16.50, 4: 21.00, 5: 25.50, 10: 45.00, 20: 80.00, max: 5.50 },
+      };
+
+      function getCustomRate(table, zone, weightLbsTotal) {
+        const zoneRates = table[zone];
+        if (!zoneRates) return 0;
+
+        let roundedWeight = Math.ceil(weightLbsTotal);
+        if (roundedWeight === 0) {
+           // Below 1 lb logic
+           if (table === groundBaseRates && weightLbsTotal <= 0.5) return zoneRates[0.5];
+           roundedWeight = 1;
+        }
+
+        if (zoneRates[roundedWeight]) return zoneRates[roundedWeight];
+
+        // Linear interpolation/extrapolation for missing weights
+        if (roundedWeight <= 2) return zoneRates[2];
+        if (roundedWeight <= 3) return zoneRates[3];
+        if (roundedWeight <= 4) return zoneRates[4];
+        if (roundedWeight <= 5) return zoneRates[5];
+        if (roundedWeight <= 10) return zoneRates[10] - ((10 - roundedWeight) * (zoneRates[10] - zoneRates[5]) / 5);
+        if (roundedWeight <= 20) return zoneRates[20] - ((20 - roundedWeight) * (zoneRates[20] - zoneRates[10]) / 10);
+
+        // Above 20 lbs
+        const overage = roundedWeight - 20;
+        return zoneRates[20] + (overage * zoneRates.max);
+      }
+
+      function calculate() {
+        const lbsStr = weightLbsInput.value;
+        const ozStr = weightOzInput.value;
+        const zoneStr = zoneSelect.value;
+        const packageType = packageTypeSelect.value;
+
+        errorEl.style.display = 'none';
+        ratesDisplay.style.opacity = '1';
+
+        const lbs = parseInt(lbsStr, 10);
+        const oz = parseFloat(ozStr);
+
+        if (isNaN(lbs) || isNaN(oz) || lbs < 0 || oz < 0 || oz >= 16) {
+          showError("Please enter a valid weight. Ounces must be between 0 and 15.99.");
+          return;
+        }
+
+        const totalLbs = lbs + (oz / 16);
+
+        if (totalLbs === 0) {
+          showError("Weight must be greater than 0.");
+          return;
+        }
+
+        if (totalLbs > 70) {
+          showError("Maximum allowed USPS weight is 70 lbs.");
+          return;
+        }
+
+        const zone = parseInt(zoneStr, 10);
+
+        let pRate = 0;
+        let gRate = 0;
+
+        if (packageType === 'custom') {
+          pRate = getCustomRate(priorityBaseRates, zone, totalLbs);
+          gRate = getCustomRate(groundBaseRates, zone, totalLbs);
+        } else {
+          const fRates = flatRates[packageType];
+          pRate = fRates.priority;
+          gRate = fRates.ground; // usually null
+        }
+
+        if (pRate) {
+          priorityRateEl.textContent = `$${pRate.toFixed(2)}`;
+        } else {
+          priorityRateEl.textContent = "N/A";
+        }
+
+        if (gRate) {
+          groundRateEl.textContent = `$${gRate.toFixed(2)}`;
+        } else {
+          if (packageType !== 'custom') {
+            groundRateEl.innerHTML = `<span style="font-size: 1rem; color: var(--text-secondary);">Not applicable for Flat Rate</span>`;
+          } else {
+            groundRateEl.textContent = "N/A";
+          }
+        }
+      }
+
+      function showError(msg) {
+        errorEl.textContent = msg;
+        errorEl.style.display = 'block';
+        ratesDisplay.style.opacity = '0.3';
+      }
+
+      weightLbsInput.addEventListener('input', calculate);
+      weightOzInput.addEventListener('input', calculate);
+      zoneSelect.addEventListener('change', calculate);
+      packageTypeSelect.addEventListener('change', calculate);
+
+      // Initial calc
+      calculate();
+    });
+  </script>
+
+  <style is:inline>
+    .page-content { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem; }
+    .hero { text-align: center; padding: 3rem 0 2rem; }
+    .hero h1 { font-size: 2.2rem; font-weight: 800; margin-bottom: 0.5rem; color: var(--accent-color); }
+    .subtitle { color: var(--text-secondary); font-size: 1.1rem; }
+    .calculator-container { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 2rem; margin: 2rem 0; }
+    input, select { background: var(--bg-color); color: var(--text-primary); border: 1px solid var(--border-color); padding: 0.75rem 1rem; border-radius: 8px; width: 100%; font-size: 1rem; font-family: var(--font-mono); }
+    input:focus, select:focus { outline: none; border-color: var(--accent-color); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-color) 20%, transparent); }
+    .input-grid { display: grid; grid-template-columns: 1fr; gap: 1.5rem; margin-bottom: 1.5rem; }
+    @media (min-width: 600px) { .input-grid { grid-template-columns: 1fr 1fr; } }
+    .input-group label { display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--text-primary); }
+    .suffix-wrapper { position: relative; display: flex; align-items: center; }
+    .suffix-wrapper input { padding-right: 2.5rem; }
+    .suffix { position: absolute; right: 1rem; color: var(--text-secondary); pointer-events: none; font-size: 0.9rem; }
+
+    .rates-container { display: grid; grid-template-columns: 1fr; gap: 1.5rem; margin-top: 2rem; }
+    @media (min-width: 600px) { .rates-container { grid-template-columns: 1fr 1fr; } }
+    .rate-card { background: color-mix(in srgb, var(--accent-color) 5%, transparent); border: 1px solid var(--accent-color); border-radius: 12px; padding: 1.5rem; text-align: center; }
+    .rate-card h3 { margin-top: 0; color: var(--text-primary); font-size: 1.2rem; margin-bottom: 0.5rem; }
+    .rate-card p { font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 1rem; }
+    .result-value { font-size: 2.5rem; font-weight: 800; color: var(--accent-color); font-family: var(--font-mono); }
+
+    .faq-section { margin-top: 3rem; }
+    .faq-section details { margin: 1rem 0; padding: 1rem; background: var(--card-bg); border-radius: 8px; border: 1px solid var(--border-color); }
+    .faq-section summary { font-weight: 600; cursor: pointer; color: var(--text-primary); }
+    .faq-section p { margin-top: 1rem; margin-bottom: 0; color: var(--text-secondary); }
+    .explainer { margin-top: 3rem; color: var(--text-secondary); line-height: 1.7; }
+    .explainer h2, .explainer h3 { color: var(--text-primary); margin-top: 2rem; margin-bottom: 1rem; }
+    .explainer p { margin-bottom: 1.25rem; }
+    .explainer code { font-family: var(--font-mono); background: var(--bg-color); padding: 0.2rem 0.4rem; border-radius: 4px; border: 1px solid var(--border-color); }
+  </style>
+</SiteLayout>
