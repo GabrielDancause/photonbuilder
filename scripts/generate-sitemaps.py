@@ -32,6 +32,7 @@ SITE_DOMAINS = {
     "westmount": "westmountfundamentals.com",
     "mathtools": "photonbuilder.com",
     "misc": "photonbuilder.com",
+    "justonemoment": "photonbuilder.com",
     "health": "health.example.com",
 }
 

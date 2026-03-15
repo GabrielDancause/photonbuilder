@@ -223,3 +223,17 @@ sites['misc'] = {
   ],
   footer: { text: '© 2026 Misc Tools', gabVentures: true },
 };
+
+sites['justonemoment'] = {
+  id: 'justonemoment',
+  name: 'Just One Moment',
+  domain: 'photonbuilder.com',
+  accent: '#F59E0B',
+  theme: { bg: '#060812', cardBg: '#0a1020', border: '#152040', textPrimary: '#e2e8f0', textSecondary: '#94a3b8' },
+  gaId: 'G-CYV604162T',
+  nav: [
+    { label: 'Timers', href: '/justonemoment/#tools' },
+    { label: 'Calculators', href: '/justonemoment/#calculators' },
+  ],
+  footer: { text: '© 2026 Just One Moment', gabVentures: true },
+};
