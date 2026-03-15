@@ -1,0 +1,678 @@
+---
+import SiteLayout from "../../../layouts/SiteLayout.astro";
+
+export const meta = {
+  title: "Weighted Grade Calculator",
+  description: "Stop guessing your final grade. Instantly calculate your weighted average, visualize how each assignment impacts your score, and figure out exactly what you need on the final to pass.",
+  category: "tool",
+  published: "2024-05-15"
+};
+
+const schema = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "How do you calculate a weighted grade?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "To calculate a weighted grade, multiply each individual grade by its corresponding weight (percentage of the final grade). Then, sum all these calculated values together. If the weights do not add up to 100%, divide the sum by the total weight."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What is the formula for a weighted average?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "The formula for a weighted average is: (Grade 1 × Weight 1) + (Grade 2 × Weight 2) + ... + (Grade n × Weight n) / Total Weight."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Why do teachers use weighted grades?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Teachers use weighted grades to emphasize the importance of certain assignments over others. For example, a final exam might be worth 30% of the grade, while homework is only worth 10%, reflecting the final exam's greater impact on learning assessment."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What happens if my weights don't add up to 100%?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "If your weights don't add up to 100%, you are calculating your current grade based only on the assignments completed so far. You divide the sum of your weighted scores by the sum of the weights of the completed assignments to get your current standing."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How do I calculate what I need on the final exam?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "To calculate what you need on the final exam: subtract your current total weighted score from your target grade, then divide that result by the weight of the final exam."
+          }
+        }
+      ]
+    },
+    {
+      "@type": "Article",
+      "headline": meta.title,
+      "description": meta.description,
+      "datePublished": meta.published,
+      "author": {
+        "@type": "Organization",
+        "name": "SiliconBased"
+      }
+    }
+  ]
+};
+---
+
+<SiteLayout site="siliconbased" title={meta.title} description={meta.description} canonical="https://siliconbased.dev/weighted-grade-calculator" schema={schema}>
+  <div class="page-content">
+    <div class="hero">
+      <h1>Weighted Grade Calculator</h1>
+      <p class="subtitle">Instantly calculate your final grade and see exactly what you need to pass.</p>
+    </div>
+
+    <div class="calculator-container">
+      <div id="calculator-form">
+        <div class="row-header">
+          <div class="header-col">Assignment / Category</div>
+          <div class="header-col">Grade (%)</div>
+          <div class="header-col">Weight (%)</div>
+          <div class="header-col action-col"></div>
+        </div>
+
+        <div id="rows-container">
+          <!-- Rows will be dynamically added here -->
+        </div>
+
+        <button type="button" id="add-row-btn" class="secondary-btn">+ Add Row</button>
+      </div>
+
+      <div class="results-section">
+        <div class="result-card">
+          <div class="result-label">Current Grade</div>
+          <div class="result-value" id="final-grade-result">0.00%</div>
+          <div class="result-subtext" id="weight-total-text">Total Weight: 0%</div>
+        </div>
+
+        <div class="error-container" id="error-message" style="display: none;"></div>
+      </div>
+
+      <div class="target-grade-section">
+        <h3>Find What You Need on the Final</h3>
+        <p>Want a specific grade in the class? Enter your target grade and the weight of your remaining assignments.</p>
+        <div class="target-inputs">
+          <div class="input-group">
+            <label for="target-grade">Target Grade (%)</label>
+            <input type="number" id="target-grade" placeholder="e.g. 90" min="0" max="100" step="0.01">
+          </div>
+          <div class="input-group">
+            <label for="remaining-weight">Remaining Weight (%)</label>
+            <input type="number" id="remaining-weight" placeholder="e.g. 20" min="0" max="100" step="0.01">
+          </div>
+        </div>
+        <div class="target-result-box" id="target-result-box" style="display: none;">
+          You need a <strong id="needed-grade" class="highlight">--</strong> on your remaining assignments to get a <span id="target-display">--</span> in the class.
+        </div>
+      </div>
+    </div>
+
+    <div class="explainer">
+      <h2>How to Calculate a Weighted Grade</h2>
+      <p>
+        Calculating a weighted grade can feel confusing, especially when your syllabus divides your overall grade into different categories like homework, quizzes, midterm exams, and a final exam. Each of these categories holds a specific "weight" or percentage of your final grade. Our <strong>weighted grade calculator</strong> takes the guesswork out of this process, but understanding the math behind it can help you strategize better for the semester.
+      </p>
+
+      <h3>The Weighted Average Formula</h3>
+      <p>
+        A weighted average is fundamentally different from a simple average. In a simple average, all assignments carry the exact same importance. You just add up all your scores and divide by the total number of assignments. In a weighted grading system, some assignments (like a final exam) are worth significantly more than others (like a daily reading quiz).
+      </p>
+      <p>
+        The mathematical formula for a weighted average is:
+      </p>
+      <div class="formula-box">
+        <code>Weighted Grade = (w₁ × g₁) + (w₂ × g₂) + ... + (wₙ × gₙ) / Total Weight</code>
+      </div>
+      <p>
+        Where:
+      </p>
+      <ul>
+        <li><strong>w</strong> = the weight of the category or assignment (as a percentage or decimal)</li>
+        <li><strong>g</strong> = your grade in that category (as a percentage)</li>
+      </ul>
+
+      <h3>Step-by-Step Calculation Example</h3>
+      <p>
+        Let's look at a practical example. Suppose your syllabus breaks down your final grade as follows:
+      </p>
+      <ul>
+        <li>Homework: 20%</li>
+        <li>Quizzes: 20%</li>
+        <li>Midterm Exam: 25%</li>
+        <li>Final Exam: 35%</li>
+      </ul>
+      <p>
+        Now, imagine your current grades in those categories are:
+      </p>
+      <ul>
+        <li>Homework: 95%</li>
+        <li>Quizzes: 82%</li>
+        <li>Midterm Exam: 88%</li>
+        <li>Final Exam: Not taken yet</li>
+      </ul>
+      <p>
+        To find your <em>current</em> grade, you need to calculate the weighted average of the work you've already completed. First, multiply each grade by its weight:
+      </p>
+      <ul>
+        <li>Homework: 95 × 0.20 = 19</li>
+        <li>Quizzes: 82 × 0.20 = 16.4</li>
+        <li>Midterm Exam: 88 × 0.25 = 22</li>
+      </ul>
+      <p>
+        Next, add those values together: <code>19 + 16.4 + 22 = 57.4</code>.
+      </p>
+      <p>
+        Now, add up the weights of the completed assignments: <code>20% + 20% + 25% = 65%</code>.
+      </p>
+      <p>
+        Finally, divide the sum of the weighted scores by the total weight completed: <code>57.4 / 0.65 = 88.31%</code>.
+      </p>
+      <p>
+        Your current grade going into the final exam is an 88.31%.
+      </p>
+
+      <h3>Figuring Out What You Need on the Final Exam</h3>
+      <p>
+        One of the most common questions students have towards the end of the semester is: <em>"What do I need to score on the final exam to keep my A (or pass the class)?"</em>
+      </p>
+      <p>
+        You can use algebra to find this out, or you can use the "Target Grade" feature of our calculator above. The formula to find the required final exam score is:
+      </p>
+      <div class="formula-box">
+        <code>Final Exam Score = (Target Grade - Current Weighted Score) / Weight of Final Exam</code>
+      </div>
+      <p>
+        Using the previous example, let's say your target grade is a 90% (an A- in most grading scales), your current weighted score is 57.4, and the final exam is worth 35% (0.35).
+      </p>
+      <p>
+        <code>Final Exam Score = (90 - 57.4) / 0.35 = 32.6 / 0.35 = 93.14%</code>
+      </p>
+      <p>
+        This means you need a 93.14% on the final exam to secure a 90% overall in the class.
+      </p>
+
+      <h3>Why Do Teachers Use Weighted Grades?</h3>
+      <p>
+        Weighted grades are standard practice in high schools, colleges, and universities because they provide a more accurate reflection of a student's mastery of the subject matter. A comprehensive final exam that tests an entire semester's worth of knowledge is inherently a better measure of overall learning than a five-question pop quiz on chapter three.
+      </p>
+      <p>
+        By weighting grades, educators can reward consistent effort (like homework and participation) while still placing appropriate emphasis on major assessments (like essays, projects, and exams). It prevents a student who does poorly on one small assignment from failing, while also requiring students to perform well on key assessments to earn top marks.
+      </p>
+
+      <h3>How to Use This Calculator</h3>
+      <p>
+        Our interactive calculator is designed to be as flexible as possible to accommodate any syllabus structure:
+      </p>
+      <ol>
+        <li><strong>Enter your assignments or categories:</strong> You can enter individual assignments (like "Essay 1", "Essay 2") or broad categories (like "All Homework", "Participation"). It doesn't matter what you call them, as long as you know what they represent.</li>
+        <li><strong>Input your grade:</strong> Enter the percentage grade you received. If you got a 45 out of 50, that's a 90%. (45 / 50 = 0.90 or 90%).</li>
+        <li><strong>Input the weight:</strong> Enter the percentage weight that assignment or category holds according to your syllabus.</li>
+        <li><strong>Add more rows:</strong> Click the "+ Add Row" button for as many categories as you need.</li>
+        <li><strong>Check your current standing:</strong> The calculator updates in real-time. If your weights don't add up to 100%, it automatically calculates your <em>current</em> grade based only on what you've entered.</li>
+        <li><strong>Set a target:</strong> If you haven't finished all your assignments, use the "Target Grade" section to see exactly what you need to score on the remaining work to reach your goal.</li>
+      </ol>
+      <p>
+        Whether you're a high school student stressing over midterms or a college student calculating your final GPA, understanding how weighted grades work puts you in control of your academic success. Instead of guessing, you can plan your study time strategically, focusing your efforts on the assignments and exams that carry the most weight.
+      </p>
+    </div>
+
+    <section class="faq-section">
+      <h2>Frequently Asked Questions</h2>
+      <details>
+        <summary>How do you calculate a weighted grade?</summary>
+        <p>To calculate a weighted grade, multiply each individual grade by its corresponding weight (percentage of the final grade). Then, sum all these calculated values together. If the weights do not add up to 100%, divide the sum by the total weight completed so far.</p>
+      </details>
+      <details>
+        <summary>What is the formula for a weighted average?</summary>
+        <p>The formula for a weighted average is: (Grade 1 × Weight 1) + (Grade 2 × Weight 2) + ... + (Grade n × Weight n) / Total Weight.</p>
+      </details>
+      <details>
+        <summary>Why do teachers use weighted grades?</summary>
+        <p>Teachers use weighted grades to emphasize the importance of certain assignments over others. For example, a final exam might be worth 30% of the grade, while homework is only worth 10%, reflecting the final exam's greater impact on learning assessment.</p>
+      </details>
+      <details>
+        <summary>What happens if my weights don't add up to 100%?</summary>
+        <p>If your weights don't add up to 100%, it usually means you haven't completed all the assignments yet. You calculate your current grade based only on the work done so far by dividing the sum of your weighted scores by the sum of the weights of the completed assignments.</p>
+      </details>
+      <details>
+        <summary>How do I calculate what I need on the final exam?</summary>
+        <p>To calculate what you need on the final exam: subtract your current total weighted score from your target grade, then divide that result by the weight of the final exam.</p>
+      </details>
+    </section>
+  </div>
+
+  <script is:inline>
+    document.addEventListener('DOMContentLoaded', () => {
+      const rowsContainer = document.getElementById('rows-container');
+      const addRowBtn = document.getElementById('add-row-btn');
+      const finalGradeResult = document.getElementById('final-grade-result');
+      const weightTotalText = document.getElementById('weight-total-text');
+      const errorMessage = document.getElementById('error-message');
+
+      const targetGradeInput = document.getElementById('target-grade');
+      const remainingWeightInput = document.getElementById('remaining-weight');
+      const targetResultBox = document.getElementById('target-result-box');
+      const neededGrade = document.getElementById('needed-grade');
+      const targetDisplay = document.getElementById('target-display');
+
+      let rowCount = 0;
+
+      function createRow() {
+        rowCount++;
+        const row = document.createElement('div');
+        row.className = 'calc-row';
+        row.dataset.rowId = rowCount;
+
+        row.innerHTML = '<div class="input-col"><input type="text" class="assignment-name" placeholder="Assignment ' + rowCount + '"></div>' +
+          '<div class="input-col"><input type="number" class="grade-input" placeholder="e.g. 95" min="0" step="0.01"></div>' +
+          '<div class="input-col"><input type="number" class="weight-input" placeholder="e.g. 20" min="0" step="0.01"></div>' +
+          '<div class="action-col"><button type="button" class="remove-btn" aria-label="Remove row" tabindex="-1">×</button></div>';
+
+        row.querySelector('.remove-btn').addEventListener('click', () => {
+          row.remove();
+          calculate();
+        });
+
+        row.querySelectorAll('input').forEach(input => {
+          input.addEventListener('input', calculate);
+        });
+
+        return row;
+      }
+
+      function initialize() {
+        // Add 4 initial rows
+        for (let i = 0; i < 4; i++) {
+          rowsContainer.appendChild(createRow());
+        }
+
+        addRowBtn.addEventListener('click', () => {
+          rowsContainer.appendChild(createRow());
+          calculate();
+        });
+
+        targetGradeInput.addEventListener('input', calculateTarget);
+        remainingWeightInput.addEventListener('input', calculateTarget);
+
+        calculate();
+      }
+
+      function calculate() {
+        const rows = document.querySelectorAll('.calc-row');
+        let totalWeight = 0;
+        let weightedSum = 0;
+        let validEntries = 0;
+
+        rows.forEach(row => {
+          const gradeVal = parseFloat(row.querySelector('.grade-input').value);
+          const weightVal = parseFloat(row.querySelector('.weight-input').value);
+
+          if (!isNaN(gradeVal) && !isNaN(weightVal)) {
+            weightedSum += (gradeVal * weightVal);
+            totalWeight += weightVal;
+            validEntries++;
+          }
+        });
+
+        weightTotalText.textContent = 'Total Weight: ' + totalWeight.toFixed(2) + '%';
+
+        if (totalWeight > 100) {
+          errorMessage.textContent = 'Warning: Total weight exceeds 100%.';
+          errorMessage.style.display = 'block';
+          weightTotalText.style.color = 'var(--accent-color)';
+        } else {
+          errorMessage.style.display = 'none';
+          weightTotalText.style.color = '';
+        }
+
+        if (validEntries === 0 || totalWeight === 0) {
+          finalGradeResult.textContent = '0.00%';
+          // Reset target inputs state visually if no valid main inputs
+          calculateTarget();
+          return;
+        }
+
+        const finalGrade = weightedSum / totalWeight;
+        finalGradeResult.textContent = finalGrade.toFixed(2) + '%';
+
+        calculateTarget(finalGrade, totalWeight);
+      }
+
+      function calculateTarget(currentGradeVal, currentWeightVal) {
+        // If passed from calculate(), use those. Otherwise try to parse current state
+        let currentGrade = currentGradeVal;
+        let currentWeight = currentWeightVal;
+
+        if (currentGrade === undefined) {
+          currentGrade = parseFloat(finalGradeResult.textContent);
+          currentWeight = parseFloat(weightTotalText.textContent.replace('Total Weight: ', '').replace('%', ''));
+        }
+
+        const targetGrade = parseFloat(targetGradeInput.value);
+        const remainingWeight = parseFloat(remainingWeightInput.value);
+
+        if (isNaN(targetGrade) || isNaN(remainingWeight) || remainingWeight <= 0 || isNaN(currentGrade) || isNaN(currentWeight) || currentWeight === 0) {
+          targetResultBox.style.display = 'none';
+          return;
+        }
+
+        // Formula: Needed = (Target - (Current * (CurrentWeight/100))) / (RemainingWeight/100)
+        // Adjust for percentage vs decimal logic used above
+        // Since our Current Grade was (Sum / Weight), the sum is CurrentGrade * CurrentWeight
+        const currentSum = currentGrade * currentWeight;
+        const targetSum = targetGrade * (currentWeight + remainingWeight); // assumes target is for the combined weight
+
+        // Wait, typical target calculation assumes total weight will be 100%.
+        // Let's use the standard formula: Target = (CurrentWeightedSum + NeededScore * RemainingWeight) / TotalWeight
+        // Most common case: Total weight = 100%
+        // Target = (CurrentWeightedSum + NeededScore * RemainingWeight) / 100
+        // NeededScore = (Target * 100 - CurrentWeightedSum) / RemainingWeight
+
+        // Let's just use the direct sum method
+        const currentWeightedSum = currentGrade * currentWeight;
+        // We assume target is for 100% total weight, or whatever the new total weight is
+        const finalTotalWeight = currentWeight + remainingWeight;
+
+        const neededScore = ((targetGrade * finalTotalWeight) - currentWeightedSum) / remainingWeight;
+
+        neededGrade.textContent = neededScore.toFixed(2) + '%';
+        targetDisplay.textContent = targetGrade.toFixed(2) + '%';
+        targetResultBox.style.display = 'block';
+      }
+
+      initialize();
+    });
+  </script>
+
+  <style is:inline>
+    .page-content {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem;
+    }
+
+    .hero {
+      text-align: center;
+      padding: 3rem 0 2rem;
+    }
+
+    .hero h1 {
+      font-size: 2.2rem;
+      font-weight: 800;
+      margin-bottom: 0.5rem;
+      color: var(--accent-color);
+    }
+
+    .subtitle {
+      color: var(--text-secondary);
+      font-size: 1.1rem;
+    }
+
+    .calculator-container {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 2rem;
+      margin: 2rem 0;
+    }
+
+    .row-header {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 0.5rem;
+      padding-right: 2.5rem; /* space for remove btn */
+      font-weight: 600;
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+    }
+
+    .calc-row {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1rem;
+      align-items: center;
+    }
+
+    .header-col, .input-col {
+      flex: 1;
+    }
+
+    .action-col {
+      width: 2.5rem;
+      flex-shrink: 0;
+      text-align: right;
+    }
+
+    input {
+      background: var(--bg-color);
+      color: var(--text-primary);
+      border: 1px solid var(--border-color);
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      width: 100%;
+      font-size: 1rem;
+    }
+
+    input:focus {
+      outline: none;
+      border-color: var(--accent-color);
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-color) 20%, transparent);
+    }
+
+    .secondary-btn {
+      background: transparent;
+      color: var(--accent-color);
+      border: 1px dashed var(--accent-color);
+      padding: 0.5rem 1rem;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 0.9rem;
+      width: 100%;
+      margin-top: 0.5rem;
+      transition: background 0.2s;
+    }
+
+    .secondary-btn:hover {
+      background: color-mix(in srgb, var(--accent-color) 10%, transparent);
+    }
+
+    .remove-btn {
+      background: transparent;
+      color: var(--text-secondary);
+      border: none;
+      font-size: 1.5rem;
+      cursor: pointer;
+      padding: 0;
+      line-height: 1;
+      border-radius: 4px;
+      width: 2rem;
+      height: 2rem;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .remove-btn:hover {
+      color: #ef4444;
+      background: rgba(239, 68, 68, 0.1);
+    }
+
+    .results-section {
+      margin-top: 2rem;
+    }
+
+    .result-card {
+      background: color-mix(in srgb, var(--accent-color) 10%, transparent);
+      border: 1px solid var(--accent-color);
+      border-radius: 12px;
+      padding: 1.5rem;
+      text-align: center;
+    }
+
+    .result-label {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+
+    .result-value {
+      font-size: 3rem;
+      font-weight: 800;
+      color: var(--accent-color);
+      line-height: 1.2;
+    }
+
+    .result-subtext {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      margin-top: 0.5rem;
+    }
+
+    .error-container {
+      margin-top: 1rem;
+      padding: 0.75rem;
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid #ef4444;
+      color: #ef4444;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      text-align: center;
+    }
+
+    .target-grade-section {
+      margin-top: 2.5rem;
+      padding-top: 2rem;
+      border-top: 1px solid var(--border-color);
+    }
+
+    .target-grade-section h3 {
+      font-size: 1.3rem;
+      margin-top: 0;
+      margin-bottom: 0.5rem;
+    }
+
+    .target-inputs {
+      display: flex;
+      gap: 1rem;
+      margin-top: 1.5rem;
+    }
+
+    .target-inputs .input-group {
+      flex: 1;
+      margin-bottom: 0;
+    }
+
+    .target-inputs label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-size: 0.9rem;
+      font-weight: 600;
+    }
+
+    .target-result-box {
+      margin-top: 1.5rem;
+      padding: 1.25rem;
+      background: var(--bg-color);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      text-align: center;
+      font-size: 1.1rem;
+    }
+
+    .target-result-box .highlight {
+      color: var(--accent-color);
+      font-size: 1.3rem;
+    }
+
+    .explainer {
+      margin: 4rem 0;
+      line-height: 1.7;
+    }
+
+    .explainer h2, .explainer h3 {
+      color: var(--accent-color);
+    }
+
+    .formula-box {
+      background: var(--bg-color);
+      padding: 1rem;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+      font-family: monospace;
+      margin: 1rem 0;
+      text-align: center;
+      overflow-x: auto;
+    }
+
+    .faq-section details {
+      margin: 1rem 0;
+      padding: 1.25rem;
+      background: var(--card-bg);
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+    }
+
+    .faq-section summary {
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 1.1rem;
+      color: var(--text-primary);
+    }
+
+    .faq-section p {
+      margin-top: 1rem;
+      margin-bottom: 0;
+      color: var(--text-secondary);
+    }
+
+    @media (max-width: 600px) {
+      .row-header {
+        display: none;
+      }
+
+      .calc-row {
+        flex-direction: column;
+        gap: 0.5rem;
+        background: var(--bg-color);
+        padding: 1rem;
+        border-radius: 8px;
+        border: 1px solid var(--border-color);
+        position: relative;
+      }
+
+      .input-col {
+        width: 100%;
+      }
+
+      .action-col {
+        position: absolute;
+        top: 0.5rem;
+        right: 0.5rem;
+      }
+
+      .target-inputs {
+        flex-direction: column;
+      }
+
+      .result-value {
+        font-size: 2.5rem;
+      }
+    }
+  </style>
+</SiteLayout>
