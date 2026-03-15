@@ -1,0 +1,322 @@
+---
+import SiteLayout from "../../../layouts/SiteLayout.astro";
+
+export const meta = {
+  title: "RVU Calculator",
+  description: "Calculate Relative Value Units (RVU) and Medicare reimbursement rates instantly. Free tool for healthcare professionals — try it now.",
+  category: "tool",
+  published: "2026-03-15",
+};
+
+const schema = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Article",
+      "headline": meta.title,
+      "description": meta.description,
+      "datePublished": meta.published,
+      "author": {
+        "@type": "Organization",
+        "name": "SiliconBased"
+      }
+    },
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "What is an RVU in healthcare?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "A Relative Value Unit (RVU) is a standardized measure used by Medicare and other insurance companies to determine the amount of money a physician or medical provider should be reimbursed for a specific medical service or procedure."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How do you calculate total RVUs?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Total RVUs for a service are calculated by adding three specific components together: Work RVUs (wRVU), Practice Expense RVUs (peRVU), and Malpractice RVUs (mpRVU). Each of these components is multiplied by its corresponding Geographic Practice Cost Index (GPCI) before being summed."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What is the Medicare Conversion Factor?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "The Medicare Conversion Factor is a specific dollar amount updated annually by the Centers for Medicare and Medicaid Services (CMS). It converts the calculated Total RVU value into a definitive payment or reimbursement amount in dollars."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Why is the Geographic Practice Cost Index (GPCI) important?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "The Geographic Practice Cost Index (GPCI) adjusts the standard RVU components to account for the variation in the cost of practicing medicine in different geographic areas. For example, rent and staff salaries in a major city are typically higher than in rural areas."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What does wRVU stand for?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "wRVU stands for Work Relative Value Unit. It measures the physician's time, technical skill, physical effort, mental effort, and judgment required to provide a specific medical service."
+          }
+        }
+      ]
+    }
+  ]
+};
+---
+
+<SiteLayout site="siliconbased" title={meta.title} description={meta.description} canonical="https://siliconbased.dev/rvu-calculator" schema={schema}>
+  <div class="page-content">
+    <div class="hero">
+      <h1>RVU Calculator</h1>
+      <p class="subtitle">Calculate Relative Value Units and Medicare Reimbursement</p>
+    </div>
+
+    <div class="calculator-container">
+
+      <div class="input-row">
+        <div class="input-group">
+          <label for="wrvu">Work RVU (wRVU)</label>
+          <input type="number" id="wrvu" placeholder="e.g., 2.5" step="0.01" min="0">
+          <div id="wrvu-error" class="error-message">Please enter a valid wRVU.</div>
+        </div>
+        <div class="input-group">
+          <label for="wrvu-gpci">Work GPCI</label>
+          <input type="number" id="wrvu-gpci" placeholder="e.g., 1.0" value="1.0" step="0.01" min="0">
+          <div id="wrvu-gpci-error" class="error-message">Please enter a valid Work GPCI.</div>
+        </div>
+      </div>
+
+      <div class="input-row">
+        <div class="input-group">
+          <label for="pervu">Practice Expense RVU (peRVU)</label>
+          <input type="number" id="pervu" placeholder="e.g., 1.2" step="0.01" min="0">
+          <div id="pervu-error" class="error-message">Please enter a valid peRVU.</div>
+        </div>
+        <div class="input-group">
+          <label for="pervu-gpci">Practice Expense GPCI</label>
+          <input type="number" id="pervu-gpci" placeholder="e.g., 1.0" value="1.0" step="0.01" min="0">
+          <div id="pervu-gpci-error" class="error-message">Please enter a valid PE GPCI.</div>
+        </div>
+      </div>
+
+      <div class="input-row">
+        <div class="input-group">
+          <label for="mprvu">Malpractice RVU (mpRVU)</label>
+          <input type="number" id="mprvu" placeholder="e.g., 0.3" step="0.01" min="0">
+          <div id="mprvu-error" class="error-message">Please enter a valid mpRVU.</div>
+        </div>
+        <div class="input-group">
+          <label for="mprvu-gpci">Malpractice GPCI</label>
+          <input type="number" id="mprvu-gpci" placeholder="e.g., 1.0" value="1.0" step="0.01" min="0">
+          <div id="mprvu-gpci-error" class="error-message">Please enter a valid Malpractice GPCI.</div>
+        </div>
+      </div>
+
+      <div class="input-group">
+        <label for="cf">Conversion Factor ($)</label>
+        <input type="number" id="cf" placeholder="e.g., 33.28" value="33.2875" step="0.01" min="0">
+        <div id="cf-error" class="error-message">Please enter a valid Conversion Factor.</div>
+      </div>
+
+      <div class="result-card" id="result-container" style="display: none;">
+        <div class="result-label">Total Reimbursement</div>
+        <div class="result-value" id="total-reimbursement">$0.00</div>
+        <div class="result-sub">Total RVUs: <span id="total-rvus">0.00</span></div>
+      </div>
+
+    </div>
+
+    <div class="explainer">
+
+      <h2>What is an RVU?</h2>
+      <p>A Relative Value Unit (RVU) is the core component of the resource-based relative value scale (RBRVS), the system used by Medicare and nearly all commercial health insurance companies in the United States to determine how much a physician should be paid for their services. Instead of simply paying a flat fee, the system assigns a numeric value to every medical procedure, consultation, or surgery to reflect the resources required to perform it.</p>
+
+      <p>The system was designed to standardize physician compensation and create a level playing field, ensuring that the reimbursement for a medical service is proportional to the time, skill, and effort required to deliver it. It aims to fairly compensate providers whether they are performing a brief follow-up visit or a complex, multi-hour surgical procedure.</p>
+
+      <h3>The Three Components of an RVU</h3>
+      <p>Total RVUs are not assigned as a single arbitrary number. Instead, they are calculated by adding together three distinct components, each representing a different aspect of providing medical care:</p>
+
+      <ul>
+        <li><strong>Work RVUs (wRVU):</strong> This is typically the largest component and reflects the physician's clinical work. It accounts for the time it takes to perform the service, the technical skill required, the physical effort, mental effort, judgment, and the stress associated with potential risks to the patient.</li>
+        <li><strong>Practice Expense RVUs (peRVU):</strong> This component covers the overhead costs associated with running a medical practice. It includes expenses such as rent, medical equipment, supplies, and the salaries of non-physician staff like nurses, receptionists, and medical assistants.</li>
+        <li><strong>Malpractice RVUs (mpRVU):</strong> This is generally the smallest component and represents the cost of professional liability insurance (malpractice insurance) required to safely provide the specific medical service.</li>
+      </ul>
+
+      <h3>How is the Total Payment Calculated?</h3>
+      <p>To convert the abstract RVU numbers into an actual dollar amount for reimbursement, the system uses two additional elements: the Geographic Practice Cost Index (GPCI) and the Medicare Conversion Factor.</p>
+
+      <p><strong>Geographic Practice Cost Index (GPCI):</strong> The cost of practicing medicine is not the same everywhere. It is much more expensive to rent office space and hire staff in Manhattan than it is in a rural midwestern town. To account for this, Medicare assigns a GPCI for each of the three RVU components based on the provider's geographic location. The base RVU components are multiplied by their respective geographic modifiers to adjust for local economic conditions.</p>
+
+      <p><strong>Medicare Conversion Factor:</strong> After the three adjusted components are summed to find the total geographic-adjusted RVU, that final number is multiplied by the Conversion Factor. The Conversion Factor is a specific dollar amount updated annually by the Centers for Medicare and Medicaid Services (CMS). It essentially sets the overall monetary value of a single unit within the system.</p>
+
+      <h3>The RVU Formula</h3>
+      <p>The complete formula used to determine the reimbursement amount for a given service is:</p>
+      <p><strong>Total Payment = [(wRVU × Work GPCI) + (peRVU × PE GPCI) + (mpRVU × Malpractice GPCI)] × Conversion Factor</strong></p>
+
+      <p>This standardized approach ensures a consistent and transparent method for calculating medical billing and provider compensation across the healthcare industry. While initially designed for Medicare, most private insurance companies now benchmark their own payment schedules against these calculated values, making understanding RVUs essential for healthcare administration and medical billing.</p>
+
+      <div class="related-tools">
+        <h3>Related Financial Tools</h3>
+        <p>Looking to analyze other financial investments or cash flows? Check out our <a href="/npv-calculator">Net Present Value (NPV) Calculator</a> to evaluate the profitability of projected investments.</p>
+      </div>
+
+    </div>
+
+    <section class="faq-section">
+      <h2>Frequently Asked Questions</h2>
+      <details>
+        <summary>What is an RVU in healthcare?</summary>
+        <p>A Relative Value Unit (RVU) is a standardized measure used by Medicare and other insurance companies to determine the amount of money a physician or medical provider should be reimbursed for a specific medical service or procedure.</p>
+      </details>
+      <details>
+        <summary>How do you calculate total RVUs?</summary>
+        <p>Total RVUs for a service are calculated by adding three specific components together: Work RVUs (wRVU), Practice Expense RVUs (peRVU), and Malpractice RVUs (mpRVU). Each of these components is multiplied by its corresponding Geographic Practice Cost Index (GPCI) before being summed.</p>
+      </details>
+      <details>
+        <summary>What is the Medicare Conversion Factor?</summary>
+        <p>The Medicare Conversion Factor is a specific dollar amount updated annually by the Centers for Medicare and Medicaid Services (CMS). It converts the calculated Total RVU value into a definitive payment or reimbursement amount in dollars.</p>
+      </details>
+      <details>
+        <summary>Why is the Geographic Practice Cost Index (GPCI) important?</summary>
+        <p>The Geographic Practice Cost Index (GPCI) adjusts the standard RVU components to account for the variation in the cost of practicing medicine in different geographic areas. For example, rent and staff salaries in a major city are typically higher than in rural areas.</p>
+      </details>
+      <details>
+        <summary>What does wRVU stand for?</summary>
+        <p>wRVU stands for Work Relative Value Unit. It measures the physician's time, technical skill, physical effort, mental effort, and judgment required to provide a specific medical service.</p>
+      </details>
+
+    </section>
+  </div>
+
+  <script is:inline>
+
+    const wrvuInput = document.getElementById('wrvu');
+    const wrvuGpciInput = document.getElementById('wrvu-gpci');
+    const pervuInput = document.getElementById('pervu');
+    const pervuGpciInput = document.getElementById('pervu-gpci');
+    const mprvuInput = document.getElementById('mprvu');
+    const mprvuGpciInput = document.getElementById('mprvu-gpci');
+    const cfInput = document.getElementById('cf');
+
+    const resultContainer = document.getElementById('result-container');
+    const totalReimbursementEl = document.getElementById('total-reimbursement');
+    const totalRvusEl = document.getElementById('total-rvus');
+
+    function validateInput(inputElement, errorElementId) {
+      const val = parseFloat(inputElement.value);
+      const errorEl = document.getElementById(errorElementId);
+
+      if (inputElement.value !== '' && (isNaN(val) || val < 0)) {
+        inputElement.classList.add('error-state');
+        errorEl.style.display = 'block';
+        return null;
+      } else {
+        inputElement.classList.remove('error-state');
+        errorEl.style.display = 'none';
+        return isNaN(val) ? 0 : val;
+      }
+    }
+
+    function calculate() {
+      // If essential components are empty, hide results
+      if (wrvuInput.value === '' && pervuInput.value === '' && mprvuInput.value === '') {
+        resultContainer.style.display = 'none';
+        return;
+      }
+
+      const wrvu = validateInput(wrvuInput, 'wrvu-error');
+      const wrvuGpci = validateInput(wrvuGpciInput, 'wrvu-gpci-error') ?? 1.0;
+      const pervu = validateInput(pervuInput, 'pervu-error');
+      const pervuGpci = validateInput(pervuGpciInput, 'pervu-gpci-error') ?? 1.0;
+      const mprvu = validateInput(mprvuInput, 'mprvu-error');
+      const mprvuGpci = validateInput(mprvuGpciInput, 'mprvu-gpci-error') ?? 1.0;
+      const cf = validateInput(cfInput, 'cf-error') ?? 33.2875;
+
+      // If any inputs are invalid, show N/A
+      if (wrvu === null || wrvuGpci === null || pervu === null || pervuGpci === null || mprvu === null || mprvuGpci === null || cf === null) {
+        resultContainer.style.display = 'block';
+        totalReimbursementEl.textContent = 'N/A';
+        totalRvusEl.textContent = 'N/A';
+        return;
+      }
+
+      const adjustedWrvu = wrvu * wrvuGpci;
+      const adjustedPervu = pervu * pervuGpci;
+      const adjustedMprvu = mprvu * mprvuGpci;
+
+      const totalRvu = adjustedWrvu + adjustedPervu + adjustedMprvu;
+      const reimbursement = totalRvu * cf;
+
+      resultContainer.style.display = 'block';
+
+      if (totalRvu === 0) {
+          totalReimbursementEl.textContent = '$0.00';
+          totalRvusEl.textContent = '0.00';
+      } else {
+          totalReimbursementEl.textContent = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(reimbursement);
+          totalRvusEl.textContent = totalRvu.toFixed(4);
+      }
+    }
+
+    const inputs = [wrvuInput, wrvuGpciInput, pervuInput, pervuGpciInput, mprvuInput, mprvuGpciInput, cfInput];
+    inputs.forEach(input => {
+      input.addEventListener('input', calculate);
+    });
+
+    // Initial run not needed since everything is empty
+
+  </script>
+
+  <style is:inline>
+    .page-content { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem; }
+    .hero { text-align: center; padding: 3rem 0 2rem; }
+    .hero h1 { font-size: 2.2rem; font-weight: 800; margin-bottom: 0.5rem; }
+    .subtitle { color: var(--text-secondary); font-size: 1.1rem; }
+
+    .calculator-container { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 2rem; margin: 2rem 0; }
+
+    .input-group { margin-bottom: 1.25rem; }
+    .input-group label { display: block; font-weight: 600; margin-bottom: 0.5rem; }
+    .input-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+
+    input, select { background: var(--bg-color); color: var(--text-primary); border: 1px solid var(--border-color); padding: 0.75rem 1rem; border-radius: 8px; width: 100%; font-size: 1rem; box-sizing: border-box; }
+    input:focus, select:focus { outline: none; border-color: var(--accent-color); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-color) 20%, transparent); }
+
+    button { background: var(--accent-color); color: white; border: none; padding: 0.75rem 2rem; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 1rem; }
+    button:hover { opacity: 0.9; }
+
+    .result-card { background: color-mix(in srgb, var(--accent-color) 10%, transparent); border: 1px solid var(--accent-color); border-radius: 12px; padding: 1.5rem; margin: 1.5rem 0; text-align: center; }
+    .result-value { font-size: 2.5rem; font-weight: 800; color: var(--accent-color); margin-bottom: 0.5rem; }
+    .result-label { font-size: 1.1rem; font-weight: 600; color: var(--text-primary); }
+    .result-sub { font-size: 0.9rem; color: var(--text-secondary); margin-top: 0.5rem; }
+
+    .error-message { color: #ef4444; font-size: 0.9rem; margin-top: 0.5rem; display: none; }
+    .error-state { border-color: #ef4444 !important; }
+
+    .explainer { margin: 3rem 0; line-height: 1.6; }
+    .explainer h2 { font-size: 1.8rem; margin: 2rem 0 1rem; }
+    .explainer h3 { font-size: 1.4rem; margin: 1.5rem 0 0.75rem; }
+    .explainer p { margin-bottom: 1rem; }
+    .explainer ul, .explainer ol { margin: 0 0 1rem 1.5rem; padding-left: 1rem; }
+    .explainer li { margin-bottom: 0.5rem; }
+
+    .related-tools { margin: 2rem 0; padding: 1.5rem; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; }
+    .related-tools h3 { margin-top: 0; margin-bottom: 1rem; }
+
+    .faq-section { margin-top: 3rem; }
+    .faq-section h2 { font-size: 1.8rem; margin-bottom: 1.5rem; }
+    .faq-section details { margin: 1rem 0; padding: 1rem; background: var(--card-bg); border-radius: 8px; border: 1px solid var(--border-color); }
+    .faq-section summary { font-weight: 600; cursor: pointer; font-size: 1.1rem; }
+    .faq-section p { margin-top: 1rem; margin-bottom: 0; line-height: 1.5; }
+
+    @media (max-width: 600px) {
+      .input-row { grid-template-columns: 1fr; }
+    }
+  </style>
+</SiteLayout>
