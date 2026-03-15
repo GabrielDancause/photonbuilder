@@ -126,21 +126,21 @@ export const sites: Record<string, SiteConfig> = {
   },
 };
 
-sites['health'] = {
-  id: 'health',
-  name: 'Health Tools',
+sites['bodycount'] = {
+  id: 'bodycount',
+  name: 'Body Count',
   domain: 'photonbuilder.com',
   accent: '#E05A5A',
   theme: { bg: '#060a12', cardBg: '#0a1020', border: '#152040', textPrimary: '#e2e8f0', textSecondary: '#94a3b8' },
   gaId: 'G-CYV604162T',
   nav: [
-    { label: 'Calculators', href: '/health/#tools' },
-    { label: 'Studies', href: '/health/#studies' },
-    { label: 'Guides', href: '/health/#guides' },
-    { label: 'Lists', href: '/health/#lists' },
-      { label: 'Roadmap', href: '/health/coming-soon' },
+    { label: 'Calculators', href: '/bodycount/#tools' },
+    { label: 'Studies', href: '/bodycount/#studies' },
+    { label: 'Guides', href: '/bodycount/#guides' },
+    { label: 'Lists', href: '/bodycount/#lists' },
+      { label: 'Roadmap', href: '/bodycount/coming-soon' },
   ],
-  footer: { text: '© 2026 Health Tools', gabVentures: true },
+  footer: { text: '© 2026 Body Count', gabVentures: true },
 };
 
 sites['nookienook'] = {

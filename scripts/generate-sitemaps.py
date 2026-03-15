@@ -32,7 +32,7 @@ SITE_DOMAINS = {
     "mathtools": "photonbuilder.com",
     "misc": "photonbuilder.com",
     "justonemoment": "photonbuilder.com",
-    "health": "health.example.com",
+    "bodycount": "health.example.com",
 }
 
 TODAY = datetime.now().strftime("%Y-%m-%d")
