@@ -1,0 +1,661 @@
+---
+import SiteLayout from "../../../layouts/SiteLayout.astro";
+
+export const meta = {
+  title: "Matrix Calculator | Add, Subtract, Multiply & Determinants",
+  description: "Need to solve complex matrix operations quickly? Use our advanced interactive matrix calculator to compute addition, subtraction, multiplication, and determinants step-by-step.",
+  category: "tool",
+  published: "2026-03-15",
+};
+
+const schema = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "What is a matrix in mathematics?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "In mathematics, a matrix is a rectangular array or table of numbers, symbols, or expressions, arranged in rows and columns. Matrices are used to represent linear maps and allow explicit computations in linear algebra."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How do you multiply two matrices?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "To multiply two matrices, the number of columns in the first matrix must equal the number of rows in the second. You multiply the elements of each row of the first matrix by the corresponding elements of each column of the second matrix and add the products."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What is the determinant of a matrix?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "The determinant is a scalar value that is a function of the entries of a square matrix. It provides important information about the matrix, such as whether the matrix is invertible (if the determinant is non-zero) and the scaling factor of the linear transformation described by the matrix."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Can I add matrices of different sizes?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "No, you cannot add or subtract matrices of different sizes. Matrix addition and subtraction are only defined for matrices that have the exact same dimensions (same number of rows and columns)."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Why are matrices useful in computer science?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Matrices are fundamental in computer science, particularly in computer graphics, machine learning, and cryptography. In graphics, they are used to perform transformations like scaling, rotation, and translation of 3D objects. In machine learning, neural network weights and input data are often represented and processed as matrices."
+          }
+        }
+      ]
+    },
+    {
+      "@type": "Article",
+      "headline": "Matrix Calculator: Compute Linear Algebra Operations",
+      "description": "An interactive tool to calculate matrix addition, subtraction, multiplication, and determinants up to 3x3.",
+      "author": {
+        "@type": "Organization",
+        "name": "SiliconBased"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "SiliconBased",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://photonbuilder.com/mathtools/logo.png"
+        }
+      },
+      "datePublished": "2026-03-15"
+    }
+  ]
+};
+---
+
+<SiteLayout site="mathtools" title={meta.title} description={meta.description} canonical="https://photonbuilder.com/mathtools/matrix-calculator" schema={schema}>
+  <div class="page-content">
+    <div class="hero">
+      <h1>Matrix Calculator</h1>
+      <p class="subtitle">Compute addition, subtraction, multiplication, and determinants for matrices up to 3&times;3.</p>
+    </div>
+
+    <div class="calculator-container">
+      <div class="controls-container">
+        <div class="input-group">
+          <label for="operation">Select Operation</label>
+          <select id="operation">
+            <option value="add">Addition (A + B)</option>
+            <option value="subtract">Subtraction (A - B)</option>
+            <option value="multiply" selected>Multiplication (A &times; B)</option>
+            <option value="detA">Determinant of A |A|</option>
+            <option value="detB">Determinant of B |B|</option>
+          </select>
+        </div>
+        <div class="matrix-size-controls">
+          <div class="input-group">
+            <label>Matrix A Size</label>
+            <div class="size-selectors">
+              <select id="aRows" aria-label="Matrix A Rows">
+                <option value="1">1</option>
+                <option value="2" selected>2</option>
+                <option value="3">3</option>
+              </select>
+              <span>&times;</span>
+              <select id="aCols" aria-label="Matrix A Columns">
+                <option value="1">1</option>
+                <option value="2" selected>2</option>
+                <option value="3">3</option>
+              </select>
+            </div>
+          </div>
+          <div class="input-group" id="bSizeGroup">
+            <label>Matrix B Size</label>
+            <div class="size-selectors">
+              <select id="bRows" aria-label="Matrix B Rows">
+                <option value="1">1</option>
+                <option value="2" selected>2</option>
+                <option value="3">3</option>
+              </select>
+              <span>&times;</span>
+              <select id="bCols" aria-label="Matrix B Columns">
+                <option value="1">1</option>
+                <option value="2" selected>2</option>
+                <option value="3">3</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="matrices-container">
+        <div class="matrix-wrapper">
+          <div class="matrix-label">Matrix A</div>
+          <div class="matrix-grid" id="matrixA"></div>
+        </div>
+
+        <div class="operator-symbol" id="operatorSymbol">&times;</div>
+
+        <div class="matrix-wrapper" id="matrixBWrapper">
+          <div class="matrix-label">Matrix B</div>
+          <div class="matrix-grid" id="matrixB"></div>
+        </div>
+      </div>
+
+      <div class="result-card">
+        <div class="calc-result-label" id="resultLabel">Result (A &times; B)</div>
+        <div id="error-message" style="color: #ef4444; margin: 1rem 0; display: none;">Error message here.</div>
+        <div class="result-display" id="resultDisplay">
+          <div class="matrix-grid" id="matrixResult"></div>
+        </div>
+        <div class="scalar-result" id="scalarResult" style="display: none;"></div>
+      </div>
+
+      <div class="action-buttons">
+        <button id="clearBtn" class="secondary-btn">Clear All</button>
+        <button id="identityABtn" class="secondary-btn">Identity A</button>
+        <button id="identityBBtn" class="secondary-btn" style="display: inline-block;">Identity B</button>
+      </div>
+    </div>
+
+    <div class="explainer">
+      <h2>Understanding Matrix Operations</h2>
+      <p>
+        Matrices are fundamental tools in linear algebra, used to solve systems of linear equations, represent linear transformations,
+        and handle complex multidimensional data. In computer science, matrices power everything from 3D computer graphics
+        and animations to machine learning algorithms and deep neural networks.
+      </p>
+
+      <h3>Matrix Addition and Subtraction</h3>
+      <p>
+        Addition and subtraction are the most straightforward matrix operations. However, they come with a strict dimensional
+        requirement: <strong>both matrices must have the exact same dimensions</strong>. You cannot add a 2&times;3 matrix to a 3&times;2 matrix.
+      </p>
+      <p>
+        When the dimensions match, the operation is performed element-wise. To calculate C = A + B, every element
+        in matrix C is the sum of the corresponding elements in matrices A and B (C<sub>ij</sub> = A<sub>ij</sub> + B<sub>ij</sub>).
+        Subtraction works exactly the same way, but with the minus operator.
+      </p>
+
+      <h3>Matrix Multiplication</h3>
+      <p>
+        Matrix multiplication (often called the dot product of rows and columns) is much more complex than addition. It is not performed
+        element-wise. Instead, it involves multiplying the rows of the first matrix by the columns of the second matrix.
+      </p>
+      <p>
+        <strong>The Compatibility Rule:</strong> For matrix multiplication A &times; B to be valid, the number of <strong>columns</strong>
+        in matrix A must equal the number of <strong>rows</strong> in matrix B. If A is an <em>m &times; n</em> matrix and B is an
+        <em>n &times; p</em> matrix, the resulting matrix C will have dimensions <em>m &times; p</em>.
+      </p>
+      <p>
+        The value of the element C<sub>ij</sub> is calculated by taking the <em>i</em>-th row of matrix A and the <em>j</em>-th column
+        of matrix B, multiplying their corresponding elements, and summing the results.
+      </p>
+      <p>
+        Crucially, matrix multiplication is <strong>not commutative</strong>. This means that, in general, A &times; B does not equal B &times; A.
+        In fact, depending on the dimensions, B &times; A might not even be a mathematically valid operation even if A &times; B is.
+      </p>
+
+      <h3>The Determinant</h3>
+      <p>
+        The determinant is a special scalar value that can only be calculated for <strong>square matrices</strong> (matrices where the
+        number of rows equals the number of columns, such as 2&times;2 or 3&times;3). The determinant is typically denoted as det(A) or |A|.
+      </p>
+      <p>
+        For a 2&times;2 matrix with elements:
+        <br><br>
+        <code style="display:block; padding: 1rem; text-align: center; font-size: 1.1rem; background: var(--bg-color); border: 1px solid var(--border-color);">
+          [a  b]<br>
+          [c  d]
+        </code>
+        <br>
+        The determinant is calculated as: <strong>|A| = ad - bc</strong>.
+      </p>
+      <p>
+        For a 3&times;3 matrix, the calculation involves finding the sum of the products of the elements of any row or column
+        and their corresponding cofactors. The standard formula expands along the top row:
+        <br><br>
+        <strong>|A| = a(ei - fh) - b(di - fg) + c(dh - eg)</strong>
+      </p>
+      <p>
+        Determinants have profound geometric and algebraic implications. Geometrically, the determinant of a 2&times;2 matrix represents
+        the signed area of the parallelogram formed by its column vectors. In 3D space, a 3&times;3 determinant represents the signed
+        volume of a parallelepiped. Algebraically, a matrix is <em>invertible</em> (meaning it has an inverse) if and only if its
+        determinant is not equal to zero. If the determinant is zero, the matrix is "singular" and cannot be inverted.
+      </p>
+
+      <p>
+        Looking for financial tools? Check out our <a href="/car-insurance-calculator">Car Insurance Calculator</a> to estimate your auto premiums.
+      </p>
+    </div>
+
+    <section class="faq-section">
+      <h2>Frequently Asked Questions</h2>
+      <details>
+        <summary>What is a matrix in mathematics?</summary>
+        <p>In mathematics, a matrix is a rectangular array or table of numbers, symbols, or expressions, arranged in rows and columns. Matrices are used to represent linear maps and allow explicit computations in linear algebra.</p>
+      </details>
+      <details>
+        <summary>How do you multiply two matrices?</summary>
+        <p>To multiply two matrices, the number of columns in the first matrix must equal the number of rows in the second. You multiply the elements of each row of the first matrix by the corresponding elements of each column of the second matrix and add the products.</p>
+      </details>
+      <details>
+        <summary>What is the determinant of a matrix?</summary>
+        <p>The determinant is a scalar value that is a function of the entries of a square matrix. It provides important information about the matrix, such as whether the matrix is invertible (if the determinant is non-zero) and the scaling factor of the linear transformation described by the matrix.</p>
+      </details>
+      <details>
+        <summary>Can I add matrices of different sizes?</summary>
+        <p>No, you cannot add or subtract matrices of different sizes. Matrix addition and subtraction are only defined for matrices that have the exact same dimensions (same number of rows and columns).</p>
+      </details>
+      <details>
+        <summary>Why are matrices useful in computer science?</summary>
+        <p>Matrices are fundamental in computer science, particularly in computer graphics, machine learning, and cryptography. In graphics, they are used to perform transformations like scaling, rotation, and translation of 3D objects. In machine learning, neural network weights and input data are often represented and processed as matrices.</p>
+      </details>
+    </section>
+  </div>
+
+  <script is:inline>
+    // State
+    let matrixA = [[1, 0], [0, 1]];
+    let matrixB = [[1, 0], [0, 1]];
+    let sizeA = { rows: 2, cols: 2 };
+    let sizeB = { rows: 2, cols: 2 };
+
+    // DOM Elements
+    const elements = {
+      operation: document.getElementById('operation'),
+      aRows: document.getElementById('aRows'),
+      aCols: document.getElementById('aCols'),
+      bRows: document.getElementById('bRows'),
+      bCols: document.getElementById('bCols'),
+      matrixAContainer: document.getElementById('matrixA'),
+      matrixBContainer: document.getElementById('matrixB'),
+      matrixBWrapper: document.getElementById('matrixBWrapper'),
+      bSizeGroup: document.getElementById('bSizeGroup'),
+      operatorSymbol: document.getElementById('operatorSymbol'),
+      matrixResult: document.getElementById('matrixResult'),
+      scalarResult: document.getElementById('scalarResult'),
+      resultDisplay: document.getElementById('resultDisplay'),
+      resultLabel: document.getElementById('resultLabel'),
+      errorMessage: document.getElementById('error-message'),
+      clearBtn: document.getElementById('clearBtn'),
+      identityABtn: document.getElementById('identityABtn'),
+      identityBBtn: document.getElementById('identityBBtn')
+    };
+
+    // Render Matrix Inputs
+    function renderMatrixInput(container, matrix, name, rows, cols) {
+      container.innerHTML = '';
+      container.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          const input = document.createElement('input');
+          input.type = 'number';
+          input.className = 'matrix-input';
+          // Make sure matrix has enough rows/cols initialized
+          if (!matrix[r]) matrix[r] = [];
+          if (matrix[r][c] === undefined) matrix[r][c] = 0;
+
+          input.value = matrix[r][c];
+          input.dataset.row = r;
+          input.dataset.col = c;
+          input.dataset.matrix = name;
+          input.step = "any";
+
+          input.addEventListener('input', handleMatrixInput);
+          container.appendChild(input);
+        }
+      }
+    }
+
+    // Render Result Matrix
+    function renderResultMatrix(resultData) {
+      elements.matrixResult.innerHTML = '';
+      elements.scalarResult.style.display = 'none';
+      elements.resultDisplay.style.display = 'block';
+
+      if (!resultData || resultData.length === 0) return;
+
+      const rows = resultData.length;
+      const cols = resultData[0].length;
+
+      elements.matrixResult.style.gridTemplateColumns = `repeat(${cols}, 1fr)`;
+
+      for (let r = 0; r < rows; r++) {
+        for (let c = 0; c < cols; c++) {
+          const cell = document.createElement('div');
+          cell.className = 'matrix-result-cell';
+          // Format number nicely, remove trailing zeros
+          let val = Number(resultData[r][c].toFixed(6));
+          cell.textContent = val;
+          elements.matrixResult.appendChild(cell);
+        }
+      }
+    }
+
+    // Render Scalar Result (for Determinants)
+    function renderScalarResult(value) {
+      elements.matrixResult.innerHTML = '';
+      elements.resultDisplay.style.display = 'none';
+      elements.scalarResult.style.display = 'block';
+
+      let val = Number(value.toFixed(6));
+      elements.scalarResult.textContent = val;
+    }
+
+    function showError(msg) {
+      elements.errorMessage.textContent = msg;
+      elements.errorMessage.style.display = 'block';
+      elements.matrixResult.innerHTML = '';
+      elements.resultDisplay.style.display = 'none';
+      elements.scalarResult.style.display = 'none';
+    }
+
+    function hideError() {
+      elements.errorMessage.style.display = 'none';
+    }
+
+    // Handlers
+    function handleMatrixInput(e) {
+      const r = parseInt(e.target.dataset.row);
+      const c = parseInt(e.target.dataset.col);
+      const mName = e.target.dataset.matrix;
+      const val = parseFloat(e.target.value);
+
+      const valToSet = isNaN(val) ? 0 : val;
+
+      if (mName === 'A') {
+        matrixA[r][c] = valToSet;
+      } else {
+        matrixB[r][c] = valToSet;
+      }
+
+      calculate();
+    }
+
+    function handleSizeChange() {
+      sizeA.rows = parseInt(elements.aRows.value);
+      sizeA.cols = parseInt(elements.aCols.value);
+      sizeB.rows = parseInt(elements.bRows.value);
+      sizeB.cols = parseInt(elements.bCols.value);
+
+      renderMatrixInput(elements.matrixAContainer, matrixA, 'A', sizeA.rows, sizeA.cols);
+      renderMatrixInput(elements.matrixBContainer, matrixB, 'B', sizeB.rows, sizeB.cols);
+
+      calculate();
+    }
+
+    function handleOperationChange() {
+      const op = elements.operation.value;
+
+      // UI updates based on operation
+      if (op === 'detA' || op === 'detB') {
+        elements.matrixBWrapper.style.display = op === 'detA' ? 'none' : 'block';
+        if (op === 'detA') {
+          elements.matrixAContainer.parentElement.style.display = 'block';
+          elements.operatorSymbol.style.display = 'none';
+          elements.bSizeGroup.style.display = 'none';
+          elements.identityBBtn.style.display = 'none';
+        } else {
+          elements.matrixAContainer.parentElement.style.display = 'none';
+          elements.operatorSymbol.style.display = 'none';
+          elements.bSizeGroup.style.display = 'block';
+          elements.identityBBtn.style.display = 'inline-block';
+        }
+      } else {
+        elements.matrixAContainer.parentElement.style.display = 'block';
+        elements.matrixBWrapper.style.display = 'block';
+        elements.operatorSymbol.style.display = 'block';
+        elements.bSizeGroup.style.display = 'block';
+        elements.identityBBtn.style.display = 'inline-block';
+
+        if (op === 'add') elements.operatorSymbol.innerHTML = '&plus;';
+        if (op === 'subtract') elements.operatorSymbol.innerHTML = '&minus;';
+        if (op === 'multiply') elements.operatorSymbol.innerHTML = '&times;';
+      }
+
+      // Update label
+      const labels = {
+        'add': 'Result (A + B)',
+        'subtract': 'Result (A - B)',
+        'multiply': 'Result (A × B)',
+        'detA': 'Determinant |A|',
+        'detB': 'Determinant |B|'
+      };
+      elements.resultLabel.textContent = labels[op];
+
+      calculate();
+    }
+
+    // Math Functions
+    function addMatrices(A, B, r, c) {
+      const res = [];
+      for (let i = 0; i < r; i++) {
+        res[i] = [];
+        for (let j = 0; j < c; j++) {
+          res[i][j] = A[i][j] + B[i][j];
+        }
+      }
+      return res;
+    }
+
+    function subMatrices(A, B, r, c) {
+      const res = [];
+      for (let i = 0; i < r; i++) {
+        res[i] = [];
+        for (let j = 0; j < c; j++) {
+          res[i][j] = A[i][j] - B[i][j];
+        }
+      }
+      return res;
+    }
+
+    function multMatrices(A, B, rA, cA, cB) {
+      const res = [];
+      for (let i = 0; i < rA; i++) {
+        res[i] = [];
+        for (let j = 0; j < cB; j++) {
+          let sum = 0;
+          for (let k = 0; k < cA; k++) {
+            sum += A[i][k] * B[k][j];
+          }
+          res[i][j] = sum;
+        }
+      }
+      return res;
+    }
+
+    function calcDeterminant(M, n) {
+      if (n === 1) return M[0][0];
+      if (n === 2) return M[0][0] * M[1][1] - M[0][1] * M[1][0];
+      if (n === 3) {
+        return M[0][0] * (M[1][1] * M[2][2] - M[1][2] * M[2][1]) -
+               M[0][1] * (M[1][0] * M[2][2] - M[1][2] * M[2][0]) +
+               M[0][2] * (M[1][0] * M[2][1] - M[1][1] * M[2][0]);
+      }
+      return 0; // Formula only supports up to 3x3 per requirements
+    }
+
+    // Main Calculation Logic
+    function calculate() {
+      hideError();
+      const op = elements.operation.value;
+
+      try {
+        if (op === 'add' || op === 'subtract') {
+          if (sizeA.rows !== sizeB.rows || sizeA.cols !== sizeB.cols) {
+            showError("Dimensions must match exactly for addition and subtraction.");
+            return;
+          }
+          const res = op === 'add' ?
+            addMatrices(matrixA, matrixB, sizeA.rows, sizeA.cols) :
+            subMatrices(matrixA, matrixB, sizeA.rows, sizeA.cols);
+          renderResultMatrix(res);
+        }
+        else if (op === 'multiply') {
+          if (sizeA.cols !== sizeB.rows) {
+            showError(`Cannot multiply: Matrix A columns (${sizeA.cols}) must equal Matrix B rows (${sizeB.rows}).`);
+            return;
+          }
+          const res = multMatrices(matrixA, matrixB, sizeA.rows, sizeA.cols, sizeB.cols);
+          renderResultMatrix(res);
+        }
+        else if (op === 'detA') {
+          if (sizeA.rows !== sizeA.cols) {
+            showError("Determinant can only be calculated for square matrices.");
+            return;
+          }
+          const det = calcDeterminant(matrixA, sizeA.rows);
+          renderScalarResult(det);
+        }
+        else if (op === 'detB') {
+          if (sizeB.rows !== sizeB.cols) {
+            showError("Determinant can only be calculated for square matrices.");
+            return;
+          }
+          const det = calcDeterminant(matrixB, sizeB.rows);
+          renderScalarResult(det);
+        }
+      } catch (err) {
+        showError("An error occurred during calculation.");
+        console.error(err);
+      }
+    }
+
+    function setIdentityMatrix(matrixObj, sizeObj) {
+      const min = Math.min(sizeObj.rows, sizeObj.cols);
+      for (let r = 0; r < sizeObj.rows; r++) {
+        for (let c = 0; c < sizeObj.cols; c++) {
+          matrixObj[r][c] = (r === c && r < min) ? 1 : 0;
+        }
+      }
+    }
+
+    function clearMatrix(matrixObj, sizeObj) {
+      for (let r = 0; r < sizeObj.rows; r++) {
+        for (let c = 0; c < sizeObj.cols; c++) {
+          matrixObj[r][c] = 0;
+        }
+      }
+    }
+
+    // Event Listeners
+    elements.operation.addEventListener('change', handleOperationChange);
+    elements.aRows.addEventListener('change', handleSizeChange);
+    elements.aCols.addEventListener('change', handleSizeChange);
+    elements.bRows.addEventListener('change', handleSizeChange);
+    elements.bCols.addEventListener('change', handleSizeChange);
+
+    elements.clearBtn.addEventListener('click', () => {
+      clearMatrix(matrixA, sizeA);
+      clearMatrix(matrixB, sizeB);
+      renderMatrixInput(elements.matrixAContainer, matrixA, 'A', sizeA.rows, sizeA.cols);
+      renderMatrixInput(elements.matrixBContainer, matrixB, 'B', sizeB.rows, sizeB.cols);
+      calculate();
+    });
+
+    elements.identityABtn.addEventListener('click', () => {
+      setIdentityMatrix(matrixA, sizeA);
+      renderMatrixInput(elements.matrixAContainer, matrixA, 'A', sizeA.rows, sizeA.cols);
+      calculate();
+    });
+
+    elements.identityBBtn.addEventListener('click', () => {
+      setIdentityMatrix(matrixB, sizeB);
+      renderMatrixInput(elements.matrixBContainer, matrixB, 'B', sizeB.rows, sizeB.cols);
+      calculate();
+    });
+
+    // Initialize
+    renderMatrixInput(elements.matrixAContainer, matrixA, 'A', sizeA.rows, sizeA.cols);
+    renderMatrixInput(elements.matrixBContainer, matrixB, 'B', sizeB.rows, sizeB.cols);
+    calculate();
+
+  </script>
+
+  <style is:inline>
+    .page-content { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem; }
+    .hero { text-align: center; padding: 3rem 0 2rem; }
+    .hero h1 { font-size: 2.2rem; font-weight: 800; margin-bottom: 0.5rem; }
+    .subtitle { color: var(--text-secondary); font-size: 1.1rem; }
+    .calculator-container { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 2rem; margin: 2rem 0; }
+
+    .controls-container { display: flex; flex-wrap: wrap; gap: 2rem; margin-bottom: 2rem; padding-bottom: 2rem; border-bottom: 1px solid var(--border-color); }
+    .matrix-size-controls { display: flex; flex-wrap: wrap; gap: 2rem; }
+    .input-group { display: flex; flex-direction: column; gap: 0.5rem; }
+    .input-group label { font-weight: 600; font-size: 0.95rem; }
+
+    .size-selectors { display: flex; align-items: center; gap: 0.5rem; }
+    .size-selectors select { width: auto; padding: 0.5rem; }
+    .size-selectors span { font-weight: bold; color: var(--text-secondary); }
+
+    input, select { background: var(--bg-color); color: var(--text-primary); border: 1px solid var(--border-color); padding: 0.75rem 1rem; border-radius: 8px; width: 100%; font-size: 1rem; }
+    input:focus, select:focus { outline: none; border-color: var(--accent-color); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-color) 20%, transparent); }
+
+    .matrices-container { display: flex; align-items: center; justify-content: center; flex-wrap: wrap; gap: 2rem; margin-bottom: 2rem; }
+    .matrix-wrapper { display: flex; flex-direction: column; align-items: center; gap: 1rem; }
+    .matrix-label { font-weight: 600; color: var(--accent-color); font-size: 1.1rem; }
+
+    .matrix-grid {
+      display: grid;
+      gap: 0.5rem;
+      padding: 1rem;
+      background: var(--bg-color);
+      border-radius: 8px;
+      border-left: 2px solid var(--text-primary);
+      border-right: 2px solid var(--text-primary);
+      position: relative;
+    }
+
+    .matrix-grid::before, .matrix-grid::after {
+      content: '';
+      position: absolute;
+      width: 10px;
+      height: 2px;
+      background: var(--text-primary);
+    }
+    .matrix-grid::before { top: 0; left: 0; }
+    .matrix-grid::after { bottom: 0; right: 0; }
+
+    .matrix-input { width: 4rem; text-align: center; padding: 0.5rem; font-family: monospace; font-size: 1.1rem; }
+    .matrix-input::-webkit-outer-spin-button, .matrix-input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+    .matrix-input[type=number] { -moz-appearance: textfield; }
+
+    .operator-symbol { font-size: 2rem; font-weight: bold; color: var(--text-secondary); }
+
+    .result-card { background: color-mix(in srgb, var(--accent-color) 10%, transparent); border: 1px solid var(--accent-color); border-radius: 12px; padding: 1.5rem; margin: 1.5rem 0; text-align: center; display: flex; flex-direction: column; align-items: center; }
+    .calc-result-label { color: var(--text-secondary); font-size: 0.95rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 1rem; }
+
+    .matrix-result-cell { background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 4px; padding: 0.5rem 1rem; font-family: monospace; font-size: 1.2rem; min-width: 4rem; text-align: center; color: var(--accent-color); font-weight: bold; }
+    .scalar-result { font-size: 3rem; font-weight: 800; color: var(--accent-color); font-family: monospace; }
+
+    .action-buttons { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; margin-top: 1.5rem; }
+    button { background: var(--accent-color); color: white; border: none; padding: 0.75rem 2rem; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 1rem; }
+    button:hover { opacity: 0.9; }
+    .secondary-btn { background: var(--bg-color); color: var(--text-primary); border: 1px solid var(--border-color); }
+    .secondary-btn:hover { background: var(--card-bg); }
+
+    .explainer { margin-top: 3rem; }
+    .explainer h2 { font-size: 1.8rem; margin-bottom: 1rem; color: var(--accent-color); }
+    .explainer h3 { font-size: 1.3rem; margin-top: 1.5rem; margin-bottom: 0.75rem; }
+    .explainer p { margin-bottom: 1.25rem; line-height: 1.7; color: var(--text-secondary); }
+
+    .faq-section { margin-top: 3rem; }
+    .faq-section h2 { font-size: 1.8rem; margin-bottom: 1rem; color: var(--accent-color); }
+    .faq-section details { margin: 1rem 0; padding: 1rem; background: var(--card-bg); border-radius: 8px; border: 1px solid var(--border-color); }
+    .faq-section summary { font-weight: 600; cursor: pointer; font-size: 1.1rem; }
+    .faq-section details p { margin-top: 1rem; margin-bottom: 0; color: var(--text-secondary); line-height: 1.6; }
+
+    @media (max-width: 600px) {
+      .matrices-container { flex-direction: column; }
+      .operator-symbol { transform: rotate(90deg); margin: 1rem 0; }
+      .controls-container { flex-direction: column; gap: 1rem; }
+    }
+  </style>
+</SiteLayout>

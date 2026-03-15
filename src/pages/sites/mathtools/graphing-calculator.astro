@@ -1,0 +1,394 @@
+---
+import SiteLayout from "../../../layouts/SiteLayout.astro";
+
+export const meta = {
+  title: "Interactive Graphing Calculator",
+  description: "Plot mathematical equations in real-time. See how complex functions visualize instantly without complex syntax...",
+  category: "tool",
+  published: "2026-03-15",
+};
+
+const schema = [
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": meta.title,
+    "description": meta.description,
+    "author": {
+      "@type": "Organization",
+      "name": "photonbuilder.com/mathtools",
+      "url": "https://photonbuilder.com/mathtools/"
+    },
+    "datePublished": meta.published,
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "How does a graphing calculator work?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "A graphing calculator plots a function by substituting many different 'x' values into a mathematical equation to determine their corresponding 'y' values. It then maps these (x, y) coordinate pairs onto a two-dimensional grid, drawing lines between the points to visualize the shape of the function."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "What is the syntax for plotting math equations?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Most programmatic graphing calculators require standard programming syntax. You use '*' for multiplication (e.g., '2*x' instead of '2x'), '/' for division, and standard Math functions like Math.sin(x), Math.cos(x), Math.pow(x, 2), or Math.sqrt(x)."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Why is my equation not graphing correctly?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "The most common reasons for a graphing failure are syntax errors. Ensure you are explicitly defining multiplication (e.g., using '3*x' rather than '3x'). Also, ensure you are utilizing proper parentheses to enforce the correct order of operations."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "What are trigonometric functions in graphing?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Trigonometric functions like sine (Math.sin), cosine (Math.cos), and tangent (Math.tan) relate an angle to the ratio of sides in a right-angled triangle. When graphed over time or space (x), they produce continuous wave-like oscillating patterns."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How does scaling affect a graph?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Scaling changes the zoom level of the coordinate plane. Zooming out (increasing the scale range) lets you see the broader behavior of a function over large values of x. Zooming in (decreasing the scale range) lets you see precise intercepts and local minimum/maximum points."
+        }
+      }
+    ]
+  }
+];
+---
+
+<SiteLayout site="mathtools" title={meta.title} description={meta.description} canonical="https://photonbuilder.com/mathtools/graphing-calculator" schema={schema}>
+  <div class="page-content">
+    <div class="hero">
+      <h1>{meta.title}</h1>
+      <p class="subtitle">Plot functions, visualize equations, and explore mathematical curves instantly.</p>
+    </div>
+
+    <div class="calculator-container">
+      <div class="calc-header">
+        <div class="input-group eq-input">
+          <label for="equation">Function: f(x) =</label>
+          <input type="text" id="equation" value="Math.sin(x) * x" placeholder="e.g. Math.sin(x), x*x, Math.pow(x, 2)" />
+        </div>
+      </div>
+
+      <div class="controls-grid">
+        <div class="input-group">
+          <label for="x-min">X Min</label>
+          <input type="number" id="x-min" value="-10" />
+        </div>
+        <div class="input-group">
+          <label for="x-max">X Max</label>
+          <input type="number" id="x-max" value="10" />
+        </div>
+        <div class="input-group">
+          <label for="y-min">Y Min</label>
+          <input type="number" id="y-min" value="-10" />
+        </div>
+        <div class="input-group">
+          <label for="y-max">Y Max</label>
+          <input type="number" id="y-max" value="10" />
+        </div>
+      </div>
+
+      <div id="error-message" class="error-msg" style="display: none;"></div>
+
+      <div class="canvas-container">
+        <canvas id="graphCanvas" width="800" height="500"></canvas>
+      </div>
+
+      <div class="presets">
+        <span style="font-size: 0.9rem; font-weight: 600; color: var(--text-secondary);">Try these:</span>
+        <button class="preset-btn" data-eq="Math.sin(x)">Sine Wave</button>
+        <button class="preset-btn" data-eq="x * x">Parabola</button>
+        <button class="preset-btn" data-eq="Math.tan(x)">Tangent</button>
+        <button class="preset-btn" data-eq="Math.sin(x) / x">Sinc Function</button>
+      </div>
+    </div>
+
+    <div class="explainer">
+      <h2>How Graphing Calculators Work: Methodology and Formulas</h2>
+      <p>Graphing calculators revolutionized mathematics by allowing students and professionals to instantly visualize complex equations. Instead of painstakingly calculating individual points and plotting them by hand, computers can compute thousands of coordinate pairs in milliseconds. This guide explores the programmatic methodology behind rendering mathematical graphs on a 2D digital canvas.</p>
+
+      <h3>The Coordinate System Conversion</h3>
+      <p>The core challenge of programmatic graphing is mapping a continuous mathematical plane (Cartesian coordinates) onto a discrete pixel grid (canvas coordinates). A computer screen operates fundamentally differently than standard math graphs.</p>
+      <ul>
+        <li><strong>Cartesian Plane:</strong> The origin (0,0) is in the exact center. The Y-axis values increase as you go UP.</li>
+        <li><strong>Canvas Grid:</strong> The origin (0,0) is at the top-left corner. The Y-axis values increase as you go DOWN.</li>
+      </ul>
+      <p>To draw a graph correctly, every mathematical (x, y) point must be transformed into a pixel (px, py) coordinate using mapping functions. We establish boundaries for our math space (X-min, X-max, Y-min, Y-max) and boundary dimensions for our canvas (width, height).</p>
+
+      <h4>The X-Coordinate Mapping Formula</h4>
+      <div class="formula-box">
+        px = (x - X_min) × (Canvas_Width) / (X_max - X_min)
+      </div>
+      <p>This formula determines where a mathematical 'x' value falls as a percentage of the total mathematical width, and multiplies that percentage by the total pixel width of the canvas.</p>
+
+      <h4>The Y-Coordinate Mapping Formula</h4>
+      <div class="formula-box">
+        py = Canvas_Height - [(y - Y_min) × (Canvas_Height) / (Y_max - Y_min)]
+      </div>
+      <p>This formula is slightly different because it must invert the Y-axis. We calculate the percentage position based on the mathematical height, multiply by canvas pixel height, and subtract that value from the total Canvas Height to flip the axis so positive values go up.</p>
+
+      <h3>Evaluating the Equation</h3>
+      <p>With the mapping functions in place, the calculator must iterate over the mathematical X domain to generate corresponding Y values. Rather than testing every possible infinite decimal, the algorithm steps through the X values at small, discrete intervals (often called the "step size").</p>
+      <p>For example, if X ranges from -10 to 10, the algorithm might evaluate the function at -10, then -9.9, then -9.8, continuing to 10. The smaller the step size, the smoother the resulting curve.</p>
+
+      <h4>Syntax and the Math Object</h4>
+      <p>In standard algebra, you can write "2x" to denote multiplication. Programmatic evaluators are strict; they require explicit operators like "2*x". Furthermore, complex functions rely on built-in math libraries. In JavaScript, these are accessed via the `Math` object:</p>
+      <ul>
+        <li><code>Math.sin(x)</code> - Returns the sine of x (in radians).</li>
+        <li><code>Math.cos(x)</code> - Returns the cosine of x.</li>
+        <li><code>Math.pow(x, 2)</code> - Returns x raised to the power of 2 (squared).</li>
+        <li><code>Math.sqrt(x)</code> - Returns the square root of x.</li>
+        <li><code>Math.abs(x)</code> - Returns the absolute value of x.</li>
+        <li><code>Math.E</code> - Euler's number (~2.718).</li>
+        <li><code>Math.PI</code> - Pi (~3.14159).</li>
+      </ul>
+
+      <h3>Rendering the Curve</h3>
+      <p>Once the algorithm has a list of mathematical (x, y) pairs, it maps them to canvas (px, py) pairs. The final step is rendering. Instead of drawing individual dots—which would look like a dotted line—the canvas API uses "paths."</p>
+      <p>The drawing algorithm moves to the very first pixel coordinate. Then, it draws a straight line to the second coordinate, then to the third, and so on. Because the step size is incredibly small, these tiny straight lines blend together to create the illusion of a smooth, continuous curve.</p>
+
+      <h3>Handling Discontinuities</h3>
+      <p>A major complexity in programmatic graphing is handling undefined values or vertical asymptotes. For example, in the function `f(x) = 1/x`, the value is mathematically undefined at `x = 0`. As X approaches 0 from the right, Y shoots toward positive infinity. As it approaches from the left, Y shoots toward negative infinity.</p>
+      <p>A naive drawing algorithm would try to draw a solid line connecting the massive negative Y value to the massive positive Y value, resulting in a vertical line jumping straight across the screen. Robust graphing calculators must detect these massive jumps between sequential points and intentionally "break" the path to avoid drawing false asymptotes.</p>
+
+      <p>Need to track duration instead of plotting equations? Check out our <a href="/time-calculator">time calculator</a>.</p>
+    </div>
+
+    <section class="faq-section">
+      <h2>Frequently Asked Questions</h2>
+      <details>
+        <summary>How does a graphing calculator work?</summary>
+        <p>A graphing calculator plots a function by substituting many different 'x' values into a mathematical equation to determine their corresponding 'y' values. It then maps these (x, y) coordinate pairs onto a two-dimensional grid, drawing lines between the points to visualize the shape of the function.</p>
+      </details>
+      <details>
+        <summary>What is the syntax for plotting math equations?</summary>
+        <p>Most programmatic graphing calculators require standard programming syntax. You use '*' for multiplication (e.g., '2*x' instead of '2x'), '/' for division, and standard Math functions like Math.sin(x), Math.cos(x), Math.pow(x, 2), or Math.sqrt(x).</p>
+      </details>
+      <details>
+        <summary>Why is my equation not graphing correctly?</summary>
+        <p>The most common reasons for a graphing failure are syntax errors. Ensure you are explicitly defining multiplication (e.g., using '3*x' rather than '3x'). Also, ensure you are utilizing proper parentheses to enforce the correct order of operations.</p>
+      </details>
+      <details>
+        <summary>What are trigonometric functions in graphing?</summary>
+        <p>Trigonometric functions like sine (Math.sin), cosine (Math.cos), and tangent (Math.tan) relate an angle to the ratio of sides in a right-angled triangle. When graphed over time or space (x), they produce continuous wave-like oscillating patterns.</p>
+      </details>
+      <details>
+        <summary>How does scaling affect a graph?</summary>
+        <p>Scaling changes the zoom level of the coordinate plane. Zooming out (increasing the scale range) lets you see the broader behavior of a function over large values of x. Zooming in (decreasing the scale range) lets you see precise intercepts and local minimum/maximum points.</p>
+      </details>
+    </section>
+  </div>
+
+  <script is:inline>
+    function drawGraph() {
+      const canvas = document.getElementById('graphCanvas');
+      const ctx = canvas.getContext('2d');
+      const eqStr = document.getElementById('equation').value;
+      const errorMsg = document.getElementById('error-message');
+
+      const parseBound = (id, defaultVal) => {
+        const val = parseFloat(document.getElementById(id).value);
+        return isNaN(val) ? defaultVal : val;
+      };
+
+      const xMin = parseBound('x-min', -10);
+      const xMax = parseBound('x-max', 10);
+      const yMin = parseBound('y-min', -10);
+      const yMax = parseBound('y-max', 10);
+
+      const width = canvas.width;
+      const height = canvas.height;
+
+      // Clear canvas
+      ctx.clearRect(0, 0, width, height);
+      errorMsg.style.display = "none";
+
+      if (xMin >= xMax || yMin >= yMax) {
+        errorMsg.textContent = "Invalid bounds: Min must be less than Max.";
+        errorMsg.style.display = "block";
+        return;
+      }
+
+      // Draw Grid
+      ctx.strokeStyle = "rgba(128, 128, 128, 0.2)";
+      ctx.lineWidth = 1;
+
+      const drawLine = (x1, y1, x2, y2, color, width) => {
+        ctx.beginPath();
+        ctx.strokeStyle = color;
+        ctx.lineWidth = width;
+        ctx.moveTo(x1, y1);
+        ctx.lineTo(x2, y2);
+        ctx.stroke();
+      };
+
+      // Math to Canvas coordinate mapping
+      const mapX = (x) => ((x - xMin) / (xMax - xMin)) * width;
+      const mapY = (y) => height - ((y - yMin) / (yMax - yMin)) * height;
+
+      // Draw Axes
+      const xAxisY = mapY(0);
+      const yAxisX = mapX(0);
+
+      // Grid lines
+      for (let x = Math.ceil(xMin); x <= Math.floor(xMax); x++) {
+        const px = mapX(x);
+        drawLine(px, 0, px, height, "rgba(128, 128, 128, 0.2)", 1);
+      }
+      for (let y = Math.ceil(yMin); y <= Math.floor(yMax); y++) {
+        const py = mapY(y);
+        drawLine(0, py, width, py, "rgba(128, 128, 128, 0.2)", 1);
+      }
+
+      // Main Axes
+      if (xAxisY >= 0 && xAxisY <= height) {
+        drawLine(0, xAxisY, width, xAxisY, "rgba(128, 128, 128, 0.6)", 2); // X-axis
+      }
+      if (yAxisX >= 0 && yAxisX <= width) {
+        drawLine(yAxisX, 0, yAxisX, height, "rgba(128, 128, 128, 0.6)", 2); // Y-axis
+      }
+
+      // Plot Equation
+      if (!eqStr.trim()) return;
+
+      try {
+        // Build evaluation function once for performance
+        const evaluateEquation = new Function('x', 'Math', `return ${eqStr};`);
+
+        // Test evaluation to catch syntax errors immediately
+        evaluateEquation(1, Math);
+
+        ctx.beginPath();
+
+        // Fetch accent color variable
+        const style = getComputedStyle(document.body);
+        const accentColor = style.getPropertyValue('--accent-color') || '#818cf8';
+
+        ctx.strokeStyle = accentColor.trim();
+        ctx.lineWidth = 2;
+
+        const step = (xMax - xMin) / width; // one pixel step
+        let firstPoint = true;
+        let lastPy = null;
+
+        for (let px = 0; px <= width; px++) {
+          const x = xMin + px * step;
+          let y = evaluateEquation(x, Math);
+          if (isNaN(y)) y = null;
+
+          if (y !== null && isFinite(y)) {
+            const py = mapY(y);
+
+            // Handle vertical asymptotes / massive jumps (e.g. 1/x or tan(x))
+            // If the jump is greater than canvas height, break the path
+            if (lastPy !== null && Math.abs(py - lastPy) > height) {
+              firstPoint = true;
+            }
+
+            if (firstPoint) {
+              ctx.moveTo(px, py);
+              firstPoint = false;
+            } else {
+              ctx.lineTo(px, py);
+            }
+            lastPy = py;
+          } else {
+            firstPoint = true; // Break line if null/infinity
+          }
+        }
+        ctx.stroke();
+
+      } catch (err) {
+        errorMsg.textContent = "Syntax Error. Try valid JavaScript Math expressions (e.g., 'Math.sin(x) * x').";
+        errorMsg.style.display = "block";
+      }
+    }
+
+    // Attach Event Listeners
+    const inputs = ['equation', 'x-min', 'x-max', 'y-min', 'y-max'];
+    inputs.forEach(id => {
+      document.getElementById(id).addEventListener('input', drawGraph);
+    });
+
+    const presetBtns = document.querySelectorAll('.preset-btn');
+    presetBtns.forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        const eq = e.target.getAttribute('data-eq');
+        document.getElementById('equation').value = eq;
+        drawGraph();
+      });
+    });
+
+    // Handle Resize (optional, to keep it responsive-ish, though canvas has fixed intrinsic size)
+    // Initial Draw
+    // Small delay to ensure CSS variables are loaded
+    setTimeout(drawGraph, 50);
+
+  </script>
+
+  <style is:inline>
+    .page-content { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem; }
+    .hero { text-align: center; padding: 3rem 0 2rem; }
+    .hero h1 { font-size: 2.2rem; font-weight: 800; margin-bottom: 0.5rem; }
+    .subtitle { color: var(--text-secondary); font-size: 1.1rem; }
+
+    .calculator-container { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 2rem; margin: 2rem 0; }
+
+    .calc-header { margin-bottom: 1.5rem; }
+    .eq-input input { font-family: monospace; font-size: 1.2rem; padding: 1rem; border-color: var(--accent-color); }
+
+    .controls-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(100px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+    .input-group { display: flex; flex-direction: column; gap: 0.5rem; }
+    .input-group label { font-weight: 600; font-size: 0.95rem; }
+
+    input { background: var(--bg-color); color: var(--text-primary); border: 1px solid var(--border-color); padding: 0.75rem 1rem; border-radius: 8px; width: 100%; font-size: 1rem; }
+    input:focus { outline: none; border-color: var(--accent-color); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-color) 20%, transparent); }
+
+    .error-msg { background: #fee2e2; color: #b91c1c; border: 1px solid #f87171; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; font-weight: 500; }
+    .dark .error-msg { background: #450a0a; color: #fca5a5; border-color: #991b1b; }
+
+    .canvas-container { background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden; display: flex; justify-content: center; width: 100%; aspect-ratio: 16/10; margin-bottom: 1.5rem;}
+    canvas { width: 100%; height: 100%; display: block; }
+
+    .presets { display: flex; gap: 0.75rem; flex-wrap: wrap; align-items: center; }
+    .preset-btn { background: color-mix(in srgb, var(--accent-color) 15%, transparent); color: var(--accent-color); border: 1px solid var(--accent-color); padding: 0.5rem 1rem; border-radius: 20px; font-weight: 600; cursor: pointer; font-size: 0.9rem; transition: background 0.2s; }
+    .preset-btn:hover { background: var(--accent-color); color: white; }
+
+    .explainer { margin-top: 3rem; line-height: 1.7; }
+    .explainer h2 { font-size: 1.8rem; margin-top: 2rem; margin-bottom: 1rem; }
+    .explainer h3 { font-size: 1.4rem; margin-top: 1.5rem; margin-bottom: 0.75rem; }
+    .explainer h4 { font-size: 1.2rem; margin-top: 1rem; margin-bottom: 0.5rem; }
+    .explainer p { margin-bottom: 1rem; color: var(--text-secondary); }
+    .explainer ul { margin-bottom: 1rem; padding-left: 1.5rem; color: var(--text-secondary); }
+    .explainer li { margin-bottom: 0.5rem; }
+    .formula-box { background: var(--card-bg); border-left: 4px solid var(--accent-color); padding: 1rem 1.5rem; margin: 1.5rem 0; border-radius: 0 8px 8px 0; font-family: monospace; font-size: 1.05rem; }
+    .explainer a { color: var(--accent-color); text-decoration: none; font-weight: 600; }
+    .explainer a:hover { text-decoration: underline; }
+
+    .faq-section { margin-top: 3rem; }
+    .faq-section h2 { font-size: 1.8rem; margin-bottom: 1.5rem; }
+    .faq-section details { margin: 1rem 0; padding: 1rem; background: var(--card-bg); border-radius: 8px; border: 1px solid var(--border-color); transition: background 0.2s; }
+    .faq-section details[open] { background: var(--bg-color); border-color: var(--accent-color); }
+    .faq-section summary { font-weight: 600; cursor: pointer; list-style: none; position: relative; padding-right: 1.5rem; font-size: 1.1rem; }
+    .faq-section summary::-webkit-details-marker { display: none; }
+    .faq-section summary::after { content: "+"; position: absolute; right: 0; top: 50%; transform: translateY(-50%); font-size: 1.5rem; color: var(--accent-color); transition: transform 0.2s; }
+    .faq-section details[open] summary::after { content: "−"; }
+    .faq-section p { margin-top: 1rem; color: var(--text-secondary); line-height: 1.6; }
+  </style>
+</SiteLayout>

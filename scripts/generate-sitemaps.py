@@ -30,6 +30,7 @@ SITE_DOMAINS = {
     "nookienook": "nookienook.com",
     "siliconbased": "siliconbased.dev",
     "westmount": "westmountfundamentals.com",
+    "mathtools": "photonbuilder.com",
     "health": "health.example.com",
 }
 

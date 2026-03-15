@@ -1,0 +1,522 @@
+---
+import SiteLayout from "../../../layouts/SiteLayout.astro";
+
+export const meta = {
+  title: "Right Triangle Calculator: Find Sides & Angles instantly",
+  description: "Stop struggling with geometry formulas. Our calculator finds any missing side, angle, or area of a right triangle in milliseconds.",
+  category: "tool",
+  published: "2026-03-15",
+};
+
+const schema = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Article",
+      "headline": meta.title,
+      "description": meta.description,
+      "author": {
+        "@type": "Organization",
+        "name": "photonbuilder.com/mathtools",
+        "url": "https://photonbuilder.com/mathtools/"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "photonbuilder.com/mathtools",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://photonbuilder.com/mathtools/favicon.ico"
+        }
+      },
+      "datePublished": meta.published
+    },
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "What is the Pythagorean theorem?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "The Pythagorean theorem states that in a right-angled triangle, the square of the length of the hypotenuse is equal to the sum of the squares of the lengths of the other two sides. The formula is a² + b² = c²."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How do you find the hypotenuse of a right triangle?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "To find the hypotenuse (c), you need to know the lengths of the other two sides (a and b). Square both sides, add them together, and then take the square root of that sum: c = √(a² + b²)."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How do you calculate the area of a right triangle?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "The area of a right triangle is calculated by multiplying the base by the height and dividing by two. The formula is Area = ½ × a × b, where a and b are the legs of the triangle."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What are trigonometric ratios?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Trigonometric ratios are mathematical relationships between the sides and angles of a right triangle. The three primary ratios are Sine (SOH), Cosine (CAH), and Tangent (TOA)."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Can a right triangle have two right angles?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "No, a right triangle cannot have two right angles. The sum of all angles in any triangle must equal 180 degrees. If a triangle had two 90-degree angles, the sum would be 180 degrees without accounting for the third angle, making it impossible."
+          }
+        }
+      ]
+    }
+  ]
+};
+---
+
+<SiteLayout site="mathtools" title={meta.title} description={meta.description} canonical="https://photonbuilder.com/mathtools/right-triangle-calculator" schema={schema}>
+  <div class="page-content">
+    <div class="hero">
+      <h1>Right Triangle Calculator</h1>
+      <p class="subtitle">Instantly calculate missing sides, angles, area, and perimeter of any right triangle.</p>
+    </div>
+
+    <div class="calculator-container" id="calculator-ui">
+      <div class="input-grid">
+        <div class="input-group" id="input1-group">
+          <label for="input1-type">Known Value 1</label>
+          <select id="input1-type">
+            <option value="a">Side a</option>
+            <option value="b">Side b</option>
+            <option value="c">Hypotenuse c</option>
+            <option value="A">Angle A</option>
+            <option value="B">Angle B</option>
+            <option value="area">Area</option>
+          </select>
+          <input type="number" id="input1-value" placeholder="Enter value" step="any" min="0.000001">
+          <span class="error-msg" id="input1-error"></span>
+        </div>
+
+        <div class="input-group" id="input2-group">
+          <label for="input2-type">Known Value 2</label>
+          <select id="input2-type">
+            <option value="b">Side b</option>
+            <option value="a">Side a</option>
+            <option value="c">Hypotenuse c</option>
+            <option value="A">Angle A</option>
+            <option value="B">Angle B</option>
+            <option value="area">Area</option>
+          </select>
+          <input type="number" id="input2-value" placeholder="Enter value" step="any" min="0.000001">
+          <span class="error-msg" id="input2-error"></span>
+        </div>
+      </div>
+
+      <div class="error-msg" id="global-error" style="text-align: center; margin-bottom: 1.5rem; font-weight: 600;"></div>
+
+      <div class="results-grid">
+        <div class="result-card">
+          <span class="result-label">Side a</span>
+          <span class="result-value" id="res-a">-</span>
+        </div>
+        <div class="result-card">
+          <span class="result-label">Side b</span>
+          <span class="result-value" id="res-b">-</span>
+        </div>
+        <div class="result-card">
+          <span class="result-label">Hypotenuse c</span>
+          <span class="result-value" id="res-c">-</span>
+        </div>
+        <div class="result-card">
+          <span class="result-label">Angle A</span>
+          <span class="result-value" id="res-angle-a">-&deg;</span>
+        </div>
+        <div class="result-card">
+          <span class="result-label">Angle B</span>
+          <span class="result-value" id="res-angle-b">-&deg;</span>
+        </div>
+        <div class="result-card">
+          <span class="result-label">Area</span>
+          <span class="result-value" id="res-area">-</span>
+        </div>
+        <div class="result-card">
+          <span class="result-label">Perimeter</span>
+          <span class="result-value" id="res-perimeter">-</span>
+        </div>
+      </div>
+
+      <div class="triangle-preview">
+        <canvas id="triangle-canvas" class="triangle-canvas"></canvas>
+      </div>
+    </div>
+
+    <div class="explainer" id="explainer-content">
+      <h2>Understanding Right Triangles</h2>
+      <p>A right triangle (or right-angled triangle) is a fundamental geometric shape characterized by having one angle that measures exactly 90 degrees (a right angle). This defining feature gives right triangles unique mathematical properties that have been studied and applied for thousands of years in fields ranging from architecture and engineering to navigation and astronomy.</p>
+
+      <p>The side opposite the 90-degree angle is always the longest side of the triangle and is called the <strong>hypotenuse</strong> (often denoted as <em>c</em>). The other two sides that meet to form the right angle are known as the <strong>legs</strong> (typically labeled <em>a</em> and <em>b</em>). The two remaining angles in a right triangle must be acute angles, meaning they are less than 90 degrees, and together they always sum to exactly 90 degrees (making them complementary).</p>
+
+      <h3>The Pythagorean Theorem</h3>
+      <p>The most famous and widely used mathematical principle associated with right triangles is the Pythagorean theorem. Named after the ancient Greek mathematician Pythagoras (though the concept was known to earlier Babylonian and Indian mathematicians), the theorem states that the square of the length of the hypotenuse is equal to the sum of the squares of the lengths of the other two sides.</p>
+
+      <p>Mathematically, this is expressed as:</p>
+      <div style="text-align: center; font-size: 1.5rem; font-weight: 600; margin: 1.5rem 0; padding: 1rem; background: var(--card-bg); border-radius: 8px;">
+        a² + b² = c²
+      </div>
+
+      <p>This simple yet powerful formula allows you to calculate the length of any unknown side of a right triangle as long as the other two sides are known. For instance, if you know the lengths of both legs, you can find the hypotenuse by adding their squares and taking the square root: <strong>c = &radic;(a² + b²)</strong>. Similarly, if you know the hypotenuse and one leg, you can find the other leg by subtracting their squares and taking the square root: <strong>a = &radic;(c² - b²)</strong>.</p>
+
+      <h3>Trigonometry and Right Triangles</h3>
+      <p>Beyond the relationships between their sides, right triangles also provide the foundation for basic trigonometry. Trigonometry introduces ratios that relate the angles of a triangle to the lengths of its sides. These primary trigonometric ratios are Sine (sin), Cosine (cos), and Tangent (tan).</p>
+
+      <p>A common mnemonic used to remember these ratios is <strong>SOH CAH TOA</strong>:</p>
+      <ul>
+        <li><strong>Sine (SOH):</strong> sin(&theta;) = Opposite / Hypotenuse</li>
+        <li><strong>Cosine (CAH):</strong> cos(&theta;) = Adjacent / Hypotenuse</li>
+        <li><strong>Tangent (TOA):</strong> tan(&theta;) = Opposite / Adjacent</li>
+      </ul>
+
+      <p>Using these trigonometric functions, you can determine an unknown angle if you know the lengths of two sides (using inverse trigonometric functions like arcsin, arccos, or arctan), or you can calculate an unknown side if you know one angle (other than the 90-degree angle) and one side.</p>
+
+      <h3>Area and Perimeter Formulas</h3>
+      <p>Calculating the area and perimeter of a right triangle is straightforward. The perimeter is simply the total distance around the outside of the triangle, found by adding the lengths of all three sides together:</p>
+
+      <p style="text-align: center; font-weight: bold;">Perimeter = a + b + c</p>
+
+      <p>The area of a right triangle is half the product of the lengths of its two legs (the base and the height). Because the legs meet at a 90-degree angle, one leg can always serve as the base and the other as the height:</p>
+
+      <p style="text-align: center; font-weight: bold;">Area = &frac12; &times; a &times; b</p>
+
+      <h3>Real-World Applications</h3>
+      <p>Right triangles are not just abstract mathematical concepts; they are incredibly practical tools used daily in the real world.</p>
+      <ul>
+        <li><strong>Construction and Architecture:</strong> Builders use right triangles to ensure walls are perfectly square and plumb. The classic "3-4-5 rule" (where a triangle with sides measuring 3, 4, and 5 units always forms a right triangle) is a quick way to verify right angles on job sites.</li>
+        <li><strong>Navigation:</strong> Right triangles are essential for calculating distances and plotting courses, especially when dealing with changes in latitude and longitude or using triangulation.</li>
+        <li><strong>Engineering:</strong> Engineers use trigonometry and right triangles to calculate forces, design structural supports like trusses, and determine heights and distances that cannot be measured directly.</li>
+        <li><strong>Computer Graphics:</strong> 3D rendering engines rely heavily on dividing complex surfaces into tiny triangles (a process called tessellation) and using trigonometry to calculate lighting, shadows, and perspective.</li>
+      </ul>
+
+      <p>If you're using these calculations for engineering or coding tasks where precision is critical, you may need to round your results appropriately. Check out our <a href="/rounding-calculator">rounding calculator</a> to help you accurately truncate or round floating-point decimals generated by these trigonometric calculations.</p>
+    </div>
+
+    <section class="faq-section" id="faq-content">
+      <h2>Frequently Asked Questions</h2>
+      <details>
+        <summary>What is the Pythagorean theorem?</summary>
+        <p>The Pythagorean theorem states that in a right-angled triangle, the square of the length of the hypotenuse is equal to the sum of the squares of the lengths of the other two sides. The formula is a² + b² = c².</p>
+      </details>
+      <details>
+        <summary>How do you find the hypotenuse of a right triangle?</summary>
+        <p>To find the hypotenuse (c), you need to know the lengths of the other two sides (a and b). Square both sides, add them together, and then take the square root of that sum: c = &radic;(a² + b²).</p>
+      </details>
+      <details>
+        <summary>How do you calculate the area of a right triangle?</summary>
+        <p>The area of a right triangle is calculated by multiplying the base by the height and dividing by two. The formula is Area = &frac12; &times; a &times; b, where a and b are the legs of the triangle.</p>
+      </details>
+      <details>
+        <summary>What are trigonometric ratios?</summary>
+        <p>Trigonometric ratios are mathematical relationships between the sides and angles of a right triangle. The three primary ratios are Sine (SOH), Cosine (CAH), and Tangent (TOA). They are used to find unknown sides or angles when partial information is provided.</p>
+      </details>
+      <details>
+        <summary>Can a right triangle have two right angles?</summary>
+        <p>No, a right triangle cannot have two right angles. The sum of all interior angles in any triangle must equal exactly 180 degrees. If a triangle had two 90-degree angles, the sum would be 180 degrees without even accounting for the third angle, making it a geometric impossibility.</p>
+      </details>
+    </section>
+  </div>
+
+  <script is:inline>
+    const type1 = document.getElementById('input1-type');
+    const val1 = document.getElementById('input1-value');
+    const type2 = document.getElementById('input2-type');
+    const val2 = document.getElementById('input2-value');
+
+    const err1 = document.getElementById('input1-error');
+    const err2 = document.getElementById('input2-error');
+    const globalErr = document.getElementById('global-error');
+
+    const elements = {
+      a: document.getElementById('res-a'),
+      b: document.getElementById('res-b'),
+      c: document.getElementById('res-c'),
+      A: document.getElementById('res-angle-a'),
+      B: document.getElementById('res-angle-b'),
+      area: document.getElementById('res-area'),
+      perimeter: document.getElementById('res-perimeter')
+    };
+
+    const canvas = document.getElementById('triangle-canvas');
+    const ctx = canvas.getContext('2d');
+
+    function initCanvas() {
+      canvas.width = canvas.parentElement.clientWidth;
+      canvas.height = canvas.parentElement.clientHeight;
+    }
+
+    window.addEventListener('resize', () => {
+      initCanvas();
+      calculate();
+    });
+
+    initCanvas();
+
+    const degToRad = (deg) => deg * (Math.PI / 180);
+    const radToDeg = (rad) => rad * (180 / Math.PI);
+
+    function formatNumber(num) {
+      if (!isFinite(num)) return '-';
+      // format with max 5 decimal places, removing trailing zeros
+      return parseFloat(num.toFixed(5)).toString();
+    }
+
+    function drawTriangle(a, b, c) {
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+      if (!a || !b || !c) return;
+
+      const padding = 20;
+      const w = canvas.width - padding * 2;
+      const h = canvas.height - padding * 2;
+
+      const scale = Math.min(w / b, h / a);
+      const drawW = b * scale;
+      const drawH = a * scale;
+
+      const startX = (canvas.width - drawW) / 2;
+      const startY = (canvas.height + drawH) / 2;
+
+      ctx.beginPath();
+      ctx.moveTo(startX, startY);
+      ctx.lineTo(startX + drawW, startY);
+      ctx.lineTo(startX + drawW, startY - drawH);
+      ctx.closePath();
+
+      ctx.strokeStyle = '#818cf8';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+
+      ctx.fillStyle = 'rgba(129, 140, 248, 0.1)';
+      ctx.fill();
+
+      // Right angle square
+      const squareSize = Math.min(drawW, drawH, 15);
+      ctx.beginPath();
+      ctx.moveTo(startX + drawW - squareSize, startY);
+      ctx.lineTo(startX + drawW - squareSize, startY - squareSize);
+      ctx.lineTo(startX + drawW, startY - squareSize);
+      ctx.stroke();
+
+      // Labels
+      ctx.fillStyle = '#cbd5e1';
+      ctx.font = '14px system-ui, sans-serif';
+      ctx.textAlign = 'center';
+      ctx.fillText('b', startX + drawW / 2, startY + 16);
+      ctx.textAlign = 'left';
+      ctx.fillText('a', startX + drawW + 8, startY - drawH / 2);
+      ctx.textAlign = 'right';
+      ctx.fillText('c', startX + drawW / 2 - 8, startY - drawH / 2 - 8);
+    }
+
+    function calculate() {
+      err1.textContent = '';
+      err2.textContent = '';
+      globalErr.textContent = '';
+      document.getElementById('input1-group').classList.remove('error');
+      document.getElementById('input2-group').classList.remove('error');
+      globalErr.style.display = 'none';
+
+      const t1 = type1.value;
+      const t2 = type2.value;
+      const v1 = parseFloat(val1.value);
+      const v2 = parseFloat(val2.value);
+
+      let a = null, b = null, c = null, A = null, B = null, area = null;
+
+      if (t1 === t2) {
+        showError('Inputs must be different.');
+        resetOutputs();
+        return;
+      }
+
+      if (isNaN(v1) || isNaN(v2) || v1 <= 0 || v2 <= 0) {
+        resetOutputs();
+        return;
+      }
+
+      // Combine inputs into an object for easier processing
+      const inputs = { [t1]: v1, [t2]: v2 };
+
+      try {
+        if ('a' in inputs && 'b' in inputs) {
+          a = inputs.a; b = inputs.b;
+          c = Math.sqrt(a*a + b*b);
+        } else if ('a' in inputs && 'c' in inputs) {
+          a = inputs.a; c = inputs.c;
+          if (a >= c) throw new Error("Hypotenuse 'c' must be greater than side 'a'.");
+          b = Math.sqrt(c*c - a*a);
+        } else if ('b' in inputs && 'c' in inputs) {
+          b = inputs.b; c = inputs.c;
+          if (b >= c) throw new Error("Hypotenuse 'c' must be greater than side 'b'.");
+          a = Math.sqrt(c*c - b*b);
+        } else if ('A' in inputs && 'B' in inputs) {
+          throw new Error("Cannot determine sides with only two angles. Need at least one side or area.");
+        } else if ('a' in inputs && 'A' in inputs) {
+          a = inputs.a; A = inputs.A;
+          if (A >= 90) throw new Error("Angle must be less than 90°.");
+          c = a / Math.sin(degToRad(A));
+          b = Math.sqrt(c*c - a*a);
+        } else if ('a' in inputs && 'B' in inputs) {
+          a = inputs.a; B = inputs.B;
+          if (B >= 90) throw new Error("Angle must be less than 90°.");
+          c = a / Math.cos(degToRad(B));
+          b = Math.sqrt(c*c - a*a);
+        } else if ('b' in inputs && 'A' in inputs) {
+          b = inputs.b; A = inputs.A;
+          if (A >= 90) throw new Error("Angle must be less than 90°.");
+          c = b / Math.cos(degToRad(A));
+          a = Math.sqrt(c*c - b*b);
+        } else if ('b' in inputs && 'B' in inputs) {
+          b = inputs.b; B = inputs.B;
+          if (B >= 90) throw new Error("Angle must be less than 90°.");
+          c = b / Math.sin(degToRad(B));
+          a = Math.sqrt(c*c - b*b);
+        } else if ('c' in inputs && 'A' in inputs) {
+          c = inputs.c; A = inputs.A;
+          if (A >= 90) throw new Error("Angle must be less than 90°.");
+          a = c * Math.sin(degToRad(A));
+          b = c * Math.cos(degToRad(A));
+        } else if ('c' in inputs && 'B' in inputs) {
+          c = inputs.c; B = inputs.B;
+          if (B >= 90) throw new Error("Angle must be less than 90°.");
+          a = c * Math.cos(degToRad(B));
+          b = c * Math.sin(degToRad(B));
+        } else if ('area' in inputs && 'a' in inputs) {
+          area = inputs.area; a = inputs.a;
+          b = (2 * area) / a;
+          c = Math.sqrt(a*a + b*b);
+        } else if ('area' in inputs && 'b' in inputs) {
+          area = inputs.area; b = inputs.b;
+          a = (2 * area) / b;
+          c = Math.sqrt(a*a + b*b);
+        } else if ('area' in inputs && 'c' in inputs) {
+           throw new Error("Cannot easily determine sides from area and hypotenuse algebraically here without complex quadratics. Try a different pair.");
+        } else if ('area' in inputs && 'A' in inputs) {
+          area = inputs.area; A = inputs.A;
+          if (A >= 90) throw new Error("Angle must be less than 90°.");
+          b = Math.sqrt((2 * area) / Math.tan(degToRad(A)));
+          a = (2 * area) / b;
+          c = Math.sqrt(a*a + b*b);
+        } else if ('area' in inputs && 'B' in inputs) {
+          area = inputs.area; B = inputs.B;
+          if (B >= 90) throw new Error("Angle must be less than 90°.");
+          a = Math.sqrt((2 * area) / Math.tan(degToRad(B)));
+          b = (2 * area) / a;
+          c = Math.sqrt(a*a + b*b);
+        }
+
+        if (!A) A = radToDeg(Math.asin(a / c));
+        if (!B) B = radToDeg(Math.asin(b / c));
+        if (!area) area = 0.5 * a * b;
+
+        if (isNaN(a) || isNaN(b) || isNaN(c) || isNaN(A) || isNaN(B)) {
+            throw new Error("Invalid calculation. Check your inputs.");
+        }
+
+        elements.a.textContent = formatNumber(a);
+        elements.b.textContent = formatNumber(b);
+        elements.c.textContent = formatNumber(c);
+        elements.A.innerHTML = formatNumber(A) + '&deg;';
+        elements.B.innerHTML = formatNumber(B) + '&deg;';
+        elements.area.textContent = formatNumber(area);
+        elements.perimeter.textContent = formatNumber(a + b + c);
+
+        drawTriangle(a, b, c);
+
+      } catch (e) {
+        showError(e.message);
+        resetOutputs();
+      }
+    }
+
+    function showError(msg) {
+      globalErr.textContent = msg;
+      globalErr.style.display = 'block';
+    }
+
+    function resetOutputs() {
+      elements.a.textContent = '-';
+      elements.b.textContent = '-';
+      elements.c.textContent = '-';
+      elements.A.innerHTML = '-&deg;';
+      elements.B.innerHTML = '-&deg;';
+      elements.area.textContent = '-';
+      elements.perimeter.textContent = '-';
+      ctx.clearRect(0, 0, canvas.width, canvas.height);
+    }
+
+    // Prevent duplicate selections
+    function handleSelectChange(changed) {
+        if(type1.value === type2.value) {
+            if(changed === 1) {
+                // Find first available option
+                const opts = Array.from(type2.options);
+                type2.value = opts.find(o => o.value !== type1.value).value;
+            } else {
+                const opts = Array.from(type1.options);
+                type1.value = opts.find(o => o.value !== type2.value).value;
+            }
+        }
+        calculate();
+    }
+
+    type1.addEventListener('change', () => handleSelectChange(1));
+    type2.addEventListener('change', () => handleSelectChange(2));
+    val1.addEventListener('input', calculate);
+    val2.addEventListener('input', calculate);
+
+    // Initial validation
+    handleSelectChange(1);
+  </script>
+
+  <style is:inline>
+    .page-content { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem; }
+    .hero { text-align: center; padding: 3rem 0 2rem; }
+    .hero h1 { font-size: 2.2rem; font-weight: 800; margin-bottom: 0.5rem; }
+    .subtitle { color: var(--text-secondary); font-size: 1.1rem; }
+    .calculator-container { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 2rem; margin: 2rem 0; }
+
+    .input-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem; }
+    @media (max-width: 600px) { .input-grid { grid-template-columns: 1fr; } }
+
+    .input-group { display: flex; flex-direction: column; gap: 0.5rem; }
+    .input-group label { font-weight: 600; font-size: 0.95rem; }
+    .input-group.error input { border-color: #ef4444; }
+    .error-msg { color: #ef4444; font-size: 0.85rem; display: none; }
+    .input-group.error .error-msg { display: block; }
+
+    input, select { background: var(--bg-color); color: var(--text-primary); border: 1px solid var(--border-color); padding: 0.75rem 1rem; border-radius: 8px; width: 100%; font-size: 1rem; }
+    input:focus, select:focus { outline: none; border-color: var(--accent-color); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-color) 20%, transparent); }
+
+    .results-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; }
+    .result-card { background: color-mix(in srgb, var(--accent-color) 10%, transparent); border: 1px solid var(--accent-color); border-radius: 12px; padding: 1.5rem; text-align: center; display: flex; flex-direction: column; justify-content: center; }
+    .result-label { font-size: 0.9rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem; color: var(--text-secondary); }
+    .result-value { font-size: 1.8rem; font-weight: 800; color: var(--accent-color); }
+
+    .triangle-preview { margin-top: 2rem; display: flex; justify-content: center; align-items: center; height: 200px; border: 1px solid var(--border-color); border-radius: 12px; background: var(--bg-color); position: relative;}
+    .triangle-canvas { width: 100%; height: 100%; }
+
+    .explainer { margin-top: 3rem; line-height: 1.7; }
+    .explainer h2, .explainer h3 { margin-top: 2rem; margin-bottom: 1rem; }
+    .explainer p { margin-bottom: 1.2rem; }
+    .explainer ul { margin-left: 1.5rem; margin-bottom: 1.2rem; }
+    .explainer li { margin-bottom: 0.5rem; }
+
+    .faq-section { margin-top: 4rem; }
+    .faq-section details { margin: 1rem 0; padding: 1rem; background: var(--card-bg); border-radius: 8px; border: 1px solid var(--border-color); }
+    .faq-section summary { font-weight: 600; cursor: pointer; font-size: 1.1rem; }
+    .faq-section details p { margin-top: 1rem; margin-bottom: 0; line-height: 1.6; }
+  </style>
+</SiteLayout>

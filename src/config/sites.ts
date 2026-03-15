@@ -194,3 +194,17 @@ sites['montrealjobs'] = {
   ],
   footer: { text: '© 2026 Montreal Jobs', gabVentures: true },
 };
+
+sites['mathtools'] = {
+  id: 'mathtools',
+  name: 'Math Tools',
+  domain: 'photonbuilder.com',
+  accent: '#3B82F6',
+  theme: { bg: '#060812', cardBg: '#0a1020', border: '#152040', textPrimary: '#e2e8f0', textSecondary: '#94a3b8' },
+  gaId: 'G-CYV604162T',
+  nav: [
+    { label: 'Calculators', href: '/mathtools/#tools' },
+    { label: 'Guides', href: '/mathtools/#guides' },
+  ],
+  footer: { text: '© 2026 Math Tools', gabVentures: true },
+};
