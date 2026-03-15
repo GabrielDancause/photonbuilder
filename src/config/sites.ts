@@ -203,3 +203,18 @@ sites['justonemoment'] = {
   ],
   footer: { text: '© 2026 Just One Moment', gabVentures: true },
 };
+
+sites['fixitwithducttape'] = {
+  id: 'fixitwithducttape',
+  name: 'Fix It With Duct Tape',
+  domain: 'photonbuilder.com',
+  accent: '#A0A0A0',
+  theme: { bg: '#0a0a0a', cardBg: '#141414', border: '#252525', textPrimary: '#e2e8f0', textSecondary: '#94a3b8' },
+  gaId: 'G-CYV604162T',
+  nav: [
+    { label: 'Reviews', href: '/fixitwithducttape/#tools' },
+    { label: 'Comparisons', href: '/fixitwithducttape/#guides' },
+    { label: 'Roadmap', href: '/fixitwithducttape/coming-soon' },
+  ],
+  footer: { text: '© 2026 Fix It With Duct Tape', gabVentures: true },
+};
