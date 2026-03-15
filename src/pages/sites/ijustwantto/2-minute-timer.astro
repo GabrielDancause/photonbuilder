@@ -1,0 +1,285 @@
+---
+import SiteLayout from "../../../layouts/SiteLayout.astro";
+
+export const meta = {
+  title: "2 Minute Timer",
+  description: "Set a 2-minute timer instantly. Discover why 120 seconds is the perfect window to break procrastination, improve focus, and finish micro-tasks.",
+  category: "tool",
+  published: "2026-03-15",
+};
+
+const schema = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "What can I do in 2 minutes?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "A two-minute window is ideal for quick tasks such as replying to a short email, organizing your desk, deep breathing exercises, stretching, or applying the 'Two-Minute Rule' to immediately handle any task that takes under two minutes."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What is the two-minute rule in time management?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "The two-minute rule, popularized by David Allen's Getting Things Done methodology, states that if a task takes less than two minutes to complete, you should do it immediately rather than deferring it. This prevents small tasks from piling up."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How does a 2-minute timer improve focus?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "A 2-minute timer acts as a psychological trigger to overcome the initial resistance to starting a task. Once you commit to focusing for just two minutes, momentum often carries you forward to continue working even after the timer ends."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Is 2 minutes long enough for a micro-break?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes, a 2-minute micro-break is sufficient to rest your eyes (using the 20-20-20 rule), do some light stretching, and refocus your mind before returning to deep work, helping to prevent burnout and eye strain."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Can I use this timer for HIIT workouts?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Absolutely. This timer is perfect for 2-minute intense intervals or extended rest periods in High-Intensity Interval Training (HIIT) routines, keeping your workout structured and efficient."
+          }
+        }
+      ]
+    },
+    {
+      "@type": "Article",
+      "headline": "2 Minute Timer",
+      "description": "Set a 2-minute timer instantly. Discover why 120 seconds is the perfect window to break procrastination, improve focus, and finish micro-tasks.",
+      "author": {
+        "@type": "Organization",
+        "name": "SiliconBased.dev"
+      }
+    }
+  ]
+};
+---
+<SiteLayout site="ijustwantto" title={meta.title} description={meta.description} canonical="https://ijustwantto.live/2-minute-timer" schema={schema}>
+  <div class="page-content">
+    <div class="hero">
+      <h1>2 Minute Timer</h1>
+      <p class="subtitle">Set an instant 120-second countdown for focus, micro-breaks, or rapid tasks.</p>
+    </div>
+
+    <!-- TIMER LOGIC HERE -->
+    <div class="timer-container">
+      <div class="timer-display" id="timer-display">02:00</div>
+      <div class="timer-controls">
+        <button class="btn btn-start" id="start-btn">Start</button>
+        <button class="btn btn-stop" id="stop-btn" style="display: none;">Stop</button>
+      </div>
+      <button class="btn-reset" id="reset-btn">Reset Timer</button>
+
+      <div class="progress-bar">
+        <div class="progress-fill" id="progress-fill" style="width: 100%;"></div>
+      </div>
+    </div>
+
+    <script is:inline>
+      document.addEventListener('DOMContentLoaded', () => {
+        const TOTAL_SECONDS = 120;
+        let timeRemaining = TOTAL_SECONDS;
+        let timerInterval = null;
+        let endTime = null;
+
+        const display = document.getElementById('timer-display');
+        const startBtn = document.getElementById('start-btn');
+        const stopBtn = document.getElementById('stop-btn');
+        const resetBtn = document.getElementById('reset-btn');
+        const progressFill = document.getElementById('progress-fill');
+
+        function updateDisplay() {
+          const minutes = Math.floor(timeRemaining / 60);
+          const seconds = timeRemaining % 60;
+          display.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+
+          const percentage = (timeRemaining / TOTAL_SECONDS) * 100;
+          progressFill.style.width = `${percentage}%`;
+        }
+
+        function playAlarm() {
+          const audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+          const oscillator = audioCtx.createOscillator();
+          const gainNode = audioCtx.createGain();
+
+          oscillator.connect(gainNode);
+          gainNode.connect(audioCtx.destination);
+
+          oscillator.type = 'sine';
+          oscillator.frequency.setValueAtTime(880, audioCtx.currentTime); // A5
+
+          gainNode.gain.setValueAtTime(0, audioCtx.currentTime);
+          gainNode.gain.linearRampToValueAtTime(1, audioCtx.currentTime + 0.1);
+          gainNode.gain.linearRampToValueAtTime(0, audioCtx.currentTime + 0.5);
+
+          oscillator.start(audioCtx.currentTime);
+          oscillator.stop(audioCtx.currentTime + 0.5);
+
+          setTimeout(() => {
+            if (audioCtx.state === 'running') audioCtx.close();
+          }, 600);
+        }
+
+        function tick() {
+          const now = Date.now();
+          timeRemaining = Math.max(0, Math.ceil((endTime - now) / 1000));
+
+          updateDisplay();
+
+          if (timeRemaining <= 0) {
+            stopTimer();
+            playAlarm();
+            setTimeout(playAlarm, 800);
+            setTimeout(playAlarm, 1600);
+          }
+        }
+
+        function startTimer() {
+          if (timerInterval) return;
+
+          if (timeRemaining <= 0) {
+            timeRemaining = TOTAL_SECONDS;
+          }
+
+          endTime = Date.now() + (timeRemaining * 1000);
+          timerInterval = setInterval(tick, 100); // Check frequently for accuracy
+
+          startBtn.style.display = 'none';
+          stopBtn.style.display = 'inline-block';
+        }
+
+        function stopTimer() {
+          if (timerInterval) {
+            clearInterval(timerInterval);
+            timerInterval = null;
+          }
+
+          startBtn.style.display = 'inline-block';
+          stopBtn.style.display = 'none';
+        }
+
+        function resetTimer() {
+          stopTimer();
+          timeRemaining = TOTAL_SECONDS;
+          updateDisplay();
+        }
+
+        startBtn.addEventListener('click', startTimer);
+        stopBtn.addEventListener('click', stopTimer);
+        resetBtn.addEventListener('click', resetTimer);
+
+        // Initial setup
+        updateDisplay();
+      });
+    </script>
+
+    <div class="content-section">
+      <h2>The Power of the 2-Minute Window</h2>
+      <p>Have you ever stared at a pile of unread emails, a messy desk, or a complex coding project, feeling completely paralyzed by the sheer volume of work? You're not alone. Procrastination is often fueled by the perceived magnitude of a task, rather than the task itself. This is where the magic of the <strong>2-minute timer</strong> comes into play.</p>
+
+      <p>One hundred and twenty seconds doesn't seem like a lot of time. It's roughly the duration of a short pop song or a commercial break. Yet, in the realm of productivity and time management, 2 minutes is a critical threshold. It's the minimum effective dose of effort required to break inertia and transition your brain from a state of resistance to a state of action.</p>
+
+      <div class="callout">
+        <strong>The Two-Minute Rule:</strong> Coined by productivity expert David Allen in his book <em>Getting Things Done</em>, this rule states: "If an action will take less than two minutes, it should be done at the moment it is defined." If you can respond to an email, file a document, or water a plant in under two minutes, do it immediately. Don't add it to a list.
+      </div>
+
+      <h3>Why 2 Minutes Works: The Psychology of Momentum</h3>
+      <p>The human brain is wired to conserve energy. When faced with a task that appears difficult or time-consuming, our natural instinct is to avoid it. We experience a genuine physiological response—a spike in cortisol—when contemplating tasks we dread.</p>
+
+      <p>By committing to work on a task for <em>just two minutes</em>, you are actively bypassing the brain's defense mechanisms. The commitment is so small, so utterly un-intimidating, that the resistance dissolves. You tell yourself, "I'll just write the opening sentence of the report," or "I'll just clear the top layer of papers off my desk."</p>
+
+      <p>Here's what usually happens next: Physics takes over. Newton's First Law of Motion states that an object at rest stays at rest, and an object in motion stays in motion. Once you start the 2-minute timer and begin the task, you create psychological momentum. Often, when the timer chimes at 120 seconds, you'll find that the friction of starting is gone, and you naturally want to keep going.</p>
+
+      <h3>Real-World Applications of a 2-Minute Timer</h3>
+      <p>How can you implement this in your daily life? The applications are incredibly versatile, spanning from professional workflows to personal well-being.</p>
+
+      <ul>
+        <li><strong>Tackling Email Backlogs:</strong> Sort through your inbox. If an email requires a simple "Yes/No" or a one-sentence reply, use the timer to force yourself to handle it immediately instead of flagging it for later.</li>
+        <li><strong>Overcoming "Blank Page Syndrome":</strong> Staring at a blank document or an empty code editor? Set the timer and commit to typing <em>something</em>, even if it's just pseudo-code or an outline. The goal is to get words on the screen, not to be perfect.</li>
+        <li><strong>Micro-Cleaning:</strong> Don't have time to clean the entire house? Set the timer for 2 minutes and focus solely on the kitchen sink or your immediate workspace. You'll be surprised how much you can wipe down in 120 seconds.</li>
+        <li><strong>Physical Reset:</strong> If you sit at a desk all day, use a 2-minute interval to stand up, stretch your hamstrings, roll your neck, and look away from your screen to prevent eye strain.</li>
+      </ul>
+
+      <h3>Comparing Micro-Timers: Which One to Choose?</h3>
+      <p>Depending on your goal, you might need different time horizons. While 2 minutes is the ultimate tool for overcoming inertia, other durations have their specific uses. For quick, focused bursts that are slightly longer, you might try a <a href="/1-minute-timer">1 minute timer</a> for ultra-rapid decisions, or step up to a <a href="/5-minute-timer">5 minute timer</a> when you need to brainstorm a quick list or review a pull request. For deeper work, the standard Pomodoro <a href="/30-minute-timer">30 minute timer</a> is often more appropriate once momentum is established.</p>
+
+      <p>If you're managing larger blocks of your day, you might also find a <a href="/time-calculator">time calculator</a> useful to add up your various time segments and ensure your schedule is balanced.</p>
+
+      <h3>The "Just Start" Philosophy</h3>
+      <p>Ultimately, the 2-minute timer is less about time tracking and more about behavior modification. It teaches us that the hardest part of any journey is the first step. By lowering the barrier to entry to an absolute minimum, we empower ourselves to take that step consistently. The next time you find yourself procrastinating, don't focus on the mountain of work ahead. Focus only on the next 120 seconds. Start the timer, and just start.</p>
+    </div>
+
+    <section class="faq-section">
+      <h2>Frequently Asked Questions</h2>
+      <details>
+        <summary>What can I do in 2 minutes?</summary>
+        <p>A two-minute window is ideal for quick tasks such as replying to a short email, organizing your desk, deep breathing exercises, stretching, or applying the 'Two-Minute Rule' to immediately handle any task that takes under two minutes.</p>
+      </details>
+      <details>
+        <summary>What is the two-minute rule in time management?</summary>
+        <p>The two-minute rule, popularized by David Allen's Getting Things Done methodology, states that if a task takes less than two minutes to complete, you should do it immediately rather than deferring it. This prevents small tasks from piling up.</p>
+      </details>
+      <details>
+        <summary>How does a 2-minute timer improve focus?</summary>
+        <p>A 2-minute timer acts as a psychological trigger to overcome the initial resistance to starting a task. Once you commit to focusing for just two minutes, momentum often carries you forward to continue working even after the timer ends.</p>
+      </details>
+      <details>
+        <summary>Is 2 minutes long enough for a micro-break?</summary>
+        <p>Yes, a 2-minute micro-break is sufficient to rest your eyes (using the 20-20-20 rule), do some light stretching, and refocus your mind before returning to deep work, helping to prevent burnout and eye strain.</p>
+      </details>
+      <details>
+        <summary>Can I use this timer for HIIT workouts?</summary>
+        <p>Absolutely. This timer is perfect for 2-minute intense intervals or extended rest periods in High-Intensity Interval Training (HIIT) routines, keeping your workout structured and efficient.</p>
+      </details>
+    </section>
+
+  </div>
+  <style is:inline>
+    .page-content { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem; }
+    .hero { text-align: center; padding: 3rem 0 2rem; }
+    .hero h1 { font-size: 2.2rem; font-weight: 800; margin-bottom: 0.5rem; color: var(--accent-color); }
+    .subtitle { color: var(--text-secondary); font-size: 1.1rem; }
+    .card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem; margin: 1.5rem 0; }
+    .callout { background: color-mix(in srgb, var(--accent-color) 10%, transparent); border-left: 4px solid var(--accent-color); padding: 1rem 1.5rem; border-radius: 0 8px 8px 0; margin: 1.5rem 0; }
+    .faq-section details { margin: 1rem 0; padding: 1rem; background: var(--card-bg); border-radius: 8px; border: 1px solid var(--border-color); }
+    .faq-section summary { font-weight: 600; cursor: pointer; color: var(--text-primary); }
+    .faq-section p { margin-top: 1rem; color: var(--text-secondary); line-height: 1.6; }
+
+    /* Timer Specific Styles */
+    .timer-container { text-align: center; margin: 2rem auto; max-width: 400px; padding: 2rem; background: var(--card-bg); border-radius: 16px; border: 1px solid var(--border-color); box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+    .timer-display { font-size: 5rem; font-family: var(--font-mono); font-weight: 900; color: var(--accent-color); line-height: 1; margin-bottom: 2rem; letter-spacing: -2px; }
+    .timer-controls { display: flex; gap: 1rem; justify-content: center; }
+    .btn { padding: 0.75rem 1.5rem; border: none; border-radius: 8px; font-weight: 700; font-size: 1.1rem; cursor: pointer; transition: all 0.2s; font-family: var(--font-ui); }
+    .btn-start { background: var(--accent-color); color: #fff; }
+    .btn-start:hover { filter: brightness(1.1); transform: translateY(-2px); }
+    .btn-stop { background: var(--card-bg); border: 2px solid var(--border-color); color: var(--text-primary); }
+    .btn-stop:hover { border-color: var(--accent-color); }
+    .btn-reset { background: transparent; color: var(--text-secondary); text-decoration: underline; padding: 0.5rem; margin-top: 1rem; cursor: pointer; border: none; font-size: 0.9rem; }
+    .btn-reset:hover { color: var(--text-primary); }
+    .progress-bar { width: 100%; height: 8px; background: var(--border-color); border-radius: 4px; overflow: hidden; margin-top: 2rem; }
+    .progress-fill { height: 100%; background: var(--accent-color); width: 100%; transition: width 0.1s linear; }
+
+    .content-section { margin-top: 3rem; }
+    .content-section h2 { font-size: 1.8rem; margin-bottom: 1rem; color: var(--text-primary); }
+    .content-section h3 { font-size: 1.4rem; margin-top: 2rem; margin-bottom: 1rem; color: var(--text-primary); }
+    .content-section p { margin-bottom: 1.5rem; color: var(--text-secondary); line-height: 1.7; font-size: 1.05rem; }
+    .content-section ul { margin-bottom: 1.5rem; padding-left: 1.5rem; color: var(--text-secondary); }
+    .content-section li { margin-bottom: 0.5rem; line-height: 1.6; }
+    .content-section a { color: var(--accent-color); text-decoration: none; }
+    .content-section a:hover { text-decoration: underline; }
+  </style>
+</SiteLayout>

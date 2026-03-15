@@ -1,0 +1,173 @@
+---
+import SiteLayout from "../../../layouts/SiteLayout.astro";
+
+const schema = [
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": "Website Monitoring Setup Guide: Uptime, Error Tracking, and Logs",
+    "description": "A comprehensive guide to setting up website monitoring before launch. Learn how to configure uptime alerts, frontend error tracking, server log management, and APM tools.",
+    "author": {
+      "@type": "Organization",
+      "name": "siliconbased.dev"
+    }
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "What is the difference between uptime monitoring and application performance monitoring (APM)?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Uptime monitoring (synthetic monitoring) checks if your website is accessible from the outside world (e.g., pinging your URL every minute). Application Performance Monitoring (APM) is internal; it instruments your application code to measure database query times, server response latency, and code-level bottlenecks."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Why do I need frontend error tracking if I already monitor my server logs?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Server logs only capture errors that happen on the backend (like a 500 Internal Server Error). Frontend error tracking (like Sentry or LogRocket) captures JavaScript exceptions that happen in the user's browser—issues caused by their specific device, browser version, or adblocker that your server never sees."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How often should an uptime monitor check my website?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "For critical business applications, 1-minute intervals are the industry standard. This ensures you are alerted almost immediately if the site goes down, minimizing potential revenue loss and reputational damage."
+        }
+      }
+    ]
+  }
+];
+
+export const meta = {
+  title: "Monitoring Setup Guide: Uptime, Error Tracking & APM",
+  description: "A complete guide to configuring website monitoring. Learn how to set up uptime alerts, frontend error tracking (Sentry), server logs, and APM tools before launch.",
+  category: "guide",
+  published: "2026-03-15",
+};
+---
+<SiteLayout site="siliconbased" title="Monitoring Setup Guide: Uptime, Error Tracking & APM" description="A complete guide to configuring website monitoring. Learn how to set up uptime alerts, frontend error tracking (Sentry), server logs, and APM tools before launch." canonical="https://siliconbased.dev/monitoring-setup-guide" schema={schema}>
+  <div class="page-content">
+    <div class="hero">
+      <h1>Monitoring Setup Guide</h1>
+      <p>Proactive defense: Uptime, Frontend Error Tracking, APM, and Log Management.</p>
+    </div>
+
+    <div class="card intro-card">
+      <p>Hope is not a strategy. You cannot wait for users to email you—or complain on Twitter—to find out your website is down, the checkout form is broken, or a critical API is timing out. Proactive monitoring is the difference between a minor hiccup resolved in minutes and a catastrophic outage that lasts for hours.</p>
+
+      <p>This technical guide expands on the monitoring phase outlined in our <a href="/website-launch-checklist">Ultimate Website Launch Checklist</a>. It provides a structured approach to implementing the necessary observability tools to guarantee uptime, identify regressions, and understand application performance in the wild.</p>
+
+      <div class="cluster-links">
+        <h3>Related Technical Guides:</h3>
+        <ul>
+          <li><a href="/security-checklist">Web Security Checklist</a></li>
+          <li><a href="/performance-checklist">Performance Optimization Checklist</a></li>
+          <li><a href="/website-launch-checklist">Back to Main Launch Checklist</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <h2>1. The Baseline: Uptime Monitoring (Synthetic Checks)</h2>
+    <p>The most fundamental question is: "Is the site up?" You need an external service to continuously verify that your infrastructure is reachable and responding correctly.</p>
+
+    <div class="card">
+      <h3>Configure Synthetic Pings</h3>
+      <p>Use a service like UptimeRobot, Pingdom, or Better Uptime. Configure it to ping your homepage (and critical API endpoints) at 1-minute intervals from multiple geographic locations. Do not rely on a single node; a routing issue in Europe shouldn't necessarily trigger a global outage alert if the US is fine.</p>
+    </div>
+
+    <div class="card">
+      <h3>Advanced Assertion Checks</h3>
+      <p>Don't just check for a 200 OK HTTP status code. A server returning a blank white page with a 200 OK is still a critical failure. Configure your monitor to look for a specific string of text (e.g., "Sign In" or "Add to Cart") within the HTML response. If the text is missing, the monitor should trigger an alert.</p>
+    </div>
+
+    <div class="card">
+      <h3>SSL Certificate Expiration Alerts</h3>
+      <p>An expired SSL certificate will immediately block all traffic to your site (browsers will display a massive security warning). Your uptime monitor must be configured to check the validity of your TLS certificate and alert you 30, 14, and 7 days before expiration, giving you ample time to renew it.</p>
+    </div>
+
+    <h2>2. Catching Bugs in the Wild: Frontend Error Tracking</h2>
+    <p>Your users have a nearly infinite combination of devices, browser versions, extensions, and network conditions. You cannot test for everything locally. You need visibility into what happens in *their* browser.</p>
+
+    <div class="card">
+      <h3>Implement Sentry (or similar tools)</h3>
+      <p>Integrate a frontend error tracking service like Sentry, LogRocket, or Bugsnag. These tools capture unhandled JavaScript exceptions, network request failures (e.g., failed API calls), and React/Vue framework errors that occur in the client's browser.</p>
+    </div>
+
+    <div class="card">
+      <h3>Source Maps and Context</h3>
+      <p>Production JavaScript is minified, making stack traces impossible to read. You must upload your source maps to your error tracking service during your CI/CD build process. This allows the service to un-minify the code and point you to the exact file and line number where the error originated. Ensure you also capture context: user ID (if logged in), browser version, and OS.</p>
+    </div>
+
+    <div class="card">
+      <h3>Session Replay</h3>
+      <p>For complex applications, a stack trace isn't enough to understand *why* an error occurred. Tools like LogRocket or Sentry's Session Replay record the user's DOM state, network activity, and mouse movements leading up to the crash, allowing you to essentially watch a video of the bug happening.</p>
+    </div>
+
+    <h2>3. Deep Visibility: Application Performance Monitoring (APM)</h2>
+    <p>When the site is "up" but excruciatingly slow, synthetic monitoring won't help you. You need internal observability to find the bottleneck.</p>
+
+    <div class="card">
+      <h3>Instrumenting the Backend (Datadog, New Relic)</h3>
+      <p>APM tools instrument your application code (Node.js, Python, Ruby, Java). They automatically trace requests as they travel through your infrastructure. If a user request takes 4 seconds, the APM will show you exactly how that time was spent: 50ms in the application logic, 3.8s waiting on a slow SQL database query, and 150ms waiting on a third-party API.</p>
+    </div>
+
+    <div class="card">
+      <h3>Database Query Analysis</h3>
+      <p>The database is usually the bottleneck. Ensure your APM is configured to capture and aggregate database query performance. Identify N+1 query problems, missing indexes, and slow-running aggregate queries that need optimization or caching.</p>
+    </div>
+
+    <div class="card">
+      <h3>Distributed Tracing for Microservices</h3>
+      <p>If your architecture consists of multiple microservices, a single user request might touch five different services. Distributed tracing (often using OpenTelemetry standards) injects a unique Trace ID into the headers of every request, allowing you to visualize the entire request lifecycle across all your isolated services.</p>
+    </div>
+
+    <h2>4. Log Management and Alerting Fatigue</h2>
+    <p>Collecting data is useless if you can't query it, or if your team ignores the alerts.</p>
+
+    <div class="card">
+      <h3>Centralized Log Aggregation</h3>
+      <p>Never rely on SSHing into individual servers to `tail -f` log files. Use a centralized log management platform (like the ELK stack, Datadog Logs, or AWS CloudWatch). Forward all application logs, Nginx/Apache access logs, and database logs to this central repository so you can search, filter, and correlate events across your entire fleet.</p>
+    </div>
+
+    <div class="card">
+      <h3>Structured Logging (JSON)</h3>
+      <p>Stop writing unstructured text to your logs (e.g., `console.log("User 123 failed to login")`). Use structured logging (JSON format). Instead, write: `&#123;"event": "login_failed", "user_id": 123, "ip": "192.168.1.1"&#125;`. This allows your log management tool to instantly index the fields, making it trivial to search for "all failed logins from this IP address."</p>
+    </div>
+
+    <div class="card">
+      <h3>Tuning Alerts (PagerDuty, Slack)</h3>
+      <p>Alert fatigue destroys teams. If your phone buzzes 50 times a day for non-actionable warnings, you will eventually ignore a critical outage alert. Only page the on-call engineer (via PagerDuty or Opsgenie) for critical, user-facing failures (e.g., 5xx errors spike over 1%, database is down). Route non-critical warnings (e.g., a single background job failed) to a dedicated Slack channel for asynchronous review during business hours.</p>
+    </div>
+
+  </div>
+
+  <script is:inline>
+    // JS intentionally blank
+  </script>
+
+  <style is:inline>
+    .page-content { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem; }
+    .hero { text-align: center; padding: 3rem 0 2rem; }
+    .hero h1 { font-size: 2.2rem; font-weight: 800; margin-bottom: 0.5rem; }
+    .hero p { color: var(--text-secondary); }
+    .card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem; margin: 1.5rem 0; }
+    .intro-card { background: color-mix(in srgb, var(--accent-color) 5%, var(--card-bg)); }
+    h2 { font-size: 1.8rem; font-weight: 700; margin-top: 2.5rem; margin-bottom: 1rem; color: var(--text-primary); }
+    h3 { font-size: 1.3rem; font-weight: 600; margin-bottom: 0.5rem; color: var(--text-primary); }
+    p { margin-bottom: 1rem; line-height: 1.6; color: var(--text-secondary); }
+    ul { margin-bottom: 1rem; padding-left: 1.5rem; color: var(--text-secondary); }
+    li { margin-bottom: 0.5rem; line-height: 1.5; }
+    strong { color: var(--text-primary); font-weight: 600; }
+    a { color: var(--accent-color); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    .cluster-links { margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--border-color); }
+    .cluster-links ul { list-style-type: none; padding-left: 0; display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1rem; }
+    .cluster-links li::before { content: "→"; color: var(--accent-color); margin-right: 0.5rem; }
+  </style>
+</SiteLayout>

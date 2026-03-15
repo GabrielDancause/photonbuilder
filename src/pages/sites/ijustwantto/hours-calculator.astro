@@ -1,0 +1,289 @@
+---
+import SiteLayout from "../../../layouts/SiteLayout.astro";
+
+export const meta = {
+  title: "Hours Calculator - Track Time Worked",
+  description: "Find out exactly how many hours you worked today—even if your shift crossed midnight. One crucial step in calculating decimal time might be costing you pay.",
+  category: "tool",
+  published: "2026-03-15",
+};
+
+const schema = [
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": meta.title,
+    "description": meta.description,
+    "author": {
+      "@type": "Organization",
+      "name": "ijustwantto.live",
+      "url": "https://ijustwantto.live/"
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "ijustwantto.live",
+      "logo": {
+        "@type": "ImageObject",
+        "url": "https://ijustwantto.live/favicon.ico"
+      }
+    },
+    "datePublished": meta.published,
+    "mainEntityOfPage": {
+      "@type": "WebPage",
+      "@id": "https://ijustwantto.live/hours-calculator"
+    }
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "How does this hours calculator work?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "The calculator takes your start time, end time, and break duration. It converts the times to a 24-hour format (military time), calculates the difference in minutes, subtracts your break time, and converts the result back into total hours and minutes."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Does the calculator handle shifts that cross midnight?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes, if your end time is earlier than your start time, the calculator assumes the shift crossed over midnight into the next day and calculates the total hours correctly."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How do I calculate decimal hours for payroll?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "To convert minutes to a decimal, divide the minutes by 60. For example, 30 minutes is 0.5 hours, and 45 minutes is 0.75 hours. Our calculator shows both the hours/minutes format and the decimal format to make payroll easier."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Should I deduct unpaid breaks?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Usually, yes. Unpaid lunch breaks or rest periods should be entered into the break field so they are correctly deducted from your total hours worked."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Is my data stored?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "No, all calculations are performed locally in your browser. We do not store or transmit your time entries."
+        }
+      }
+    ]
+  }
+];
+---
+
+<SiteLayout site="ijustwantto" title={meta.title} description={meta.description} canonical="https://ijustwantto.live/hours-calculator" schema={schema}>
+  <div class="page-content">
+    <div class="hero">
+      <h1>Hours Calculator</h1>
+      <p class="subtitle">Calculate your total hours worked instantly</p>
+    </div>
+
+    <div class="calculator-container">
+      <div class="calc-grid">
+        <div class="input-group">
+          <label for="startTime">Start Time</label>
+          <input type="time" id="startTime" value="09:00" required />
+        </div>
+        <div class="input-group">
+          <label for="endTime">End Time</label>
+          <input type="time" id="endTime" value="17:00" required />
+        </div>
+        <div class="input-group">
+          <label for="breakMinutes">Break (Minutes)</label>
+          <input type="number" id="breakMinutes" value="30" min="0" step="5" />
+        </div>
+      </div>
+
+      <div class="error-message" id="errorMessage"></div>
+
+      <div class="result-card">
+        <div>Total Time Worked</div>
+        <div class="result-value" id="resultTotal">0h 0m</div>
+        <div class="decimal-result" id="resultDecimal">0.00 hours</div>
+      </div>
+    </div>
+
+    <div class="explainer">
+      <h2>The Complete Guide to Calculating Hours Worked</h2>
+      <p>Tracking your time accurately is an essential task whether you are a freelancer billing a high-profile client, an employee carefully filling out a weekly timesheet, or an employer responsible for running a precise payroll. Errors in time tracking do not just result in minor inconveniences; they can lead to underpayment, compliance issues, and frustrated working relationships. Our free hours calculator simplifies this necessary administrative burden by automatically determining the exact duration between a start time and an end time, while also accounting for any unpaid breaks.</p>
+
+      <p>By automating the math, this tool removes the risk of manual errors and saves you from the tedious process of trying to mentally subtract hours across the sometimes confusing boundaries of a 12-hour clock. The underlying logic handles edge cases—such as shifts extending past midnight—with mathematical precision, ensuring that the total hours you see are exactly what you should be paid for or what you should bill.</p>
+
+      <h3>Understanding the Time Calculation Methodology</h3>
+      <p>Calculating the difference between two arbitrary times might seem straightforward at first glance, but it can quickly become complicated. When you are dealing with the traditional 12-hour clock format involving AM and PM, or when you encounter working shifts that span across the invisible boundary of midnight, human error becomes incredibly common. A robust calculator relies on a methodical, step-by-step approach to guarantee accuracy under any condition.</p>
+      <p>Here is the detailed, step-by-step methodology our calculator employs to ensure your time is logged correctly every single time:</p>
+
+      <h4>1. Conversion to a Standard Minute-Based Format</h4>
+      <p>The first and most critical step in programmatically calculating hours is to convert the start and end times into a standard, comparable format. Working with hours and minutes simultaneously creates a complex base-60 math problem. The most reliable and elegant way to solve this is by converting all times into a total number of absolute minutes elapsed since the beginning of the day (midnight).</p>
+      <p>The mathematical formula for this conversion is: <code>Total Minutes = (Hours × 60) + Minutes</code>. For example, a start time of 9:30 AM is processed as 9 hours and 30 minutes. This converts to <code>(9 × 60) + 30 = 570 minutes</code> from midnight. A 5:45 PM end time, which is 17:45 in military time, becomes <code>(17 × 60) + 45 = 1,065 minutes</code>. Once everything is in a uniform base unit, subtraction becomes trivial.</p>
+
+      <h4>2. Gracefully Handling Overnight Shifts</h4>
+      <p>A frequent challenge in time calculation occurs when a shift starts on one calendar day and ends on the next. Consider a nurse or security guard starting a shift at 10:00 PM (1,320 minutes) and ending their shift at 6:00 AM (360 minutes). If you simply subtracted the start time from the end time (360 - 1,320), you would end up with a negative number, which is mathematically useless for payroll.</p>
+      <p>To calculate this scenario correctly, the program must recognize that an overnight transition has occurred. It does this by checking if the end time's absolute minute value is less than the start time's minute value. If it is, the calculator understands that the shift crossed midnight. It then logically adds a full 24 hours (which equals 1,440 minutes) to the end time before performing the subtraction. The revised formula becomes: <code>Total Minutes = (End Time + 1440) - Start Time</code>. Using the previous example, <code>(360 + 1440) - 1320 = 480 minutes</code>, or exactly 8 hours.</p>
+
+      <h4>3. Accurately Deducting Breaks</h4>
+      <p>Gross hours do not always equal billable or payable hours. Unpaid breaks, such as a designated lunch hour or mandatory rest periods, must be systematically subtracted from the gross total time. Once the calculator determines the absolute duration of the shift in minutes, it then deducts the specified break duration.</p>
+      <p>If the gross time was 480 minutes and the worker took a 30-minute unpaid lunch, the formula applies: <code>Net Minutes = Total Minutes - Break Minutes</code>, yielding a final net time of 450 minutes.</p>
+
+      <h4>4. Formatting the Result for Payroll and Reporting</h4>
+      <p>A final net duration of "450 minutes" is not particularly useful for an HR department or an invoice. The net minutes must be converted back into readable, standard formats. Our calculator simultaneously provides the two most common professional formats to cover all use cases:</p>
+      <ul>
+        <li><strong>Hours and Minutes Format:</strong> To get the whole hours, the net minutes are divided by 60 and rounded down. To find the remaining minutes, the system uses the modulo operator (<code>%</code>). For instance, 450 minutes divided by 60 gives 7 whole hours, with a remainder of 30 minutes, displayed clearly as 7h 30m.</li>
+        <li><strong>Decimal Hours Format:</strong> Modern payroll and accounting systems almost universally require time to be entered in a decimal format. This is calculated simply by dividing the total net minutes by 60 and retaining the decimal precision. For example, 450 minutes becomes <code>450 / 60 = 7.50 hours</code>.</li>
+      </ul>
+
+      <h3>The Importance of Decimal Hours for Accurate Payroll</h3>
+      <p>Converting traditional minutes into a base-10 decimal format is a crucial and often misunderstood step in calculating pay. It is one of the most common sources of payroll discrepancies for independent contractors and small businesses.</p>
+      <p>Consider a scenario where you earn $20.00 per hour, and your timesheet reflects a shift of exactly 7 hours and 15 minutes. It is a common mistake to simply multiply the hourly rate by 7.15 (<code>$20 × 7.15 = $143.00</code>). However, this is mathematically incorrect because minutes are on a base-60 scale, not a base-10 scale. "15 minutes" is not 15% of an hour; it is exactly one-quarter of an hour.</p>
+      <p>To calculate accurate gross pay, those 15 minutes must first be properly converted to a decimal by dividing by 60: <code>15 / 60 = 0.25</code>. The correct time value is 7.25 hours. When you perform the proper calculation, <code>$20.00 × 7.25 = $145.00</code>, you see a difference of $2.00. Over weeks and months, these improper conversions can compound into significant financial losses or overpayments.</p>
+      <p>To assist in manual calculations, here is a quick reference for the most common minute-to-decimal payroll conversions:</p>
+      <ul>
+        <li>5 minutes = 0.08 hours</li>
+        <li>10 minutes = 0.17 hours</li>
+        <li>15 minutes = 0.25 hours</li>
+        <li>20 minutes = 0.33 hours</li>
+        <li>30 minutes = 0.50 hours</li>
+        <li>45 minutes = 0.75 hours</li>
+        <li>50 minutes = 0.83 hours</li>
+      </ul>
+
+      <p>Understanding the exact math behind your paycheck is empowering. Whether you are using software or checking the numbers by hand, precision matters. If you also need to track physiological cycles with the same level of care, we recommend checking out our comprehensive <a href="/period-tracker">period tracker tool</a>.</p>
+    </div>
+
+    <section class="faq-section">
+      <h2>Frequently Asked Questions</h2>
+      <details>
+        <summary>How does this hours calculator work?</summary>
+        <p>The calculator takes your start time, end time, and break duration. It converts the times to a 24-hour format (military time), calculates the difference in minutes, subtracts your break time, and converts the result back into total hours and minutes.</p>
+      </details>
+      <details>
+        <summary>Does the calculator handle shifts that cross midnight?</summary>
+        <p>Yes, if your end time is earlier than your start time, the calculator assumes the shift crossed over midnight into the next day and calculates the total hours correctly.</p>
+      </details>
+      <details>
+        <summary>How do I calculate decimal hours for payroll?</summary>
+        <p>To convert minutes to a decimal, divide the minutes by 60. For example, 30 minutes is 0.5 hours, and 45 minutes is 0.75 hours. Our calculator shows both the hours/minutes format and the decimal format to make payroll easier.</p>
+      </details>
+      <details>
+        <summary>Should I deduct unpaid breaks?</summary>
+        <p>Usually, yes. Unpaid lunch breaks or rest periods should be entered into the break field so they are correctly deducted from your total hours worked.</p>
+      </details>
+      <details>
+        <summary>Is my data stored?</summary>
+        <p>No, all calculations are performed locally in your browser. We do not store or transmit your time entries.</p>
+      </details>
+    </section>
+  </div>
+
+  <script is:inline>
+    document.addEventListener('DOMContentLoaded', () => {
+      const startInput = document.getElementById('startTime');
+      const endInput = document.getElementById('endTime');
+      const breakInput = document.getElementById('breakMinutes');
+      const resultTotal = document.getElementById('resultTotal');
+      const resultDecimal = document.getElementById('resultDecimal');
+      const errorMessage = document.getElementById('errorMessage');
+
+      function calculateHours() {
+        errorMessage.textContent = '';
+        errorMessage.style.display = 'none';
+
+        const startVal = startInput.value;
+        const endVal = endInput.value;
+        const breakVal = parseInt(breakInput.value) || 0;
+
+        if (!startVal || !endVal) {
+          resultTotal.textContent = '0h 0m';
+          resultDecimal.textContent = '0.00 hours';
+          return;
+        }
+
+        const [startHours, startMins] = startVal.split(':').map(Number);
+        const [endHours, endMins] = endVal.split(':').map(Number);
+
+        let totalStartMins = (startHours * 60) + startMins;
+        let totalEndMins = (endHours * 60) + endMins;
+
+        // Handle overnight shift
+        if (totalEndMins < totalStartMins) {
+          totalEndMins += (24 * 60);
+        }
+
+        let diffMins = totalEndMins - totalStartMins;
+
+        if (breakVal > diffMins) {
+          errorMessage.textContent = 'Break time cannot be greater than total time worked.';
+          errorMessage.style.display = 'block';
+          resultTotal.textContent = '0h 0m';
+          resultDecimal.textContent = '0.00 hours';
+          return;
+        }
+
+        diffMins -= breakVal;
+
+        const finalHours = Math.floor(diffMins / 60);
+        const finalMins = diffMins % 60;
+        const decimalHours = (diffMins / 60).toFixed(2);
+
+        resultTotal.textContent = `${finalHours}h ${finalMins}m`;
+        resultDecimal.textContent = `${decimalHours} hours`;
+      }
+
+      startInput.addEventListener('input', calculateHours);
+      endInput.addEventListener('input', calculateHours);
+      breakInput.addEventListener('input', calculateHours);
+
+      // Initial calculation
+      calculateHours();
+    });
+  </script>
+
+  <style is:inline>
+    .page-content { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem; }
+    .hero { text-align: center; padding: 3rem 0 2rem; }
+    .hero h1 { font-size: 2.2rem; font-weight: 800; margin-bottom: 0.5rem; }
+    .subtitle { color: var(--text-secondary); font-size: 1.1rem; }
+    .calculator-container { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 2rem; margin: 2rem 0; }
+
+    .calc-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 1.5rem; }
+    .input-group { display: flex; flex-direction: column; gap: 0.5rem; }
+    .input-group label { font-weight: 600; font-size: 0.95rem; }
+
+    input, select { background: var(--bg-color); color: var(--text-primary); border: 1px solid var(--border-color); padding: 0.75rem 1rem; border-radius: 8px; width: 100%; font-size: 1rem; }
+    input:focus, select:focus { outline: none; border-color: var(--accent-color); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-color) 20%, transparent); }
+
+    .error-message { color: #ef4444; background: #fef2f2; border: 1px solid #fecaca; padding: 0.75rem; border-radius: 8px; margin-bottom: 1rem; display: none; font-size: 0.9rem; }
+
+    .result-card { background: color-mix(in srgb, var(--accent-color) 10%, transparent); border: 1px solid var(--accent-color); border-radius: 12px; padding: 1.5rem; margin: 1.5rem 0 0; text-align: center; }
+    .result-value { font-size: 2.5rem; font-weight: 800; color: var(--accent-color); margin: 0.5rem 0; }
+    .decimal-result { font-size: 1.1rem; color: var(--text-secondary); }
+
+    .explainer { margin: 3rem 0; line-height: 1.6; }
+    .explainer h2 { font-size: 1.8rem; margin-bottom: 1rem; }
+    .explainer h3 { font-size: 1.4rem; margin: 1.5rem 0 0.75rem; }
+    .explainer h4 { font-size: 1.1rem; margin: 1.25rem 0 0.5rem; }
+    .explainer p { margin-bottom: 1rem; color: var(--text-secondary); }
+    .explainer ul { margin-bottom: 1rem; padding-left: 1.5rem; color: var(--text-secondary); }
+    .explainer li { margin-bottom: 0.5rem; }
+    .explainer code { background: var(--card-bg); border: 1px solid var(--border-color); padding: 0.1rem 0.3rem; border-radius: 4px; font-family: monospace; font-size: 0.9em; }
+    .explainer a { color: var(--accent-color); text-decoration: none; font-weight: 600; }
+    .explainer a:hover { text-decoration: underline; }
+
+    .faq-section { margin-top: 3rem; }
+    .faq-section h2 { font-size: 1.8rem; margin-bottom: 1.5rem; }
+    .faq-section details { margin: 1rem 0; padding: 1rem; background: var(--card-bg); border-radius: 8px; border: 1px solid var(--border-color); }
+    .faq-section summary { font-weight: 600; cursor: pointer; }
+    .faq-section p { margin: 1rem 0 0; color: var(--text-secondary); line-height: 1.5; }
+  </style>
+</SiteLayout>

@@ -1,0 +1,178 @@
+---
+import SiteLayout from "../../../layouts/SiteLayout.astro";
+
+const schema = [
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": "What is Edge Computing? CDNs vs Edge Networks",
+    "description": "A deep dive into Edge Computing, how it differs from traditional CDNs, and platforms like Cloudflare Workers and Vercel Edge.",
+    "author": {
+      "@type": "Organization",
+      "name": "siliconbased.dev"
+    }
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "What is the difference between Edge Computing and a CDN?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "A CDN primarily caches static assets (images, CSS, JS) at locations close to users. Edge computing goes a step further by executing custom backend logic (JavaScript, Wasm) at those same locations, eliminating the round trip to a central origin server."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Are Edge functions the same as Serverless functions (AWS Lambda)?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "They are similar in that you don't manage servers, but they differ in runtime. AWS Lambda runs Node.js processes in specific regions, which introduces cold starts. Edge functions use the V8 isolates engine, running globally with near-zero cold starts."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Can I connect to a database from the Edge?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes, but with caveats. Traditional databases (like Postgres) use stateful TCP connections, which struggle with thousands of global Edge connections. Edge computing relies on HTTP-based databases, Edge-native DBs (like Cloudflare D1), or specialized connection poolers."
+        }
+      }
+    ]
+  }
+];
+
+export const meta = {
+  title: "What is Edge Computing? CDNs vs Edge Networks",
+  description: "A deep dive into Edge Computing, how it differs from traditional CDNs, and platforms like Cloudflare Workers and Vercel Edge.",
+  category: "guide",
+  published: "2026-03-15",
+};
+---
+
+<SiteLayout site="siliconbased" title="What is Edge Computing? CDNs vs Edge Networks" description="A deep dive into Edge Computing, how it differs from traditional CDNs, and platforms like Cloudflare Workers and Vercel Edge." canonical="https://siliconbased.dev/what-is-edge-computing" schema={schema}>
+  <div class="page-content">
+    <div class="breadcrumb">
+      <a href="/web-dev-glossary">← Back to Web Dev Glossary</a>
+    </div>
+
+    <div class="hero">
+      <h1>What is Edge Computing?</h1>
+      <p>Moving code closer to the user: Understanding Edge networks, Cloudflare Workers, and Vercel Edge.</p>
+    </div>
+
+    <div class="content-body">
+      <p>In traditional web architecture, a user in Tokyo making an API request might wait hundreds of milliseconds as their request travels under the ocean to a server in Virginia, waits for a database query to resolve, and travels all the way back. This geographic distance imposes a hard physical limit on web performance: the speed of light.</p>
+
+      <p><strong>Edge computing</strong> aims to solve this by moving computation—the actual execution of backend code—out of centralized data centers and into localized servers placed physically close to the user.</p>
+
+      <h2>The Evolution: Origin -> CDN -> Edge</h2>
+      <p>To understand the Edge, it helps to see how web architecture has evolved.</p>
+
+      <ul>
+        <li><strong>The Origin Server:</strong> All code and assets live on a single server (e.g., AWS us-east-1). Every user globally hits this server. High latency for global users.</li>
+        <li><strong>The CDN (Content Delivery Network):</strong> Static assets (images, CSS, JS) are cached at hundreds of points of presence (PoPs) globally. A user in Tokyo gets the image from a Tokyo server. However, <em>dynamic API requests</em> still must go back to the origin server in Virginia.</li>
+        <li><strong>Edge Computing:</strong> Instead of just caching static files, the PoPs run compute engines. The dynamic API request is intercepted and processed in Tokyo.</li>
+      </ul>
+
+      <h2>How Edge Functions Work (V8 Isolates)</h2>
+      <p>If you've used AWS Lambda (Serverless), you know it can take 1-3 seconds for a function to spin up if it hasn't been used recently (a "Cold Start"). This happens because AWS is literally booting up a lightweight virtual machine and a Node.js process.</p>
+
+      <p>Edge platforms like <strong>Cloudflare Workers</strong> and <strong>Vercel Edge</strong> cannot afford cold starts. Instead of booting up VMs or Node.js processes, they use <strong>V8 Isolates</strong>.</p>
+
+      <p>V8 is the JavaScript engine that powers Google Chrome. An "isolate" is an independent instance of the V8 engine, complete with its own memory heap. Because Edge functions run within these lightweight isolates rather than full Node.js processes, they boot up in under 5 milliseconds.</p>
+
+      <div class="code-block">
+        <pre><code>// A simple Edge function (Cloudflare Worker syntax)
+export default &#123;
+  async fetch(request, env, ctx) &#123;
+    const url = new URL(request.url);
+
+    // A/B testing logic executed instantly at the edge
+    if (request.headers.get('cookie')?.includes('test=A')) &#123;
+      return new Response('Showing version A');
+    &#125;
+
+    return fetch(request); // Passthrough to origin
+  &#125;
+&#125;</code></pre>
+      </div>
+
+      <h2>Common Use Cases for Edge Computing</h2>
+      <p>Edge computing isn't appropriate for every task. It excels in operations that require low latency and high concurrency:</p>
+
+      <div class="card">
+        <ol>
+          <li><strong>A/B Testing & Personalization:</strong> Modify the HTTP request/response on the fly based on cookies or geolocation without a trip to the origin.</li>
+          <li><strong>Authentication & Authorization:</strong> Validate JWTs at the Edge. If a token is invalid, reject the request immediately before it ever hits your primary database.</li>
+          <li><strong>Edge Rendering:</strong> React Server Components and SSR frameworks (like Next.js) can stream HTML directly from the edge, significantly reducing TTFB (Time to First Byte).</li>
+          <li><strong>Geographic Routing:</strong> Detect where a user is calling from and instantly route them to the nearest database replica.</li>
+        </ol>
+      </div>
+
+      <h2>The Database Problem at the Edge</h2>
+      <p>The biggest hurdle in Edge computing is data. If your code executes in 5ms in Tokyo, but it needs to query a PostgreSQL database in Virginia, you've gained nothing. You still have to wait for the cross-ocean data transfer.</p>
+
+      <p>Furthermore, traditional databases use stateful TCP connections. If thousands of global Edge instances open TCP connections simultaneously, the database will crash (connection exhaustion).</p>
+
+      <p>The industry is solving this in three ways:</p>
+      <ul>
+        <li><strong>HTTP-based Databases:</strong> Services like Upstash (Redis) or Supabase allow you to query the database via REST/HTTP, which the Edge handles perfectly.</li>
+        <li><strong>Distributed Edge Databases:</strong> Databases like Cloudflare D1 (SQLite) or Turso replicate data to the edge nodes themselves.</li>
+        <li><strong>Connection Poolers:</strong> Proxies that sit in front of traditional Postgres databases to manage the thousands of incoming Edge connections.</li>
+      </ul>
+
+      <div class="related-clusters">
+        <h3>Continue Reading</h3>
+        <div class="cluster-links">
+          <a href="/what-is-ssr" class="cluster-link">
+            <h4>Server-Side Rendering</h4>
+            <p>How Edge functions are changing SSR frameworks.</p>
+          </a>
+          <a href="/what-is-web-assembly" class="cluster-link">
+            <h4>WebAssembly</h4>
+            <p>How Wasm runs alongside JavaScript in Edge environments.</p>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <style is:inline>
+    .page-content { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem; }
+    .hero { text-align: center; padding: 3rem 0 2rem; border-bottom: 1px solid var(--border-color); margin-bottom: 2rem; }
+    .hero h1 { font-size: 2.5rem; font-weight: 800; margin-bottom: 0.5rem; color: var(--text-primary); }
+    .hero p { color: var(--text-secondary); font-size: 1.1rem; max-width: 600px; margin: 0 auto; }
+
+    .breadcrumb { margin-bottom: 1rem; }
+    .breadcrumb a { color: var(--accent-color); text-decoration: none; font-size: 0.9rem; font-weight: 600; }
+    .breadcrumb a:hover { text-decoration: underline; }
+
+    .content-body { color: var(--text-secondary); line-height: 1.7; font-size: 1.05rem; }
+    .content-body h2 { color: var(--text-primary); font-size: 1.8rem; margin-top: 2.5rem; margin-bottom: 1rem; }
+    .content-body h3 { color: var(--text-primary); font-size: 1.3rem; margin-top: 1.5rem; margin-bottom: 0.5rem; }
+    .content-body p { margin-bottom: 1.2rem; }
+
+    .content-body ul, .content-body ol { margin-bottom: 1.5rem; padding-left: 1.5rem; }
+    .content-body li { margin-bottom: 0.5rem; }
+    .content-body strong { color: var(--text-primary); }
+
+    .code-block { background: #0d1117; border: 1px solid var(--border-color); border-radius: 8px; padding: 1rem; margin: 1.5rem 0; overflow-x: auto; }
+    .code-block pre { margin: 0; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 0.9rem; color: #c9d1d9; }
+
+    .card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem; margin: 2rem 0; }
+    .card ul, .card ol { margin: 0; }
+    .card li { margin-bottom: 0.8rem; }
+    .card li:last-child { margin-bottom: 0; }
+
+    .related-clusters { margin-top: 4rem; border-top: 1px solid var(--border-color); padding-top: 2rem; }
+    .related-clusters h3 { color: var(--text-primary); margin-bottom: 1.5rem; }
+    .cluster-links { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1rem; }
+    .cluster-link { display: block; padding: 1.25rem; border: 1px solid var(--border-color); border-radius: 8px; text-decoration: none; transition: all 0.2s ease; background: color-mix(in srgb, var(--card-bg) 50%, transparent); }
+    .cluster-link:hover { border-color: var(--accent-color); transform: translateY(-2px); background: var(--card-bg); }
+    .cluster-link h4 { color: var(--accent-color); font-size: 1.1rem; margin-top: 0; margin-bottom: 0.5rem; }
+    .cluster-link p { color: var(--text-secondary); font-size: 0.9rem; margin: 0; line-height: 1.4; }
+  </style>
+</SiteLayout>

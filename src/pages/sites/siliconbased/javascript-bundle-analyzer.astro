@@ -1,0 +1,303 @@
+---
+import SiteLayout from "../../../layouts/SiteLayout.astro";
+
+const schema = {
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "JavaScript Bundle Size Analyzer & Optimization Guide",
+  "description": "Analyze your JS bundle size against industry benchmarks. Learn techniques like code splitting, tree shaking, and dynamic imports to reduce JavaScript payload.",
+  "author": {
+    "@type": "Organization",
+    "name": "siliconbased.dev"
+  },
+  "mainEntity": {
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "What is considered a good JavaScript bundle size?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "A good initial JavaScript bundle size should be under 150KB (gzipped). Once it exceeds 300KB, it starts noticeably impacting metrics like Interaction to Next Paint (INP) and Time to Interactive (TTI) on mobile devices."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "What is tree shaking in JavaScript?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Tree shaking is a term used to describe dead-code elimination. Bundlers like Webpack or Vite analyze your code during the build process and remove exported functions or modules that are never actually imported or used in your application."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How does code splitting improve performance?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Code splitting breaks your large, single JavaScript bundle into multiple smaller files (chunks). This allows the browser to download only the JavaScript necessary for the current page or component, deferring the rest until the user navigates elsewhere."
+        }
+      }
+    ]
+  }
+};
+
+export const meta = {
+  title: "JavaScript Bundle Analyzer & Optimization Guide",
+  description: "Compare your JS bundle size to benchmarks and learn how to optimize it with code splitting and tree shaking.",
+  category: "tool",
+  published: "2026-03-15",
+};
+---
+
+<SiteLayout
+  site="siliconbased"
+  title="JavaScript Bundle Analyzer & Optimization Guide"
+  description="Compare your JS bundle size to benchmarks and learn how to optimize it with code splitting and tree shaking."
+  canonical="https://siliconbased.dev/javascript-bundle-analyzer"
+  schema={schema}
+>
+  <div class="page-content">
+    <div class="hero">
+      <h1>JavaScript Bundle Analyzer</h1>
+      <p>Check your bundle size against industry benchmarks and learn how to shrink it using code splitting and tree shaking.</p>
+    </div>
+
+    <div class="content">
+      <p>JavaScript is the most expensive resource on the web. Unlike images, which only need to be downloaded and decoded, JavaScript must be downloaded, parsed, compiled, and executed. Large bundles are the primary cause of poor interactivity metrics and are a major focus of modern <a href="/web-performance-guide">Web Performance</a> optimization.</p>
+
+      <h2>Bundle Size Benchmark Tool</h2>
+      <p>Enter your initial JavaScript bundle size (minified and gzipped) to see how it compares to industry standards and the HTTP Archive dataset.</p>
+
+      <div class="interactive-tool card">
+        <div class="input-group">
+          <label for="bundleSize">Initial JS Bundle Size (gzipped):</label>
+          <div class="input-wrapper">
+            <input type="number" id="bundleSize" min="0" max="10000" step="1" value="350">
+            <span class="unit">KB</span>
+          </div>
+          <button id="analyzeBtn" class="primary-btn">Analyze Size</button>
+        </div>
+
+        <div id="results" class="results-panel" style="display: none;">
+          <div class="meter-container">
+            <div class="meter-bar">
+              <div id="meterFill" class="meter-fill"></div>
+              <div class="meter-markers">
+                <span class="marker" style="left: 15%;">| 150KB</span>
+                <span class="marker" style="left: 30%;">| 300KB</span>
+                <span class="marker" style="left: 50%;">| 500KB</span>
+              </div>
+            </div>
+          </div>
+          <div class="analysis-text">
+            <h3 id="resultTitle">Analysis</h3>
+            <p id="resultDesc"></p>
+            <div id="resultStats" class="stats-box"></div>
+          </div>
+        </div>
+      </div>
+
+      <h2>Strategies for Shrinking Your Bundle</h2>
+
+      <h3>1. Code Splitting</h3>
+      <p>Instead of sending one massive <code>app.js</code> file containing every route, component, and library in your app, code splitting breaks your code into smaller chunks. Users only download what they need for the current view.</p>
+
+      <div class="card">
+        <h4>Route-Based Splitting</h4>
+        <p>This is the most common approach. If a user lands on the Homepage, they shouldn't be forced to download the JavaScript required for the Settings Dashboard.</p>
+        <p>In frameworks like React (with React Router) or Vue, this is achieved using dynamic imports:</p>
+        <pre><code>// React Example
+import React, &#123; Suspense, lazy &#125; from 'react';
+
+// This creates a separate JS chunk for the Settings component
+const Settings = lazy(() =&gt; import('./Settings'));
+
+function App() &#123;
+  return (
+    &lt;Suspense fallback=&#123;&lt;Spinner /&gt;&#125;&gt;
+      &lt;Settings /&gt;
+    &lt;/Suspense&gt;
+  );
+&#125;</code></pre>
+      </div>
+
+      <h3>2. Dynamic Imports for Heavy Libraries</h3>
+      <p>Sometimes you need a massive library (like a PDF generator, complex charting tool, or rich text editor), but only when the user clicks a specific button. Do not include this in your main bundle!</p>
+      <pre><code>button.addEventListener('click', async () =&gt; &#123;
+  // The browser only downloads the library when clicked
+  const Chart = await import('chart.js/auto');
+
+  // Initialize chart...
+  new Chart.default(ctx, config);
+&#125;);</code></pre>
+
+      <h3>3. Tree Shaking</h3>
+      <p>Tree shaking is dead-code elimination. When you import a library, you often only use a fraction of its functions. A modern bundler (Webpack, Vite, ESBuild) can detect unused code and strip it from the final bundle.</p>
+
+      <div class="card">
+        <h4>How to ensure Tree Shaking works:</h4>
+        <p>You must use ES6 module syntax (<code>import</code> / <code>export</code>). CommonJS (<code>require()</code>) cannot be reliably tree-shaken.</p>
+
+        <p><strong>Bad (Imports the entire library):</strong></p>
+        <pre><code>import lodash from 'lodash';
+const arr = lodash.compact([0, 1, false, 2, '', 3]);</code></pre>
+
+        <p><strong>Good (Allows bundler to extract only what's needed):</strong></p>
+        <pre><code>import &#123; compact &#125; from 'lodash-es';
+const arr = compact([0, 1, false, 2, '', 3]);</code></pre>
+      </div>
+
+      <h3>4. Avoid Massive Dependencies</h3>
+      <p>Before installing an npm package, check its size using tools like <a href="https://bundlephobia.com/" target="_blank" rel="noopener">Bundlephobia</a>. Often, there are modern, lightweight alternatives.</p>
+      <ul>
+        <li>Instead of <strong>Moment.js</strong> (72KB), use <strong>date-fns</strong> (modular) or the native <code>Intl</code> API.</li>
+        <li>Instead of heavy UI component libraries, consider using headless UI libraries paired with Tailwind CSS.</li>
+      </ul>
+
+      <h2>Analyzing Your Bundle Locally</h2>
+      <p>To truly understand what is bloating your bundle, you need a visual map of your dependencies. If you use Webpack, install <code>webpack-bundle-analyzer</code>. It generates an interactive treemap showing exactly how many kilobytes each dependency is consuming.</p>
+
+      <div class="faq-section">
+        <h2>Frequently Asked Questions</h2>
+        <div class="faq-item">
+          <h3>What is considered a good JavaScript bundle size?</h3>
+          <p>A good initial JavaScript bundle size should be under 150KB (gzipped). Once it exceeds 300KB, it starts noticeably impacting metrics like Interaction to Next Paint (INP) and Time to Interactive (TTI), particularly on mid-tier mobile devices.</p>
+        </div>
+        <div class="faq-item">
+          <h3>What is tree shaking in JavaScript?</h3>
+          <p>Tree shaking is a term used to describe dead-code elimination. Bundlers like Webpack or Vite analyze your code during the build process and remove exported functions or modules that are never actually imported or used in your application, resulting in a smaller final file.</p>
+        </div>
+        <div class="faq-item">
+          <h3>How does code splitting improve performance?</h3>
+          <p>Code splitting breaks your large, single JavaScript bundle into multiple smaller files (chunks). This allows the browser to download only the JavaScript necessary for the current page or component, deferring the rest until the user navigates elsewhere, drastically speeding up the initial load time.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script is:inline>
+    document.addEventListener('DOMContentLoaded', () => {
+      const btn = document.getElementById('analyzeBtn');
+      const input = document.getElementById('bundleSize');
+      const results = document.getElementById('results');
+      const meterFill = document.getElementById('meterFill');
+      const title = document.getElementById('resultTitle');
+      const desc = document.getElementById('resultDesc');
+      const stats = document.getElementById('resultStats');
+
+      btn.addEventListener('click', () => {
+        const val = parseFloat(input.value);
+        if (isNaN(val) || val < 0) return;
+
+        // Visual mapping: 1000KB = 100% width
+        let pct = (val / 1000) * 100;
+        if (pct > 100) pct = 100;
+
+        let statusClass = '';
+        let titleText = '';
+        let descText = '';
+
+        if (val <= 150) {
+          statusClass = 'excellent';
+          meterFill.style.backgroundColor = '#22c55e'; // Green
+          titleText = "Excellent! You're in the top tier.";
+          descText = "Your bundle is highly optimized. You are well below the recommended budget of 150KB, ensuring fast parsing and execution even on budget mobile devices.";
+        } else if (val <= 300) {
+          statusClass = 'good';
+          meterFill.style.backgroundColor = '#eab308'; // Yellow
+          titleText = "Good, but nearing the limit.";
+          descText = "Your bundle is acceptable, but you are approaching the threshold where JavaScript execution time starts hurting Core Web Vitals (specifically INP).";
+        } else if (val <= 500) {
+          statusClass = 'warning';
+          meterFill.style.backgroundColor = '#f97316'; // Orange
+          titleText = "Warning: Over Budget";
+          descText = "Your bundle is too large. Users on mid-tier devices (like a Moto G Power) will likely experience noticeable input delay and sluggish interactions upon loading.";
+        } else {
+          statusClass = 'danger';
+          meterFill.style.backgroundColor = '#ef4444'; // Red
+          titleText = "Critical: Massive Performance Penalty";
+          descText = "Your bundle is massive. This guarantees poor performance, massive battery drain on mobile, and failing Core Web Vitals. Immediate auditing and code splitting is required.";
+        }
+
+        meterFill.style.width = `${pct}%`;
+
+        title.textContent = titleText;
+        title.style.color = meterFill.style.backgroundColor;
+        desc.textContent = descText;
+
+        // HTTP Archive stats context
+        const medianDesktop = 414; // KB gzipped based on HTTP archive rough data
+        const diff = Math.round(((val - medianDesktop) / medianDesktop) * 100);
+        let comparisonStr = '';
+
+        if (diff > 0) {
+          comparisonStr = `Your bundle is <strong>${diff}% larger</strong> than the average desktop webpage.`;
+        } else {
+          comparisonStr = `Your bundle is <strong>${Math.abs(diff)}% smaller</strong> than the average desktop webpage.`;
+        }
+
+        stats.innerHTML = `
+          <p><strong>Your Size:</strong> ${val} KB (gzipped)</p>
+          <p><strong>Industry Median:</strong> ~414 KB (gzipped)</p>
+          <p>${comparisonStr}</p>
+        `;
+
+        results.style.display = 'block';
+      });
+    });
+  </script>
+
+  <style is:inline>
+    .page-content { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem; color: var(--text-primary); }
+    .hero { text-align: center; padding: 3rem 0 2rem; border-bottom: 1px solid var(--border-color); margin-bottom: 2rem; }
+    .hero h1 { font-size: 2.2rem; font-weight: 800; margin-bottom: 0.5rem; color: #fff; }
+    .hero p { color: var(--text-secondary); font-size: 1.1rem; }
+
+    .content h2 { font-size: 1.8rem; margin-top: 2.5rem; margin-bottom: 1rem; color: #fff; }
+    .content h3 { font-size: 1.3rem; margin-top: 1.5rem; margin-bottom: 0.5rem; color: #fff; }
+    .content p { line-height: 1.7; margin-bottom: 1rem; color: #d1d5db; }
+    .content ul { margin-bottom: 1.5rem; padding-left: 1.5rem; color: #d1d5db; line-height: 1.7; }
+    .content li { margin-bottom: 0.5rem; }
+
+    .card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem; margin: 1.5rem 0; }
+
+    .content a { color: var(--accent-color); text-decoration: none; font-weight: 500; }
+    .content a:hover { text-decoration: underline; }
+
+    pre { background: #0f172a; padding: 1rem; border-radius: 8px; overflow-x: auto; border: 1px solid var(--border-color); margin-bottom: 1rem; }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 0.9em; color: #e2e8f0; }
+    p code, li code { background: #1e293b; padding: 0.2rem 0.4rem; border-radius: 4px; }
+
+    /* Interactive Tool Styles */
+    .interactive-tool { margin: 2rem 0; padding: 2rem; }
+    .input-group { display: flex; flex-direction: column; gap: 1rem; max-width: 400px; }
+    .input-group label { font-weight: 600; color: #fff; }
+    .input-wrapper { display: flex; align-items: center; background: #0f172a; border: 2px solid var(--border-color); border-radius: 8px; overflow: hidden; transition: border-color 0.2s; }
+    .input-wrapper:focus-within { border-color: var(--accent-color); }
+    .input-wrapper input { flex: 1; padding: 1rem; background: transparent; border: none; color: #fff; font-size: 1.2rem; font-family: monospace; outline: none; }
+    .input-wrapper .unit { padding: 0 1rem; color: #94a3b8; font-weight: 600; background: rgba(255,255,255,0.05); height: 100%; display: flex; align-items: center; border-left: 1px solid var(--border-color); }
+
+    .primary-btn { background: var(--accent-color); color: #000; font-weight: 700; padding: 1rem; border: none; border-radius: 8px; cursor: pointer; transition: opacity 0.2s; font-size: 1.05rem; }
+    .primary-btn:hover { opacity: 0.9; }
+
+    .results-panel { margin-top: 2.5rem; animation: fadeIn 0.4s ease; border-top: 1px solid var(--border-color); padding-top: 2rem; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+    .meter-container { margin-bottom: 2rem; }
+    .meter-bar { height: 30px; background: #0f172a; border-radius: 15px; border: 1px solid var(--border-color); position: relative; overflow: hidden; }
+    .meter-fill { height: 100%; width: 0%; transition: width 0.8s cubic-bezier(0.22, 1, 0.36, 1), background-color 0.5s; border-radius: 15px; }
+    .meter-markers { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
+    .marker { position: absolute; top: 0; height: 100%; border-left: 1px dashed rgba(255,255,255,0.3); padding-left: 4px; font-size: 0.75rem; color: #cbd5e1; display: flex; align-items: center; }
+
+    .analysis-text h3 { margin-top: 0; font-size: 1.5rem; }
+    .analysis-text p { font-size: 1.1rem; line-height: 1.6; }
+
+    .stats-box { background: rgba(0,0,0,0.2); padding: 1rem; border-radius: 8px; margin-top: 1.5rem; border: 1px solid rgba(255,255,255,0.05); }
+    .stats-box p { margin: 0.5rem 0; font-size: 1rem; color: #cbd5e1; }
+    .stats-box strong { color: #fff; }
+
+    .faq-section { margin-top: 4rem; padding-top: 2rem; border-top: 1px solid var(--border-color); }
+    .faq-item { margin-bottom: 2rem; }
+    .faq-item h3 { font-size: 1.2rem; margin-bottom: 0.5rem; margin-top: 0; }
+  </style>
+</SiteLayout>
