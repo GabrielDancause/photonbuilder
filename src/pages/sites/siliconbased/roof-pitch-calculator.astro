@@ -1,0 +1,395 @@
+---
+import SiteLayout from "../../../layouts/SiteLayout.astro";
+
+export const meta = {
+  title: "Roof Pitch Calculator: Find Rise, Run, Angle & Fraction Easily",
+  description: "Accurately calculate your roof's pitch, angle, and rafter length in seconds. Whether you're a DIYer or a pro, get the precise measurements you need now!",
+  category: "tool",
+  published: "2026-03-15",
+};
+
+const schema = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "What is considered a standard roof pitch?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "While 'standard' can vary by region and architectural style, the most common roof pitches for residential homes in the US typically range from 4/12 to 9/12. These pitches offer a good balance of efficient water shedding, walkable safety for roofers, and adequate attic space."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What is the minimum pitch for asphalt shingles?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "The standard minimum pitch for installing standard asphalt shingles is 2/12. However, for pitches between 2/12 and 4/12, most manufacturers require special underlayment procedures (like a double layer of felt or ice and water shield) to prevent leaks. Pitches below 2/12 are considered 'low slope' and require different roofing materials entirely."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How do I find the rafter length if I know the pitch?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Our calculator provides a 'Multiplier' value. To find your rafter length, simply measure your horizontal run (half the total span of the building) and multiply it by this multiplier. For example, if your run is 10 feet and the multiplier is 1.201, your rafter length (not including the overhang) is 12.01 feet."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Is a 12/12 roof considered steep?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes, a 12/12 roof pitch is considered very steep. It means the roof rises 12 inches for every 12 inches of run, creating a 45-degree angle. Roofs of this steepness are not considered 'walkable' and require specialized safety equipment and staging for roofers, which often increases the cost of installation."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Does roof pitch affect solar panel installation?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Absolutely. Solar panels are most efficient when they are angled optimally toward the sun. While panels can be installed on almost any roof, if your pitch is too flat or too steep, installers may need to use special racking systems to tilt the panels to the ideal angle, which can add to the total cost of the solar project."
+          }
+        }
+      ]
+    },
+    {
+      "@type": "Article",
+      "headline": meta.title,
+      "description": meta.description,
+      "datePublished": meta.published,
+      "author": {
+        "@type": "Organization",
+        "name": "SiliconBased",
+        "url": "https://siliconbased.dev/"
+      }
+    }
+  ]
+};
+---
+<SiteLayout site="siliconbased" title={meta.title} description={meta.description} canonical="https://siliconbased.dev/roof-pitch-calculator" schema={schema}>
+  <div class="page-content">
+    <div class="hero">
+      <h1>Roof Pitch Calculator</h1>
+      <p class="subtitle">Calculate roof pitch, angle, rise, and run instantly</p>
+    </div>
+
+
+    <div class="calculator-container">
+      <div class="input-row" style="margin-bottom: 1.5rem;">
+        <div class="input-group">
+          <label for="calcMode">Calculate From:</label>
+          <select id="calcMode">
+            <option value="rise_run">Rise and Run</option>
+            <option value="pitch">Pitch (x/12)</option>
+            <option value="angle">Angle (Degrees)</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Rise/Run Inputs -->
+      <div id="mode-rise-run" class="mode-inputs">
+        <div class="input-row">
+          <div class="input-group">
+            <label for="riseInput">Rise (Inches)</label>
+            <input type="number" id="riseInput" placeholder="e.g., 6" min="0" step="any">
+            <div class="error-message" id="riseError">Please enter a valid positive number.</div>
+          </div>
+          <div class="input-group">
+            <label for="runInput">Run (Inches)</label>
+            <input type="number" id="runInput" placeholder="e.g., 12" min="0.1" step="any">
+            <div class="error-message" id="runError">Run must be greater than zero.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Pitch Inputs -->
+      <div id="mode-pitch" class="mode-inputs" style="display: none;">
+        <div class="input-row">
+          <div class="input-group">
+            <label for="pitchInput">Pitch Ratio (X / 12)</label>
+            <div style="display: flex; align-items: center; gap: 0.5rem;">
+              <input type="number" id="pitchInput" placeholder="e.g., 4" min="0" step="any" style="flex: 1;">
+              <span style="font-weight: bold; font-size: 1.2rem;">/ 12</span>
+            </div>
+            <div class="error-message" id="pitchError">Please enter a valid positive number.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Angle Inputs -->
+      <div id="mode-angle" class="mode-inputs" style="display: none;">
+        <div class="input-row">
+          <div class="input-group">
+            <label for="angleInput">Roof Angle (Degrees)</label>
+            <input type="number" id="angleInput" placeholder="e.g., 18.4" min="0" max="89.9" step="any">
+            <div class="error-message" id="angleError">Please enter an angle between 0 and 89.9.</div>
+          </div>
+        </div>
+      </div>
+
+      <div id="resultsContainer" style="display: none;">
+        <div class="result-card">
+          <div class="result-label" style="font-size: 1.1rem; color: var(--text-primary);">Roof Pitch</div>
+          <div class="result-value" id="resultPitch">0 / 12</div>
+        </div>
+
+        <div class="results-grid">
+          <div class="result-box">
+            <div class="result-label">Roof Angle</div>
+            <div class="result-number" id="resultAngle">0.00°</div>
+          </div>
+          <div class="result-box">
+            <div class="result-label">Grade (Percentage)</div>
+            <div class="result-number" id="resultGrade">0.00%</div>
+          </div>
+          <div class="result-box">
+            <div class="result-label">Multiplier (Rafter Length)</div>
+            <div class="result-number" id="resultMultiplier">1.000</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+
+
+    <div class="explainer">
+      <h2>Understanding Roof Pitch</h2>
+      <p>Whether you are planning to build a new home, install solar panels, or replace your existing shingles, understanding your roof pitch is a fundamental requirement. Roof pitch is simply the measure of how steep your roof is. In the roofing industry, this steepness is not typically expressed in degrees (though our calculator provides that as well for your convenience), but rather as a ratio of the roof's vertical "rise" to its horizontal "run." By calculating this ratio, contractors and homeowners can accurately determine the amount of materials needed, the types of shingles that can be safely used, and the overall difficulty of the roofing project.</p>
+
+      <p>The standard convention in the United States and Canada is to express this ratio as X over 12 (or X/12). The number 12 represents a constant horizontal run of 12 inches (or one foot). The "X" represents the number of inches the roof rises vertically for every 12 inches it extends horizontally. For example, if your roof rises 4 inches for every 12 inches of run, you have a 4/12 roof pitch. If it rises 8 inches, you have an 8/12 roof pitch.</p>
+
+      <h3>The Components: Rise, Run, and Rafters</h3>
+      <p>To fully grasp roof pitch, you need to understand the three main components that make up the triangle of your roof's structure:</p>
+      <ul>
+        <li><strong>Rise:</strong> This is the vertical distance from the top of the wall plate (the lowest edge of the roof) to the peak of the ridge (the highest point).</li>
+        <li><strong>Run:</strong> This is the horizontal distance from the outside edge of the wall plate to a point directly below the center of the ridge. For a standard symmetrical gable roof, the run is exactly half of the total width (the span) of the building.</li>
+        <li><strong>Rafter / Slope:</strong> This is the diagonal line of the roof itself, forming the hypotenuse of the right triangle created by the rise and run. Knowing the length of this slope is crucial for estimating roofing materials.</li>
+      </ul>
+      <p>Our calculator simplifies this by allowing you to input either the rise and run measurements you took yourself, an existing pitch ratio, or even an angle in degrees. It will then instantly calculate all the corresponding values, ensuring you have the exact data you need regardless of your starting point.</p>
+
+      <h3>How to Measure Your Roof Pitch Safely</h3>
+      <p>You don't necessarily have to climb up onto your roof to determine its pitch, which is great news for safety. The easiest and safest way to measure roof pitch is from inside your attic. Here is a simple step-by-step guide:</p>
+      <p>First, you will need a standard tape measure and a spirit level (at least 12 inches long). Go into your attic and locate one of the rafters (the angled wooden beams supporting the roof). Hold the spirit level perfectly horizontal against the bottom edge of the rafter. Ensure the bubble in the level is perfectly centered. Now, use your tape measure to measure exactly 12 inches along the level, starting from where it touches the rafter. From that 12-inch mark, measure straight up vertically to the bottom edge of the rafter. The number of inches you measure vertically is your "rise." If it measures 6 inches, you have a 6/12 pitch.</p>
+      <p>If you don't have attic access, you can also measure from the outside edge of the roof (the gable end) using the same technique with a level and tape measure, or by using a specialized pitch gauge tool or a smartphone app designed for roof measurement.</p>
+
+      <h3>Why Roof Pitch Matters</h3>
+      <p>Your roof's pitch dictates much more than just the aesthetic appeal of your home. It plays a critical role in the structural integrity and functionality of the building. Here are a few key reasons why pitch is so important:</p>
+      <ul>
+        <li><strong>Material Selection:</strong> Not all roofing materials are suitable for all pitches. For instance, standard asphalt shingles require a minimum pitch of 2/12 to shed water effectively. If you use shingles on a roof flatter than that, water is likely to seep underneath, causing rot and leaks. For flat or low-slope roofs (below 2/12), you typically need specialized materials like rubber membrane (EPDM) or built-up roofing. Conversely, very steep roofs might require specialized fastening techniques for heavy materials like slate or tile.</li>
+        <li><strong>Water and Snow Shedding:</strong> A steeper roof sheds water, snow, and debris much faster than a flatter roof. In areas with heavy snowfall, a steeper pitch is highly recommended to prevent snow from accumulating and putting excessive weight on the roof structure, which could lead to a collapse.</li>
+        <li><strong>Attic Space:</strong> The steeper the pitch, the higher the rise, which translates to more volume in your attic. This is essential if you plan to use your attic for storage or want to convert it into a vaulted ceiling or livable space.</li>
+        <li><strong>Cost and Difficulty:</strong> Generally, the steeper the roof, the more difficult and dangerous it is to work on. Roofers often charge a premium for "walkability" – if a roof is too steep to walk on safely without specialized harness equipment (usually anything over a 7/12 or 8/12 pitch), the labor costs for installation or repair will increase significantly.</li>
+      </ul>
+
+      <h3>The Mathematics Behind the Calculator</h3>
+      <p>For those interested in the underlying math, our calculator uses standard trigonometric functions and the Pythagorean theorem to convert between these different units of measurement.</p>
+      <p>To find the angle in degrees from a pitch (X/12), we use the inverse tangent function (arctangent). The formula is: <code>Angle = arctan(Rise / Run)</code>. Because the result is in radians, we multiply by <code>(180 / π)</code> to convert it to degrees.</p>
+      <p>To find the rafter length multiplier, we use the Pythagorean theorem (A² + B² = C²). The formula is: <code>Multiplier = √(Rise² + 12²) / 12</code>. You can then multiply this number by your total horizontal run to find the total diagonal length of your rafter.</p>
+      <p>Whether you are calculating the slope for a simple shed or planning a complex multi-gabled home addition, having accurate pitch data is the first step to a successful build.</p>
+
+      <div class="related-links">
+        <h3>Related Calculators</h3>
+        <p>Planning for major home renovations? Make sure your finances are growing efficiently to cover the costs. Use our <a href="/cd-rate-calculator">CD Rate Calculator</a> to see how much your savings could earn over time.</p>
+      </div>
+    </div>
+
+
+
+    <section class="faq-section">
+      <h2>Frequently Asked Questions</h2>
+      <details>
+        <summary>What is considered a standard roof pitch?</summary>
+        <p>While "standard" can vary by region and architectural style, the most common roof pitches for residential homes in the US typically range from 4/12 to 9/12. These pitches offer a good balance of efficient water shedding, walkable safety for roofers, and adequate attic space.</p>
+      </details>
+      <details>
+        <summary>What is the minimum pitch for asphalt shingles?</summary>
+        <p>The standard minimum pitch for installing standard asphalt shingles is 2/12. However, for pitches between 2/12 and 4/12, most manufacturers require special underlayment procedures (like a double layer of felt or ice and water shield) to prevent leaks. Pitches below 2/12 are considered "low slope" and require different roofing materials entirely.</p>
+      </details>
+      <details>
+        <summary>How do I find the rafter length if I know the pitch?</summary>
+        <p>Our calculator provides a "Multiplier" value. To find your rafter length, simply measure your horizontal run (half the total span of the building) and multiply it by this multiplier. For example, if your run is 10 feet and the multiplier is 1.201, your rafter length (not including the overhang) is 12.01 feet.</p>
+      </details>
+      <details>
+        <summary>Is a 12/12 roof considered steep?</summary>
+        <p>Yes, a 12/12 roof pitch is considered very steep. It means the roof rises 12 inches for every 12 inches of run, creating a 45-degree angle. Roofs of this steepness are not considered "walkable" and require specialized safety equipment and staging for roofers, which often increases the cost of installation.</p>
+      </details>
+      <details>
+        <summary>Does roof pitch affect solar panel installation?</summary>
+        <p>Absolutely. Solar panels are most efficient when they are angled optimally toward the sun. While panels can be installed on almost any roof, if your pitch is too flat or too steep, installers may need to use special racking systems to tilt the panels to the ideal angle, which can add to the total cost of the solar project.</p>
+      </details>
+    </section>
+
+  </div>
+
+  <script is:inline>
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const calcMode = document.getElementById('calcMode');
+      const modeRiseRun = document.getElementById('mode-rise-run');
+      const modePitch = document.getElementById('mode-pitch');
+      const modeAngle = document.getElementById('mode-angle');
+
+      const riseInput = document.getElementById('riseInput');
+      const runInput = document.getElementById('runInput');
+      const pitchInput = document.getElementById('pitchInput');
+      const angleInput = document.getElementById('angleInput');
+
+      const resultsContainer = document.getElementById('resultsContainer');
+      const resultPitch = document.getElementById('resultPitch');
+      const resultAngle = document.getElementById('resultAngle');
+      const resultGrade = document.getElementById('resultGrade');
+      const resultMultiplier = document.getElementById('resultMultiplier');
+
+      const inputs = [riseInput, runInput, pitchInput, angleInput];
+
+      function clearErrors() {
+        inputs.forEach(input => {
+          input.classList.remove('invalid');
+          const errorId = input.id.replace('Input', 'Error');
+          const errorEl = document.getElementById(errorId);
+          if (errorEl) errorEl.style.display = 'none';
+        });
+      }
+
+      function showError(inputId) {
+        document.getElementById(inputId).classList.add('invalid');
+        const errorId = inputId.replace('Input', 'Error');
+        const errorEl = document.getElementById(errorId);
+        if (errorEl) errorEl.style.display = 'block';
+      }
+
+      calcMode.addEventListener('change', (e) => {
+        modeRiseRun.style.display = 'none';
+        modePitch.style.display = 'none';
+        modeAngle.style.display = 'none';
+
+        if (e.target.value === 'rise_run') modeRiseRun.style.display = 'block';
+        if (e.target.value === 'pitch') modePitch.style.display = 'block';
+        if (e.target.value === 'angle') modeAngle.style.display = 'block';
+
+        calculateRoof();
+      });
+
+      function calculateRoof() {
+        clearErrors();
+        let pitchX = 0; // The X in X/12
+        const mode = calcMode.value;
+        let isValid = false;
+
+        if (mode === 'rise_run') {
+          if (riseInput.value === '' && runInput.value === '') {
+            resultsContainer.style.display = 'none';
+            return;
+          }
+          const rise = parseFloat(riseInput.value);
+          const run = parseFloat(runInput.value);
+
+          if (isNaN(rise) || rise < 0) {
+            if (riseInput.value !== '') showError('riseInput');
+          } else if (isNaN(run) || run <= 0) {
+            if (runInput.value !== '') showError('runInput');
+          } else {
+            // Standardize to a run of 12
+            pitchX = (rise / run) * 12;
+            isValid = true;
+          }
+        } else if (mode === 'pitch') {
+          if (pitchInput.value === '') {
+            resultsContainer.style.display = 'none';
+            return;
+          }
+          const pitch = parseFloat(pitchInput.value);
+          if (isNaN(pitch) || pitch < 0) {
+            showError('pitchInput');
+          } else {
+            pitchX = pitch;
+            isValid = true;
+          }
+        } else if (mode === 'angle') {
+          if (angleInput.value === '') {
+            resultsContainer.style.display = 'none';
+            return;
+          }
+          const angle = parseFloat(angleInput.value);
+          if (isNaN(angle) || angle < 0 || angle >= 90) {
+            showError('angleInput');
+          } else {
+            // angle in degrees to radians
+            const radians = angle * (Math.PI / 180);
+            pitchX = Math.tan(radians) * 12;
+            isValid = true;
+          }
+        }
+
+        if (!isValid) {
+          resultsContainer.style.display = 'none';
+          return;
+        }
+
+        // Calculations based on Pitch (X/12)
+        const radians = Math.atan(pitchX / 12);
+        const degrees = radians * (180 / Math.PI);
+        const grade = (pitchX / 12) * 100;
+
+        // Pythagorean theorem for multiplier: sqrt(rise^2 + run^2) / run
+        const multiplier = Math.sqrt(Math.pow(pitchX, 2) + Math.pow(12, 2)) / 12;
+
+        // Display
+        resultPitch.textContent = `${parseFloat(pitchX.toFixed(2))} / 12`;
+        resultAngle.textContent = `${degrees.toFixed(2)}°`;
+        resultGrade.textContent = `${grade.toFixed(2)}%`;
+        resultMultiplier.textContent = multiplier.toFixed(4);
+
+        resultsContainer.style.display = 'block';
+      }
+
+      inputs.forEach(input => {
+        input.addEventListener('input', calculateRoof);
+      });
+    });
+
+  </script>
+
+  <style is:inline>
+    .page-content { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem; }
+    .hero { text-align: center; padding: 3rem 0 2rem; }
+    .hero h1 { font-size: 2.2rem; font-weight: 800; margin-bottom: 0.5rem; }
+    .subtitle { color: var(--text-secondary); font-size: 1.1rem; }
+    .calculator-container { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 2rem; margin: 2rem 0; }
+    input, select { background: var(--bg-color); color: var(--text-primary); border: 1px solid var(--border-color); padding: 0.75rem 1rem; border-radius: 8px; width: 100%; font-size: 1rem; }
+    input:focus, select:focus { outline: none; border-color: var(--accent-color); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-color) 20%, transparent); }
+    button { background: var(--accent-color); color: white; border: none; padding: 0.75rem 2rem; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 1rem; }
+    button:hover { opacity: 0.9; }
+    .result-card { background: color-mix(in srgb, var(--accent-color) 10%, transparent); border: 1px solid var(--accent-color); border-radius: 12px; padding: 1.5rem; margin: 1.5rem 0; text-align: center; }
+    .result-value { font-size: 2.5rem; font-weight: 800; color: var(--accent-color); }
+    .faq-section details { margin: 1rem 0; padding: 1rem; background: var(--card-bg); border-radius: 8px; border: 1px solid var(--border-color); }
+    .faq-section summary { font-weight: 600; cursor: pointer; }
+
+    .input-group { margin-bottom: 1.5rem; }
+    .input-group label { display: block; margin-bottom: 0.5rem; font-weight: 600; }
+    .input-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    @media (max-width: 600px) { .input-row { grid-template-columns: 1fr; } }
+    .error-message { color: #ef4444; font-size: 0.875rem; margin-top: 0.25rem; display: none; }
+    .invalid { border-color: #ef4444 !important; }
+
+    .results-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-top: 1.5rem; }
+    .result-box { background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 1rem; text-align: center; }
+    .result-label { font-size: 0.875rem; color: var(--text-secondary); margin-bottom: 0.5rem; }
+    .result-number { font-size: 1.5rem; font-weight: 700; color: var(--text-primary); }
+
+    .explainer { line-height: 1.7; margin-top: 3rem; }
+    .explainer h2 { font-size: 1.8rem; margin: 2rem 0 1rem; }
+    .explainer h3 { font-size: 1.4rem; margin: 1.5rem 0 1rem; }
+    .explainer p { margin-bottom: 1rem; }
+    .explainer ul { margin-bottom: 1rem; padding-left: 1.5rem; }
+    .explainer li { margin-bottom: 0.5rem; }
+    .related-links { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; padding: 1.5rem; margin: 2rem 0; }
+    .related-links h3 { margin-top: 0; margin-bottom: 1rem; }
+    .related-links a { color: var(--accent-color); text-decoration: none; font-weight: 600; }
+    .related-links a:hover { text-decoration: underline; }
+  </style>
+</SiteLayout>
