@@ -1,0 +1,371 @@
+---
+import SiteLayout from "../../../layouts/SiteLayout.astro";
+
+export const meta = {
+  title: "Lease Calculator: Estimate Monthly Payments Instantly",
+  description: "Thinking about leasing a new car? Don't sign anything until you run your numbers through this tool to uncover what dealerships hide...",
+  category: "tool",
+  published: "2026-03-15",
+};
+
+const schema = [
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": meta.title,
+    "description": meta.description,
+    "datePublished": meta.published,
+    "author": {
+      "@type": "Organization",
+      "name": "SiliconBased"
+    }
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "How is a car lease monthly payment calculated?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "A car lease payment consists of three main parts: the depreciation fee, the finance fee (or rent charge), and sales tax. Depreciation covers the loss in value of the car over the lease term. The finance fee is interest charged on the money tied up in the car. Finally, local sales taxes are added to the monthly total."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "What is the Money Factor in leasing?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "The money factor (also known as the lease factor) is a way of expressing the interest rate on a lease. It is typically a very small decimal, such as 0.00125. To convert a money factor into a traditional Annual Percentage Rate (APR), simply multiply it by 2400."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Can I negotiate a car lease?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes, many elements of a car lease are negotiable. You can negotiate the capitalized cost (the selling price of the car), the money factor, and the value of your trade-in. However, the residual value and the acquisition fee are generally set by the leasing company and are not negotiable."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "What happens if I exceed the mileage limit on my lease?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "If you drive more than the agreed-upon mileage limit in your lease contract, you will be charged a penalty fee for every excess mile. These fees typically range from 15 to 30 cents per mile. If you anticipate driving more, it's usually cheaper to negotiate a higher mileage limit upfront."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Is it better to lease or buy a car?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "The choice between leasing and buying depends on your lifestyle and financial goals. Leasing generally offers lower monthly payments and allows you to drive a new car every few years without worrying about long-term maintenance. Buying is better if you want long-term ownership, plan to keep the car for many years, or drive excessive miles."
+        }
+      }
+    ]
+  }
+];
+---
+
+<SiteLayout
+  site="siliconbased"
+  title={meta.title}
+  description={meta.description}
+  canonical="https://siliconbased.dev/lease-calculator"
+  schema={schema}
+>
+  <div class="page-content">
+    <div class="hero">
+      <h1>Lease Calculator</h1>
+      <p class="subtitle">Estimate your monthly auto lease payments and uncover the true cost of leasing.</p>
+    </div>
+
+    <div class="calculator-container">
+      <div class="input-grid">
+        <div class="input-group">
+          <label for="carPrice">Car Price (MSRP) ($)</label>
+          <input type="number" id="carPrice" placeholder="e.g., 35000" min="0" step="100">
+        </div>
+        <div class="input-group">
+          <label for="negotiatedPrice">Negotiated Price ($)</label>
+          <input type="number" id="negotiatedPrice" placeholder="e.g., 33000" min="0" step="100">
+        </div>
+        <div class="input-group">
+          <label for="downPayment">Down Payment ($)</label>
+          <input type="number" id="downPayment" placeholder="e.g., 2000" min="0" step="100">
+        </div>
+        <div class="input-group">
+          <label for="tradeIn">Trade-in Value ($)</label>
+          <input type="number" id="tradeIn" placeholder="e.g., 0" min="0" step="100">
+        </div>
+        <div class="input-group">
+          <label for="leaseTerm">Lease Term (Months)</label>
+          <select id="leaseTerm">
+            <option value="24">24 Months</option>
+            <option value="36" selected>36 Months</option>
+            <option value="48">48 Months</option>
+            <option value="60">60 Months</option>
+          </select>
+        </div>
+        <div class="input-group">
+          <label for="residualValue">Residual Value (%)</label>
+          <input type="number" id="residualValue" placeholder="e.g., 55" min="0" max="100" step="1">
+        </div>
+        <div class="input-group">
+          <label for="moneyFactor">Money Factor (or APR%)</label>
+          <input type="number" id="moneyFactor" placeholder="e.g., 0.00125 or 3%" min="0" step="0.00001">
+        </div>
+        <div class="input-group">
+          <label for="salesTax">Sales Tax Rate (%)</label>
+          <input type="number" id="salesTax" placeholder="e.g., 7" min="0" step="0.1">
+        </div>
+      </div>
+
+      <div id="errorMessage" class="error-message" style="display: none;">Please fill in all required fields correctly.</div>
+
+      <div class="result-card" id="resultCard" style="display: none;">
+        <p class="result-label">Estimated Monthly Payment</p>
+        <div class="result-value" id="monthlyPayment">$0.00</div>
+
+        <div class="breakdown">
+          <div class="breakdown-item">
+            <span>Depreciation Fee:</span>
+            <strong id="depreciationFee">$0.00</strong>
+          </div>
+          <div class="breakdown-item">
+            <span>Finance Fee:</span>
+            <strong id="financeFee">$0.00</strong>
+          </div>
+          <div class="breakdown-item">
+            <span>Monthly Tax:</span>
+            <strong id="monthlyTax">$0.00</strong>
+          </div>
+          <div class="breakdown-item total-cost">
+            <span>Total Lease Cost:</span>
+            <strong id="totalCost">$0.00</strong>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="cross-link-section">
+      <h3>Need to plan your work shifts instead?</h3>
+      <p>Check out our <a href="/platinum-planner">Platinum Planner Calculator</a> to calculate your required clinical hours and shifts.</p>
+    </div>
+
+    <div class="explainer">
+      <h2>How Car Leasing Works: A Comprehensive Guide</h2>
+      <p>Leasing a vehicle is fundamentally different from purchasing one. When you buy a car, you are paying for the entire value of the vehicle over time, eventually owning it outright. In contrast, when you lease a car, you are essentially renting it from the dealership or leasing company for a predetermined period, typically between two and four years. Understanding the mechanics of leasing is crucial for making informed financial decisions and ensuring you get a fair deal.</p>
+
+      <p>At its core, a lease payment is designed to cover the loss in the vehicle's value during the time you drive it, plus interest and taxes. This is why lease payments are often significantly lower than loan payments for the same vehicle; you are only financing a portion of the car's total worth. However, at the end of the lease, you must return the vehicle (unless you choose to buy it at the predetermined residual value), meaning you do not build equity in the asset.</p>
+
+      <h3>The Three Components of a Lease Payment</h3>
+      <p>To accurately calculate a lease payment, you must understand its three primary components: the depreciation fee, the finance fee (also known as the rent charge), and the monthly sales tax. Let's break down each element in detail.</p>
+
+      <h4>1. The Depreciation Fee</h4>
+      <p>The largest portion of your monthly lease payment is the depreciation fee. Cars lose value over time, a process known as depreciation. When you lease, you are compensating the leasing company for this loss in value.</p>
+      <p>To calculate the depreciation fee, you first need to determine the Gross Capitalized Cost (Cap Cost). This is the negotiated selling price of the vehicle, plus any fees or add-ons you roll into the lease. From the Cap Cost, you subtract your down payment (Cap Cost Reduction) and the value of any trade-in vehicle. The resulting number is the Adjusted Capitalized Cost.</p>
+      <p>Next, you need the Residual Value. This is the estimated wholesale value of the vehicle at the end of the lease term, as set by the leasing company. The Residual Value is usually expressed as a percentage of the Manufacturer's Suggested Retail Price (MSRP).</p>
+      <p>The total depreciation over the lease is the Adjusted Cap Cost minus the Residual Value. To find the monthly depreciation fee, you simply divide this total depreciation by the number of months in the lease term.</p>
+
+      <h4>2. The Finance Fee (Rent Charge)</h4>
+      <p>The second component is the finance fee. Although you are not buying the car, the leasing company still has a significant amount of capital tied up in the vehicle while you drive it. They charge you interest for the use of this capital.</p>
+      <p>In leasing, interest is not expressed as an Annual Percentage Rate (APR). Instead, it is expressed as a Money Factor (or Lease Factor). The Money Factor is a very small decimal number, typically something like 0.00125. If a dealership gives you an APR, you can estimate the Money Factor by dividing the APR by 2400 (e.g., 3% APR / 2400 = 0.00125).</p>
+      <p>The formula to calculate the monthly finance fee is unique to leasing: (Adjusted Cap Cost + Residual Value) × Money Factor. It might seem counterintuitive to add the Cap Cost and Residual Value together to calculate interest, but this mathematical shortcut accurately estimates the average outstanding balance over the lease term.</p>
+
+      <h4>3. Monthly Sales Tax</h4>
+      <p>The final component is sales tax. Unlike purchasing a car where you pay tax on the entire purchase price upfront, most states only require you to pay tax on your monthly lease payment. To calculate the monthly tax, you add the depreciation fee and the finance fee together, and multiply the sum by your local sales tax rate.</p>
+      <p>Keep in mind that some states structure lease taxes differently. A few states require taxes to be paid upfront on the total value of the lease payments, while a rare few tax the entire purchase price of the vehicle even if it is leased. Always verify the specific tax laws in your state.</p>
+
+      <h3>Key Terms Defined</h3>
+      <ul>
+        <li><strong>MSRP:</strong> The Manufacturer's Suggested Retail Price. This is the starting point for calculating the residual value.</li>
+        <li><strong>Capitalized Cost (Cap Cost):</strong> The negotiated selling price of the vehicle. This is highly negotiable.</li>
+        <li><strong>Cap Cost Reduction:</strong> Anything that lowers the Cap Cost, such as a down payment, a trade-in vehicle, or manufacturer rebates.</li>
+        <li><strong>Residual Value:</strong> The guaranteed value of the car at the end of the lease. This is set by the bank and is generally not negotiable.</li>
+        <li><strong>Money Factor:</strong> The interest rate on the lease, expressed as a small decimal. You can often negotiate the Money Factor, provided your credit score is strong.</li>
+        <li><strong>Acquisition Fee:</strong> A fee charged by the leasing company to originate the lease. It is typically not negotiable.</li>
+        <li><strong>Disposition Fee:</strong> A fee charged at the end of the lease to cover the costs of cleaning and selling the vehicle if you choose not to buy it.</li>
+      </ul>
+
+      <h3>Methodology Used in This Calculator</h3>
+      <p>Our Lease Calculator uses industry-standard formulas to provide an accurate estimate of your monthly payments. The underlying mathematics are as follows:</p>
+      <p>First, we calculate the Adjusted Capitalized Cost: <em>Negotiated Price - Down Payment - Trade-in Value</em>.</p>
+      <p>Next, we calculate the Residual Value in dollars: <em>MSRP × (Residual Percentage / 100)</em>.</p>
+      <p>We then determine the Monthly Depreciation: <em>(Adjusted Cap Cost - Residual Value in dollars) / Lease Term in Months</em>.</p>
+      <p>To calculate the Finance Fee, we handle the Money Factor input. If the user enters an APR (a number greater than 0.01), we divide it by 2400 to find the true Money Factor. The formula is then: <em>(Adjusted Cap Cost + Residual Value in dollars) × Money Factor</em>.</p>
+      <p>The Base Monthly Payment is the sum of the Depreciation and Finance Fee.</p>
+      <p>Finally, we calculate the Monthly Tax: <em>Base Monthly Payment × (Sales Tax Rate / 100)</em>. The Total Monthly Payment is the Base Payment plus the Tax.</p>
+      <p>By providing transparency into these calculations, our tool empowers consumers to evaluate lease offers critically, identify potential markups by dealerships, and negotiate better terms for their next vehicle lease.</p>
+    </div>
+
+    <section class="faq-section">
+      <h2>Frequently Asked Questions</h2>
+      <details>
+        <summary>How is a car lease monthly payment calculated?</summary>
+        <p>A car lease payment consists of three main parts: the depreciation fee, the finance fee (or rent charge), and sales tax. Depreciation covers the loss in value of the car over the lease term. The finance fee is interest charged on the money tied up in the car. Finally, local sales taxes are added to the monthly total.</p>
+      </details>
+      <details>
+        <summary>What is the Money Factor in leasing?</summary>
+        <p>The money factor (also known as the lease factor) is a way of expressing the interest rate on a lease. It is typically a very small decimal, such as 0.00125. To convert a money factor into a traditional Annual Percentage Rate (APR), simply multiply it by 2400.</p>
+      </details>
+      <details>
+        <summary>Can I negotiate a car lease?</summary>
+        <p>Yes, many elements of a car lease are negotiable. You can negotiate the capitalized cost (the selling price of the car), the money factor, and the value of your trade-in. However, the residual value and the acquisition fee are generally set by the leasing company and are not negotiable.</p>
+      </details>
+      <details>
+        <summary>What happens if I exceed the mileage limit on my lease?</summary>
+        <p>If you drive more than the agreed-upon mileage limit in your lease contract, you will be charged a penalty fee for every excess mile. These fees typically range from 15 to 30 cents per mile. If you anticipate driving more, it's usually cheaper to negotiate a higher mileage limit upfront.</p>
+      </details>
+      <details>
+        <summary>Is it better to lease or buy a car?</summary>
+        <p>The choice between leasing and buying depends on your lifestyle and financial goals. Leasing generally offers lower monthly payments and allows you to drive a new car every few years without worrying about long-term maintenance. Buying is better if you want long-term ownership, plan to keep the car for many years, or drive excessive miles.</p>
+      </details>
+    </section>
+  </div>
+
+  <script is:inline>
+    document.addEventListener('DOMContentLoaded', () => {
+      const inputs = [
+        'carPrice', 'negotiatedPrice', 'downPayment', 'tradeIn',
+        'leaseTerm', 'residualValue', 'moneyFactor', 'salesTax'
+      ];
+
+      const elements = {};
+      inputs.forEach(id => {
+        elements[id] = document.getElementById(id);
+        elements[id].addEventListener('input', calculateLease);
+      });
+
+      const resultCard = document.getElementById('resultCard');
+      const errorMessage = document.getElementById('errorMessage');
+
+      function formatMoney(amount) {
+        return new Intl.NumberFormat('en-US', {
+          style: 'currency',
+          currency: 'USD'
+        }).format(amount);
+      }
+
+      function calculateLease() {
+        const msrp = parseFloat(elements.carPrice.value);
+        let negotiated = parseFloat(elements.negotiatedPrice.value);
+        const down = parseFloat(elements.downPayment.value) || 0;
+        const trade = parseFloat(elements.tradeIn.value) || 0;
+        const term = parseInt(elements.leaseTerm.value);
+        const residualPercent = parseFloat(elements.residualValue.value);
+        let mfInput = parseFloat(elements.moneyFactor.value) || 0;
+        const taxRate = parseFloat(elements.salesTax.value) || 0;
+
+        if (isNaN(msrp) || msrp <= 0 || isNaN(residualPercent) || residualPercent <= 0) {
+          resultCard.style.display = 'none';
+          if (elements.carPrice.value !== '' && elements.residualValue.value !== '') {
+            errorMessage.style.display = 'block';
+          }
+          return;
+        }
+
+        errorMessage.style.display = 'none';
+
+        if (isNaN(negotiated) || negotiated <= 0) {
+          negotiated = msrp;
+        }
+
+        // Calculate Adjusted Cap Cost
+        const adjustedCapCost = negotiated - down - trade;
+
+        // Calculate Residual Value ($)
+        const residualValueDoll = msrp * (residualPercent / 100);
+
+        // Calculate Depreciation Fee
+        const depreciationFee = (adjustedCapCost - residualValueDoll) / term;
+
+        // Handle Money Factor or APR
+        let moneyFactor = mfInput;
+        if (mfInput > 0.05) { // If user enters something like 3 instead of 0.00125
+            moneyFactor = mfInput / 2400;
+        }
+
+        // Calculate Finance Fee
+        const financeFee = (adjustedCapCost + residualValueDoll) * moneyFactor;
+
+        // Base Payment
+        const basePayment = depreciationFee + financeFee;
+
+        // Monthly Tax
+        const monthlyTax = basePayment * (taxRate / 100);
+
+        // Total Payment
+        const totalPayment = basePayment + monthlyTax;
+
+        // Total Lease Cost (Total Payments + Down Payment + Trade-in)
+        const totalCost = (totalPayment * term) + down + trade;
+
+        if (totalPayment > 0 && isFinite(totalPayment)) {
+          document.getElementById('monthlyPayment').textContent = formatMoney(totalPayment);
+          document.getElementById('depreciationFee').textContent = formatMoney(depreciationFee);
+          document.getElementById('financeFee').textContent = formatMoney(financeFee);
+          document.getElementById('monthlyTax').textContent = formatMoney(monthlyTax);
+          document.getElementById('totalCost').textContent = formatMoney(totalCost);
+
+          resultCard.style.display = 'block';
+        } else {
+          resultCard.style.display = 'none';
+        }
+      }
+    });
+  </script>
+
+  <style is:inline>
+    .page-content { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem; }
+    .hero { text-align: center; padding: 3rem 0 2rem; }
+    .hero h1 { font-size: 2.2rem; font-weight: 800; margin-bottom: 0.5rem; }
+    .subtitle { color: var(--text-secondary); font-size: 1.1rem; }
+
+    .calculator-container { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 2rem; margin: 2rem 0; }
+    .input-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; }
+    .input-group { display: flex; flex-direction: column; gap: 0.5rem; }
+    .input-group label { font-weight: 600; font-size: 0.95rem; }
+
+    input, select { background: var(--bg-color); color: var(--text-primary); border: 1px solid var(--border-color); padding: 0.75rem 1rem; border-radius: 8px; width: 100%; font-size: 1rem; }
+    input:focus, select:focus { outline: none; border-color: var(--accent-color); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-color) 20%, transparent); }
+
+    .error-message { color: #ef4444; background: #fee2e2; border: 1px solid #f87171; padding: 1rem; border-radius: 8px; margin-top: 1.5rem; text-align: center; font-weight: 600; }
+
+    .result-card { background: color-mix(in srgb, var(--accent-color) 10%, transparent); border: 1px solid var(--accent-color); border-radius: 12px; padding: 2rem; margin: 2rem 0 0; text-align: center; }
+    .result-label { font-size: 1.1rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.5rem; }
+    .result-value { font-size: 3rem; font-weight: 800; color: var(--accent-color); margin-bottom: 1.5rem; }
+
+    .breakdown { background: var(--bg-color); border-radius: 8px; padding: 1.5rem; border: 1px solid var(--border-color); }
+    .breakdown-item { display: flex; justify-content: space-between; padding: 0.75rem 0; border-bottom: 1px solid var(--border-color); }
+    .breakdown-item:last-child { border-bottom: none; padding-bottom: 0; }
+    .breakdown-item span { color: var(--text-secondary); }
+    .total-cost { margin-top: 0.5rem; padding-top: 1rem; border-top: 2px solid var(--border-color); font-size: 1.1rem; font-weight: 700; color: var(--text-primary); }
+
+    .cross-link-section { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem; margin: 2rem 0; text-align: center; }
+    .cross-link-section h3 { margin-bottom: 0.5rem; font-size: 1.2rem; }
+    .cross-link-section a { color: var(--accent-color); font-weight: 600; text-decoration: none; }
+    .cross-link-section a:hover { text-decoration: underline; }
+
+    .explainer { margin: 3rem 0; line-height: 1.7; }
+    .explainer h2 { font-size: 1.8rem; margin-bottom: 1.5rem; }
+    .explainer h3 { font-size: 1.4rem; margin: 2rem 0 1rem; }
+    .explainer h4 { font-size: 1.2rem; margin: 1.5rem 0 0.75rem; }
+    .explainer p { margin-bottom: 1rem; color: var(--text-secondary); }
+    .explainer ul { margin: 1rem 0 1rem 2rem; color: var(--text-secondary); }
+    .explainer li { margin-bottom: 0.5rem; }
+
+    .faq-section { margin: 3rem 0; }
+    .faq-section h2 { font-size: 1.8rem; margin-bottom: 1.5rem; text-align: center; }
+    .faq-section details { margin: 1rem 0; padding: 1.25rem; background: var(--card-bg); border-radius: 8px; border: 1px solid var(--border-color); }
+    .faq-section summary { font-weight: 600; cursor: pointer; font-size: 1.1rem; }
+    .faq-section details p { margin-top: 1rem; color: var(--text-secondary); line-height: 1.6; }
+
+    @media (max-width: 600px) {
+      .input-grid { grid-template-columns: 1fr; }
+      .result-value { font-size: 2.5rem; }
+    }
+  </style>
+</SiteLayout>
