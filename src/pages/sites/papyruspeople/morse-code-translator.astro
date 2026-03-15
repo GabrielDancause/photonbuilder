@@ -1,0 +1,229 @@
+---
+import SiteLayout from '../../../layouts/SiteLayout.astro';
+
+export const meta = {
+  title: 'Morse Code Translator',
+  description: 'Translate text to Morse code and Morse code to text. Play audio of the Morse code.',
+  category: 'tool',
+  published: '2026-03-24'
+};
+
+const SITE_ID = 'papyruspeople';
+
+const schema = [{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "Morse Code Translator",
+  "description": "Translate text to Morse code and Morse code to text. Play audio of the Morse code.",
+  "applicationCategory": "UtilityApplication",
+  "operatingSystem": "All"
+}];
+---
+
+<SiteLayout
+  site={SITE_ID}
+  title={meta.title}
+  description={meta.description}
+  schema={schema}
+>
+  <div class="page-content">
+    <div class="hero">
+      <h1>Morse Code Translator</h1>
+      <p>Translate between plain text and Morse code instantly. Play the code out loud.</p>
+    </div>
+
+    <div class="tool-container card">
+      <div class="input-group">
+        <label for="text-input">Text</label>
+        <textarea id="text-input" placeholder="Type plain text here to convert to Morse code..." rows="4"></textarea>
+        <div class="actions">
+          <button id="copy-text-btn" class="copy-btn">Copy Text</button>
+        </div>
+      </div>
+
+      <div class="swap-container">
+        <button id="play-btn" class="play-btn" title="Play Morse Code">
+          <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+          Play Audio
+        </button>
+      </div>
+
+      <div class="input-group">
+        <label for="morse-input">Morse Code</label>
+        <textarea id="morse-input" placeholder="Type Morse code here (e.g. .... . .-.. .-.. ---) to convert to text..." rows="4"></textarea>
+        <div class="actions">
+          <button id="copy-morse-btn" class="copy-btn">Copy Morse</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script is:inline>
+    document.addEventListener('DOMContentLoaded', () => {
+      const textInput = document.getElementById('text-input');
+      const morseInput = document.getElementById('morse-input');
+      const copyTextBtn = document.getElementById('copy-text-btn');
+      const copyMorseBtn = document.getElementById('copy-morse-btn');
+      const playBtn = document.getElementById('play-btn');
+
+      const textToMorseMap = {
+        'A': '.-', 'B': '-...', 'C': '-.-.', 'D': '-..', 'E': '.', 'F': '..-.',
+        'G': '--.', 'H': '....', 'I': '..', 'J': '.---', 'K': '-.-', 'L': '.-..',
+        'M': '--', 'N': '-.', 'O': '---', 'P': '.--.', 'Q': '--.-', 'R': '.-.',
+        'S': '...', 'T': '-', 'U': '..-', 'V': '...-', 'W': '.--', 'X': '-..-',
+        'Y': '-.--', 'Z': '--..', '0': '-----', '1': '.----', '2': '..---',
+        '3': '...--', '4': '....-', '5': '.....', '6': '-....', '7': '--...',
+        '8': '---..', '9': '----.', '.': '.-.-.-', ',': '--..--', '?': '..--..',
+        "'": '.----.', '!': '-.-.--', '/': '-..-.', '(': '-.--.', ')': '-.--.-',
+        '&': '.-...', ':': '---...', ';': '-.-.-.', '=': '-...-', '+': '.-.-.',
+        '-': '-....-', '_': '..--.-', '"': '.-..-.', '$': '...-..-', '@': '.--.-.'
+      };
+
+      const morseToTextMap = Object.entries(textToMorseMap).reduce((acc, [key, value]) => {
+        acc[value] = key;
+        return acc;
+      }, {});
+
+      function textToMorse(text) {
+        return text.toUpperCase().split('').map(char => {
+          if (char === ' ') return '/';
+          return textToMorseMap[char] || char;
+        }).join(' ');
+      }
+
+      function morseToText(morse) {
+        return morse.split(' ').map(code => {
+          if (code === '/' || code === '') return ' ';
+          return morseToTextMap[code] || code;
+        }).join('');
+      }
+
+      let isUpdating = false;
+
+      textInput.addEventListener('input', () => {
+        if (isUpdating) return;
+        isUpdating = true;
+        morseInput.value = textToMorse(textInput.value);
+        isUpdating = false;
+      });
+
+      morseInput.addEventListener('input', () => {
+        if (isUpdating) return;
+        isUpdating = true;
+        textInput.value = morseToText(morseInput.value.trim());
+        isUpdating = false;
+      });
+
+      function copyToClipboard(element, button) {
+        navigator.clipboard.writeText(element.value).then(() => {
+          const originalText = button.textContent;
+          button.textContent = 'Copied!';
+          button.classList.add('copied');
+          setTimeout(() => {
+            button.textContent = originalText;
+            button.classList.remove('copied');
+          }, 2000);
+        });
+      }
+
+      copyTextBtn.addEventListener('click', () => copyToClipboard(textInput, copyTextBtn));
+      copyMorseBtn.addEventListener('click', () => copyToClipboard(morseInput, copyMorseBtn));
+
+      // Audio playback logic
+      let audioCtx = null;
+      let isPlaying = false;
+
+      async function playMorseCode(morseString) {
+        if (isPlaying || !morseString.trim()) return;
+        isPlaying = true;
+        playBtn.classList.add('playing');
+        playBtn.innerHTML = 'Playing...';
+
+        if (!audioCtx) {
+          audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+        }
+
+        if (audioCtx.state === 'suspended') {
+          await audioCtx.resume();
+        }
+
+        const dotDuration = 80; // ms
+        const dashDuration = dotDuration * 3;
+        const symbolSpace = dotDuration;
+        const letterSpace = dotDuration * 3;
+        const wordSpace = dotDuration * 7;
+        const frequency = 600;
+
+        let time = audioCtx.currentTime;
+
+        const oscillator = audioCtx.createOscillator();
+        const gainNode = audioCtx.createGain();
+
+        oscillator.type = 'sine';
+        oscillator.frequency.value = frequency;
+
+        oscillator.connect(gainNode);
+        gainNode.connect(audioCtx.destination);
+
+        gainNode.gain.setValueAtTime(0, time);
+        oscillator.start(time);
+
+        for (let i = 0; i < morseString.length; i++) {
+          const char = morseString[i];
+
+          if (char === '.') {
+            gainNode.gain.setValueAtTime(1, time);
+            time += dotDuration / 1000;
+            gainNode.gain.setValueAtTime(0, time);
+            time += symbolSpace / 1000;
+          } else if (char === '-') {
+            gainNode.gain.setValueAtTime(1, time);
+            time += dashDuration / 1000;
+            gainNode.gain.setValueAtTime(0, time);
+            time += symbolSpace / 1000;
+          } else if (char === ' ') {
+            time += letterSpace / 1000 - symbolSpace / 1000;
+          } else if (char === '/') {
+            time += wordSpace / 1000 - symbolSpace / 1000;
+          }
+        }
+
+        oscillator.stop(time);
+
+        oscillator.onended = () => {
+          isPlaying = false;
+          playBtn.classList.remove('playing');
+          playBtn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg> Play Audio';
+        };
+      }
+
+      playBtn.addEventListener('click', () => {
+        playMorseCode(morseInput.value);
+      });
+    });
+  </script>
+
+  <style is:inline>
+    .page-content { max-width: 800px; margin: 0 auto; padding: 2rem 1.5rem; }
+    .hero { text-align: center; margin-bottom: 2.5rem; }
+    .hero h1 { font-size: 2.5rem; font-weight: 800; margin-bottom: 0.5rem; color: var(--text-primary); }
+    .hero p { color: var(--text-secondary); font-size: 1.1rem; }
+
+    .card { background: var(--card-bg); border: 1px solid var(--border-color, #2a2418); border-radius: 12px; padding: 2rem; }
+    .input-group { position: relative; }
+    .input-group label { display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--text-primary); }
+    textarea { width: 100%; padding: 1rem; padding-bottom: 3rem; border-radius: 8px; border: 1px solid var(--border-color, #2a2418); background: var(--bg-color, #0a0806); color: var(--text-primary); font-family: inherit; font-size: 1.1rem; resize: vertical; transition: border-color 0.2s; }
+    textarea:focus { outline: none; border-color: var(--accent-color, #D4A574); }
+
+    .actions { position: absolute; bottom: 0.75rem; right: 0.75rem; }
+    .copy-btn { background: var(--card-bg); border: 1px solid var(--border-color, #2a2418); color: var(--text-primary); padding: 0.4rem 1rem; border-radius: 6px; font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+    .copy-btn:hover { background: var(--accent-color, #D4A574); color: #000; border-color: var(--accent-color, #D4A574); }
+    .copy-btn.copied { background: #10B981; color: #fff; border-color: #10B981; }
+
+    .swap-container { display: flex; justify-content: center; margin: 1.5rem 0; }
+    .play-btn { display: flex; align-items: center; gap: 0.5rem; background: var(--accent-color, #D4A574); color: #000; border: none; padding: 0.75rem 1.5rem; border-radius: 30px; font-weight: 700; font-size: 1rem; cursor: pointer; transition: transform 0.2s, opacity 0.2s; }
+    .play-btn:hover { transform: scale(1.05); opacity: 0.9; }
+    .play-btn.playing { background: #10B981; pointer-events: none; }
+    .play-btn svg { width: 20px; height: 20px; fill: currentColor; }
+  </style>
+</SiteLayout>
