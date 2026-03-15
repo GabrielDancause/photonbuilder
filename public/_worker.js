@@ -48,6 +48,49 @@ export default {
 
     const site = SITE_MAP[host];
 
+    // For photonbuilder.com: check if path starts with a sub-site folder
+    if (!site && (host === 'photonbuilder.com' || host === 'www.photonbuilder.com')) {
+      const SUB_SITES = ['bodycount','sendnerds','justonemoment','getthebag',
+                         'fixitwithducttape','papyruspeople','eeniemeenie','pleasestartplease'];
+      const firstSegment = url.pathname.split('/')[1];
+      if (SUB_SITES.includes(firstSegment)) {
+        // Rewrite /bodycount/foo → /sites/bodycount/foo
+        const subPath = url.pathname.slice(firstSegment.length + 1) || '/';
+        const base = `/sites/${firstSegment}`;
+        let assetPath;
+        if (subPath === '/' || subPath === '') {
+          assetPath = `${base}/index.html`;
+        } else if (subPath.endsWith('/')) {
+          assetPath = `${base}${subPath}index.html`;
+        } else {
+          assetPath = `${base}${subPath}`;
+        }
+        const resp = await env.ASSETS.fetch(new URL(assetPath, url.origin).toString());
+        if (resp.ok) {
+          const headers = new Headers(resp.headers);
+          const mime = getMimeType(assetPath);
+          if (mime) headers.set('Content-Type', mime);
+          headers.set('Cache-Control', 'public, max-age=0, must-revalidate');
+          return new Response(resp.body, { status: resp.status, headers });
+        }
+        // Try .html and /index.html
+        if (!subPath.includes('.')) {
+          for (const suffix of ['.html', '/index.html']) {
+            const tryPath = `${base}${subPath}${suffix}`;
+            const tryResp = await env.ASSETS.fetch(new URL(tryPath, url.origin).toString());
+            if (tryResp.ok) {
+              const headers = new Headers(tryResp.headers);
+              headers.set('Content-Type', 'text/html; charset=utf-8');
+              headers.set('Cache-Control', 'public, max-age=0, must-revalidate');
+              return new Response(tryResp.body, { status: tryResp.status, headers });
+            }
+          }
+        }
+      }
+      // Not a sub-site path, serve from root assets (photonbuilder.com homepage etc.)
+      return env.ASSETS.fetch(request);
+    }
+
     if (!site) {
       return env.ASSETS.fetch(request);
     }
@@ -118,6 +161,14 @@ export default {
       }
     }
 
+    // Serve 404 page
+    const notFoundResp = await env.ASSETS.fetch(new URL('/404.html', url.origin).toString());
+    if (notFoundResp.ok) {
+      return new Response(notFoundResp.body, {
+        status: 404,
+        headers: { 'Content-Type': 'text/html; charset=utf-8' },
+      });
+    }
     return new Response('Not Found', { status: 404 });
   }
 };
