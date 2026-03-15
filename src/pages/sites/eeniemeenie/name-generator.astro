@@ -1,0 +1,301 @@
+---
+import SiteLayout from '../../../layouts/SiteLayout.astro';
+export const meta = { title: 'Random Name Generator', description: 'Writing a story, filling a database, or just curious? Generate realistic names with perfectly tailored combinations.', category: 'tools', published: '2026-03-15' };
+const SITE_ID = 'eeniemeenie';
+---
+<SiteLayout title={meta.title} description={meta.description} site={SITE_ID}>
+<style is:inline>
+
+  .page-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+  }
+  .hero {
+    text-align: center;
+    padding: 4rem 1.5rem 2rem;
+    width: 100%;
+  }
+  .hero h1 {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    color: var(--accent-color);
+  }
+  .hero p {
+    font-size: 1.1rem;
+    color: var(--text-secondary);
+    max-width: 600px;
+    margin: 0 auto;
+  }
+  .filters-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+  }
+  .form-select {
+    width: 100%;
+    background-color: var(--bg-color);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    font-family: var(--font-body);
+    font-size: 1rem;
+    padding: 0.75rem 1rem;
+    border-radius: 8px;
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23a090b8' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 1rem center;
+    background-size: 1em;
+  }
+  .form-select:focus {
+    outline: none;
+    border-color: var(--accent-color);
+  }
+  .btn-primary {
+    display: block;
+    width: 100%;
+    padding: 1rem;
+    background-color: var(--accent-color);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 1.1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.1s;
+  }
+  .btn-primary:hover {
+    opacity: 0.9;
+  }
+  .btn-primary:active {
+    transform: scale(0.98);
+  }
+  .result-area {
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border-color);
+  }
+  .result-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+  }
+  .result-count {
+    color: var(--text-secondary);
+    font-size: 0.95rem;
+    font-weight: 500;
+  }
+  .btn-icon {
+    background: transparent;
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    padding: 0.4rem 0.8rem;
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    transition: color 0.2s, border-color 0.2s;
+  }
+  .btn-icon:hover {
+    color: var(--accent-color);
+    border-color: var(--accent-color);
+  }
+  .name-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1rem;
+  }
+  .name-list li {
+    background-color: var(--bg-color);
+    border: 1px solid var(--border-color);
+    padding: 1rem;
+    border-radius: 8px;
+    color: var(--text-primary);
+    font-size: 1.1rem;
+    font-weight: 500;
+    text-align: center;
+    transition: transform 0.2s;
+  }
+  .name-list li:hover {
+    border-color: var(--accent-color);
+    transform: translateY(-2px);
+  }
+
+</style>
+<div class="page-content">
+
+<div class="hero">
+  <h1>Random Name Generator</h1>
+  <p>Generate thousands of realistic, high-quality name combinations.</p>
+</div>
+
+<div class="container">
+  <div class="calculator-card">
+    <div class="filters-grid">
+      <div class="input-group">
+        <label for="name-gender">Gender</label>
+        <div class="select-wrapper">
+          <select id="name-gender" class="form-select">
+            <option value="any">Any Gender</option>
+            <option value="female">Female</option>
+            <option value="male">Male</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="input-group">
+        <label for="name-type">Name Type</label>
+        <div class="select-wrapper">
+          <select id="name-type" class="form-select">
+            <option value="full">Full Name</option>
+            <option value="first">First Name Only</option>
+            <option value="last">Last Name Only</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="input-group">
+        <label for="name-qty">Quantity</label>
+        <div class="input-wrapper">
+          <input type="number" id="name-qty" value="10" min="1" max="20">
+        </div>
+      </div>
+    </div>
+
+    <button id="btn-generate" class="btn-primary">Generate Names</button>
+
+    <div class="result-area" style="display: none;" id="result-container">
+      <div class="result-header">
+        <span class="result-count" id="result-count">10 Names Generated</span>
+        <button id="btn-copy" class="btn-icon">Copy All</button>
+      </div>
+      <ul id="name-results" class="name-list"></ul>
+    </div>
+  </div>
+</div>
+
+</div>
+<script is:inline>
+
+  document.addEventListener('DOMContentLoaded', () => {
+    const genderSelect = document.getElementById('name-gender');
+    const typeSelect = document.getElementById('name-type');
+    const qtyInput = document.getElementById('name-qty');
+    const btnGenerate = document.getElementById('btn-generate');
+    const btnCopy = document.getElementById('btn-copy');
+    const resultContainer = document.getElementById('result-container');
+    const resultCount = document.getElementById('result-count');
+    const nameList = document.getElementById('name-results');
+
+    // Over 200 hardcoded names
+    const names = {
+      female: [
+        "Emma", "Olivia", "Ava", "Isabella", "Sophia", "Mia", "Amelia", "Harper", "Evelyn", "Abigail",
+        "Emily", "Elizabeth", "Mila", "Ella", "Avery", "Sofia", "Camila", "Aria", "Scarlett", "Victoria",
+        "Madison", "Luna", "Grace", "Chloe", "Penelope", "Layla", "Riley", "Zoey", "Nora", "Lily",
+        "Eleanor", "Hannah", "Lillian", "Addison", "Aubrey", "Ellie", "Stella", "Natalie", "Zoe", "Leah",
+        "Hazel", "Violet", "Aurora", "Savannah", "Audrey", "Brooklyn", "Bella", "Claire", "Skylar", "Lucy",
+        "Paisley", "Everly", "Anna", "Caroline", "Nova", "Genesis", "Emilia", "Kennedy", "Samantha", "Maya",
+        "Willow", "Kinsley", "Naomi", "Aaliyah", "Elena", "Sarah", "Ariana", "Allison", "Gabriella", "Alice",
+        "Madelyn", "Cora", "Ruby", "Eva", "Serenity", "Autumn", "Adeline", "Hailey", "Gianna", "Valentina",
+        "Isla", "Eliana", "Quinn", "Nevaeh", "Ivy", "Sadie", "Piper", "Lydia", "Alexa", "Josephine",
+        "Emery", "Julia", "Delilah", "Arianna", "Vivian", "Kaylee", "Sophie", "Brielle", "Madeline", "Peyton"
+      ],
+      male: [
+        "Liam", "Noah", "William", "James", "Oliver", "Benjamin", "Elijah", "Lucas", "Mason", "Logan",
+        "Alexander", "Ethan", "Jacob", "Michael", "Daniel", "Henry", "Jackson", "Sebastian", "Aiden", "Matthew",
+        "Samuel", "David", "Joseph", "Carter", "Owen", "Wyatt", "John", "Jack", "Luke", "Jayden",
+        "Dylan", "Grayson", "Levi", "Isaac", "Gabriel", "Julian", "Mateo", "Anthony", "Jaxon", "Lincoln",
+        "Joshua", "Christopher", "Andrew", "Theodore", "Caleb", "Ryan", "Asher", "Nathan", "Thomas", "Leo",
+        "Isaiah", "Charles", "Josiah", "Hudson", "Christian", "Hunter", "Connor", "Eli", "Ezra", "Aaron",
+        "Landon", "Adrian", "Jonathan", "Nolan", "Jeremiah", "Easton", "Elias", "Colton", "Cameron", "Carson",
+        "Robert", "Angel", "Maverick", "Nicholas", "Dominic", "Jaxson", "Greyson", "Adam", "Ian", "Austin",
+        "Santiago", "Jordan", "Cooper", "Brayden", "Roman", "Evan", "Ezekiel", "Xavier", "Jose", "Jace",
+        "Jameson", "Leonardo", "Bryson", "Axel", "Everett", "Parker", "Kayden", "Miles", "Sawyer", "Jason"
+      ],
+      last: [
+        "Smith", "Johnson", "Williams", "Brown", "Jones", "Garcia", "Miller", "Davis", "Rodriguez", "Martinez",
+        "Hernandez", "Lopez", "Gonzalez", "Wilson", "Anderson", "Thomas", "Taylor", "Moore", "Jackson", "Martin",
+        "Lee", "Perez", "Thompson", "White", "Harris", "Sanchez", "Clark", "Ramirez", "Lewis", "Robinson",
+        "Walker", "Young", "Allen", "King", "Wright", "Scott", "Torres", "Nguyen", "Hill", "Flores",
+        "Green", "Adams", "Nelson", "Baker", "Hall", "Rivera", "Campbell", "Mitchell", "Carter", "Roberts",
+        "Gomez", "Phillips", "Evans", "Turner", "Diaz", "Parker", "Cruz", "Edwards", "Collins", "Reyes",
+        "Stewart", "Morris", "Morales", "Murphy", "Cook", "Rogers", "Gutierrez", "Ortiz", "Morgan", "Cooper",
+        "Peterson", "Bailey", "Reed", "Kelly", "Howard", "Ramos", "Kim", "Cox", "Ward", "Richardson",
+        "Watson", "Brooks", "Chavez", "Wood", "James", "Bennett", "Gray", "Mendoza", "Ruiz", "Hughes",
+        "Price", "Alvarez", "Castillo", "Sanders", "Patel", "Myers", "Long", "Ross", "Foster", "Jimenez"
+      ]
+    };
+
+    function getRandomItem(arr) {
+      return arr[Math.floor(Math.random() * arr.length)];
+    }
+
+    function generate() {
+      const gender = genderSelect.value;
+      const type = typeSelect.value;
+      let qty = parseInt(qtyInput.value, 10);
+
+      if (isNaN(qty) || qty < 1) qty = 1;
+      if (qty > 20) qty = 20;
+      qtyInput.value = qty;
+
+      const results = [];
+
+      for (let i = 0; i < qty; i++) {
+        let firstPool = [];
+        if (gender === 'female') {
+          firstPool = names.female;
+        } else if (gender === 'male') {
+          firstPool = names.male;
+        } else {
+          firstPool = [...names.female, ...names.male];
+        }
+
+        let resultName = "";
+
+        if (type === 'first') {
+          resultName = getRandomItem(firstPool);
+        } else if (type === 'last') {
+          resultName = getRandomItem(names.last);
+        } else {
+          // Full name
+          const firstName = getRandomItem(firstPool);
+          const lastName = getRandomItem(names.last);
+          resultName = `${firstName} ${lastName}`;
+        }
+
+        results.push(resultName);
+      }
+
+      // Update UI
+      resultCount.textContent = `${qty} Name${qty !== 1 ? 's' : ''} Generated`;
+      nameList.innerHTML = results.map(name => `<li>${name}</li>`).join('');
+      resultContainer.style.display = 'block';
+    }
+
+    btnGenerate.addEventListener('click', generate);
+
+    btnCopy.addEventListener('click', () => {
+      const listItems = nameList.querySelectorAll('li');
+      const textToCopy = Array.from(listItems).map(li => li.textContent).join('\n');
+
+      if (!textToCopy) return;
+
+      navigator.clipboard.writeText(textToCopy).then(() => {
+        const originalText = btnCopy.textContent;
+        btnCopy.textContent = 'Copied!';
+        setTimeout(() => {
+          btnCopy.textContent = originalText;
+        }, 2000);
+      });
+    });
+  });
+
+</script>
+</SiteLayout>
