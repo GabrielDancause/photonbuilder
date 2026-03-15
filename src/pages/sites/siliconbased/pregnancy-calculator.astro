@@ -1,0 +1,386 @@
+---
+import SiteLayout from "../../../layouts/SiteLayout.astro";
+
+export const meta = {
+  title: "Pregnancy Calculator & Growth Tracker",
+  description: "Calculate your estimated due date, current gestational age, and track fetal growth milestones based on your last menstrual period.",
+  category: "tool",
+  published: "2026-03-15",
+};
+
+const schema = [
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": "Pregnancy Calculator & Growth Tracker",
+    "description": "Interactive pregnancy calculator to determine estimated due date, gestational age, and key pregnancy milestones.",
+    "author": {
+      "@type": "Organization",
+      "name": "SiliconBased"
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "SiliconBased"
+    },
+    "datePublished": "2026-03-15"
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "How does a pregnancy calculator estimate my due date?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Most pregnancy calculators, including ours, use Naegele's rule. This standard medical formula estimates the due date by adding 280 days (40 weeks) to the first day of your last menstrual period (LMP). It assumes a standard 28-day cycle, but can be adjusted for shorter or longer cycles."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Why is my gestational age longer than the time I've been pregnant?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Medical professionals calculate pregnancy from the first day of your last menstrual period, not the date of conception. This means that for the first two weeks of your \"pregnancy,\" you aren't actually pregnant yet. This standardizes the counting process since conception dates are often difficult to pinpoint."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How accurate are estimated due dates?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Estimated due dates are just that—estimates. Only about 4% to 5% of babies are born exactly on their due date. A normal, full-term pregnancy can last anywhere from 37 to 42 weeks, making the due date more of a central target within a multi-week delivery window."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Can I calculate my due date if I have irregular cycles?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes, but standard LMP calculations might be less accurate. If your cycles are consistently longer or shorter than 28 days, calculators can adjust the date by adding or subtracting days. However, an early ultrasound is typically the most accurate way to date a pregnancy if your cycles are highly irregular."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "When does the second and third trimester start?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "The first trimester lasts from week 1 through the end of week 13. The second trimester begins at week 14 and goes through the end of week 27. The third trimester starts at week 28 and continues until you deliver your baby."
+        }
+      }
+    ]
+  }
+];
+---
+
+<SiteLayout site="siliconbased" title="Pregnancy Calculator & Growth Tracker" description="Calculate your estimated due date, current gestational age, and track fetal growth milestones based on your last menstrual period." canonical="https://siliconbased.dev/pregnancy-calculator" schema={schema}>
+  <div class="page-content">
+    <div class="hero">
+      <h1>Pregnancy Calculator & Growth Tracker</h1>
+      <p class="subtitle">Calculate your estimated due date, current gestational age, and key milestones</p>
+    </div>
+
+    <div class="calculator-container">
+      <div style="display: grid; gap: 1.5rem; margin-bottom: 1.5rem;">
+        <div>
+          <label for="lmpDate" style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: var(--text-primary);">First day of Last Menstrual Period (LMP)</label>
+          <input type="date" id="lmpDate" name="lmpDate" required />
+          <div id="lmpError" style="color: #ef4444; font-size: 0.875rem; margin-top: 0.5rem; display: none;">Please select a valid past date within the last 40 weeks.</div>
+        </div>
+        <div>
+          <label for="cycleLength" style="display: block; font-weight: 600; margin-bottom: 0.5rem; color: var(--text-primary);">Average Cycle Length (Days)</label>
+          <input type="number" id="cycleLength" name="cycleLength" value="28" min="20" max="45" />
+          <div id="cycleError" style="color: #ef4444; font-size: 0.875rem; margin-top: 0.5rem; display: none;">Cycle length must be between 20 and 45 days.</div>
+        </div>
+      </div>
+
+      <div id="resultsArea" style="display: none;">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+          <div class="result-card">
+            <div style="font-weight: 600; margin-bottom: 0.5rem; color: var(--text-secondary);">Estimated Due Date</div>
+            <div class="result-value" id="eddResult">--</div>
+            <div style="font-size: 0.875rem; margin-top: 0.5rem; color: var(--text-secondary);" id="countdownResult">--</div>
+          </div>
+          <div class="result-card">
+            <div style="font-weight: 600; margin-bottom: 0.5rem; color: var(--text-secondary);">Gestational Age</div>
+            <div class="result-value" id="gaResult">--</div>
+            <div style="font-size: 0.875rem; margin-top: 0.5rem; color: var(--text-secondary);" id="trimesterResult">--</div>
+          </div>
+        </div>
+
+        <div style="margin-top: 2rem; background: var(--bg-color); padding: 1.5rem; border-radius: 8px; border: 1px solid var(--border-color);">
+            <h3 style="margin-top: 0; margin-bottom: 1rem; color: var(--text-primary);">Pregnancy Milestones</h3>
+            <div style="display: grid; gap: 0.75rem;">
+                <div style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
+                    <span style="color: var(--text-secondary);">Conception (Est.):</span>
+                    <strong id="conceptionDate" style="color: var(--text-primary);">--</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
+                    <span style="color: var(--text-secondary);">End of 1st Trimester (Week 13):</span>
+                    <strong id="tri1Date" style="color: var(--text-primary);">--</strong>
+                </div>
+                <div style="display: flex; justify-content: space-between; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem;">
+                    <span style="color: var(--text-secondary);">End of 2nd Trimester (Week 27):</span>
+                    <strong id="tri2Date" style="color: var(--text-primary);">--</strong>
+                </div>
+                 <div style="display: flex; justify-content: space-between;">
+                    <span style="color: var(--text-secondary);">Full Term (Week 37):</span>
+                    <strong id="fullTermDate" style="color: var(--text-primary);">--</strong>
+                </div>
+            </div>
+        </div>
+      </div>
+
+      <div id="initialState" style="text-align: center; padding: 2rem; color: var(--text-secondary);">
+        Please select your Last Menstrual Period date to calculate your pregnancy timeline.
+      </div>
+    </div>
+
+    <div class="explainer">
+      <h2>How the Pregnancy Calculator Works</h2>
+
+      <p>Building an accurate pregnancy calculator requires translating complex biological timelines into standardized medical mathematics. Unlike a simple date addition script, calculating gestational age and due dates involves accounting for varying cycle lengths, leap years, and the clinical convention of counting weeks prior to actual conception.</p>
+
+      <h3>The Mathematics of Gestation: Naegele's Rule</h3>
+
+      <p>The foundation of this calculator is <strong>Naegele's rule</strong>, named after the 19th-century German obstetrician Franz Karl Naegele. This standard medical formula estimates the Expected Date of Delivery (EDD) by adding 280 days (exactly 40 weeks) to the first day of the Last Menstrual Period (LMP).</p>
+
+      <p>The classic formula assumes a textbook 28-day menstrual cycle where ovulation occurs precisely on day 14. In programming terms, the baseline calculation is remarkably straightforward:</p>
+
+      <pre style="background: var(--bg-color); padding: 1rem; border-radius: 8px; border: 1px solid var(--border-color); overflow-x: auto;"><code style="font-family: monospace;">const EDD = new Date(LMP.getTime() + (280 * 24 * 60 * 60 * 1000));</code></pre>
+
+      <p>However, biology is rarely so precise. Many individuals have cycle lengths ranging from 21 to 35 days or more. Because the luteal phase (the time from ovulation to the start of the next period) is relatively constant at 14 days, a longer cycle means ovulation occurred later, and a shorter cycle means ovulation occurred earlier.</p>
+
+      <p>To provide a more clinically accurate result, our calculator dynamically adjusts the 280-day baseline based on the provided cycle length. If a cycle is 30 days long (2 days longer than the 28-day standard), the calculator adds an additional 2 days to the EDD. Conversely, for a 26-day cycle, it subtracts 2 days.</p>
+
+      <p>The adjusted formula becomes:</p>
+
+      <pre style="background: var(--bg-color); padding: 1rem; border-radius: 8px; border: 1px solid var(--border-color); overflow-x: auto;"><code style="font-family: monospace;">const adjustedDays = 280 + (cycleLength - 28);
+const EDD = new Date(LMP.getTime() + (adjustedDays * 24 * 60 * 60 * 1000));</code></pre>
+
+      <h3>Calculating Gestational Age</h3>
+
+      <p>One of the most confusing aspects of pregnancy tracking is the concept of <strong>Gestational Age (GA)</strong>. Clinically, pregnancy is measured from the LMP, not the date of conception. This means that at the exact moment of conception (roughly ovulation), a person is already considered "2 weeks pregnant."</p>
+
+      <p>To calculate the current gestational age in real-time, the application computes the precise difference in milliseconds between the user's LMP date and the current system date, then converts that span into weeks and days. This calculation must account for Daylight Saving Time transitions and timezone offsets to ensure the day count remains perfectly accurate regardless of the user's geographic location.</p>
+
+      <p>If you need to analyze how gestational growth metrics change over time, you can cross-reference specific fetal weight estimates against expected baselines using our <a href="/percent-calculator" style="color: var(--accent-color); text-decoration: underline;">percent calculator</a> to determine if growth is tracking within normal percentile ranges.</p>
+
+      <h3>Defining the Trimesters</h3>
+
+      <p>Translating a continuous 40-week timeline into discrete trimesters requires strict mathematical boundaries. While lay definitions sometimes vary, clinical tracking systems define the trimesters as follows:</p>
+
+      <ul>
+        <li style="margin-bottom: 0.5rem;"><strong>First Trimester:</strong> Weeks 1 through 13 (up to 13 weeks and 6 days)</li>
+        <li style="margin-bottom: 0.5rem;"><strong>Second Trimester:</strong> Weeks 14 through 27 (up to 27 weeks and 6 days)</li>
+        <li style="margin-bottom: 0.5rem;"><strong>Third Trimester:</strong> Week 28 through delivery</li>
+      </ul>
+
+      <p>Our calculator dynamically determines the current trimester by assessing the calculated gestational age against these week-based thresholds. It also projects future milestone dates by adding the corresponding number of weeks (e.g., 13 weeks or 27 weeks) to the original LMP date, allowing users to plan ahead for crucial medical appointments, anatomical scans, and viability milestones.</p>
+
+      <h3>Data Privacy and Client-Side Processing</h3>
+
+      <p>Given the sensitive nature of health and medical data, this calculator is designed with a strict client-side architecture. When you input your LMP and cycle data, all mathematical processing occurs entirely within your local browser instance. No data is transmitted to external servers, stored in databases, or tracked via analytical payloads.</p>
+
+      <p>This approach not only ensures complete user privacy but also provides instantaneous, zero-latency updates to the results matrix the moment an input field is modified. The real-time DOM updates are handled via lightweight JavaScript event listeners bound directly to the input elements, bypassing the need for form submissions or page reloads.</p>
+
+      <h3>Limitations of Algorithm-Based Dating</h3>
+
+      <p>While algorithmic calculations provide an excellent baseline, they represent a statistical estimate rather than an absolute biological certainty. The accuracy of the LMP method relies heavily on regular cycles and accurate date recall. In modern obstetric practice, algorithmic dating is frequently cross-referenced with early transvaginal or abdominal ultrasounds.</p>
+
+      <p>First-trimester ultrasounds measure the Crown-Rump Length (CRL) of the fetus. Because fetal growth rates are highly uniform during the first 12 weeks, ultrasound measurements during this window can pinpoint gestational age to within 3-5 days. If a significant discrepancy exists between the LMP-calculated date and the ultrasound measurements, medical professionals will typically adjust the official Estimated Due Date to align with the sonographic data.</p>
+    </div>
+
+    <section class="faq-section">
+      <h2>Frequently Asked Questions</h2>
+      <details>
+        <summary>How does a pregnancy calculator estimate my due date?</summary>
+        <p>Most pregnancy calculators, including ours, use Naegele's rule. This standard medical formula estimates the due date by adding 280 days (40 weeks) to the first day of your last menstrual period (LMP). It assumes a standard 28-day cycle, but can be adjusted for shorter or longer cycles.</p>
+      </details>
+      <details>
+        <summary>Why is my gestational age longer than the time I've been pregnant?</summary>
+        <p>Medical professionals calculate pregnancy from the first day of your last menstrual period, not the date of conception. This means that for the first two weeks of your "pregnancy," you aren't actually pregnant yet. This standardizes the counting process since conception dates are often difficult to pinpoint.</p>
+      </details>
+      <details>
+        <summary>How accurate are estimated due dates?</summary>
+        <p>Estimated due dates are just that—estimates. Only about 4% to 5% of babies are born exactly on their due date. A normal, full-term pregnancy can last anywhere from 37 to 42 weeks, making the due date more of a central target within a multi-week delivery window.</p>
+      </details>
+      <details>
+        <summary>Can I calculate my due date if I have irregular cycles?</summary>
+        <p>Yes, but standard LMP calculations might be less accurate. If your cycles are consistently longer or shorter than 28 days, calculators can adjust the date by adding or subtracting days. However, an early ultrasound is typically the most accurate way to date a pregnancy if your cycles are highly irregular.</p>
+      </details>
+      <details>
+        <summary>When does the second and third trimester start?</summary>
+        <p>The first trimester lasts from week 1 through the end of week 13. The second trimester begins at week 14 and goes through the end of week 27. The third trimester starts at week 28 and continues until you deliver your baby.</p>
+      </details>
+    </section>
+  </div>
+
+  <script is:inline>
+    document.addEventListener('DOMContentLoaded', () => {
+      const lmpDateInput = document.getElementById('lmpDate');
+      const cycleLengthInput = document.getElementById('cycleLength');
+
+      const lmpError = document.getElementById('lmpError');
+      const cycleError = document.getElementById('cycleError');
+
+      const resultsArea = document.getElementById('resultsArea');
+      const initialState = document.getElementById('initialState');
+
+      const eddResult = document.getElementById('eddResult');
+      const countdownResult = document.getElementById('countdownResult');
+      const gaResult = document.getElementById('gaResult');
+      const trimesterResult = document.getElementById('trimesterResult');
+
+      const conceptionDate = document.getElementById('conceptionDate');
+      const tri1Date = document.getElementById('tri1Date');
+      const tri2Date = document.getElementById('tri2Date');
+      const fullTermDate = document.getElementById('fullTermDate');
+
+      // Set max date to today
+      const today = new Date();
+      const localToday = new Date(today.getTime() - (today.getTimezoneOffset() * 60000)).toISOString().split('T')[0];
+      lmpDateInput.max = localToday;
+
+      function calculatePregnancy() {
+        // Reset errors
+        lmpError.style.display = 'none';
+        cycleError.style.display = 'none';
+        lmpDateInput.style.borderColor = '';
+        cycleLengthInput.style.borderColor = '';
+
+        const lmpVal = lmpDateInput.value;
+        const cycleVal = parseInt(cycleLengthInput.value, 10);
+
+        if (!lmpVal) {
+          resultsArea.style.display = 'none';
+          initialState.style.display = 'block';
+          return;
+        }
+
+        // Validate cycle length
+        if (isNaN(cycleVal) || cycleVal < 20 || cycleVal > 45) {
+          cycleError.style.display = 'block';
+          cycleLengthInput.style.borderColor = '#ef4444';
+          resultsArea.style.display = 'none';
+          initialState.style.display = 'block';
+          return;
+        }
+
+        // Parse LMP date assuming local timezone to prevent off-by-one errors
+        const parts = lmpVal.split('-');
+        const lmpDate = new Date(parts[0], parts[1] - 1, parts[2]);
+        const currentDate = new Date();
+        currentDate.setHours(0, 0, 0, 0);
+
+        // Validate LMP is in the past and not too far back (e.g. 44 weeks limit for safety)
+        const msDiff = currentDate.getTime() - lmpDate.getTime();
+        const daysSinceLmp = Math.floor(msDiff / (1000 * 60 * 60 * 24));
+
+        if (daysSinceLmp < 0 || daysSinceLmp > 308) { // 308 days = 44 weeks
+          lmpError.style.display = 'block';
+          lmpDateInput.style.borderColor = '#ef4444';
+          resultsArea.style.display = 'none';
+          initialState.style.display = 'block';
+          return;
+        }
+
+        resultsArea.style.display = 'block';
+        initialState.style.display = 'none';
+
+        // Core Calculations - Using setDate to avoid DST off-by-one errors
+        const adjustedDaysForEDD = 280 + (cycleVal - 28);
+        const edd = new Date(lmpDate);
+        edd.setDate(edd.getDate() + adjustedDaysForEDD);
+
+        // Format options for dates
+        const dateOptions = { weekday: 'short', year: 'numeric', month: 'short', day: 'numeric' };
+
+        // 1. EDD
+        eddResult.textContent = edd.toLocaleDateString(undefined, dateOptions);
+
+        // 2. Countdown
+        const daysToEDD = Math.round((edd.getTime() - currentDate.getTime()) / (1000 * 60 * 60 * 24));
+        if (daysToEDD > 0) {
+            countdownResult.textContent = `${daysToEDD} days remaining`;
+        } else if (daysToEDD === 0) {
+            countdownResult.textContent = "Due today!";
+        } else {
+            countdownResult.textContent = `${Math.abs(daysToEDD)} days past due date`;
+        }
+
+        // 3. Gestational Age (Round instead of floor to handle DST shifts cleanly if daysSinceLmp was a float)
+        const roundedDaysSinceLmp = Math.round(daysSinceLmp);
+        const currentWeeks = Math.floor(roundedDaysSinceLmp / 7);
+        const currentDays = roundedDaysSinceLmp % 7;
+
+        if (currentWeeks === 0 && currentDays === 0) {
+             gaResult.textContent = "0 weeks, 0 days";
+        } else {
+             gaResult.textContent = `${currentWeeks} weeks, ${currentDays} days`;
+        }
+
+        // 4. Trimester
+        let trimesterText = "";
+        if (currentWeeks < 14) {
+          trimesterText = "First Trimester";
+        } else if (currentWeeks < 28) {
+          trimesterText = "Second Trimester";
+        } else {
+          trimesterText = "Third Trimester";
+        }
+        trimesterResult.textContent = trimesterText;
+
+        // 5. Milestones
+        // Conception (approx 14 days + cycle adjustment after LMP)
+        const conceptionAdjustment = 14 + (cycleVal - 28);
+        const estConception = new Date(lmpDate);
+        estConception.setDate(estConception.getDate() + conceptionAdjustment);
+        conceptionDate.textContent = estConception.toLocaleDateString(undefined, dateOptions);
+
+        // End of 1st Tri (13 weeks = 91 days)
+        const tri1End = new Date(lmpDate);
+        tri1End.setDate(tri1End.getDate() + 91);
+        tri1Date.textContent = tri1End.toLocaleDateString(undefined, dateOptions);
+
+        // End of 2nd Tri (27 weeks = 189 days)
+        const tri2End = new Date(lmpDate);
+        tri2End.setDate(tri2End.getDate() + 189);
+        tri2Date.textContent = tri2End.toLocaleDateString(undefined, dateOptions);
+
+        // Full Term (37 weeks = 259 days)
+        const fullTerm = new Date(lmpDate);
+        fullTerm.setDate(fullTerm.getDate() + 259);
+        fullTermDate.textContent = fullTerm.toLocaleDateString(undefined, dateOptions);
+      }
+
+      lmpDateInput.addEventListener('change', calculatePregnancy);
+      cycleLengthInput.addEventListener('input', calculatePregnancy);
+    });
+  </script>
+  <style is:inline>
+    .page-content { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem; }
+    .hero { text-align: center; padding: 3rem 0 2rem; }
+    .hero h1 { font-size: 2.2rem; font-weight: 800; margin-bottom: 0.5rem; }
+    .subtitle { color: var(--text-secondary); font-size: 1.1rem; }
+    .calculator-container { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 2rem; margin: 2rem 0; }
+    input, select { background: var(--bg-color); color: var(--text-primary); border: 1px solid var(--border-color); padding: 0.75rem 1rem; border-radius: 8px; width: 100%; font-size: 1rem; box-sizing: border-box; }
+    input:focus, select:focus { outline: none; border-color: var(--accent-color); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-color) 20%, transparent); }
+    button { background: var(--accent-color); color: white; border: none; padding: 0.75rem 2rem; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 1rem; }
+    button:hover { opacity: 0.9; }
+    .result-card { background: color-mix(in srgb, var(--accent-color) 10%, transparent); border: 1px solid var(--accent-color); border-radius: 12px; padding: 1.5rem; text-align: center; }
+    .result-value { font-size: 2rem; font-weight: 800; color: var(--accent-color); line-height: 1.2; }
+
+    .explainer { line-height: 1.7; margin-top: 3rem; }
+    .explainer h2 { font-size: 1.8rem; margin-top: 2rem; margin-bottom: 1rem; }
+    .explainer h3 { font-size: 1.4rem; margin-top: 1.5rem; margin-bottom: 0.75rem; }
+    .explainer p { margin-bottom: 1rem; color: var(--text-secondary); }
+    .explainer ul { margin-bottom: 1rem; padding-left: 1.5rem; color: var(--text-secondary); }
+
+    .faq-section { margin-top: 3rem; }
+    .faq-section h2 { font-size: 1.8rem; margin-bottom: 1.5rem; }
+    .faq-section details { margin: 1rem 0; padding: 1rem; background: var(--card-bg); border-radius: 8px; border: 1px solid var(--border-color); }
+    .faq-section summary { font-weight: 600; cursor: pointer; font-size: 1.1rem; }
+    .faq-section p { margin-top: 1rem; margin-bottom: 0; color: var(--text-secondary); line-height: 1.6; }
+  </style>
+</SiteLayout>
