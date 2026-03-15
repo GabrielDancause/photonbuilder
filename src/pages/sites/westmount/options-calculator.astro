@@ -1,0 +1,370 @@
+---
+import SiteLayout from "../../../layouts/SiteLayout.astro";
+
+export const meta = {
+  title: "Options Profit Calculator",
+  description: "Calculate your potential profit, loss, and break-even points for options trades. What happens if the stock price moves?",
+  category: "tool",
+  published: "2026-03-15",
+};
+
+const schema = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "How is option profit calculated?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Option profit is calculated by taking the difference between the underlying stock price and the strike price at expiration, then multiplying by 100 per contract, and subtracting the premium paid (for buyers) or adding the premium received (for sellers)."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What is the break-even point for a call option?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "For a call option buyer, the break-even point is the strike price plus the premium paid for the option."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What is the break-even point for a put option?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "For a put option buyer, the break-even point is the strike price minus the premium paid for the option."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Can you lose more than you invest in options?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "If you are buying options (long call or long put), your maximum loss is strictly limited to the premium you paid. If you are selling (writing) options without holding the underlying asset, your potential losses can be substantial and, theoretically, unlimited for naked calls."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Why do options have 100 shares per contract?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Standard equity options in the US markets represent 100 shares of the underlying stock. This standard size provides liquidity and consistency across the options market."
+          }
+        }
+      ]
+    },
+    {
+      "@type": "Article",
+      "headline": meta.title,
+      "description": meta.description,
+      "author": {
+        "@type": "Organization",
+        "name": "Westmount Fundamentals",
+        "url": "https://westmountfundamentals.com"
+      }
+    }
+  ]
+};
+---
+
+<SiteLayout site="westmount" title={meta.title} description={meta.description} canonical="https://westmountfundamentals.com/options-calculator" schema={schema}>
+  <div class="page-content">
+    <div class="hero">
+      <h1>{meta.title}</h1>
+      <p class="subtitle">Calculate potential profit, loss, and break-even points for call and put options</p>
+    </div>
+
+    <div class="calculator-container">
+      <div class="input-grid">
+        <div class="input-group">
+          <label for="option-type">Option Type</label>
+          <select id="option-type">
+            <option value="call">Call</option>
+            <option value="put">Put</option>
+          </select>
+        </div>
+        <div class="input-group">
+          <label for="action">Action</label>
+          <select id="action">
+            <option value="buy">Buy (Long)</option>
+            <option value="sell">Sell (Short)</option>
+          </select>
+        </div>
+        <div class="input-group">
+          <label for="strike-price">Strike Price ($)</label>
+          <input type="number" id="strike-price" value="100" min="0" step="0.5" />
+        </div>
+        <div class="input-group">
+          <label for="premium">Premium ($)</label>
+          <input type="number" id="premium" value="2.50" min="0" step="0.01" />
+        </div>
+        <div class="input-group">
+          <label for="contracts">Number of Contracts</label>
+          <input type="number" id="contracts" value="1" min="1" step="1" />
+        </div>
+        <div class="input-group">
+          <label for="current-price">Target Underlying Price ($)</label>
+          <input type="number" id="current-price" value="105" min="0" step="0.5" />
+        </div>
+      </div>
+
+      <div class="results-grid">
+        <div class="result-card">
+          <div class="result-label">Break-Even Price</div>
+          <div class="result-value" id="break-even">$102.50</div>
+        </div>
+        <div class="result-card">
+          <div class="result-label">Net Cost / Credit</div>
+          <div class="result-value" id="net-cost">-$250.00</div>
+        </div>
+        <div class="result-card primary-result">
+          <div class="result-label">Estimated Profit / Loss</div>
+          <div class="result-value" id="profit-loss">$250.00</div>
+        </div>
+      </div>
+
+      <div class="table-container">
+        <table id="payoff-table">
+          <thead>
+            <tr>
+              <th>Underlying Price at Expiration</th>
+              <th>Intrinsic Value per Share</th>
+              <th>Net Profit / Loss</th>
+            </tr>
+          </thead>
+          <tbody>
+            <!-- Populated by JS -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="explainer">
+      <h2>Understanding the Options Profit Calculator</h2>
+      <p>Trading options can be complex, involving variables like strike price, premium, and the difference between buying (long) and selling (short) positions. Our options profit calculator helps demystify these mechanics, allowing you to estimate potential profit, loss, and the all-important break-even point before executing a trade.</p>
+
+      <h3>How is Options Profit Calculated?</h3>
+      <p>To accurately calculate the profitability of an options trade at expiration, you need to determine the intrinsic value of the contract. The formula differs based on the type of option and whether you are buying or selling.</p>
+
+      <p>For a <strong>Long Call (Buying a Call)</strong>, you secure the right to buy the stock at the strike price. If the stock price rises above the strike price, the option gains intrinsic value. Your profit is calculated as:<br>
+      <code>Profit = (Underlying Price - Strike Price - Premium Paid) &times; 100 &times; Contracts</code><br>
+      If the underlying price is below the strike price at expiration, the option expires worthless, and your loss is limited to the premium paid.</p>
+
+      <p>For a <strong>Long Put (Buying a Put)</strong>, you secure the right to sell the stock at the strike price. The option gains value as the stock price falls below the strike price. The profit formula is:<br>
+      <code>Profit = (Strike Price - Underlying Price - Premium Paid) &times; 100 &times; Contracts</code><br>
+      Again, if the stock price is above the strike price, the maximum loss is the premium paid.</p>
+
+      <p>When <strong>Selling Options (Short Call or Short Put)</strong>, you collect the premium upfront (a credit). Your maximum profit is capped at the total premium received, assuming the option expires worthless. However, the risk is substantial—theoretically unlimited for short calls—if the stock moves against your position.</p>
+
+      <h3>Determining the Break-Even Point</h3>
+      <p>The break-even point is the exact underlying stock price at expiration where the trade yields neither a profit nor a loss. It is a critical metric for setting target prices.</p>
+      <ul>
+        <li><strong>Call Options (Buy or Sell):</strong> <code>Break-Even = Strike Price + Premium</code></li>
+        <li><strong>Put Options (Buy or Sell):</strong> <code>Break-Even = Strike Price - Premium</code></li>
+      </ul>
+
+      <h3>Intrinsic vs. Extrinsic Value</h3>
+      <p>The total premium of an option is comprised of intrinsic and extrinsic value. Intrinsic value is the tangible "in-the-money" portion. Extrinsic value (or time value) accounts for the time remaining until expiration and implied volatility. This calculator focuses on <strong>payoff at expiration</strong>, where extrinsic value decays to zero, leaving only intrinsic value to determine your net profit or loss. For a deeper dive into growing a portfolio through consistent cash flow rather than volatile price action, explore our <a href="/sites/westmount/drip-calculator">DRIP Calculator</a> to see the power of dividend reinvestment.</p>
+
+      <h3>The Role of "The Greeks"</h3>
+      <p>While this tool provides a clear view of your expiration payoff, options pricing before expiration is heavily influenced by "The Greeks"—Delta, Gamma, Theta, and Vega. Theta, for instance, measures time decay, meaning options lose extrinsic value every day they are held. Vega measures sensitivity to implied volatility. If you plan to close an options trade before expiration, the actual market value will deviate from the exact intrinsic payoff modeled here.</p>
+    </div>
+
+    <section class="faq-section">
+      <h2>Frequently Asked Questions</h2>
+      <details>
+        <summary>How is option profit calculated?</summary>
+        <p>Option profit is calculated by taking the difference between the underlying stock price and the strike price at expiration, then multiplying by 100 per contract, and subtracting the premium paid (for buyers) or adding the premium received (for sellers).</p>
+      </details>
+      <details>
+        <summary>What is the break-even point for a call option?</summary>
+        <p>For a call option, the break-even point is the strike price plus the premium. The underlying stock must rise above this point for a long call to be profitable.</p>
+      </details>
+      <details>
+        <summary>What is the break-even point for a put option?</summary>
+        <p>For a put option, the break-even point is the strike price minus the premium. The underlying stock must fall below this point for a long put to be profitable.</p>
+      </details>
+      <details>
+        <summary>Can you lose more than you invest in options?</summary>
+        <p>If you buy options, your maximum loss is strictly limited to the premium paid. If you sell options (writing naked calls or puts), your losses can be substantial and, in the case of short calls, theoretically unlimited.</p>
+      </details>
+      <details>
+        <summary>Why do options have 100 shares per contract?</summary>
+        <p>Standard equity options in the US markets represent a multiplier of 100 shares of the underlying stock. This provides standardized sizing, liquidity, and consistency across the exchange.</p>
+      </details>
+    </section>
+  </div>
+
+  <script is:inline>
+    document.addEventListener('DOMContentLoaded', () => {
+      const inputs = {
+        type: document.getElementById('option-type'),
+        action: document.getElementById('action'),
+        strike: document.getElementById('strike-price'),
+        premium: document.getElementById('premium'),
+        contracts: document.getElementById('contracts'),
+        current: document.getElementById('current-price')
+      };
+
+      const outputs = {
+        breakEven: document.getElementById('break-even'),
+        netCost: document.getElementById('net-cost'),
+        profitLoss: document.getElementById('profit-loss'),
+        resultCard: document.getElementById('profit-loss').parentElement,
+        tableBody: document.querySelector('#payoff-table tbody')
+      };
+
+      const formatCurrency = (val) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(val);
+
+      function calculate() {
+        // Parse inputs
+        const type = inputs.type.value; // 'call' or 'put'
+        const action = inputs.action.value; // 'buy' or 'sell'
+        const strike = parseFloat(inputs.strike.value) || 0;
+        const premium = parseFloat(inputs.premium.value) || 0;
+        const contracts = parseInt(inputs.contracts.value, 10) || 1;
+        const targetPrice = parseFloat(inputs.current.value) || 0;
+
+        const multiplier = 100 * contracts;
+
+        // Calculate Break-Even
+        let breakEvenPrice = 0;
+        if (type === 'call') {
+          breakEvenPrice = strike + premium;
+        } else {
+          breakEvenPrice = strike - premium;
+        }
+        outputs.breakEven.textContent = formatCurrency(breakEvenPrice);
+
+        // Calculate Net Cost/Credit
+        const netCostValue = premium * multiplier;
+        if (action === 'buy') {
+          outputs.netCost.textContent = `-${formatCurrency(netCostValue)}`;
+        } else {
+          outputs.netCost.textContent = `+${formatCurrency(netCostValue)}`;
+        }
+
+        // Calculate Target PnL
+        let intrinsicValue = 0;
+        if (type === 'call') {
+          intrinsicValue = Math.max(0, targetPrice - strike);
+        } else {
+          intrinsicValue = Math.max(0, strike - targetPrice);
+        }
+
+        let pnl = 0;
+        if (action === 'buy') {
+          pnl = (intrinsicValue - premium) * multiplier;
+        } else {
+          pnl = (premium - intrinsicValue) * multiplier;
+        }
+
+        outputs.profitLoss.textContent = formatCurrency(pnl);
+
+        // Update styling
+        if (pnl >= 0) {
+          outputs.resultCard.classList.remove('loss');
+        } else {
+          outputs.resultCard.classList.add('loss');
+        }
+
+        // Generate Payoff Table
+        generateTable(strike, type, action, premium, multiplier);
+      }
+
+      function generateTable(strike, type, action, premium, multiplier) {
+        outputs.tableBody.innerHTML = '';
+
+        const range = strike * 0.2; // 20% range
+        const step = range / 5;
+        const startPrice = Math.max(0, strike - range);
+
+        let prices = [];
+        for (let i = 0; i <= 10; i++) {
+          prices.push(startPrice + (step * i));
+        }
+
+        prices.forEach(price => {
+          let intrinsic = 0;
+          if (type === 'call') {
+            intrinsic = Math.max(0, price - strike);
+          } else {
+            intrinsic = Math.max(0, strike - price);
+          }
+
+          let pnl = 0;
+          if (action === 'buy') {
+            pnl = (intrinsic - premium) * multiplier;
+          } else {
+            pnl = (premium - intrinsic) * multiplier;
+          }
+
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td>${formatCurrency(price)}</td>
+            <td>${formatCurrency(intrinsic)}</td>
+            <td class="${pnl >= 0 ? 'positive' : 'negative'}">${pnl >= 0 ? '+' : ''}${formatCurrency(pnl)}</td>
+          `;
+          outputs.tableBody.appendChild(tr);
+        });
+      }
+
+      // Add event listeners to all inputs
+      Object.values(inputs).forEach(input => {
+        if (input) {
+          input.addEventListener('input', calculate);
+          input.addEventListener('change', calculate);
+        }
+      });
+
+      // Initial calculation
+      calculate();
+    });
+  </script>
+
+  <style is:inline>
+    .page-content { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem; }
+    .hero { text-align: center; padding: 3rem 0 2rem; }
+    .hero h1 { font-size: 2.2rem; font-weight: 800; margin-bottom: 0.5rem; }
+    .subtitle { color: var(--text-secondary); font-size: 1.1rem; }
+
+    .calculator-container { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 2rem; margin: 2rem 0; }
+    .input-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
+
+    input, select { background: var(--bg-color); color: var(--text-primary); border: 1px solid var(--border-color); padding: 0.75rem 1rem; border-radius: 8px; width: 100%; font-size: 1rem; }
+    input:focus, select:focus { outline: none; border-color: var(--accent-color); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-color) 20%, transparent); }
+
+    .results-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+    .result-card { background: color-mix(in srgb, var(--accent-color) 10%, transparent); border: 1px solid var(--accent-color); border-radius: 12px; padding: 1.5rem; text-align: center; }
+    .primary-result { background: color-mix(in srgb, #22c55e 10%, transparent); border-color: #22c55e; }
+    .primary-result.loss { background: color-mix(in srgb, #ef4444 10%, transparent); border-color: #ef4444; }
+    .primary-result .result-value { color: #22c55e; }
+    .primary-result.loss .result-value { color: #ef4444; }
+
+    .result-label { font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; }
+    .result-value { font-size: 2rem; font-weight: 800; color: var(--accent-color); }
+
+    .table-container { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; text-align: left; }
+    th, td { padding: 1rem; border-bottom: 1px solid var(--border-color); }
+    th { color: var(--text-secondary); font-weight: 600; font-size: 0.9rem; }
+    td { font-family: var(--font-mono, monospace); }
+    .positive { color: #22c55e; }
+    .negative { color: #ef4444; }
+
+    .explainer { margin-top: 3rem; line-height: 1.7; }
+    .explainer h2, .explainer h3 { color: var(--text-primary); margin-top: 2rem; margin-bottom: 1rem; }
+    .explainer p { margin-bottom: 1rem; color: var(--text-secondary); }
+    .explainer code { background: color-mix(in srgb, var(--text-primary) 10%, transparent); padding: 0.2rem 0.4rem; border-radius: 4px; font-family: monospace; }
+    .explainer a { color: var(--accent-color); text-decoration: none; }
+    .explainer a:hover { text-decoration: underline; }
+
+    .faq-section { margin-top: 3rem; }
+    .faq-section details { margin: 1rem 0; padding: 1rem; background: var(--card-bg); border-radius: 8px; border: 1px solid var(--border-color); }
+    .faq-section summary { font-weight: 600; cursor: pointer; color: var(--text-primary); }
+    .faq-section p { margin-top: 1rem; color: var(--text-secondary); margin-bottom: 0; }
+  </style>
+</SiteLayout>
