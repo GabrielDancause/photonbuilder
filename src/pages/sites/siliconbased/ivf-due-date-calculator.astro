@@ -1,0 +1,282 @@
+---
+import SiteLayout from "../../../layouts/SiteLayout.astro";
+
+export const meta = {
+  title: "IVF Due Date Calculator - Accurate Transfer Date Estimates",
+  description: "Calculate your estimated due date precisely based on your embryo transfer date. Why guess when you can know exactly where you are in your journey?",
+  category: "tool",
+  published: "2026-03-15",
+};
+
+const schema = [
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {"@type": "Question", "name": "Why is my IVF due date different from my LMP due date?", "acceptedAnswer": {"@type": "Answer", "text": "The standard LMP (Last Menstrual Period) method assumes ovulation and conception happened exactly 14 days after your period started. In IVF, the exact date of fertilization is known and medically controlled, making the LMP calculation inaccurate and obsolete. Using your embryo transfer date and the embryo's age provides a mathematically precise due date."}}, {"@type": "Question", "name": "What is the difference between a Day 3 and Day 5 transfer?", "acceptedAnswer": {"@type": "Answer", "text": "This refers to how long the embryo was grown in the laboratory before being transferred into the uterus. A Day 3 embryo is in the 'cleavage' stage, while a Day 5 embryo has developed into a 'blastocyst'. Because a Day 5 embryo is two days older at the time of transfer, the calculation adjusts the due date forward by two days compared to a Day 3 transfer."}}, {"@type": "Question", "name": "Is this calculator accurate for frozen embryo transfers (FET)?", "acceptedAnswer": {"@type": "Answer", "text": "Yes. The calculation for a frozen embryo transfer (FET) is exactly the same as for a fresh transfer. The time the embryo spent frozen is paused and does not count toward its gestational age. You only need to know the date the embryo was transferred and whether it was frozen on Day 3 or Day 5."}}, {"@type": "Question", "name": "How is my \"Current Gestational Age\" calculated?", "acceptedAnswer": {"@type": "Answer", "text": "Once the calculator determines your 'theoretical LMP' (the date your period would have started in a textbook 28-day cycle to align with your transfer date), it simply calculates the number of weeks and days that have passed between that theoretical date and today's date."}}, {"@type": "Question", "name": "What if I transfer two embryos and have twins?", "acceptedAnswer": {"@type": "Answer", "text": "The estimated due date calculation remains exactly the same for multiples, as the embryos were transferred on the same day and are the same age. However, it is important to note that a full-term twin pregnancy is typically considered 37-38 weeks, rather than 40 weeks, and your doctor will likely plan for an earlier delivery."}}
+    ]
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": meta.title,
+    "description": meta.description,
+    "author": {
+      "@type": "Organization",
+      "name": "SiliconBased"
+    }
+  }
+];
+---
+<SiteLayout site="siliconbased" title={meta.title} description={meta.description} canonical="https://siliconbased.dev/ivf-due-date-calculator" schema={schema}>
+  <div class="page-content">
+    <div class="hero">
+      <h1>IVF Due Date Calculator</h1>
+      <p class="subtitle">Precisely calculate your estimated due date based on your embryo transfer.</p>
+    </div>
+
+    <div class="calculator-container">
+      <div style="display: grid; gap: 1.5rem; margin-bottom: 2rem;">
+        <div>
+          <label for="transfer-date" style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Embryo Transfer Date:</label>
+          <input type="date" id="transfer-date" style="width: 100%; max-width: 300px;" />
+        </div>
+        <div>
+          <label for="transfer-type" style="display: block; margin-bottom: 0.5rem; font-weight: 600;">Embryo Type:</label>
+          <select id="transfer-type" style="width: 100%; max-width: 300px;">
+            <option value="5">Day 5 (Blastocyst)</option>
+            <option value="3">Day 3 (Cleavage)</option>
+          </select>
+        </div>
+      </div>
+
+      <div id="error-message" style="display: none; color: #ef4444; background: #fef2f2; border: 1px solid #f87171; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem;"></div>
+
+      <div class="result-card" id="results-container" style="display: none;">
+        <h3 style="margin-bottom: 1rem;">Estimated Due Date</h3>
+        <div class="result-value" id="due-date-result" style="margin-bottom: 1.5rem;"></div>
+
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; text-align: left; background: var(--bg-color); padding: 1.5rem; border-radius: 8px; border: 1px solid var(--border-color);">
+          <div>
+            <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 0.25rem;">Current Gestational Age</p>
+            <p id="gestational-age" style="font-weight: 600; font-size: 1.1rem;"></p>
+          </div>
+          <div>
+            <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 0.25rem;">Estimated Conception Date</p>
+            <p id="conception-date" style="font-weight: 600; font-size: 1.1rem;"></p>
+          </div>
+          <div>
+            <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 0.25rem;">First Trimester Ends</p>
+            <p id="first-trimester" style="font-weight: 600; font-size: 1.1rem;"></p>
+          </div>
+          <div>
+            <p style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 0.25rem;">Second Trimester Ends</p>
+            <p id="second-trimester" style="font-weight: 600; font-size: 1.1rem;"></p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="explainer">
+
+      <h2>Understanding IVF Due Date Calculations</h2>
+      <p>For individuals and couples going through In Vitro Fertilization (IVF), determining an accurate estimated due date (EDD) can be confusing. In a spontaneous, unassisted pregnancy, doctors universally rely on the first day of the Last Menstrual Period (LMP) as the starting point for calculating a 40-week gestation. This standard method assumes conception (ovulation and fertilization) occurred exactly 14 days after the LMP began.</p>
+
+      <p>However, when you undergo IVF, the timeline of fertilization and implantation is scientifically controlled and precisely known, rendering the LMP method obsolete and often highly inaccurate. Our IVF Due Date Calculator bypasses the estimations of the LMP method entirely, utilizing the precise medical milestones of your transfer to give you the most accurate gestational age and due date possible.</p>
+
+      <h3>Why the Last Menstrual Period (LMP) Method Fails in IVF</h3>
+      <p>The standard LMP calculation assumes a textbook 28-day menstrual cycle with ovulation occurring precisely on Day 14. In reality, cycle lengths vary wildly among individuals, and ovulation can occur earlier or later. More importantly, in an IVF cycle, your natural hormones are often suppressed and replaced with medical protocols designed to control follicle growth and prepare the uterine lining.</p>
+      <p>Because the exact day the egg was fertilized in the laboratory and the exact day the embryo was transferred into the uterus are strictly documented, using the LMP to guess when conception happened is unnecessary. Doing so in an IVF context can result in a due date that is off by several days or even weeks, which can cause unnecessary anxiety regarding fetal growth percentiles during early ultrasounds.</p>
+
+      <h3>How IVF Due Dates Are Actually Calculated</h3>
+      <p>To calculate an IVF due date, reproductive endocrinologists and obstetricians start from the transfer date and factor in the age of the embryo at the time it was transferred. The human gestation period is standardized at 280 days (40 weeks). Because the "conception" date is technically the day the egg was retrieved and fertilized, we use that as our true anchor point.</p>
+      <p>The formula works by determining a "theoretical LMP date" to align with standard obstetric charts. This is done by subtracting the embryo's age, plus the 14 days representing the typical pre-ovulation phase, from your transfer date. Once this theoretical LMP is established, 280 days are added to find the exact Estimated Due Date.</p>
+
+      <h3>Day 3 (Cleavage) vs. Day 5 (Blastocyst) Transfers</h3>
+      <p>The math changes slightly depending on how many days the embryo was cultured in the laboratory before being transferred to the uterus:</p>
+      <ul>
+        <li><strong>Day 5 Transfers (Blastocyst):</strong> This is the most common protocol in modern IVF, especially when genetic testing (PGT-A) is involved. A blastocyst is an embryo that has developed for 5 days post-egg retrieval. To calculate the due date for a Day 5 transfer, the calculator subtracts 5 days (the embryo's age) plus 14 days (the standard pre-ovulation phase) from the transfer date to find the theoretical LMP. Then, 280 days are added. In simpler mathematical terms: Transfer Date + 261 days = EDD.</li>
+        <li><strong>Day 3 Transfers (Cleavage Stage):</strong> Some clinics transfer embryos three days after retrieval, while they are still in the cleavage stage. For a Day 3 transfer, the calculator subtracts 3 days (embryo age) plus 14 days from the transfer date. This equates to: Transfer Date + 263 days = EDD.</li>
+      </ul>
+
+      <h3>Understanding Gestational Milestones</h3>
+      <p>Beyond simply providing a final due date, knowing your precise dates allows you to track vital pregnancy milestones with accuracy. Our calculator also provides estimates for the end of your first and second trimesters based on American College of Obstetricians and Gynecologists (ACOG) guidelines.</p>
+      <ul>
+        <li><strong>First Trimester:</strong> Ends at 13 weeks and 6 days of gestation. This is a major milestone as the risk of miscarriage drops significantly, and early anatomical development is largely complete.</li>
+        <li><strong>Second Trimester:</strong> Ends at 27 weeks and 6 days. This period is often characterized by rapid fetal growth and the mother feeling the baby move (quickening).</li>
+        <li><strong>Current Gestational Age:</strong> By comparing today's date to your calculated theoretical LMP, we can instantly tell you exactly how many weeks and days pregnant you are right now.</li>
+      </ul>
+      <p>By relying on the hard science of your embryo transfer rather than the estimates of a menstrual cycle, you can approach your pregnancy timeline with confidence and clarity.</p>
+
+    </div>
+
+    <div style="margin: 2rem 0; padding: 1.5rem; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px;">
+      <h3>Related Tools</h3>
+      <p style="margin-top: 0.5rem;">
+        Check out our <a href="/rref-calculator" style="color: var(--accent-color); font-weight: 600; text-decoration: none;">RREF Calculator</a> to solve complex linear equations matrix transformations instantly.
+      </p>
+    </div>
+
+    <section class="faq-section">
+      <h2>Frequently Asked Questions</h2>
+
+      <details>
+        <summary>Why is my IVF due date different from my LMP due date?</summary>
+        <p>The standard LMP (Last Menstrual Period) method assumes ovulation and conception happened exactly 14 days after your period started. In IVF, the exact date of fertilization is known and medically controlled, making the LMP calculation inaccurate and obsolete. Using your embryo transfer date and the embryo's age provides a mathematically precise due date.</p>
+      </details>
+      <details>
+        <summary>What is the difference between a Day 3 and Day 5 transfer?</summary>
+        <p>This refers to how long the embryo was grown in the laboratory before being transferred into the uterus. A Day 3 embryo is in the 'cleavage' stage, while a Day 5 embryo has developed into a 'blastocyst'. Because a Day 5 embryo is two days older at the time of transfer, the calculation adjusts the due date forward by two days compared to a Day 3 transfer.</p>
+      </details>
+      <details>
+        <summary>Is this calculator accurate for frozen embryo transfers (FET)?</summary>
+        <p>Yes. The calculation for a frozen embryo transfer (FET) is exactly the same as for a fresh transfer. The time the embryo spent frozen is paused and does not count toward its gestational age. You only need to know the date the embryo was transferred and whether it was frozen on Day 3 or Day 5.</p>
+      </details>
+      <details>
+        <summary>How is my "Current Gestational Age" calculated?</summary>
+        <p>Once the calculator determines your 'theoretical LMP' (the date your period would have started in a textbook 28-day cycle to align with your transfer date), it simply calculates the number of weeks and days that have passed between that theoretical date and today's date.</p>
+      </details>
+      <details>
+        <summary>What if I transfer two embryos and have twins?</summary>
+        <p>The estimated due date calculation remains exactly the same for multiples, as the embryos were transferred on the same day and are the same age. However, it is important to note that a full-term twin pregnancy is typically considered 37-38 weeks, rather than 40 weeks, and your doctor will likely plan for an earlier delivery.</p>
+      </details>
+
+    </section>
+  </div>
+
+  <script is:inline>
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const transferDateInput = document.getElementById("transfer-date");
+      const transferTypeInput = document.getElementById("transfer-type");
+      const resultsContainer = document.getElementById("results-container");
+      const errorMessage = document.getElementById("error-message");
+
+      const dueDateResult = document.getElementById("due-date-result");
+      const gestationalAgeEl = document.getElementById("gestational-age");
+      const conceptionDateEl = document.getElementById("conception-date");
+      const firstTrimesterEl = document.getElementById("first-trimester");
+      const secondTrimesterEl = document.getElementById("second-trimester");
+
+      // Set max date to today + 30 days, min date to today - 300 days
+      const today = new Date();
+      const maxDate = new Date();
+      maxDate.setDate(today.getDate() + 30);
+      const minDate = new Date();
+      minDate.setDate(today.getDate() - 300);
+
+      transferDateInput.max = maxDate.toISOString().split('T')[0];
+      transferDateInput.min = minDate.toISOString().split('T')[0];
+
+      function formatDate(date) {
+        return date.toLocaleDateString('en-US', {
+          weekday: 'long',
+          year: 'numeric',
+          month: 'long',
+          day: 'numeric'
+        });
+      }
+
+      function calculateDates() {
+        if (!transferDateInput.value) {
+          resultsContainer.style.display = "none";
+          errorMessage.style.display = "none";
+          return;
+        }
+
+        errorMessage.style.display = "none";
+
+        const transferDateStr = transferDateInput.value;
+        const embryoAge = parseInt(transferTypeInput.value); // 3 or 5
+
+        // Parse date considering local timezone to avoid off-by-one errors
+        const [year, month, day] = transferDateStr.split('-');
+        const transferDate = new Date(year, month - 1, day);
+
+        if (isNaN(transferDate.getTime())) {
+          errorMessage.textContent = "Please enter a valid transfer date.";
+          errorMessage.style.display = "block";
+          resultsContainer.style.display = "none";
+          return;
+        }
+
+        // Calculation Logic:
+        // A standard pregnancy is 280 days from Last Menstrual Period (LMP)
+        // Conception (fertilization) happens on day 14 of the cycle.
+        // For IVF, the "conception" date is the day of retrieval.
+        // The transfer date happens X days after retrieval (X = embryoAge).
+        // Therefore, retrieval (conception) = transferDate - embryoAge.
+        // Theoretical LMP = retrieval - 14 days = transferDate - embryoAge - 14.
+        // Due Date = Theoretical LMP + 280 days = transferDate - embryoAge - 14 + 280
+        // Due Date = transferDate + 266 - embryoAge
+
+        const daysToAdd = 266 - embryoAge;
+
+        const dueDate = new Date(transferDate);
+        dueDate.setDate(dueDate.getDate() + daysToAdd);
+
+        const conceptionDate = new Date(transferDate);
+        conceptionDate.setDate(conceptionDate.getDate() - embryoAge);
+
+        const firstTriEnd = new Date(dueDate);
+        firstTriEnd.setDate(firstTriEnd.getDate() - (40 * 7) + (13 * 7) + 6); // End of week 13
+
+        const secondTriEnd = new Date(dueDate);
+        secondTriEnd.setDate(secondTriEnd.getDate() - (40 * 7) + (27 * 7) + 6); // End of week 27
+
+        // Calculate Gestational Age
+        const theoreticalLMP = new Date(conceptionDate);
+        theoreticalLMP.setDate(theoreticalLMP.getDate() - 14);
+
+        const now = new Date();
+        now.setHours(0, 0, 0, 0); // Normalize today to midnight
+
+        const diffTime = now - theoreticalLMP;
+        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+
+        let gestAgeText = "";
+        if (diffDays < 0) {
+          gestAgeText = "Pre-pregnancy";
+        } else if (diffDays >= 280) {
+          gestAgeText = "40+ Weeks (Full Term)";
+        } else {
+          const weeks = Math.floor(diffDays / 7);
+          const days = diffDays % 7;
+          gestAgeText = `${weeks} weeks, ${days} days`;
+        }
+
+        // Update UI
+        dueDateResult.textContent = formatDate(dueDate);
+        gestationalAgeEl.textContent = gestAgeText;
+        conceptionDateEl.textContent = formatDate(conceptionDate);
+        firstTrimesterEl.textContent = formatDate(firstTriEnd);
+        secondTrimesterEl.textContent = formatDate(secondTriEnd);
+
+        resultsContainer.style.display = "block";
+      }
+
+      transferDateInput.addEventListener("input", calculateDates);
+      transferTypeInput.addEventListener("change", calculateDates);
+    });
+
+  </script>
+
+  <style is:inline>
+    .page-content { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem; }
+    .hero { text-align: center; padding: 3rem 0 2rem; }
+    .hero h1 { font-size: 2.2rem; font-weight: 800; margin-bottom: 0.5rem; }
+    .subtitle { color: var(--text-secondary); font-size: 1.1rem; }
+    .calculator-container { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 2rem; margin: 2rem 0; }
+    input, select { background: var(--bg-color); color: var(--text-primary); border: 1px solid var(--border-color); padding: 0.75rem 1rem; border-radius: 8px; width: 100%; font-size: 1rem; }
+    input:focus, select:focus { outline: none; border-color: var(--accent-color); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-color) 20%, transparent); }
+    button { background: var(--accent-color); color: white; border: none; padding: 0.75rem 2rem; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 1rem; }
+    button:hover { opacity: 0.9; }
+    .result-card { background: color-mix(in srgb, var(--accent-color) 10%, transparent); border: 1px solid var(--accent-color); border-radius: 12px; padding: 1.5rem; margin: 1.5rem 0; text-align: center; }
+    .result-value { font-size: 2.5rem; font-weight: 800; color: var(--accent-color); }
+    .faq-section details { margin: 1rem 0; padding: 1rem; background: var(--card-bg); border-radius: 8px; border: 1px solid var(--border-color); }
+    .faq-section summary { font-weight: 600; cursor: pointer; }
+    .explainer h2, .explainer h3 { margin-top: 2rem; margin-bottom: 1rem; }
+    .explainer p, .explainer ul { margin-bottom: 1rem; line-height: 1.6; }
+    .explainer ul { padding-left: 1.5rem; }
+  </style>
+</SiteLayout>
