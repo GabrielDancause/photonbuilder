@@ -31,6 +31,7 @@ SITE_DOMAINS = {
     "westmount": "westmountfundamentals.com",
     "sendnerds": "photonbuilder.com",
     "fixitwithducttape": "photonbuilder.com",
+    "papyruspeople": "photonbuilder.com",
     "misc": "photonbuilder.com",
     "justonemoment": "photonbuilder.com",
     "bodycount": "health.example.com",

@@ -218,3 +218,18 @@ sites['fixitwithducttape'] = {
   ],
   footer: { text: '© 2026 Fix It With Duct Tape', gabVentures: true },
 };
+
+sites['papyruspeople'] = {
+  id: 'papyruspeople',
+  name: 'Papyrus People',
+  domain: 'photonbuilder.com',
+  accent: '#D4A574',
+  theme: { bg: '#0a0806', cardBg: '#12100c', border: '#2a2418', textPrimary: '#e8e0d0', textSecondary: '#a09880' },
+  gaId: 'G-CYV604162T',
+  nav: [
+    { label: 'Translators', href: '/papyruspeople/#tools' },
+    { label: 'Fonts', href: '/papyruspeople/#guides' },
+    { label: 'Roadmap', href: '/papyruspeople/coming-soon' },
+  ],
+  footer: { text: '© 2026 Papyrus People', gabVentures: true },
+};
