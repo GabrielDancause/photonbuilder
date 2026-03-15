@@ -1,0 +1,455 @@
+---
+import SiteLayout from "../../../layouts/SiteLayout.astro";
+
+export const meta = {
+  title: "R6 Stat Tracker & Calculator",
+  description: "Calculate your Rainbow Six Siege K/D ratio, Win Rate, and Kills Per Round (KPR) instantly. Want to know what a good K/D is?",
+  category: "tool",
+  published: "2026-03-15",
+};
+
+const schema = [
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": meta.title,
+    "description": meta.description,
+    "author": {
+      "@type": "Organization",
+      "name": "SiliconBased"
+    },
+    "datePublished": meta.published
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "What is a good K/D ratio in Rainbow Six Siege?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "A K/D (Kill/Death) ratio of 1.0 means you get exactly one kill for every death. Generally, anything above 1.0 is considered positive and above average, while anything below 1.0 means you die more often than you get kills."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Why does Win Rate matter more than K/D?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Rainbow Six Siege is an objective-based tactical shooter. A high win rate indicates you are playing the objective, providing good intel, and supporting your team, even if your personal K/D isn't extremely high."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "What does KPR stand for?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "KPR stands for Kills Per Round. It is calculated by dividing your total kills by the total number of rounds played. It's a useful metric for seeing how consistently you get entry frags or trades in individual rounds."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How is the Headshot Percentage calculated?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Headshot percentage is calculated by dividing the total number of headshots you've secured by your total number of kills, then multiplying by 100 to get a percentage."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Are there calculators for real life stats?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes! If you are a veteran looking to estimate your combined disability rating and monthly compensation, try our <a href=\"/va-disability-calculator\">VA Disability Calculator</a>."
+        }
+      }
+    ]
+  }
+];
+
+---
+
+<SiteLayout site="siliconbased" title={meta.title} description={meta.description} canonical="https://siliconbased.dev/r6-stat-tracker" schema={schema}>
+  <div class="page-content">
+    <div class="hero">
+      <h1>R6 Stat Tracker & Calculator</h1>
+      <p class="subtitle">Instantly calculate your K/D, Win Rate, and KPR for Rainbow Six Siege.</p>
+    </div>
+
+    <div class="calculator-container">
+      <div id="calculator-errors" class="error-message" style="display: none;"></div>
+
+      <div class="input-grid">
+        <div class="input-group">
+          <label for="kills">Total Kills</label>
+          <div class="input-wrapper">
+            <input type="number" id="kills" class="stat-input" placeholder="e.g., 250" min="0">
+          </div>
+        </div>
+
+        <div class="input-group">
+          <label for="deaths">Total Deaths</label>
+          <div class="input-wrapper">
+            <input type="number" id="deaths" class="stat-input" placeholder="e.g., 200" min="0">
+          </div>
+        </div>
+
+        <div class="input-group">
+          <label for="headshots">Headshot Kills</label>
+          <div class="input-wrapper">
+            <input type="number" id="headshots" class="stat-input" placeholder="e.g., 100" min="0">
+          </div>
+        </div>
+
+        <div class="input-group">
+          <label for="rounds">Rounds Played</label>
+          <div class="input-wrapper">
+            <input type="number" id="rounds" class="stat-input" placeholder="e.g., 300" min="0">
+          </div>
+        </div>
+
+        <div class="input-group">
+          <label for="matches-won">Matches Won</label>
+          <div class="input-wrapper">
+            <input type="number" id="matches-won" class="stat-input" placeholder="e.g., 25" min="0">
+          </div>
+        </div>
+
+        <div class="input-group">
+          <label for="matches-lost">Matches Lost</label>
+          <div class="input-wrapper">
+            <input type="number" id="matches-lost" class="stat-input" placeholder="e.g., 20" min="0">
+          </div>
+        </div>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="result-label">K/D Ratio</div>
+          <div class="result-value" id="kd-result">0.00</div>
+          <div id="kd-eval" class="eval-badge badge neutral">N/A</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="result-label">Win Rate</div>
+          <div class="result-value" id="win-rate-result">0.0%</div>
+          <div id="wr-eval" class="eval-badge badge neutral">N/A</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="result-label">Headshot %</div>
+          <div class="result-value" id="hs-result">0.0%</div>
+          <div id="hs-eval" class="eval-badge badge neutral">N/A</div>
+        </div>
+
+        <div class="stat-card">
+          <div class="result-label">Kills Per Round</div>
+          <div class="result-value" id="kpr-result">0.00</div>
+          <div id="kpr-eval" class="eval-badge badge neutral">N/A</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="explainer">
+      <h2>Understanding Rainbow Six Siege Stats</h2>
+      <p>Rainbow Six Siege is a highly tactical, objective-based shooter. While securing kills is important, understanding the deeper metrics of your gameplay can help you identify areas for improvement. This calculator allows you to input your raw numbers to see your core performance metrics instantly.</p>
+
+      <h3>The Importance of K/D Ratio</h3>
+      <p>Your K/D (Kill/Death) ratio is the most fundamental metric in any first-person shooter. It is calculated by taking your total number of kills and dividing it by your total number of deaths. A K/D of exactly 1.0 means that for every life you lose, you take exactly one enemy life. This is considered breaking even.</p>
+      <p>In Siege, a K/D ratio heavily depends on the roles you play. Entry fraggers (like Ash or Iana) are expected to have higher K/Ds because their primary job is to secure kills and take map control. Support players (like Thermite or Thatcher) might have lower K/Ds around 0.9 or 1.0, but they provide immense value by opening reinforced walls and enabling the fraggers to do their jobs.</p>
+
+      <h3>Win Rate: The Ultimate Metric</h3>
+      <p>While K/D is flashy, your Win Rate is arguably the most important metric in Rainbow Six Siege. Win Rate is calculated by dividing your total wins by your total matches played (wins + losses), then multiplying by 100 to get a percentage. </p>
+      <p>Because Siege is an objective game (defusing bombs, securing areas, or rescuing hostages), you can theoretically win a round without firing a single bullet. A player with a 0.8 K/D but a 60% win rate is providing significant value to their team, perhaps through excellent callouts, drone work, trap placements, or playing the objective perfectly. If your win rate is above 50%, you are consistently contributing to your team's success.</p>
+
+      <h3>Headshot Percentage and Gun Skill</h3>
+      <p>Siege features a unique one-hit headshot mechanic. No matter what weapon you are using or what armor the enemy has, a single bullet to the head is an instant kill. Therefore, your Headshot Percentage is a strong indicator of your raw mechanical skill and crosshair placement.</p>
+      <p>This is calculated by dividing your headshot kills by your total kills. High-level players typically maintain a headshot percentage above 45%. Improving your crosshair placement—keeping your reticle at head height at all times—is the fastest way to boost this stat.</p>
+
+      <h3>Kills Per Round (KPR)</h3>
+      <p>Kills Per Round (KPR) gives a slightly different view than K/D. It divides your total kills by the total number of rounds you have played. This metric shows how consistently you find impact in a given round.</p>
+      <p>A player might have a great K/D because they play very passively and rarely die, saving their life when rounds are lost. However, their KPR might be very low (e.g., 0.5), meaning they only get a kill every other round. A high KPR (e.g., 0.8+) indicates a player who is consistently getting involved in the action and trading out enemies.</p>
+
+      <h3>Using These Metrics to Improve</h3>
+      <p>Don't look at these stats in isolation. Use them together to understand your playstyle. If you have a high K/D but a low win rate, you might be playing for kills rather than the objective ("baiting"). If you have a low headshot percentage, you need to spend time in the Shooting Range practicing your aim. By tracking your stats over time, you can see if the changes you make to your playstyle are actually yielding results.</p>
+    </div>
+
+    <section class="faq-section">
+      <h2>Frequently Asked Questions</h2>
+      <details>
+        <summary>What is a good K/D ratio in Rainbow Six Siege?</summary>
+        <p>A K/D (Kill/Death) ratio of 1.0 means you get exactly one kill for every death. Generally, anything above 1.0 is considered positive and above average, while anything below 1.0 means you die more often than you get kills.</p>
+      </details>
+      <details>
+        <summary>Why does Win Rate matter more than K/D?</summary>
+        <p>Rainbow Six Siege is an objective-based tactical shooter. A high win rate indicates you are playing the objective, providing good intel, and supporting your team, even if your personal K/D isn't extremely high.</p>
+      </details>
+      <details>
+        <summary>What does KPR stand for?</summary>
+        <p>KPR stands for Kills Per Round. It is calculated by dividing your total kills by the total number of rounds played. It's a useful metric for seeing how consistently you get entry frags or trades in individual rounds.</p>
+      </details>
+      <details>
+        <summary>How is the Headshot Percentage calculated?</summary>
+        <p>Headshot percentage is calculated by dividing the total number of headshots you've secured by your total number of kills, then multiplying by 100 to get a percentage.</p>
+      </details>
+      <details>
+        <summary>Are there calculators for real life stats?</summary>
+        <p>Yes! If you are a veteran looking to estimate your combined disability rating and monthly compensation, try our <a href="/va-disability-calculator">VA Disability Calculator</a>.</p>
+      </details>
+    </section>
+  </div>
+
+  <script is:inline>
+    document.addEventListener('DOMContentLoaded', () => {
+      const inputs = document.querySelectorAll('.stat-input');
+      const errorContainer = document.getElementById('calculator-errors');
+
+      const kdResult = document.getElementById('kd-result');
+      const winRateResult = document.getElementById('win-rate-result');
+      const hsResult = document.getElementById('hs-result');
+      const kprResult = document.getElementById('kpr-result');
+
+      const kdEval = document.getElementById('kd-eval');
+      const wrEval = document.getElementById('wr-eval');
+      const hsEval = document.getElementById('hs-eval');
+      const kprEval = document.getElementById('kpr-eval');
+
+      function updateBadge(badgeElement, value, thresholds) {
+        badgeElement.classList.remove('positive', 'negative', 'neutral');
+
+        if (value === null || isNaN(value)) {
+          badgeElement.textContent = 'N/A';
+          badgeElement.classList.add('neutral');
+          return;
+        }
+
+        if (value >= thresholds.good) {
+          badgeElement.textContent = 'Excellent';
+          badgeElement.classList.add('positive');
+        } else if (value >= thresholds.avg) {
+          badgeElement.textContent = 'Average';
+          badgeElement.classList.add('neutral');
+        } else {
+          badgeElement.textContent = 'Below Avg';
+          badgeElement.classList.add('negative');
+        }
+      }
+
+      function calculateStats() {
+        errorContainer.style.display = 'none';
+        errorContainer.textContent = '';
+
+        const kills = parseInt(document.getElementById('kills').value) || 0;
+        const deaths = parseInt(document.getElementById('deaths').value) || 0;
+        const headshots = parseInt(document.getElementById('headshots').value) || 0;
+        const rounds = parseInt(document.getElementById('rounds').value) || 0;
+        const wins = parseInt(document.getElementById('matches-won').value) || 0;
+        const losses = parseInt(document.getElementById('matches-lost').value) || 0;
+
+        // Validation
+        if (kills < 0 || deaths < 0 || headshots < 0 || rounds < 0 || wins < 0 || losses < 0) {
+          errorContainer.textContent = "Values cannot be negative.";
+          errorContainer.style.display = 'block';
+          return;
+        }
+
+        if (headshots > kills) {
+          errorContainer.textContent = "Headshots cannot exceed total kills.";
+          errorContainer.style.display = 'block';
+          return;
+        }
+
+        // K/D Ratio
+        let kd = 0;
+        if (deaths === 0) {
+          kd = kills > 0 ? kills : 0; // Perfect K/D if no deaths but have kills
+        } else {
+          kd = kills / deaths;
+        }
+        kdResult.textContent = kd.toFixed(2);
+        updateBadge(kdEval, kd, { good: 1.1, avg: 0.9 });
+
+        // Win Rate
+        const totalMatches = wins + losses;
+        let winRate = 0;
+        if (totalMatches > 0) {
+          winRate = (wins / totalMatches) * 100;
+        }
+        winRateResult.textContent = `${winRate.toFixed(1)}%`;
+        updateBadge(wrEval, totalMatches > 0 ? winRate : null, { good: 52, avg: 48 });
+
+        // Headshot %
+        let hsRate = 0;
+        if (kills > 0) {
+          hsRate = (headshots / kills) * 100;
+        }
+        hsResult.textContent = `${hsRate.toFixed(1)}%`;
+        updateBadge(hsEval, kills > 0 ? hsRate : null, { good: 45, avg: 35 });
+
+        // Kills Per Round (KPR)
+        let kpr = 0;
+        if (rounds > 0) {
+          kpr = kills / rounds;
+        }
+        kprResult.textContent = kpr.toFixed(2);
+        updateBadge(kprEval, rounds > 0 ? kpr : null, { good: 0.8, avg: 0.6 });
+      }
+
+      inputs.forEach(input => {
+        input.addEventListener('input', calculateStats);
+      });
+    });
+  </script>
+
+  <style is:inline>
+    .page-content { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem; }
+    .hero { text-align: center; padding: 3rem 0 2rem; }
+    .hero h1 { font-size: 2.2rem; font-weight: 800; margin-bottom: 0.5rem; }
+    .subtitle { color: var(--text-secondary); font-size: 1.1rem; }
+
+    .calculator-container {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 2rem;
+      margin: 2rem 0;
+    }
+
+    .input-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .input-group label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 600;
+    }
+
+    input {
+      background: var(--bg-color);
+      color: var(--text-primary);
+      border: 1px solid var(--border-color);
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      width: 100%;
+      font-size: 1rem;
+    }
+
+    input:focus {
+      outline: none;
+      border-color: var(--accent-color);
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-color) 20%, transparent);
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      gap: 1.5rem;
+      border-top: 1px solid var(--border-color);
+      padding-top: 2rem;
+    }
+
+    .stat-card {
+      background: color-mix(in srgb, var(--accent-color) 5%, transparent);
+      border: 1px solid var(--accent-color);
+      border-radius: 12px;
+      padding: 1.5rem;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .result-label {
+      font-weight: 600;
+      color: var(--text-secondary);
+      margin-bottom: 0.5rem;
+    }
+
+    .result-value {
+      font-size: 2.5rem;
+      font-weight: 800;
+      color: var(--accent-color);
+      margin-bottom: 0.5rem;
+    }
+
+    .eval-badge {
+      display: inline-block;
+      padding: 0.25rem 0.75rem;
+      font-size: 0.8rem;
+      font-weight: 600;
+      border-radius: 9999px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .badge.positive {
+      background: rgba(34, 197, 94, 0.15);
+      color: #22c55e;
+      border: 1px solid rgba(34, 197, 94, 0.3);
+    }
+
+    .badge.negative {
+      background: rgba(239, 68, 68, 0.15);
+      color: #ef4444;
+      border: 1px solid rgba(239, 68, 68, 0.3);
+    }
+
+    .badge.neutral {
+      background: rgba(148, 163, 184, 0.15);
+      color: var(--text-secondary);
+      border: 1px solid var(--border-color);
+    }
+
+    .error-message {
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid #ef4444;
+      color: #ef4444;
+      padding: 1rem;
+      border-radius: 8px;
+      margin-bottom: 1.5rem;
+      font-weight: 500;
+    }
+
+    .explainer {
+      line-height: 1.7;
+      margin: 3rem 0;
+    }
+
+    .explainer h2 {
+      margin-bottom: 1.5rem;
+    }
+
+    .explainer h3 {
+      margin-top: 2rem;
+      margin-bottom: 1rem;
+    }
+
+    .explainer p {
+      margin-bottom: 1.5rem;
+    }
+
+    .faq-section details {
+      margin: 1rem 0;
+      padding: 1rem;
+      background: var(--card-bg);
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+    }
+
+    .faq-section summary {
+      font-weight: 600;
+      cursor: pointer;
+    }
+
+    .faq-section p {
+      margin-top: 1rem;
+      margin-bottom: 0;
+      line-height: 1.6;
+    }
+  </style>
+</SiteLayout>
