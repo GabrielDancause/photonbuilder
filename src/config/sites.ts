@@ -248,3 +248,18 @@ sites['eeniemeenie'] = {
   ],
   footer: { text: '© 2026 Eenie Meenie', gabVentures: true },
 };
+
+sites['pleasestartplease'] = {
+  id: 'pleasestartplease',
+  name: 'Please Start Please',
+  domain: 'photonbuilder.com',
+  accent: '#EF4444',
+  theme: { bg: '#0a0606', cardBg: '#141010', border: '#2a1a1a', textPrimary: '#e8e0e0', textSecondary: '#a09090' },
+  gaId: 'G-CYV604162T',
+  nav: [
+    { label: 'Calculators', href: '/pleasestartplease/#tools' },
+    { label: 'Guides', href: '/pleasestartplease/#guides' },
+    { label: 'Roadmap', href: '/pleasestartplease/coming-soon' },
+  ],
+  footer: { text: '© 2026 Please Start Please', gabVentures: true },
+};
