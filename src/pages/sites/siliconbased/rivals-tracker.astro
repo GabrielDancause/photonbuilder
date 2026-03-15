@@ -1,0 +1,348 @@
+---
+import SiteLayout from "../../../layouts/SiteLayout.astro";
+
+export const meta = {
+  title: "Rivals Tracker: Track Your Win Rate, KDA, and Performance Stats",
+  description: "Stop relying on memory. Use our free Rivals Tracker to easily log your match stats, instantly calculate your true win rate, and find your average KDA ratio.",
+  category: "tool",
+  published: "2026-03-15",
+};
+
+const schema = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "Article",
+      "headline": meta.title,
+      "description": meta.description,
+      "author": {
+        "@type": "Organization",
+        "name": "SiliconBased"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "SiliconBased",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://siliconbased.dev/logo.png"
+        }
+      },
+      "datePublished": meta.published
+    },
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "What is a good win rate?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "In any competitive matchmaking system designed to pair you with equally skilled opponents (SBMM), the system tries to push everyone toward a 50% win rate. Therefore, maintaining a win rate of 51% to 55% over a large sample size is considered good, and means you are steadily improving and ranking up. Anything consistently above 60% is exceptional."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What is considered a good KDA?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "A good KDA varies heavily depending on the role you are playing. For pure damage dealers (DPS), a KDA of 2.0 or higher is generally expected. For support or tank roles who take more damage or assist rather than secure final blows, a KDA of 1.5 to 2.5 is strong. Keep in mind that playing the objective is always more important than preserving your KDA."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Why does the tracker show \"Perfect\" for my KDA?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "If you have registered kills or assists but have exactly zero deaths, mathematically, dividing by zero is undefined. In gaming terminology, surviving without a single death while contributing to eliminations is simply referred to as a \"Perfect\" KDA."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Are assists weighed the same as kills?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes. In standard KDA calculations across almost all modern team shooters and MOBAs, a kill and an assist are given equal weight (1 point each) in the numerator of the formula: (Kills + Assists) / Deaths."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Does this tracker save my data?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "No, this tracker is entirely client-side and operates in real-time in your browser for maximum speed and privacy. If you close the tab or refresh the page, your data will be reset to zero. We recommend noting down your session stats before closing."
+          }
+        }
+      ]
+    }
+  ]
+};
+---
+
+<SiteLayout site="siliconbased" title={meta.title} description={meta.description} canonical="https://siliconbased.dev/rivals-tracker" schema={schema}>
+  <div class="page-content">
+    <div class="hero">
+      <h1>Rivals Tracker</h1>
+      <p class="subtitle">A manual stat tracker to instantly calculate your win rate, KDA, and overall performance.</p>
+    </div>
+
+    <div class="calculator-container">
+      <div class="tracker-inputs">
+        <div class="input-card">
+          <h3>Match Results</h3>
+          <div class="grid-2">
+            <div class="input-group">
+              <label for="wins">Total Wins</label>
+              <input type="number" id="wins" min="0" step="1" value="0">
+            </div>
+            <div class="input-group">
+              <label for="losses">Total Losses</label>
+              <input type="number" id="losses" min="0" step="1" value="0">
+            </div>
+          </div>
+        </div>
+
+        <div class="input-card">
+          <h3>Combat Stats</h3>
+          <div class="grid-3">
+            <div class="input-group">
+              <label for="kills">Total Kills</label>
+              <input type="number" id="kills" min="0" step="1" value="0">
+            </div>
+            <div class="input-group">
+              <label for="deaths">Total Deaths</label>
+              <input type="number" id="deaths" min="0" step="1" value="0">
+            </div>
+            <div class="input-group">
+              <label for="assists">Total Assists</label>
+              <input type="number" id="assists" min="0" step="1" value="0">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="stats-dashboard">
+        <div class="stat-box highlight">
+          <div class="stat-label">Win Rate</div>
+          <div class="stat-value" id="win-rate">0.0%</div>
+          <div class="stat-sub" id="total-matches">0 Matches</div>
+        </div>
+        <div class="stat-box highlight">
+          <div class="stat-label">KDA Ratio</div>
+          <div class="stat-value" id="kda-ratio">0.00</div>
+          <div class="stat-sub">Kills + Assists / Deaths</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">Avg Kills/Match</div>
+          <div class="stat-value" id="avg-kills">0.0</div>
+        </div>
+        <div class="stat-box">
+          <div class="stat-label">Avg Deaths/Match</div>
+          <div class="stat-value" id="avg-deaths">0.0</div>
+        </div>
+      </div>
+
+      <div id="tracker-error" style="color: #ef4444; font-size: 0.9rem; margin-top: 1rem; text-align: center; display: none;"></div>
+    </div>
+
+    <div class="explainer">
+      <h2>Why Track Your Stats Manually?</h2>
+      <p>In the rapidly evolving landscape of competitive gaming, developers often launch new hero shooters or arena games without comprehensive, public API support on day one. When third-party stat websites cannot pull your data automatically, it becomes incredibly difficult to track your improvement over time.</p>
+
+      <p>This is where our manual <strong>Rivals Tracker</strong> steps in. By taking just a few seconds after a gaming session to input your overall wins, losses, kills, deaths, and assists, you immediately gain access to the same high-level metrics that automated trackers provide. Knowing your actual win rate and true KDA ratio is the first step toward analyzing your gameplay and climbing the competitive ranks.</p>
+
+      <h2>Core Metrics Explained</h2>
+
+      <h3>1. Win Rate</h3>
+      <p>Your Win Rate is the ultimate indicator of your overall impact on the game. While having a high kill count is satisfying, winning the match is the objective. Win rate is calculated by dividing your total wins by your total matches played (wins plus losses).</p>
+
+      <div class="formula-box">
+        <strong>Win Rate Formula:</strong><br>
+        (Wins &divide; Total Matches) &times; 100
+      </div>
+
+      <p>For example, if you have 15 wins and 10 losses, you have played 25 total matches. Your win rate is (15 / 25) = 0.60, or <strong>60%</strong>. Consistently maintaining a win rate above 50% guarantees that you will eventually climb the competitive ladder.</p>
+
+      <h3>2. KDA Ratio</h3>
+      <p><strong>KDA</strong> stands for Kills, Deaths, and Assists. This ratio evaluates your combat effectiveness. Because team-based hero shooters often reward supportive playstyles, assists are factored in equally with kills.</p>
+
+      <div class="formula-box">
+        <strong>KDA Formula:</strong><br>
+        (Kills + Assists) &divide; Deaths
+      </div>
+
+      <p>If you finish a session with 40 kills, 15 assists, and 20 deaths, your KDA is (40 + 15) / 20 = <strong>2.75</strong>. This means that for every time you died, you contributed to nearly three eliminations for your team. A "Perfect" KDA occurs when you have secured kills or assists but have zero deaths.</p>
+
+      <h3>3. Averages Per Match</h3>
+      <p>While cumulative totals are fun to look at, averages give you a realistic expectation of your performance on a match-by-match basis. Tracking your <strong>Average Kills per Match</strong> and <strong>Average Deaths per Match</strong> helps you set immediate, tangible goals for your next queue.</p>
+
+      <h2>How to Use This Tracker</h2>
+      <ol>
+        <li><strong>Session Tracking:</strong> We recommend using this tool on a per-session basis rather than attempting to track your entire lifetime career manually. Keep the tab open on a second monitor or your phone.</li>
+        <li><strong>Update Regularly:</strong> After every match, simply click the input boxes and update your numbers. You don't need to hit submit—the dashboard updates instantly.</li>
+        <li><strong>Analyze:</strong> Watch how your stats shift. If your KDA is high but your win rate is low, you might be playing too passively and not contributing to the objective.</li>
+      </ol>
+
+      <h2>The Philosophy of Stat Tracking</h2>
+      <p>While stat trackers are powerful tools, it is crucial to approach them with the right mindset. Fixating too heavily on your KDA can actually be detrimental to your long-term success in team-based games. This phenomenon, often referred to as "KDA padding," occurs when a player actively avoids engaging in necessary, risky team fights or refuses to contest an objective simply to avoid adding a death to their stat sheet.</p>
+
+      <p>Your KDA should be viewed as a diagnostic metric, not the final goal. If you notice your KDA is exceptionally high but your win rate is hovering around 45%, it is a strong indicator that your kills are not impactful. You might be securing eliminations after the team fight has already been lost, or you might be playing too far away from your team to capitalize on the advantages you create.</p>
+
+      <p>Conversely, if you play a tank or support role and your KDA is slightly lower but your win rate is climbing steadily at 58%, you are clearly enabling your team to win. In these roles, drawing enemy attention, making space, and sacrificing yourself for the main objective are often the correct plays, even if they negatively impact your personal statistics.</p>
+
+      <h3>Identifying Trends in Your Gameplay</h3>
+      <p>The true value of our Rivals Tracker comes from identifying trends over multiple gaming sessions. Consider taking a screenshot of your final dashboard after each night of playing. Over the course of a week or a month, you can start to identify patterns:</p>
+
+      <ul>
+        <li><strong>Warm-up Dependency:</strong> Do your first two matches consistently drag down your averages? If so, consider playing quick-play or casual modes before jumping into ranked to protect your win rate.</li>
+        <li><strong>Fatigue Tracking:</strong> Does your KDA drop significantly after your fifth consecutive match? This is a common sign of mental fatigue. Recognizing this threshold allows you to know exactly when to stop playing for the night to prevent a losing streak.</li>
+        <li><strong>Role Effectiveness:</strong> If you are flexing between different roles (e.g., Damage vs. Support), track your sessions separately. You might discover that while you enjoy playing Damage, your win rate is actually much higher when you play Support.</li>
+      </ul>
+
+      <h2>Beyond Basic Stats: Advanced Metrics</h2>
+      <p>While Win Rate and KDA are the foundational pillars of performance tracking, they don't tell the entire story. As you become more analytical about your gameplay, consider tracking more granular data points mentally or in a spreadsheet alongside our tool:</p>
+
+      <ul>
+        <li><strong>Objective Time/Score:</strong> Are you actually playing the game mode? High kills mean nothing if you aren't moving the payload or capturing the point.</li>
+        <li><strong>First Bloods:</strong> Securing the first elimination in a team fight drastically increases your team's chance of winning that specific engagement.</li>
+        <li><strong>Damage/Healing Output:</strong> While these numbers can be easily padded (e.g., shooting enemy shields), they provide context to your KDA. Are you dealing meaningful damage that leads to kills, or just poking the enemy team?</li>
+      </ul>
+
+      <p>By combining the raw, hard data from the Rivals Tracker with a critical, objective evaluation of your in-game decisions, you can break through plateaus and reach new peaks in your competitive journey.</p>
+
+      <p>If you are also interested in calculating the financial efficiency of your content creation around gaming, check out our <a href="/cpm-calculator">CPM Calculator</a>.</p>
+    </div>
+
+    <section class="faq-section">
+      <h2>Frequently Asked Questions</h2>
+
+      <details>
+        <summary>What is a good win rate?</summary>
+        <p>In any competitive matchmaking system designed to pair you with equally skilled opponents (SBMM), the system tries to push everyone toward a 50% win rate. Therefore, maintaining a win rate of 51% to 55% over a large sample size is considered good, and means you are steadily improving and ranking up. Anything consistently above 60% is exceptional.</p>
+      </details>
+
+      <details>
+        <summary>What is considered a good KDA?</summary>
+        <p>A good KDA varies heavily depending on the role you are playing. For pure damage dealers (DPS), a KDA of 2.0 or higher is generally expected. For support or tank roles who take more damage or assist rather than secure final blows, a KDA of 1.5 to 2.5 is strong. Keep in mind that playing the objective is always more important than preserving your KDA.</p>
+      </details>
+
+      <details>
+        <summary>Why does the tracker show "Perfect" for my KDA?</summary>
+        <p>If you have registered kills or assists but have exactly zero deaths, mathematically, dividing by zero is undefined. In gaming terminology, surviving without a single death while contributing to eliminations is simply referred to as a "Perfect" KDA.</p>
+      </details>
+
+      <details>
+        <summary>Are assists weighed the same as kills?</summary>
+        <p>Yes. In standard KDA calculations across almost all modern team shooters and MOBAs, a kill and an assist are given equal weight (1 point each) in the numerator of the formula: (Kills + Assists) / Deaths.</p>
+      </details>
+
+      <details>
+        <summary>Does this tracker save my data?</summary>
+        <p>No, this tracker is entirely client-side and operates in real-time in your browser for maximum speed and privacy. If you close the tab or refresh the page, your data will be reset to zero. We recommend noting down your session stats before closing.</p>
+      </details>
+    </section>
+  </div>
+
+  <script is:inline>
+    document.addEventListener('DOMContentLoaded', () => {
+      const inputs = ['wins', 'losses', 'kills', 'deaths', 'assists'].map(id => document.getElementById(id));
+
+      const elWinRate = document.getElementById('win-rate');
+      const elTotalMatches = document.getElementById('total-matches');
+      const elKdaRatio = document.getElementById('kda-ratio');
+      const elAvgKills = document.getElementById('avg-kills');
+      const elAvgDeaths = document.getElementById('avg-deaths');
+      const elError = document.getElementById('tracker-error');
+
+      function calculateStats() {
+        const values = {};
+        let hasError = false;
+
+        inputs.forEach(input => {
+          const val = parseInt(input.value) || 0;
+          if (val < 0) hasError = true;
+          values[input.id] = val;
+        });
+
+        if (hasError) {
+          elError.textContent = 'All values must be 0 or greater.';
+          elError.style.display = 'block';
+          return;
+        } else {
+          elError.style.display = 'none';
+        }
+
+        const totalMatches = values.wins + values.losses;
+        const winRate = totalMatches > 0 ? (values.wins / totalMatches) : 0;
+
+        // Handle perfect KDA (0 deaths)
+        const kda = values.deaths === 0 && (values.kills > 0 || values.assists > 0)
+            ? 'Perfect'
+            : values.deaths === 0 ? 0 : (values.kills + values.assists) / values.deaths;
+
+        const avgKills = totalMatches > 0 ? values.kills / totalMatches : 0;
+        const avgDeaths = totalMatches > 0 ? values.deaths / totalMatches : 0;
+
+        // Update UI
+        elWinRate.textContent = new Intl.NumberFormat('en-US', { style: 'percent', minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(winRate);
+        elTotalMatches.textContent = `${totalMatches} Match${totalMatches === 1 ? '' : 'es'}`;
+
+        elKdaRatio.textContent = kda === 'Perfect' ? 'Perfect' : new Intl.NumberFormat('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(kda);
+
+        elAvgKills.textContent = new Intl.NumberFormat('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(avgKills);
+        elAvgDeaths.textContent = new Intl.NumberFormat('en-US', { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(avgDeaths);
+      }
+
+      inputs.forEach(input => {
+        input.addEventListener('input', calculateStats);
+        // Select text on focus for easy replacement
+        input.addEventListener('focus', () => input.select());
+      });
+
+      // Initial calc
+      calculateStats();
+    });
+  </script>
+
+  <style is:inline>
+    .page-content { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem; }
+    .hero { text-align: center; padding: 3rem 0 2rem; }
+    .hero h1 { font-size: 2.2rem; font-weight: 800; margin-bottom: 0.5rem; }
+    .subtitle { color: var(--text-secondary); font-size: 1.1rem; }
+    .calculator-container { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 2rem; margin: 2rem 0; }
+    .tracker-inputs { display: flex; flex-direction: column; gap: 1.5rem; margin-bottom: 2.5rem; }
+    .input-card { background: color-mix(in srgb, var(--bg-color) 50%, transparent); border: 1px solid var(--border-color); border-radius: 8px; padding: 1.5rem; }
+    .input-card h3 { margin-top: 0; margin-bottom: 1rem; font-size: 1.1rem; color: var(--accent-color); border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem; }
+    .input-group label { display: block; margin-bottom: 0.5rem; font-weight: 600; font-size: 0.9rem; color: var(--text-primary); }
+    input, select { background: var(--bg-color); color: var(--text-primary); border: 1px solid var(--border-color); padding: 0.75rem 1rem; border-radius: 8px; width: 100%; font-size: 1.1rem; font-family: var(--font-mono); font-weight: 600; }
+
+    @media (max-width: 600px) {
+      .grid-3 { grid-template-columns: 1fr; }
+    }
+
+    .stats-dashboard { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; }
+    .stat-box { background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 1.5rem; text-align: center; }
+    .stat-box.highlight { background: color-mix(in srgb, var(--accent-color) 10%, transparent); border-color: var(--accent-color); }
+    .stat-label { color: var(--text-secondary); font-size: 0.9rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.5rem; }
+    .stat-value { font-size: 2rem; font-weight: 800; color: var(--text-primary); font-family: var(--font-mono); line-height: 1.2; }
+    .highlight .stat-value { color: var(--accent-color); font-size: 2.5rem; }
+    .stat-sub { color: var(--text-secondary); font-size: 0.85rem; margin-top: 0.5rem; }
+    input:focus, select:focus { outline: none; border-color: var(--accent-color); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-color) 20%, transparent); }
+    button { background: var(--accent-color); color: white; border: none; padding: 0.75rem 2rem; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 1rem; }
+    button:hover { opacity: 0.9; }
+    .result-card { background: color-mix(in srgb, var(--accent-color) 10%, transparent); border: 1px solid var(--accent-color); border-radius: 12px; padding: 1.5rem; margin: 1.5rem 0; text-align: center; }
+    .result-value { font-size: 2.5rem; font-weight: 800; color: var(--accent-color); }
+    .faq-section details { margin: 1rem 0; padding: 1rem; background: var(--card-bg); border-radius: 8px; border: 1px solid var(--border-color); }
+    .faq-section summary { font-weight: 600; cursor: pointer; }
+    .explainer { margin-top: 3rem; }
+    .explainer h2 { margin-top: 2rem; margin-bottom: 1rem; color: var(--accent-color); }
+    .explainer h3 { margin-top: 1.5rem; margin-bottom: 0.75rem; }
+    .explainer p { margin-bottom: 1.25rem; line-height: 1.7; }
+    .explainer ul, .explainer ol { margin-bottom: 1.5rem; padding-left: 1.5rem; }
+    .explainer li { margin-bottom: 0.5rem; }
+    .formula-box { background: color-mix(in srgb, var(--accent-color) 5%, transparent); border-left: 4px solid var(--accent-color); padding: 1.25rem; margin: 1.5rem 0; border-radius: 0 8px 8px 0; font-family: var(--font-mono); }
+    .explainer a { color: var(--accent-color); text-decoration: none; font-weight: 500; }
+    .explainer a:hover { text-decoration: underline; }
+  </style>
+</SiteLayout>
