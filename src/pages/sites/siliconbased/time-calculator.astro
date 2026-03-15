@@ -1,0 +1,338 @@
+---
+import SiteLayout from "../../../layouts/SiteLayout.astro";
+
+export const meta = {
+  title: "Time Calculator & Tracker",
+  description: "Stop guessing how many hours you actually worked. This simple math reveals exactly where your time is going...",
+  category: "tool",
+  published: "2026-03-15",
+};
+
+const schema = [
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": meta.title,
+    "description": meta.description,
+    "author": {
+      "@type": "Organization",
+      "name": "siliconbased.dev",
+      "url": "https://siliconbased.dev/"
+    },
+    "datePublished": meta.published,
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "How do you calculate hours worked from start and end times?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "To calculate the hours worked, convert your start and end times into a 24-hour format (military time) or to total minutes since midnight. Subtract the start time from the end time. If the end time is smaller than the start time, it means the shift crossed midnight, so you add 24 hours (or 1440 minutes) to the end time before subtracting. Finally, subtract any unpaid break time to find the total hours worked."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "What is the formula for calculating time difference?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "The fundamental formula is: Total Time = End Time - Start Time. When dealing with hours and minutes, it is often easier to convert everything to minutes first: Total Minutes = (End Hours × 60 + End Minutes) - (Start Hours × 60 + Start Minutes). Convert the final result back to hours by dividing by 60."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How do you account for breaks in a time calculator?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Breaks are simply subtracted from the gross time worked. If your gross time (End Time - Start Time) is 8 hours, and you took a 30-minute unpaid lunch break, your net time worked is 7 hours and 30 minutes. Always ensure your break time is in the same unit (minutes or decimal hours) before subtracting."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How do you handle overnight shifts crossing midnight?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "When a shift crosses midnight, the end time appears earlier than the start time (e.g., 10:00 PM to 6:00 AM). To calculate this correctly, add 24 hours to the end time. For instance, 6:00 AM becomes 30:00. Then subtract the start time (22:00) from the adjusted end time (30:00) to get 8 hours."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "What is decimal time and why is it used for payroll?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Decimal time represents minutes as a fraction of an hour (e.g., 30 minutes is 0.5 hours, 15 minutes is 0.25 hours). Payroll systems use decimal time because it simplifies calculating wages. Multiplying an hourly rate by 7.5 hours is much easier than multiplying by 7 hours and 30 minutes."
+        }
+      }
+    ]
+  }
+];
+---
+
+<SiteLayout site="siliconbased" title={meta.title} description={meta.description} canonical="https://siliconbased.dev/time-calculator" schema={schema}>
+  <div class="page-content">
+    <div class="hero">
+      <h1>{meta.title}</h1>
+      <p class="subtitle">Calculate hours worked, duration between times, and decimal hours instantly.</p>
+    </div>
+
+    <div class="calculator-container">
+      <div class="calc-grid">
+        <div class="input-group">
+          <label for="start-time">Start Time</label>
+          <input type="time" id="start-time" value="09:00" />
+        </div>
+        <div class="input-group">
+          <label for="end-time">End Time</label>
+          <input type="time" id="end-time" value="17:00" />
+        </div>
+        <div class="input-group">
+          <label for="break-mins">Break (Minutes)</label>
+          <input type="number" id="break-mins" min="0" value="0" placeholder="e.g., 30" />
+        </div>
+      </div>
+
+      <div id="error-message" class="error-msg" style="display: none;"></div>
+
+      <div class="result-card">
+        <div class="result-grid">
+          <div class="result-box">
+            <div class="result-label">Total Duration</div>
+            <div class="result-value" id="res-duration">0h 0m</div>
+          </div>
+          <div class="result-box">
+            <div class="result-label">Decimal Hours</div>
+            <div class="result-value" id="res-decimal">0.00</div>
+          </div>
+          <div class="result-box">
+            <div class="result-label">Total Minutes</div>
+            <div class="result-value" id="res-minutes">0</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="explainer">
+      <h2>How to Calculate Time: Methodology and Formulas</h2>
+      <p>Time calculation might seem straightforward, but when you introduce variables like the 60-minute hour, 24-hour days, overnight shifts crossing midnight, and unpaid break deductions, the math can quickly become prone to human error. Whether you are tracking billable hours for a freelance project, calculating employee payroll, or simply measuring the duration of an event, understanding the underlying formulas is essential. This guide breaks down the precise methodology used in our time calculator to ensure accuracy in every scenario.</p>
+
+      <h3>The Foundation: Base 60 vs. Base 10</h3>
+      <p>The primary challenge in calculating time duration is the mismatch between how we measure time (Base 60) and how we perform standard arithmetic (Base 10). There are 60 minutes in an hour, not 100. Because of this, you cannot simply subtract 8.30 from 17.00 to find the difference between 8:30 AM and 5:00 PM. Doing so yields 8.70, which is mathematically correct in decimal notation but incorrect in terms of hours and minutes.</p>
+      <p>To perform accurate time calculations, all temporal values must be standardized. The most robust method for programmatic and manual time calculation is converting all values into <strong>Total Minutes Since Midnight</strong>.</p>
+
+      <h3>Step 1: Converting to Military Time (24-Hour Format)</h3>
+      <p>Before any subtraction occurs, the 12-hour AM/PM format must be converted into a 24-hour continuous scale. This eliminates the ambiguity of "8:00"—is it morning or evening? In military time, 8:00 AM is 08:00, and 8:00 PM is 20:00.</p>
+      <ul>
+        <li><strong>For AM times:</strong> The hour remains the same. The exception is 12:00 AM (midnight), which becomes 00:00.</li>
+        <li><strong>For PM times:</strong> Add 12 to the hour. For example, 1:00 PM becomes 13:00. The exception is 12:00 PM (noon), which remains 12:00.</li>
+      </ul>
+
+      <h3>Step 2: Calculating Total Minutes</h3>
+      <p>Once you have the 24-hour format, extract the hours and minutes for both the Start Time and the End Time. Multiply the hours by 60 and add the minutes. This yields the absolute number of minutes that have elapsed since midnight for that specific point in time.</p>
+      <div class="formula-box">
+        <strong>Formula:</strong> Total Minutes = (Hours × 60) + Minutes
+      </div>
+      <p><strong>Example:</strong> Calculating minutes for 2:45 PM (14:45 in 24-hour time):</p>
+      <ul>
+        <li>Hours: 14 × 60 = 840 minutes</li>
+        <li>Minutes: 45 minutes</li>
+        <li>Total = 840 + 45 = <strong>885 minutes since midnight</strong></li>
+      </ul>
+
+      <h3>Step 3: Calculating Gross Duration</h3>
+      <p>With both times converted into total minutes, finding the duration is a matter of simple subtraction: End Time minus Start Time. However, there is a critical edge case to account for: shifts that cross midnight.</p>
+      <div class="formula-box">
+        <strong>Formula:</strong> Gross Duration = End Minutes - Start Minutes
+      </div>
+      <h4>Handling Overnight Shifts (Crossing Midnight)</h4>
+      <p>If someone starts working at 10:00 PM (22:00) and finishes at 6:00 AM (06:00) the next day, subtracting the start time from the end time yields a negative number (360 - 1320 = -960). To correct this logic, we must recognize that a new day has begun. A full 24-hour cycle contains 1,440 minutes.</p>
+      <p><strong>The Overnight Rule:</strong> If the End Time is less than the Start Time, add 24 hours (1,440 minutes) to the End Time before subtracting.</p>
+      <ul>
+        <li>Start Time (22:00): (22 × 60) + 0 = 1320 minutes</li>
+        <li>End Time (06:00): (6 × 60) + 0 = 360 minutes</li>
+        <li>Since 360 &lt; 1320, add 1440 to 360: New End Time = 1800 minutes</li>
+        <li>Gross Duration = 1800 - 1320 = <strong>480 minutes (8 hours)</strong></li>
+      </ul>
+
+      <h3>Step 4: Deducting Unpaid Breaks</h3>
+      <p>Many time calculations, especially for payroll, require deducting unpaid break periods. To maintain accuracy, break time must be converted into total minutes before subtracting it from the gross duration.</p>
+      <div class="formula-box">
+        <strong>Formula:</strong> Net Duration (in minutes) = Gross Duration - Break Minutes
+      </div>
+      <p>If the calculated Gross Duration is 510 minutes (8.5 hours) and the worker took a 30-minute break, the Net Duration is 480 minutes (8.0 hours). Our calculator includes input validation to ensure you cannot subtract a break that is longer than the gross duration itself, preventing negative time results.</p>
+
+      <h3>Step 5: Converting Back to Hours and Minutes</h3>
+      <p>Now that we have the Net Duration in total minutes, we must convert it back into a readable format (Hours and Minutes). This requires integer division and the modulo operator.</p>
+      <ul>
+        <li><strong>Hours:</strong> Divide the total minutes by 60 and drop any remainder. (e.g., 480 / 60 = 8).</li>
+        <li><strong>Minutes:</strong> Use the modulo operator to find the remainder after dividing by 60. (e.g., 480 % 60 = 0).</li>
+      </ul>
+      <p>The final formatted result is presented as <em>H</em>h <em>M</em>m.</p>
+
+      <h3>Step 6: Calculating Decimal Hours for Payroll</h3>
+      <p>While "8 hours and 15 minutes" is easy for humans to read, it is notoriously difficult for accounting software. Payroll requires decimal time. To calculate gross pay, you multiply the hourly rate by the decimal time.</p>
+      <p>To convert minutes into a decimal fraction of an hour, divide the remaining minutes by 60. Then, add that decimal to the total whole hours.</p>
+      <div class="formula-box">
+        <strong>Formula:</strong> Decimal Hours = Whole Hours + (Remaining Minutes ÷ 60)
+      </div>
+      <p><strong>Example:</strong> Converting 8 hours and 15 minutes to decimal hours:</p>
+      <ul>
+        <li>15 minutes ÷ 60 = 0.25</li>
+        <li>8 hours + 0.25 = <strong>8.25 Decimal Hours</strong></li>
+      </ul>
+      <p>If the hourly wage is $20/hr, the math is now straightforward: $20 × 8.25 = $165.00. This methodology ensures exact precision for invoicing, timesheets, and financial tracking.</p>
+
+      <h3>Step 7: Automating the Process with Software</h3>
+      <p>While understanding the manual calculations is crucial for spotting errors and verifying payroll anomalies, calculating time by hand on a daily basis is highly inefficient. Modern organizations rely on automated time tracking software to eliminate manual data entry and human error.</p>
+      <p>When you use an online time calculator like ours, the JavaScript engine handles the Base 60 to Base 10 conversions instantaneously. The code parses the input times directly from the HTML inputs, converts them into standard Date objects or total minutes (as described in Step 2), and executes the subtraction.</p>
+      <p>Furthermore, automated systems inherently prevent common mistakes, such as subtracting a 45-minute break from a 30-minute shift, or failing to account for the 24-hour overlap when working overnight. By standardizing the inputs and adhering to strict programmatic rules, time tracking software ensures that every minute is accounted for accurately.</p>
+
+      <h3>Step 8: Dealing with Time Zones and Daylight Saving Time</h3>
+      <p>The calculations outlined above assume a localized, consistent 24-hour period. However, global teams face additional complexities. When calculating the duration between an event starting in Tokyo and ending in New York, you must first normalize both times to Coordinated Universal Time (UTC).</p>
+      <p>Similarly, Daylight Saving Time (DST) introduces a unique edge case. Twice a year in participating regions, the clocks jump forward or fall back. If a night shift worker is on the clock during the "fall back" transition, they physically work an extra hour that does not appear on the clock. Conversely, during the "spring forward" transition, a standard 8-hour shift takes only 7 hours of physical time. Robust enterprise time calculators must integrate with global time zone databases (like the IANA Time Zone Database) to cross-reference timestamps against local DST rules, ensuring workers are paid for their actual physical duration of work, not just the difference on the clock.</p>
+
+      <p>For more advanced mathematical plotting, check out our <a href="/graphing-calculator">interactive graphing calculator</a>.</p>
+    </div>
+
+    <section class="faq-section">
+      <h2>Frequently Asked Questions</h2>
+      <details>
+        <summary>How do you calculate hours worked from start and end times?</summary>
+        <p>To calculate the hours worked, convert your start and end times into a 24-hour format (military time) or to total minutes since midnight. Subtract the start time from the end time. If the end time is smaller than the start time, it means the shift crossed midnight, so you add 24 hours (or 1440 minutes) to the end time before subtracting. Finally, subtract any unpaid break time to find the total hours worked.</p>
+      </details>
+      <details>
+        <summary>What is the formula for calculating time difference?</summary>
+        <p>The fundamental formula is: Total Time = End Time - Start Time. When dealing with hours and minutes, it is often easier to convert everything to minutes first: Total Minutes = (End Hours × 60 + End Minutes) - (Start Hours × 60 + Start Minutes). Convert the final result back to hours by dividing by 60.</p>
+      </details>
+      <details>
+        <summary>How do you account for breaks in a time calculator?</summary>
+        <p>Breaks are simply subtracted from the gross time worked. If your gross time (End Time - Start Time) is 8 hours, and you took a 30-minute unpaid lunch break, your net time worked is 7 hours and 30 minutes. Always ensure your break time is in the same unit (minutes or decimal hours) before subtracting.</p>
+      </details>
+      <details>
+        <summary>How do you handle overnight shifts crossing midnight?</summary>
+        <p>When a shift crosses midnight, the end time appears earlier than the start time (e.g., 10:00 PM to 6:00 AM). To calculate this correctly, add 24 hours to the end time. For instance, 6:00 AM becomes 30:00. Then subtract the start time (22:00) from the adjusted end time (30:00) to get 8 hours.</p>
+      </details>
+      <details>
+        <summary>What is decimal time and why is it used for payroll?</summary>
+        <p>Decimal time represents minutes as a fraction of an hour (e.g., 30 minutes is 0.5 hours, 15 minutes is 0.25 hours). Payroll systems use decimal time because it simplifies calculating wages. Multiplying an hourly rate by 7.5 hours is much easier than multiplying by 7 hours and 30 minutes.</p>
+      </details>
+    </section>
+  </div>
+
+  <script is:inline>
+    function calculateTime() {
+      const startTimeInput = document.getElementById('start-time').value;
+      const endTimeInput = document.getElementById('end-time').value;
+      const breakMinsInput = parseInt(document.getElementById('break-mins').value) || 0;
+      const errorMsg = document.getElementById('error-message');
+
+      if (!startTimeInput || !endTimeInput) {
+        return; // Don't calculate if empty
+      }
+
+      // Parse times
+      const [startH, startM] = startTimeInput.split(':').map(Number);
+      const [endH, endM] = endTimeInput.split(':').map(Number);
+
+      let startTotalMins = (startH * 60) + startM;
+      let endTotalMins = (endH * 60) + endM;
+
+      // Handle overnight shift crossing midnight
+      if (endTotalMins < startTotalMins) {
+        endTotalMins += (24 * 60);
+      }
+
+      let grossDurationMins = endTotalMins - startTotalMins;
+
+      // Input validation
+      if (breakMinsInput < 0) {
+        errorMsg.textContent = "Break time cannot be negative.";
+        errorMsg.style.display = "block";
+        resetOutputs();
+        return;
+      }
+
+      if (breakMinsInput > grossDurationMins) {
+        errorMsg.textContent = "Break time cannot be longer than the total duration worked.";
+        errorMsg.style.display = "block";
+        resetOutputs();
+        return;
+      }
+
+      errorMsg.style.display = "none";
+      let netDurationMins = grossDurationMins - breakMinsInput;
+
+      // Format outputs
+      const hours = Math.floor(netDurationMins / 60);
+      const minutes = netDurationMins % 60;
+      const decimalHours = (netDurationMins / 60).toFixed(2);
+
+      document.getElementById('res-duration').textContent = `${hours}h ${minutes}m`;
+      document.getElementById('res-decimal').textContent = decimalHours;
+      document.getElementById('res-minutes').textContent = netDurationMins;
+    }
+
+    function resetOutputs() {
+      document.getElementById('res-duration').textContent = `0h 0m`;
+      document.getElementById('res-decimal').textContent = `0.00`;
+      document.getElementById('res-minutes').textContent = `0`;
+    }
+
+    // Attach event listeners
+    document.getElementById('start-time').addEventListener('input', calculateTime);
+    document.getElementById('end-time').addEventListener('input', calculateTime);
+    document.getElementById('break-mins').addEventListener('input', calculateTime);
+
+    // Initial calc
+    calculateTime();
+  </script>
+
+  <style is:inline>
+    .page-content { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem; }
+    .hero { text-align: center; padding: 3rem 0 2rem; }
+    .hero h1 { font-size: 2.2rem; font-weight: 800; margin-bottom: 0.5rem; }
+    .subtitle { color: var(--text-secondary); font-size: 1.1rem; }
+
+    .calculator-container { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 2rem; margin: 2rem 0; }
+    .calc-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 1.5rem; }
+    .input-group { display: flex; flex-direction: column; gap: 0.5rem; }
+    .input-group label { font-weight: 600; font-size: 0.95rem; }
+
+    input, select { background: var(--bg-color); color: var(--text-primary); border: 1px solid var(--border-color); padding: 0.75rem 1rem; border-radius: 8px; width: 100%; font-size: 1rem; }
+    input:focus, select:focus { outline: none; border-color: var(--accent-color); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-color) 20%, transparent); }
+
+    .error-msg { background: #fee2e2; color: #b91c1c; border: 1px solid #f87171; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; font-weight: 500; }
+    .dark .error-msg { background: #450a0a; color: #fca5a5; border-color: #991b1b; }
+
+    button { background: var(--accent-color); color: white; border: none; padding: 0.75rem 2rem; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 1rem; }
+    button:hover { opacity: 0.9; }
+
+    .result-card { background: color-mix(in srgb, var(--accent-color) 10%, transparent); border: 1px solid var(--accent-color); border-radius: 12px; padding: 1.5rem; text-align: center; }
+    .result-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 1rem; }
+    .result-box { padding: 1rem; background: var(--bg-color); border-radius: 8px; border: 1px solid var(--border-color); }
+    .result-label { font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 0.5rem; text-transform: uppercase; font-weight: 600; letter-spacing: 0.5px; }
+    .result-value { font-size: 2rem; font-weight: 800; color: var(--accent-color); }
+
+    .explainer { margin-top: 3rem; line-height: 1.7; }
+    .explainer h2 { font-size: 1.8rem; margin-top: 2rem; margin-bottom: 1rem; }
+    .explainer h3 { font-size: 1.4rem; margin-top: 1.5rem; margin-bottom: 0.75rem; }
+    .explainer h4 { font-size: 1.2rem; margin-top: 1rem; margin-bottom: 0.5rem; }
+    .explainer p { margin-bottom: 1rem; color: var(--text-secondary); }
+    .explainer ul { margin-bottom: 1rem; padding-left: 1.5rem; color: var(--text-secondary); }
+    .explainer li { margin-bottom: 0.5rem; }
+    .formula-box { background: var(--card-bg); border-left: 4px solid var(--accent-color); padding: 1rem 1.5rem; margin: 1.5rem 0; border-radius: 0 8px 8px 0; font-family: monospace; font-size: 1.05rem; }
+    .explainer a { color: var(--accent-color); text-decoration: none; font-weight: 600; }
+    .explainer a:hover { text-decoration: underline; }
+
+    .faq-section { margin-top: 3rem; }
+    .faq-section h2 { font-size: 1.8rem; margin-bottom: 1.5rem; }
+    .faq-section details { margin: 1rem 0; padding: 1rem; background: var(--card-bg); border-radius: 8px; border: 1px solid var(--border-color); transition: background 0.2s; }
+    .faq-section details[open] { background: var(--bg-color); border-color: var(--accent-color); }
+    .faq-section summary { font-weight: 600; cursor: pointer; list-style: none; position: relative; padding-right: 1.5rem; font-size: 1.1rem; }
+    .faq-section summary::-webkit-details-marker { display: none; }
+    .faq-section summary::after { content: "+"; position: absolute; right: 0; top: 50%; transform: translateY(-50%); font-size: 1.5rem; color: var(--accent-color); transition: transform 0.2s; }
+    .faq-section details[open] summary::after { content: "−"; }
+    .faq-section p { margin-top: 1rem; color: var(--text-secondary); line-height: 1.6; }
+  </style>
+</SiteLayout>
