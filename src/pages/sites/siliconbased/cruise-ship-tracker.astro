@@ -1,0 +1,453 @@
+---
+import SiteLayout from "../../../layouts/SiteLayout.astro";
+
+export const meta = {
+  title: "Cruise Ship Tracker: Real-Time Voyage Progress Calculator",
+  description: "Wondering when the ship arrives? Calculate live cruise ship tracking progress, ETA, and distance remaining based on speed and departure time.",
+  category: "tool",
+  published: "2026-03-15",
+};
+
+const title = "Cruise Ship Tracker & Voyage Calculator";
+const description = "Calculate your cruise ship's estimated time of arrival (ETA), remaining distance, and current voyage progress based on speed and departure metrics.";
+const canonical = "https://siliconbased.dev/cruise-ship-tracker";
+
+const schema = [
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": meta.title,
+    "description": meta.description,
+    "author": {
+      "@type": "Organization",
+      "name": "SiliconBased"
+    },
+    "datePublished": meta.published
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "How is a cruise ship's speed measured?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "A cruise ship's speed is typically measured in knots. One knot is equal to one nautical mile per hour. To convert knots to standard miles per hour (mph), you multiply the speed in knots by approximately 1.15078."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "What is the average cruising speed of a passenger ship?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Most modern passenger cruise ships have an average cruising speed of about 20 to 22 knots (roughly 23 to 25 mph or 37 to 41 km/h). They can travel faster, up to 25-30 knots, but generally maintain lower speeds to optimize fuel efficiency and passenger comfort."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How does weather affect a cruise ship's ETA?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Severe weather, such as high winds, heavy seas, or storms, can significantly impact a ship's speed and route. The captain may reduce speed for safety and comfort or alter the course entirely to avoid rough weather, both of which will delay the Estimated Time of Arrival (ETA)."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How do you calculate the remaining distance on a voyage?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Remaining distance is calculated by taking the total voyage distance and subtracting the distance already traveled. The distance traveled is found by multiplying the ship's average speed by the total time elapsed since departure (Distance = Speed × Time)."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Are nautical miles different from regular miles?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes, a nautical mile is slightly longer than a standard (statute) mile. While a standard mile is 5,280 feet, a nautical mile is exactly 6,076.11549 feet (1,852 meters). It is based on the Earth's circumference and is equal to one minute of latitude."
+        }
+      }
+    ]
+  }
+];
+---
+
+<SiteLayout site="siliconbased" title={title} description={description} canonical={canonical} schema={schema}>
+  <div class="page-content">
+    <div class="hero">
+      <h1>{title}</h1>
+      <p class="subtitle">{description}</p>
+    </div>
+
+    <div class="calculator-container">
+      <div class="input-grid">
+        <div class="input-group">
+          <label for="total-distance">Total Voyage Distance (Nautical Miles)</label>
+          <input type="number" id="total-distance" placeholder="e.g. 1500" min="1" step="any" />
+        </div>
+
+        <div class="input-group">
+          <label for="avg-speed">Average Cruising Speed (Knots)</label>
+          <input type="number" id="avg-speed" placeholder="e.g. 21" min="1" step="any" />
+        </div>
+
+        <div class="input-group">
+          <label for="departure-time">Departure Date & Time</label>
+          <input type="datetime-local" id="departure-time" />
+        </div>
+
+        <div class="input-group">
+          <label for="current-time">Current Date & Time (Optional, defaults to now)</label>
+          <input type="datetime-local" id="current-time" />
+        </div>
+      </div>
+
+      <div class="error-message" id="error-message" style="display: none; color: #ef4444; margin-top: 1rem; text-align: center;">
+        Please enter valid positive numbers for distance and speed, and ensure departure time is set.
+      </div>
+
+      <div class="time-error" id="time-error" style="display: none; color: #ef4444; margin-top: 1rem; text-align: center;">
+        Departure time must be in the past relative to the current time to track progress.
+      </div>
+
+      <div class="result-card">
+        <h3>Voyage Progress</h3>
+
+        <div class="progress-bar-container" style="background: var(--bg-color); border-radius: 8px; height: 24px; margin: 1rem 0; overflow: hidden; border: 1px solid var(--border-color);">
+          <div id="progress-fill" style="background: var(--accent-color); height: 100%; width: 0%; transition: width 0.3s ease;"></div>
+        </div>
+
+        <div class="result-value" id="progress-percentage">0%</div>
+
+        <div class="metrics-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1.5rem; text-align: left; background: var(--card-bg); padding: 1rem; border-radius: 8px; border: 1px solid var(--border-color);">
+          <div>
+            <span class="metric-label">Status</span>
+            <strong class="metric-value" id="voyage-status">Not Started</strong>
+          </div>
+          <div>
+            <span class="metric-label">Estimated ETA</span>
+            <strong class="metric-value" id="eta-display">--</strong>
+          </div>
+          <div>
+            <span class="metric-label">Distance Traveled</span>
+            <strong class="metric-value" id="dist-traveled">0 NM</strong>
+          </div>
+          <div>
+            <span class="metric-label">Distance Remaining</span>
+            <strong class="metric-value" id="dist-remaining">0 NM</strong>
+          </div>
+          <div>
+            <span class="metric-label">Time Elapsed</span>
+            <strong class="metric-value" id="time-elapsed">0 hrs</strong>
+          </div>
+          <div>
+            <span class="metric-label">Time Remaining</span>
+            <strong class="metric-value" id="time-remaining">0 hrs</strong>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="explainer">
+      <h2>Understanding Cruise Ship Tracking Metrics</h2>
+      <p>
+        Whether you are a maritime enthusiast, a passenger eagerly awaiting your next port of call, or family tracking loved ones at sea, understanding how a cruise ship's progress is calculated adds a fascinating layer of insight to the journey. Our interactive Cruise Ship Tracker operates as a voyage calculator, taking standard nautical metrics—distance, speed, and time—and instantly translating them into a real-time progress report.
+      </p>
+
+      <h3>The Fundamental Variables of Voyage Tracking</h3>
+      <p>
+        To accurately predict a ship's current position along its route and estimate its arrival time, you need three core pieces of data. These are the inputs you provide to the calculator:
+      </p>
+      <ul>
+        <li><strong>Total Distance:</strong> In maritime operations, distance is measured in Nautical Miles (NM). Unlike standard miles, a nautical mile is based on the Earth's circumference and is slightly longer (roughly 1.15 standard miles). The total distance represents the planned route length between the departure port and the destination.</li>
+        <li><strong>Average Speed:</strong> Ship speed is universally measured in <em>Knots</em>. One knot is equivalent to traveling one nautical mile in one hour. If a ship is traveling at 20 knots, it is covering 20 nautical miles every hour. Modern cruise ships typically average between 18 and 22 knots to balance fuel efficiency with schedule demands.</li>
+        <li><strong>Departure Time:</strong> The exact date and time the vessel left the dock. This serves as the anchor point (pun intended) for all elapsed time calculations.</li>
+      </ul>
+
+      <h3>The Mathematics of Maritime Travel</h3>
+      <p>
+        The calculations driving our tracker are grounded in the classic physics formula governing motion: <strong>Distance = Speed × Time (D = S × T)</strong>. By rearranging this formula, we can extrapolate all necessary voyage metrics.
+      </p>
+
+      <h4>Calculating Elapsed Time</h4>
+      <p>
+        First, the calculator determines how much time has passed since the ship departed. It subtracts the Departure Time from the Current Time. This yields the Elapsed Time, usually tracked in hours and fractions of an hour for precision.
+      </p>
+
+      <h4>Calculating Distance Traveled</h4>
+      <p>
+        With the elapsed time established, the calculator applies the ship's average speed.
+      </p>
+      <div class="formula-box">
+        <code>Distance Traveled (NM) = Average Speed (Knots) × Elapsed Time (Hours)</code>
+      </div>
+      <p>
+        For example, if a ship has been sailing for 12 hours at an average speed of 20 knots, it has traveled 240 nautical miles.
+      </p>
+
+      <h4>Determining Voyage Progress and Remaining Distance</h4>
+      <p>
+        To find the Remaining Distance, we simply subtract the Distance Traveled from the Total Voyage Distance:
+      </p>
+      <div class="formula-box">
+        <code>Remaining Distance = Total Distance - Distance Traveled</code>
+      </div>
+      <p>
+        The Voyage Progress percentage, which drives the visual progress bar, is calculated by dividing the Distance Traveled by the Total Distance, and multiplying by 100 to get a percentage.
+      </p>
+
+      <h4>Estimating the Time of Arrival (ETA)</h4>
+      <p>
+        To calculate when the ship will arrive at its destination, the calculator first determines the Total Travel Time required for the entire journey:
+      </p>
+      <div class="formula-box">
+        <code>Total Travel Time (Hours) = Total Distance / Average Speed</code>
+      </div>
+      <p>
+        The ETA is then found by taking the Departure Time and adding the Total Travel Time. Alternatively, to find the Time Remaining, the calculator divides the Remaining Distance by the Average Speed.
+      </p>
+
+      <h3>Real-World Tracking Variables</h3>
+      <p>
+        While the mathematics provided by the calculator are precise, real-world maritime navigation involves dynamic variables that can alter these figures. A captain must navigate around weather systems, ocean currents, and shipping traffic.
+      </p>
+      <p>
+        <strong>Ocean Currents:</strong> Traveling with a favorable current (like the Gulf Stream) can effectively increase a ship's speed over ground, saving time and fuel. Conversely, pushing against a strong current will reduce speed and delay the ETA.
+      </p>
+      <p>
+        <strong>Weather Adjustments:</strong> Severe weather may force a ship to slow down to minimize hull stress and passenger discomfort. In extreme cases, a captain will alter the course entirely, increasing the total distance of the voyage to bypass a storm.
+      </p>
+      <p>
+        Because of these factors, the "Average Speed" input in our calculator is critical. Over a long voyage, a ship's speed fluctuates. The calculator assumes a constant average speed for its projections. If you know a ship has slowed due to weather, lowering the average speed input will yield a more accurate ETA.
+      </p>
+
+      <h3>Related Analytical Tools</h3>
+      <p>
+        The principles of establishing distances and midpoints are deeply interconnected in navigation and geography. If you are interested in finding the exact geographic center between a departure port and a destination port using their specific coordinate data, we recommend using our <a href="/sites/siliconbased/midpoint-calculator">Midpoint Calculator</a>. It provides precise calculations for identifying the exact middle point between two sets of Cartesian or geographic coordinates.
+      </p>
+      <p>
+        Whether you are actively tracking a current voyage or planning a future trip, understanding the mathematics behind the journey demystifies the process, turning a long wait at sea into a predictable, measurable timeline.
+      </p>
+    </div>
+
+    <section class="faq-section">
+      <h2>Frequently Asked Questions</h2>
+      <details>
+        <summary>How is a cruise ship's speed measured?</summary>
+        <p>A cruise ship's speed is typically measured in knots. One knot is equal to one nautical mile per hour. To convert knots to standard miles per hour (mph), you multiply the speed in knots by approximately 1.15078.</p>
+      </details>
+      <details>
+        <summary>What is the average cruising speed of a passenger ship?</summary>
+        <p>Most modern passenger cruise ships have an average cruising speed of about 20 to 22 knots (roughly 23 to 25 mph or 37 to 41 km/h). They can travel faster, up to 25-30 knots, but generally maintain lower speeds to optimize fuel efficiency and passenger comfort.</p>
+      </details>
+      <details>
+        <summary>How does weather affect a cruise ship's ETA?</summary>
+        <p>Severe weather, such as high winds, heavy seas, or storms, can significantly impact a ship's speed and route. The captain may reduce speed for safety and comfort or alter the course entirely to avoid rough weather, both of which will delay the Estimated Time of Arrival (ETA).</p>
+      </details>
+      <details>
+        <summary>How do you calculate the remaining distance on a voyage?</summary>
+        <p>Remaining distance is calculated by taking the total voyage distance and subtracting the distance already traveled. The distance traveled is found by multiplying the ship's average speed by the total time elapsed since departure (Distance = Speed × Time).</p>
+      </details>
+      <details>
+        <summary>Are nautical miles different from regular miles?</summary>
+        <p>Yes, a nautical mile is slightly longer than a standard (statute) mile. While a standard mile is 5,280 feet, a nautical mile is exactly 6,076.11549 feet (1,852 meters). It is based on the Earth's circumference and is equal to one minute of latitude.</p>
+      </details>
+    </section>
+  </div>
+
+  <script is:inline>
+    document.addEventListener('DOMContentLoaded', () => {
+      const totalDistanceInput = document.getElementById('total-distance');
+      const avgSpeedInput = document.getElementById('avg-speed');
+      const departureTimeInput = document.getElementById('departure-time');
+      const currentTimeInput = document.getElementById('current-time');
+
+      const errorMsg = document.getElementById('error-message');
+      const timeError = document.getElementById('time-error');
+
+      const progressPercentage = document.getElementById('progress-percentage');
+      const progressFill = document.getElementById('progress-fill');
+
+      const voyageStatus = document.getElementById('voyage-status');
+      const etaDisplay = document.getElementById('eta-display');
+      const distTraveledDisplay = document.getElementById('dist-traveled');
+      const distRemainingDisplay = document.getElementById('dist-remaining');
+      const timeElapsedDisplay = document.getElementById('time-elapsed');
+      const timeRemainingDisplay = document.getElementById('time-remaining');
+
+      // Set default departure time to 24 hours ago, and current time to now
+      const now = new Date();
+      const yesterday = new Date(now.getTime() - (24 * 60 * 60 * 1000));
+
+      // Format datetime-local string (YYYY-MM-DDThh:mm)
+      const formatDateTimeLocal = (date) => {
+        return new Date(date.getTime() - (date.getTimezoneOffset() * 60000)).toISOString().slice(0, 16);
+      };
+
+      departureTimeInput.value = formatDateTimeLocal(yesterday);
+
+      function formatNumber(num) {
+        return num.toLocaleString(undefined, { maximumFractionDigits: 1 });
+      }
+
+      function calculateVoyage() {
+        const totalDistance = parseFloat(totalDistanceInput.value);
+        const avgSpeed = parseFloat(avgSpeedInput.value);
+
+        if (!totalDistanceInput.value || !avgSpeedInput.value || !departureTimeInput.value) {
+          errorMsg.style.display = 'none';
+          timeError.style.display = 'none';
+          resetDisplay();
+          return;
+        }
+
+        if (isNaN(totalDistance) || totalDistance <= 0 || isNaN(avgSpeed) || avgSpeed <= 0) {
+          errorMsg.style.display = 'block';
+          timeError.style.display = 'none';
+          resetDisplay();
+          return;
+        }
+
+        errorMsg.style.display = 'none';
+
+        const departureDate = new Date(departureTimeInput.value);
+        const currentDate = currentTimeInput.value ? new Date(currentTimeInput.value) : new Date();
+
+        if (currentDate < departureDate) {
+          timeError.style.display = 'block';
+          voyageStatus.textContent = 'Not Started';
+          voyageStatus.style.color = 'var(--text-secondary)';
+          resetDisplayValues();
+
+          // Still calculate ETA even if not started
+          const totalHours = totalDistance / avgSpeed;
+          const eta = new Date(departureDate.getTime() + (totalHours * 60 * 60 * 1000));
+          etaDisplay.textContent = eta.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
+          return;
+        }
+
+        timeError.style.display = 'none';
+
+        // Time elapsed in hours
+        const elapsedHours = (currentDate - departureDate) / (1000 * 60 * 60);
+
+        // Distance traveled
+        let distanceTraveled = elapsedHours * avgSpeed;
+
+        // Cap distance at total distance
+        let isArrived = false;
+        if (distanceTraveled >= totalDistance) {
+          distanceTraveled = totalDistance;
+          isArrived = true;
+        }
+
+        const distanceRemaining = totalDistance - distanceTraveled;
+        const progress = (distanceTraveled / totalDistance) * 100;
+
+        // Total duration and ETA
+        const totalHours = totalDistance / avgSpeed;
+        const eta = new Date(departureDate.getTime() + (totalHours * 60 * 60 * 1000));
+
+        const hoursRemaining = totalHours - elapsedHours;
+
+        // Update DOM
+        progressPercentage.textContent = formatNumber(progress) + '%';
+        progressFill.style.width = Math.min(progress, 100) + '%';
+
+        distTraveledDisplay.textContent = formatNumber(distanceTraveled) + ' NM';
+        distRemainingDisplay.textContent = formatNumber(distanceRemaining) + ' NM';
+
+        timeElapsedDisplay.textContent = formatNumber(elapsedHours) + ' hrs';
+
+        if (isArrived) {
+          voyageStatus.textContent = 'Arrived';
+          voyageStatus.style.color = '#10b981'; // green
+          timeRemainingDisplay.textContent = '0 hrs';
+          etaDisplay.textContent = eta.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
+        } else {
+          voyageStatus.textContent = 'En Route';
+          voyageStatus.style.color = '#3b82f6'; // blue
+          timeRemainingDisplay.textContent = formatNumber(Math.max(0, hoursRemaining)) + ' hrs';
+          etaDisplay.textContent = eta.toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' });
+        }
+      }
+
+      function resetDisplay() {
+        progressPercentage.textContent = '0%';
+        progressFill.style.width = '0%';
+        voyageStatus.textContent = 'Awaiting Input';
+        voyageStatus.style.color = 'var(--text-secondary)';
+        etaDisplay.textContent = '--';
+        distTraveledDisplay.textContent = '0 NM';
+        distRemainingDisplay.textContent = '0 NM';
+        timeElapsedDisplay.textContent = '0 hrs';
+        timeRemainingDisplay.textContent = '0 hrs';
+      }
+
+      function resetDisplayValues() {
+        progressPercentage.textContent = '0%';
+        progressFill.style.width = '0%';
+        distTraveledDisplay.textContent = '0 NM';
+        distRemainingDisplay.textContent = formatNumber(parseFloat(totalDistanceInput.value || 0)) + ' NM';
+        timeElapsedDisplay.textContent = '0 hrs';
+
+        const totalDist = parseFloat(totalDistanceInput.value);
+        const speed = parseFloat(avgSpeedInput.value);
+        if (totalDist > 0 && speed > 0) {
+          timeRemainingDisplay.textContent = formatNumber(totalDist / speed) + ' hrs';
+        } else {
+          timeRemainingDisplay.textContent = '0 hrs';
+        }
+      }
+
+      totalDistanceInput.addEventListener('input', calculateVoyage);
+      avgSpeedInput.addEventListener('input', calculateVoyage);
+      departureTimeInput.addEventListener('input', calculateVoyage);
+      currentTimeInput.addEventListener('input', calculateVoyage);
+
+      // Initial calculation if default values are present
+      if (totalDistanceInput.value && avgSpeedInput.value) {
+        calculateVoyage();
+      }
+    });
+  </script>
+
+  <style is:inline>
+    .page-content { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem; }
+    .hero { text-align: center; padding: 3rem 0 2rem; }
+    .hero h1 { font-size: 2.2rem; font-weight: 800; margin-bottom: 0.5rem; }
+    .subtitle { color: var(--text-secondary); font-size: 1.1rem; }
+
+    .calculator-container { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 2rem; margin: 2rem 0; }
+    .input-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+    @media (max-width: 768px) { .input-grid { grid-template-columns: 1fr; } }
+
+    .input-group label { display: block; margin-bottom: 0.5rem; font-weight: 600; font-size: 0.9rem; color: var(--text-secondary); }
+    input { background: var(--bg-color); color: var(--text-primary); border: 1px solid var(--border-color); padding: 0.75rem 1rem; border-radius: 8px; width: 100%; font-size: 1rem; box-sizing: border-box; }
+    input:focus { outline: none; border-color: var(--accent-color); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-color) 20%, transparent); }
+
+    .result-card { background: color-mix(in srgb, var(--accent-color) 10%, transparent); border: 1px solid var(--accent-color); border-radius: 12px; padding: 1.5rem; margin: 2rem 0 0 0; text-align: center; }
+    .result-card h3 { margin-top: 0; margin-bottom: 0.5rem; color: var(--text-primary); font-size: 1.2rem; }
+    .result-value { font-size: 2.5rem; font-weight: 800; color: var(--accent-color); font-family: monospace; }
+
+    .metric-label { display: block; font-size: 0.85rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.25rem; }
+    .metric-value { font-size: 1.1rem; color: var(--text-primary); }
+
+    .explainer { line-height: 1.7; margin-top: 3rem; }
+    .explainer h2 { font-size: 1.8rem; margin-top: 2rem; margin-bottom: 1rem; }
+    .explainer h3 { font-size: 1.4rem; margin-top: 1.5rem; margin-bottom: 0.75rem; }
+    .explainer h4 { font-size: 1.2rem; margin-top: 1.25rem; margin-bottom: 0.5rem; }
+    .explainer p { margin-bottom: 1rem; color: var(--text-secondary); }
+    .explainer ul, .explainer ol { margin-bottom: 1.5rem; padding-left: 1.5rem; color: var(--text-secondary); }
+    .explainer li { margin-bottom: 0.5rem; }
+    .explainer a { color: var(--accent-color); text-decoration: none; font-weight: 600; }
+    .explainer a:hover { text-decoration: underline; }
+    .formula-box { background: var(--card-bg); border-left: 4px solid var(--accent-color); padding: 1rem; margin: 1.5rem 0; font-family: monospace; font-size: 1.1rem; border-radius: 4px; overflow-x: auto; }
+
+    .faq-section { margin-top: 3rem; }
+    .faq-section details { margin: 1rem 0; padding: 1rem; background: var(--card-bg); border-radius: 8px; border: 1px solid var(--border-color); }
+    .faq-section summary { font-weight: 600; cursor: pointer; font-size: 1.1rem; }
+    .faq-section p { margin-top: 1rem; margin-bottom: 0; color: var(--text-secondary); line-height: 1.6; }
+  </style>
+</SiteLayout>
