@@ -1,0 +1,69 @@
+--- src/pages/sites/siliconbased/geo-tracker.astro
++++ src/pages/sites/siliconbased/geo-tracker.astro
+@@ -107,26 +107,25 @@
+         const domainRegex = /^[a-zA-Z0-9][a-zA-Z0-9-]{1,61}[a-zA-Z0-9]\.[a-zA-Z]{2,}$/;
+         return ipv4Regex.test(str) || ipv6Regex.test(str) || domainRegex.test(str);
+       };
+
+       const fetchGeoData = async (query = "") => {
+         loadingEl.style.display = 'block';
+         errorEl.style.display = 'none';
+         resultsEl.style.display = 'none';
+
+         try {
+-          const url = query ? \`https://ipwho.is/\${encodeURIComponent(query)}\` : 'https://ipwho.is/';
++          const url = query ? \`https://get.geojs.io/v1/ip/geo/\${encodeURIComponent(query)}.json\` : 'https://get.geojs.io/v1/ip/geo.json';
+           const response = await fetch(url);
+
+           if (!response.ok) {
+-            throw new Error('Network response was not ok');
++            throw new Error('Failed to fetch location data. Invalid IP or Domain.');
+           }
+           const data = await response.json();
+
+-          if (!data.success) {
+-            showError(data.message || 'Failed to fetch location data');
+-            return;
+-          }
++          if (data.status === 404 || data.error) {
++             throw new Error(data.message || 'Location data not found.');
++          }
+
+           // Parse data
+-          const ip = data.ip || 'N/A';
+-          const type = data.type || 'N/A';
+-          const continent = data.continent || '';
++          const ip = data.ip || query || 'N/A';
++          const type = data.ip && data.ip.includes(':') ? 'IPv6' : 'IPv4';
++          const continent = data.continent_code || '';
+           const country = data.country || '';
+           const region = data.region || '';
+           const city = data.city || '';
+
+           const locParts = [city, region, country, continent].filter(Boolean);
+           const locationStr = locParts.length > 0 ? locParts.join(', ') : 'Unknown Location';
+
+-          const lat = data.latitude ? data.latitude.toFixed(4) : 'N/A';
+-          const lng = data.longitude ? data.longitude.toFixed(4) : 'N/A';
++          const lat = data.latitude ? parseFloat(data.latitude).toFixed(4) : 'N/A';
++          const lng = data.longitude ? parseFloat(data.longitude).toFixed(4) : 'N/A';
+           const coordsStr = (lat !== 'N/A' && lng !== 'N/A') ? \`\${lat}, \${lng}\` : 'N/A';
+
+-          const isp = data.connection?.isp || 'N/A';
+-          const asn = data.connection?.asn || 'N/A';
+-          const org = data.connection?.org || 'N/A';
+-          const timezone = data.timezone?.id || 'N/A';
+-          const currentTime = data.timezone?.current_time ? new Date(data.timezone.current_time).toLocaleString() : 'N/A';
++          const isp = data.organization_name || 'N/A';
++          const asn = data.asn ? \`AS\${data.asn}\` : 'N/A';
++          const org = data.organization || 'N/A';
++          const timezone = data.timezone || 'N/A';
++          let currentTime = 'N/A';
++          if (timezone !== 'N/A') {
++             try {
++                currentTime = new Date().toLocaleString("en-US", {timeZone: timezone});
++             } catch(e) {}
++          }
+
+           // Update DOM
+           resIpEl.textContent = ip;

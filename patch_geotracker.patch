@@ -1,0 +1,62 @@
+--- src/pages/sites/siliconbased/geo-tracker.astro
++++ src/pages/sites/siliconbased/geo-tracker.astro
+@@ -218,36 +218,34 @@
+           loadingIndicator.style.display = "block";
+           errorMessage.style.display = "none";
+
+-          // Use keyless ipwho.is API
+-          const url = query ? \`https://ipwho.is/\${encodeURIComponent(query)}\` : 'https://ipwho.is/';
++          // Fallback to get.geojs.io because ipwho.is blocks CORS on the free plan
++          const url = query ? \`https://get.geojs.io/v1/ip/geo/\${encodeURIComponent(query)}.json\` : 'https://get.geojs.io/v1/ip/geo.json';
+
+           const response = await fetch(url);
++          if (!response.ok) {
++             throw new Error("Network error fetching IP data.");
++          }
+           const data = await response.json();
+
+-          if (!data.success) {
+-            throw new Error(data.message || "Failed to retrieve IP data.");
++          if (data.status === 404 || data.error) {
++            throw new Error(data.message || "Location data not found.");
+           }
+
+-          displayResults(data);
++          displayResults(data, query);
+
+         } catch (error) {
+           showError(error.message);
+         } finally {
+           loadingIndicator.style.display = "none";
+         }
+       };
+
+-      const displayResults = (data) => {
++      const displayResults = (data, query) => {
+         errorMessage.style.display = "none";
+         resultCard.style.display = "block";
+
+-        resIp.textContent = data.ip || "--";
+-        resFlag.textContent = data.flag?.emoji || "🌐";
++        resIp.textContent = data.ip || query || "--";
++        resFlag.textContent = "🌐";
+
+         const city = data.city || "";
+         const region = data.region || "";
+         resLocation.textContent = [city, region].filter(Boolean).join(", ") || "Unknown";
+         resCountry.textContent = data.country || "Unknown";
+
+-        resIsp.textContent = data.connection?.isp || data.connection?.org || "Unknown";
+-        resAsn.textContent = data.connection?.asn ? \`AS\${data.connection.asn}\` : "--";
++        resIsp.textContent = data.organization_name || data.organization || "Unknown";
++        resAsn.textContent = data.asn ? \`AS\${data.asn}\` : "--";
+
+-        resCoords.textContent = data.latitude && data.longitude ? \`\${data.latitude}, \${data.longitude}\` : "--";
+-        resTimezone.textContent = data.timezone?.id ? \`\${data.timezone.id} (UTC \${data.timezone.utc})\` : "--";
++        const lat = data.latitude ? parseFloat(data.latitude).toFixed(4) : "--";
++        const lon = data.longitude ? parseFloat(data.longitude).toFixed(4) : "--";
++        resCoords.textContent = (lat !== "--" && lon !== "--") ? \`\${lat}, \${lon}\` : "--";
++        resTimezone.textContent = data.timezone || "--";
+       };
+
+       const showError = (message) => {
