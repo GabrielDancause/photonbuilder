@@ -1,0 +1,450 @@
+---
+import SiteLayout from "../../../layouts/SiteLayout.astro";
+
+export const meta = {
+  title: "2024 & 2025 Paycheck Tax Calculator",
+  description: "Where does all your money go? Discover your exact take-home pay by breaking down your federal and FICA taxes instantly.",
+  category: "tool",
+  published: "2025-01-20",
+};
+
+const schema = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "How is my take-home pay calculated?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Your take-home pay (net pay) is your gross pay minus federal income tax, FICA taxes (Social Security and Medicare), and any pre-tax or post-tax deductions (like 401(k) contributions or health insurance premiums)."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What are FICA taxes in 2024 and 2025?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "FICA consists of a 6.2% Social Security tax and a 1.45% Medicare tax. In both 2024 and 2025, employees pay a total of 7.65% on their earnings, though Social Security tax caps at a certain income limit ($168,600 in 2024, $176,100 in 2025)."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Do pre-tax deductions lower my taxes?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes, pre-tax deductions like Traditional 401(k) contributions and health insurance premiums lower your taxable gross income, which directly reduces the amount of federal income tax you owe."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Does this paycheck tax calculator 2025 include state taxes?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "No, this calculator only estimates federal income and FICA taxes. State and local taxes vary widely by location."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Why is my net pay different on every check?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Variations in net pay can happen due to overtime, bonuses, reaching the Social Security wage base limit, or changes to your tax withholdings (W-4) and benefit premiums."
+      }
+    }
+  ]
+};
+---
+
+<SiteLayout site="firemaths" title={meta.title} description={meta.description} canonical="https://firemaths.info/paycheck-tax-calculator" schema={schema}>
+  <div class="page-content">
+    <div class="hero">
+      <h1>{meta.title}</h1>
+      <p class="subtitle">Calculate your net take-home pay after federal taxes, FICA, and deductions per paycheck.</p>
+    </div>
+
+    <div class="calculator-container">
+      <div class="input-grid">
+        <div class="input-group">
+          <label for="taxYear">Tax Year</label>
+          <select id="taxYear">
+            <option value="2025">2025</option>
+            <option value="2024">2024</option>
+          </select>
+        </div>
+
+        <div class="input-group">
+          <label for="payFrequency">Pay Frequency</label>
+          <select id="payFrequency">
+            <option value="1">Annually (1 check)</option>
+            <option value="12">Monthly (12 checks)</option>
+            <option value="24">Semi-monthly (24 checks)</option>
+            <option value="26" selected>Bi-weekly (26 checks)</option>
+            <option value="52">Weekly (52 checks)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="input-group">
+        <label for="filingStatus">Filing Status</label>
+        <select id="filingStatus">
+          <option value="single">Single</option>
+          <option value="married_joint">Married Filing Jointly</option>
+          <option value="head_household">Head of Household</option>
+        </select>
+      </div>
+
+      <div class="input-group highlight-input">
+        <label for="grossPay">Gross Pay (Per Paycheck) $</label>
+        <div class="input-wrapper">
+          <input type="number" id="grossPay" value="3000" min="0" step="100">
+        </div>
+        <p class="help-text" id="annualGrossText">Annual Gross: $78,000</p>
+      </div>
+
+      <div class="deductions-container">
+        <h3>Deductions (Per Paycheck)</h3>
+
+        <div class="input-grid">
+          <div class="input-group">
+            <label for="preTaxDeductions">Pre-Tax Deductions $</label>
+            <div class="input-wrapper">
+              <input type="number" id="preTaxDeductions" value="150" min="0" step="50">
+            </div>
+            <p class="help-text">e.g., Traditional 401(k), HSA, Health Premiums</p>
+          </div>
+
+          <div class="input-group">
+            <label for="postTaxDeductions">Post-Tax Deductions $</label>
+            <div class="input-wrapper">
+              <input type="number" id="postTaxDeductions" value="0" min="0" step="50">
+            </div>
+            <p class="help-text">e.g., Roth 401(k), Union Dues</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="error-message" id="errorMessage"></div>
+
+      <div class="result-card">
+        <div class="result-label">Net Take-Home Pay (Per Check)</div>
+        <div class="result-value" id="netPayResult">$0</div>
+
+        <div class="paycheck-breakdown">
+          <div class="breakdown-row total-row">
+            <span>Gross Pay</span>
+            <span id="grossResult">$0.00</span>
+          </div>
+          <div class="breakdown-row deduction-row">
+            <span>Pre-Tax Deductions</span>
+            <span id="preTaxResult">-$0.00</span>
+          </div>
+          <div class="breakdown-row">
+            <span>Taxable Income</span>
+            <span id="taxableResult">$0.00</span>
+          </div>
+          <div class="breakdown-row tax-row">
+            <span>Federal Income Tax</span>
+            <span id="federalTaxResult">-$0.00</span>
+          </div>
+          <div class="breakdown-row tax-row">
+            <span>Social Security (6.2%)</span>
+            <span id="ssTaxResult">-$0.00</span>
+          </div>
+          <div class="breakdown-row tax-row">
+            <span>Medicare (1.45%)</span>
+            <span id="medicareTaxResult">-$0.00</span>
+          </div>
+          <div class="breakdown-row deduction-row">
+            <span>Post-Tax Deductions</span>
+            <span id="postTaxResult">-$0.00</span>
+          </div>
+          <div class="breakdown-row total-row">
+            <span>Net Pay</span>
+            <span id="finalNetResult">$0.00</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="cross-link-box">
+        Want to calculate your total yearly tax liability? Try our <a href="/sites/firemaths/tax-estimator">Income Tax Estimator</a>.
+      </div>
+    </div>
+
+    <div class="explainer">
+      <h2>Understanding Your Paycheck Taxes</h2>
+      <p>A <strong>paycheck tax calculator</strong> is an essential tool for budgeting and reaching your financial independence goals. It bridges the gap between the salary you are offered (your gross pay) and the money that actually hits your bank account (your net pay or take-home pay). By understanding each deduction, you can better manage your cash flow.</p>
+
+      <h3>How a Paycheck Tax Calculator Works</h3>
+      <p>When you receive a paycheck, several taxes and deductions are pulled out before you ever see the money. Our <strong>paycheck tax calculator 2025</strong> estimates your take-home pay by simulating standard payroll accounting. Here is exactly what is happening under the hood:</p>
+
+      <ul>
+        <li><strong>Gross Pay:</strong> This is your starting point. If you make $78,000 a year and get paid bi-weekly (26 times), your gross pay per check is $3,000.</li>
+        <li><strong>Pre-Tax Deductions:</strong> These are the best kind of deductions because they lower your taxable income. This includes contributions to a Traditional 401(k), health insurance premiums, and HSA contributions. If you deduct $200 pre-tax, the IRS acts as if you never made that $200.</li>
+        <li><strong>Federal Income Tax:</strong> After pre-tax deductions are removed, standard federal income tax is applied based on IRS withholding brackets. Note: Your actual withholding is determined by your W-4 form, but our calculator estimates it based on standard IRS guidelines for your filing status and an annualized projection of your paycheck.</li>
+        <li><strong>FICA Taxes:</strong> The Federal Insurance Contributions Act mandates that employees pay into two systems: Social Security (6.2% of gross pay up to an annual limit) and Medicare (1.45% of all gross pay).</li>
+        <li><strong>Post-Tax Deductions:</strong> These are taken out <em>after</em> all taxes are applied. Roth 401(k) contributions, wage garnishments, and certain union dues fall into this category.</li>
+        <li><strong>Net Pay:</strong> The final amount deposited into your checking account.</li>
+      </ul>
+
+      <h3>What is FICA?</h3>
+      <p>Many people are surprised by FICA taxes because they often focus solely on their income tax bracket. FICA is a flat tax on your earnings, not a progressive one like federal income tax.</p>
+      <p><strong>Social Security (6.2%):</strong> This funds retirement and disability benefits. For 2024, the tax is only applied to your first $168,600 of earnings. In 2025, that wage base limit increases to $176,100. High earners will see their take-home pay suddenly increase later in the year once they cross this threshold.</p>
+      <p><strong>Medicare (1.45%):</strong> This funds healthcare for seniors. Unlike Social Security, there is no wage limit on Medicare taxes. In fact, if you earn over $200,000 as a single filer (or $250,000 married filing jointly), you are subject to an Additional Medicare Tax of 0.9%.</p>
+
+      <h3>Why Your W-4 Matters</h3>
+      <p>Our <strong>paycheck tax calculator</strong> provides a solid estimate of your federal liability. However, your employer relies entirely on the W-4 form you filled out when you were hired to decide exactly how much to withhold.</p>
+      <p>If you get a massive tax refund every spring, it means you instructed your employer to withhold too much money from your paychecks. You are essentially giving the government a free loan. By adjusting your W-4 to match the estimates provided by a <strong>paycheck tax calculator 2025</strong>, you can keep more of your own money throughout the year to invest or pay off debt faster.</p>
+
+      <h3>Maximizing Your Take-Home Pay</h3>
+      <p>If you are on the path to FIRE, optimizing your paycheck is a major milestone. Increasing your pre-tax deductions (like maximizing your 401k match) lowers your gross taxable income, reducing your federal tax burden. While this decreases your immediate take-home pay, the tax savings are significant, and your overall net worth grows faster due to the power of compound interest.</p>
+    </div>
+
+    <script is:inline>
+      document.addEventListener('DOMContentLoaded', () => {
+        const taxYearEl = document.getElementById('taxYear');
+        const payFrequencyEl = document.getElementById('payFrequency');
+        const filingStatusEl = document.getElementById('filingStatus');
+        const grossPayEl = document.getElementById('grossPay');
+        const preTaxDeductionsEl = document.getElementById('preTaxDeductions');
+        const postTaxDeductionsEl = document.getElementById('postTaxDeductions');
+        const annualGrossTextEl = document.getElementById('annualGrossText');
+        const errorMessageEl = document.getElementById('errorMessage');
+
+        const netPayResultEl = document.getElementById('netPayResult');
+        const grossResultEl = document.getElementById('grossResult');
+        const preTaxResultEl = document.getElementById('preTaxResult');
+        const taxableResultEl = document.getElementById('taxableResult');
+        const federalTaxResultEl = document.getElementById('federalTaxResult');
+        const ssTaxResultEl = document.getElementById('ssTaxResult');
+        const medicareTaxResultEl = document.getElementById('medicareTaxResult');
+        const postTaxResultEl = document.getElementById('postTaxResult');
+        const finalNetResultEl = document.getElementById('finalNetResult');
+
+        const taxData = {
+          2024: {
+            standardDeductions: { single: 14600, married_joint: 29200, head_household: 21900 },
+            ssLimit: 168600,
+            brackets: {
+              single: [
+                { rate: 0.10, max: 11600 }, { rate: 0.12, max: 47150 }, { rate: 0.22, max: 100525 },
+                { rate: 0.24, max: 191950 }, { rate: 0.32, max: 243725 }, { rate: 0.35, max: 609350 }, { rate: 0.37, max: Infinity }
+              ],
+              married_joint: [
+                { rate: 0.10, max: 23200 }, { rate: 0.12, max: 94300 }, { rate: 0.22, max: 201050 },
+                { rate: 0.24, max: 383900 }, { rate: 0.32, max: 487450 }, { rate: 0.35, max: 731200 }, { rate: 0.37, max: Infinity }
+              ],
+              head_household: [
+                { rate: 0.10, max: 16550 }, { rate: 0.12, max: 63100 }, { rate: 0.22, max: 100500 },
+                { rate: 0.24, max: 191950 }, { rate: 0.32, max: 243700 }, { rate: 0.35, max: 609350 }, { rate: 0.37, max: Infinity }
+              ]
+            }
+          },
+          2025: {
+            standardDeductions: { single: 15000, married_joint: 30000, head_household: 22500 },
+            ssLimit: 176100,
+            brackets: {
+              single: [
+                { rate: 0.10, max: 11925 }, { rate: 0.12, max: 48475 }, { rate: 0.22, max: 103350 },
+                { rate: 0.24, max: 197300 }, { rate: 0.32, max: 250525 }, { rate: 0.35, max: 626350 }, { rate: 0.37, max: Infinity }
+              ],
+              married_joint: [
+                { rate: 0.10, max: 23850 }, { rate: 0.12, max: 96950 }, { rate: 0.22, max: 206700 },
+                { rate: 0.24, max: 394600 }, { rate: 0.32, max: 501050 }, { rate: 0.35, max: 751600 }, { rate: 0.37, max: Infinity }
+              ],
+              head_household: [
+                { rate: 0.10, max: 17000 }, { rate: 0.12, max: 64850 }, { rate: 0.22, max: 103350 },
+                { rate: 0.24, max: 197300 }, { rate: 0.32, max: 250500 }, { rate: 0.35, max: 626350 }, { rate: 0.37, max: Infinity }
+              ]
+            }
+          }
+        };
+
+        const formatCurrency = (val) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(val);
+
+        function calculateFederalTax(annualTaxableIncome, yearData, filingStatus) {
+          if (annualTaxableIncome <= 0) return 0;
+
+          let taxLiability = 0;
+          const brackets = yearData.brackets[filingStatus];
+          let previousMax = 0;
+
+          for (let i = 0; i < brackets.length; i++) {
+            const bracket = brackets[i];
+            if (annualTaxableIncome > previousMax) {
+              const taxableInThisBracket = Math.min(annualTaxableIncome, bracket.max) - previousMax;
+              taxLiability += taxableInThisBracket * bracket.rate;
+            } else {
+              break;
+            }
+            previousMax = bracket.max;
+          }
+          return taxLiability;
+        }
+
+        function calculatePaycheck() {
+          const taxYear = taxYearEl.value;
+          const payPeriods = parseInt(payFrequencyEl.value, 10) || 26;
+          const filingStatus = filingStatusEl.value;
+
+          const grossPayCheck = parseFloat(grossPayEl.value) || 0;
+          const preTaxCheck = parseFloat(preTaxDeductionsEl.value) || 0;
+          const postTaxCheck = parseFloat(postTaxDeductionsEl.value) || 0;
+
+          errorMessageEl.style.display = 'none';
+
+          if (grossPayCheck < 0 || preTaxCheck < 0 || postTaxCheck < 0) {
+            errorMessageEl.textContent = "Values cannot be negative.";
+            errorMessageEl.style.display = 'block';
+            return;
+          }
+
+          if (preTaxCheck + postTaxCheck > grossPayCheck) {
+            errorMessageEl.textContent = "Total deductions cannot exceed gross pay.";
+            errorMessageEl.style.display = 'block';
+            return;
+          }
+
+          const annualGross = grossPayCheck * payPeriods;
+          annualGrossTextEl.textContent = `Annual Gross: ${formatCurrency(annualGross)}`;
+
+          const yearData = taxData[taxYear];
+
+          // FICA Taxes (Calculated per check, but acknowledging limits roughly)
+          // For simplicity in a per-check estimator, we assume average check over the year
+          let ssTaxCheck = 0;
+          const annualPreTax = preTaxCheck * payPeriods;
+          // Note: Many pre-tax deductions (like 401k) do NOT reduce FICA taxable income.
+          // Health insurance premiums usually do, but to be conservative/standard, we calculate FICA on gross.
+          // In reality it depends on the exact deduction type. We will use grossPayCheck for FICA baseline.
+
+          const ssTaxableAnnual = Math.min(annualGross, yearData.ssLimit);
+          const ssTaxAnnual = ssTaxableAnnual * 0.062;
+          ssTaxCheck = ssTaxAnnual / payPeriods;
+
+          let medicareTaxAnnual = annualGross * 0.0145;
+          // Additional Medicare Tax
+          const addlMedThreshold = filingStatus === 'married_joint' ? 250000 : 200000;
+          if (annualGross > addlMedThreshold) {
+            medicareTaxAnnual += (annualGross - addlMedThreshold) * 0.009;
+          }
+          const medicareTaxCheck = medicareTaxAnnual / payPeriods;
+
+          // Federal Income Tax
+          // Annualize income minus pre-tax deductions
+          let annualAdjustedGross = annualGross - annualPreTax;
+          let annualTaxableIncome = Math.max(0, annualAdjustedGross - yearData.standardDeductions[filingStatus]);
+
+          let federalTaxAnnual = calculateFederalTax(annualTaxableIncome, yearData, filingStatus);
+          let federalTaxCheck = federalTaxAnnual / payPeriods;
+
+          // Net Pay
+          const totalTaxesCheck = federalTaxCheck + ssTaxCheck + medicareTaxCheck;
+          const netPayCheck = grossPayCheck - preTaxCheck - totalTaxesCheck - postTaxCheck;
+          const taxableIncomeCheck = grossPayCheck - preTaxCheck;
+
+          // Update UI
+          netPayResultEl.textContent = formatCurrency(Math.max(0, netPayCheck));
+          finalNetResultEl.textContent = formatCurrency(Math.max(0, netPayCheck));
+
+          grossResultEl.textContent = formatCurrency(grossPayCheck);
+          preTaxResultEl.textContent = `-${formatCurrency(preTaxCheck)}`;
+          taxableResultEl.textContent = formatCurrency(taxableIncomeCheck);
+          federalTaxResultEl.textContent = `-${formatCurrency(federalTaxCheck)}`;
+          ssTaxResultEl.textContent = `-${formatCurrency(ssTaxCheck)}`;
+          medicareTaxResultEl.textContent = `-${formatCurrency(medicareTaxCheck)}`;
+          postTaxResultEl.textContent = `-${formatCurrency(postTaxCheck)}`;
+        }
+
+        const inputs = [taxYearEl, payFrequencyEl, filingStatusEl, grossPayEl, preTaxDeductionsEl, postTaxDeductionsEl];
+        inputs.forEach(input => input.addEventListener('input', calculatePaycheck));
+        inputs.forEach(input => input.addEventListener('change', calculatePaycheck));
+
+        // Initial calculation
+        calculatePaycheck();
+      });
+    </script>
+
+    <section class="faq-section">
+      <h2>Frequently Asked Questions</h2>
+      <details>
+        <summary>How is my take-home pay calculated?</summary>
+        <p>Your take-home pay (net pay) is your gross pay minus federal income tax, FICA taxes (Social Security and Medicare), and any pre-tax or post-tax deductions (like 401(k) contributions or health insurance premiums).</p>
+      </details>
+      <details>
+        <summary>What are FICA taxes in 2024 and 2025?</summary>
+        <p>FICA consists of a 6.2% Social Security tax and a 1.45% Medicare tax. In both 2024 and 2025, employees pay a total of 7.65% on their earnings, though Social Security tax caps at a certain income limit ($168,600 in 2024, $176,100 in 2025).</p>
+      </details>
+      <details>
+        <summary>Do pre-tax deductions lower my taxes?</summary>
+        <p>Yes, pre-tax deductions like Traditional 401(k) contributions and health insurance premiums lower your taxable gross income, which directly reduces the amount of federal income tax you owe.</p>
+      </details>
+      <details>
+        <summary>Does this paycheck tax calculator 2025 include state taxes?</summary>
+        <p>No, this calculator only estimates federal income and FICA taxes. State and local taxes vary widely by location.</p>
+      </details>
+      <details>
+        <summary>Why is my net pay different on every check?</summary>
+        <p>Variations in net pay can happen due to overtime, bonuses, reaching the Social Security wage base limit, or changes to your tax withholdings (W-4) and benefit premiums.</p>
+      </details>
+    </section>
+  </div>
+
+  <style is:inline>
+    .page-content { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem; }
+    .hero { text-align: center; padding: 3rem 0 2rem; }
+    .hero h1 { font-size: 2.2rem; font-weight: 800; margin-bottom: 0.5rem; color: var(--accent-color); }
+    .subtitle { color: var(--text-secondary); font-size: 1.1rem; }
+
+    .calculator-container { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 2rem; margin: 2rem 0; }
+    .input-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+    .input-group { margin-bottom: 1.5rem; }
+    .input-group label { display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--text-primary); }
+    .help-text { font-size: 0.85rem; color: var(--text-secondary); margin-top: 0.5rem; }
+
+    .highlight-input { padding: 1.25rem; background: rgba(212, 160, 23, 0.05); border: 1px solid rgba(212, 160, 23, 0.3); border-radius: 8px; margin-bottom: 1.5rem; }
+
+    .deductions-container { border-top: 1px solid var(--border-color); padding-top: 1.5rem; margin-top: 1rem; }
+    .deductions-container h3 { font-size: 1.1rem; margin-top: 0; margin-bottom: 1rem; color: var(--text-primary); }
+
+    input, select { background: var(--bg-color); color: var(--text-primary); border: 1px solid var(--border-color); padding: 0.75rem 1rem; border-radius: 8px; width: 100%; font-size: 1rem; }
+    input:focus, select:focus { outline: none; border-color: var(--accent-color); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-color) 20%, transparent); }
+
+    .result-card { background: color-mix(in srgb, var(--accent-color) 10%, transparent); border: 1px solid var(--accent-color); border-radius: 12px; padding: 1.5rem; margin: 1.5rem 0; text-align: center; }
+    .result-label { color: var(--text-secondary); font-size: 1rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+    .result-value { font-size: 3rem; font-weight: 800; color: var(--accent-color); margin: 0.5rem 0; }
+
+    .paycheck-breakdown { margin-top: 1.5rem; text-align: left; background: var(--bg-color); border-radius: 8px; border: 1px solid var(--border-color); overflow: hidden; }
+    .breakdown-row { display: flex; justify-content: space-between; padding: 0.75rem 1rem; border-bottom: 1px solid var(--border-color); font-size: 0.95rem; }
+    .breakdown-row:last-child { border-bottom: none; }
+    .breakdown-row.total-row { font-weight: 700; color: var(--text-primary); background: rgba(0,0,0,0.02); }
+    .breakdown-row.deduction-row span:last-child { color: var(--text-secondary); }
+    .breakdown-row.tax-row span:last-child { color: #ef4444; }
+
+    .error-message { color: #ef4444; background: rgba(239, 68, 68, 0.1); padding: 0.75rem; border-radius: 8px; margin-bottom: 1rem; display: none; text-align: center; border: 1px solid rgba(239, 68, 68, 0.3); }
+
+    .cross-link-box { margin-top: 1.5rem; padding: 1rem; background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 8px; text-align: center; font-size: 0.95rem; }
+    .cross-link-box a { color: var(--accent-color); font-weight: 600; text-decoration: none; }
+    .cross-link-box a:hover { text-decoration: underline; }
+
+    .explainer { margin: 3rem 0; }
+    .explainer h2 { color: var(--accent-color); margin-bottom: 1rem; }
+    .explainer h3 { margin-top: 2rem; margin-bottom: 0.75rem; }
+    .explainer p { margin-bottom: 1rem; line-height: 1.7; color: var(--text-secondary); }
+    .explainer ul { margin-bottom: 1.5rem; padding-left: 1.5rem; color: var(--text-secondary); }
+    .explainer li { margin-bottom: 0.5rem; }
+
+    .faq-section { margin-top: 3rem; }
+    .faq-section details { margin: 1rem 0; padding: 1rem; background: var(--card-bg); border-radius: 8px; border: 1px solid var(--border-color); }
+    .faq-section summary { font-weight: 600; cursor: pointer; color: var(--text-primary); list-style: none; position: relative; padding-right: 1.5rem; }
+    .faq-section summary::-webkit-details-marker { display: none; }
+    .faq-section summary::after { content: '+'; position: absolute; right: 0; top: 0; color: var(--accent-color); font-size: 1.25rem; font-weight: 400; line-height: 1; }
+    .faq-section details[open] summary::after { content: '−'; }
+    .faq-section p { margin-top: 1rem; margin-bottom: 0; color: var(--text-secondary); line-height: 1.6; }
+
+    @media (max-width: 600px) {
+      .input-grid { grid-template-columns: 1fr; gap: 0; }
+      .result-value { font-size: 2.25rem; }
+    }
+  </style>
+</SiteLayout>

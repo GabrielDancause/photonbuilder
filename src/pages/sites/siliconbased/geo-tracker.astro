@@ -1,0 +1,536 @@
+---
+import SiteLayout from "../../../layouts/SiteLayout.astro";
+
+export const meta = {
+  title: "Geo Tracker: Locate IP Addresses and Domains Worldwide",
+  description: "Accurately trace the geographical location, ISP, and ASN data of any public IP address or domain name instantly with our reliable network Geo Tracker.",
+  category: "tool",
+  published: "2026-03-15",
+};
+
+const schema = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "How does an IP Geo Tracker work?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "An IP Geo Tracker queries large databases maintained by Regional Internet Registries (RIRs) and commercial mapping providers. These databases associate blocks of IP addresses with specific physical locations, ISPs, and organizations. When you input an IP, the tracker looks up its allocation record to estimate where the device using that IP is geographically situated."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Can an IP tracker pinpoint my exact physical address?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "No, a public IP tracker cannot pinpoint your exact street address or house. It can typically only identify your country, region, city, and approximate zip code based on where your Internet Service Provider (ISP) routes your connection. Exact physical locations are only known by your ISP, which requires a legal subpoena to release."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Why is the location shown by the Geo Tracker sometimes wrong?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Location inaccuracies occur for several reasons. First, if a user is utilizing a VPN (Virtual Private Network) or Proxy, the tracker will show the location of the VPN server, not the user. Second, mobile networks often route traffic through central hubs that may be miles away from your actual location. Finally, IP allocation databases can sometimes be outdated or imprecise, especially for newly reassigned IP blocks."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What is the difference between IPv4 and IPv6 tracking?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "The core tracking concept is identical, but the formats differ. IPv4 addresses are numeric (e.g., 192.168.1.1), while IPv6 addresses are longer and alphanumeric (e.g., 2001:0db8:85a3:0000:0000:8a2e:0370:7334). Modern Geo Trackers handle both protocols, referencing the respective IP allocation registries to provide location data regardless of the protocol version."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Can I use this Geo Tracker to track a domain name instead of an IP?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes, our Geo Tracker supports domain name resolution. If you input a domain (like example.com), the tool will perform a DNS lookup behind the scenes to find the underlying IP address hosting that domain, and then provide the geographic location and server details associated with that IP."
+          }
+        }
+      ]
+    },
+    {
+      "@type": "Article",
+      "headline": meta.title,
+      "description": meta.description,
+      "author": {
+        "@type": "Organization",
+        "name": "SiliconBased",
+        "url": "https://siliconbased.dev"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "SiliconBased",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://siliconbased.dev/logo.png"
+        }
+      },
+      "datePublished": meta.published
+    }
+  ]
+};
+---
+
+<SiteLayout site="siliconbased" title={meta.title} description={meta.description} canonical="https://siliconbased.dev/geo-tracker" schema={schema}>
+  <div class="page-content">
+    <div class="hero">
+      <h1>Network Geo Tracker</h1>
+      <p class="subtitle">Instantly map the physical location, ISP, and routing data of any IP address or domain.</p>
+    </div>
+
+    <div class="calculator-container" id="calculator-ui">
+      <div class="input-group">
+        <label for="target-input">IP Address or Domain Name</label>
+        <input type="text" id="target-input" placeholder="e.g., 8.8.8.8 or example.com" autocomplete="off" spellcheck="false" />
+        <div class="error-message" id="target-error">Please enter a valid IP address or domain name.</div>
+      </div>
+
+      <div class="loader" id="loading-spinner"></div>
+
+      <div class="error-card" id="error-card"></div>
+
+      <div class="result-card" id="result-container" style="display: none;">
+        <div class="result-header">
+          <span class="result-ip" id="res-ip">--</span>
+          <span class="result-flag" id="res-flag">🏳️</span>
+        </div>
+
+        <div class="result-grid">
+          <div class="data-point">
+            <span class="data-label">Country</span>
+            <span class="data-value" id="res-country">--</span>
+          </div>
+          <div class="data-point">
+            <span class="data-label">Region / State</span>
+            <span class="data-value" id="res-region">--</span>
+          </div>
+          <div class="data-point">
+            <span class="data-label">City</span>
+            <span class="data-value" id="res-city">--</span>
+          </div>
+          <div class="data-point">
+            <span class="data-label">ZIP / Postal</span>
+            <span class="data-value" id="res-zip">--</span>
+          </div>
+          <div class="data-point">
+            <span class="data-label">Latitude & Longitude</span>
+            <span class="data-value" id="res-coords">--</span>
+          </div>
+          <div class="data-point">
+            <span class="data-label">Timezone</span>
+            <span class="data-value" id="res-timezone">--</span>
+          </div>
+          <div class="data-point">
+            <span class="data-label">ISP / Organization</span>
+            <span class="data-value" id="res-isp">--</span>
+          </div>
+          <div class="data-point">
+            <span class="data-label">ASN</span>
+            <span class="data-value" id="res-asn">--</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="explainer">
+      <h2>Understanding Geolocation: The Mechanics of IP Tracking</h2>
+
+      <p>In the interconnected topology of the modern internet, every device connected to the network must possess a unique identifier to send and receive data packets. This identifier is the Internet Protocol (IP) address. Our <strong>Geo Tracker</strong> is a robust utility designed to trace these digital identifiers back to their physical, real-world origins, providing crucial data for network administrators, cybersecurity analysts, and curious users alike.</p>
+
+      <p>Much like how our <a href="/conception-calculator">Conception Calculator</a> relies on biological databases and mathematical formulas to estimate timelines, our Geo Tracker relies on massive, constantly updating registries of internet allocations to estimate geographic coordinates. Understanding how this mapping occurs is essential for correctly interpreting the data our tracker provides.</p>
+
+      <h3>How IP Addresses are Distributed</h3>
+
+      <p>To understand geolocation, one must first understand how IP addresses are assigned globally. IP addresses are not distributed randomly; they are governed by a hierarchical system:</p>
+
+      <ul>
+        <li><strong>IANA (Internet Assigned Numbers Authority):</strong> At the very top, IANA manages the global pool of IP addresses.</li>
+        <li><strong>RIRs (Regional Internet Registries):</strong> IANA allocates massive blocks of IP addresses to five RIRs, each responsible for a specific global region (e.g., ARIN for North America, RIPE NCC for Europe and the Middle East).</li>
+        <li><strong>ISPs and LIRs:</strong> The RIRs, in turn, distribute smaller blocks to Local Internet Registries (LIRs) and major Internet Service Providers (ISPs), such as Comcast or AT&T.</li>
+        <li><strong>End Users:</strong> Finally, your ISP temporarily assigns a single IP address from its block to your home router or mobile device.</li>
+      </ul>
+
+      <p>Because these allocations are meticulously recorded, databases can map specific IP blocks to the physical locations where the ISPs deploy them. When our tracker analyzes an IP, it queries these comprehensive databases to retrieve the registered location of that specific network block.</p>
+
+      <h3>What Data Can a Geo Tracker Reveal?</h3>
+
+      <p>When you input an IP address or domain into our tool, it performs a multi-stage lookup. The resulting dataset typically includes several key pieces of intelligence:</p>
+
+      <ul>
+        <li><strong>Geographic Location:</strong> The estimated Country, Region/State, and City associated with the IP address.</li>
+        <li><strong>Coordinates:</strong> Approximate Latitude and Longitude. Note: These coordinates pinpoint the center of the assigned city or the ISP's local routing hub; they do <em>not</em> represent the exact GPS location of the user's house or device.</li>
+        <li><strong>ISP and Organization:</strong> The name of the company that owns and manages the network (e.g., Verizon, Amazon Web Services).</li>
+        <li><strong>ASN (Autonomous System Number):</strong> A unique number identifying the specific network or group of networks on the internet, crucial for understanding BGP routing.</li>
+      </ul>
+
+      <h3>Limitations and Caveats of IP Geolocation</h3>
+
+      <p>While our Geo Tracker provides high-fidelity estimations, IP geolocation is an inexact science by nature. It is imperative to understand its limitations to avoid drawing false conclusions from the data.</p>
+
+      <h4>1. The VPN and Proxy Illusion</h4>
+      <p>The most common reason for misleading geolocation data is the use of a Virtual Private Network (VPN) or a proxy server. When a user connects to a VPN, their internet traffic is routed through an encrypted tunnel to a server in a different location. The Geo Tracker will correctly identify the IP address of the <em>VPN server</em>, entirely masking the actual IP and location of the user behind it. If a user in New York connects to a VPN server in Tokyo, our tracker will accurately report the connection as originating from Tokyo.</p>
+
+      <h4>2. Cellular Network Architecture</h4>
+      <p>Mobile networks handle IP assignments differently than fixed broadband lines. Mobile ISPs often route internet traffic from thousands of cellular devices through centralized, regional gateways. Therefore, if you track the IP address of a smartphone on a cellular network, the location returned will often be the city where the carrier's gateway is located, which could be hundreds of miles away from the user's actual physical position.</p>
+
+      <h4>3. Database Latency and Reassignments</h4>
+      <p>IP addresses are frequently bought, sold, and reassigned between organizations. While major mapping databases strive to keep their records current, there is inevitably a delay. If a block of IPs is moved from an ISP in Chicago to an ISP in Miami, it may take weeks for all global registries to reflect the new location, leading to temporarily inaccurate results.</p>
+
+      <h3>Domain Name Resolution</h3>
+
+      <p>Our tracker also accepts domain names (like <code>siliconbased.dev</code>). When a domain is entered, the tool first performs a DNS (Domain Name System) resolution. This process translates the human-readable domain name into the machine-readable IP address of the server hosting that website. Once the IP is resolved, the standard geolocation process proceeds, revealing the physical location of the web server or CDN (Content Delivery Network) node handling the traffic.</p>
+    </div>
+
+    <section class="faq-section">
+      <h2>Frequently Asked Questions</h2>
+
+      <details>
+        <summary>How does an IP Geo Tracker work?</summary>
+        <p>An IP Geo Tracker queries large databases maintained by Regional Internet Registries (RIRs) and commercial mapping providers. These databases associate blocks of IP addresses with specific physical locations, ISPs, and organizations. When you input an IP, the tracker looks up its allocation record to estimate where the device using that IP is geographically situated.</p>
+      </details>
+
+      <details>
+        <summary>Can an IP tracker pinpoint my exact physical address?</summary>
+        <p>No, a public IP tracker cannot pinpoint your exact street address or house. It can typically only identify your country, region, city, and approximate zip code based on where your Internet Service Provider (ISP) routes your connection. Exact physical locations are only known by your ISP, which requires a legal subpoena to release.</p>
+      </details>
+
+      <details>
+        <summary>Why is the location shown by the Geo Tracker sometimes wrong?</summary>
+        <p>Location inaccuracies occur for several reasons. First, if a user is utilizing a VPN (Virtual Private Network) or Proxy, the tracker will show the location of the VPN server, not the user. Second, mobile networks often route traffic through central hubs that may be miles away from your actual location. Finally, IP allocation databases can sometimes be outdated or imprecise, especially for newly reassigned IP blocks.</p>
+      </details>
+
+      <details>
+        <summary>What is the difference between IPv4 and IPv6 tracking?</summary>
+        <p>The core tracking concept is identical, but the formats differ. IPv4 addresses are numeric (e.g., 192.168.1.1), while IPv6 addresses are longer and alphanumeric (e.g., 2001:0db8:85a3:0000:0000:8a2e:0370:7334). Modern Geo Trackers handle both protocols, referencing the respective IP allocation registries to provide location data regardless of the protocol version.</p>
+      </details>
+
+      <details>
+        <summary>Can I use this Geo Tracker to track a domain name instead of an IP?</summary>
+        <p>Yes, our Geo Tracker supports domain name resolution. If you input a domain (like example.com), the tool will perform a DNS lookup behind the scenes to find the underlying IP address hosting that domain, and then provide the geographic location and server details associated with that IP.</p>
+      </details>
+    </section>
+  </div>
+
+  <script is:inline>
+    document.addEventListener("DOMContentLoaded", () => {
+      const input = document.getElementById("target-input");
+      const errorMsg = document.getElementById("target-error");
+      const errorCard = document.getElementById("error-card");
+      const spinner = document.getElementById("loading-spinner");
+      const resultContainer = document.getElementById("result-container");
+
+      const resNodes = {
+        ip: document.getElementById("res-ip"),
+        flag: document.getElementById("res-flag"),
+        country: document.getElementById("res-country"),
+        region: document.getElementById("res-region"),
+        city: document.getElementById("res-city"),
+        zip: document.getElementById("res-zip"),
+        coords: document.getElementById("res-coords"),
+        timezone: document.getElementById("res-timezone"),
+        isp: document.getElementById("res-isp"),
+        asn: document.getElementById("res-asn")
+      };
+
+      let debounceTimer;
+
+      const isValidInput = (val) => {
+        // Basic check for either IPv4, IPv6, or domain format
+        if (!val) return false;
+        const ip4 = /^(?:[0-9]{1,3}\.){3}[0-9]{1,3}$/;
+        const ip6 = /^[a-fA-F0-9:]+$/; // Simplified IPv6
+        const domain = /^[a-zA-Z0-9][a-zA-Z0-9-]{1,61}[a-zA-Z0-9](?:\.[a-zA-Z]{2,})+$/;
+        return ip4.test(val) || ip6.test(val) || domain.test(val) || val.toLowerCase() === 'localhost';
+      };
+
+      const getFlagEmoji = (countryCode) => {
+        if (!countryCode) return '🏳️';
+        const codePoints = countryCode
+          .toUpperCase()
+          .split('')
+          .map(char =>  127397 + char.charCodeAt());
+        return String.fromCodePoint(...codePoints);
+      };
+
+      const fetchGeoData = async (target) => {
+        spinner.style.display = "block";
+        resultContainer.style.display = "none";
+        errorCard.style.display = "none";
+
+        try {
+          // Using ip-api.com as it supports domains and IPs without an API key (HTTP only over standard endpoints, but we use HTTPS endpoint for domains, though their free tier is HTTP.
+          // We will use ipapi.co which works on HTTPS for free).
+          // Wait, ipapi.co has strict rate limits. Let's use ip-api.com over HTTPS if possible, or another reliable one.
+          // ip-api.com allows HTTPS on free tier? No, it requires pro.
+          // Let's use https://ipwho.is/ which is free, allows HTTPS, and supports IPv4/IPv6 (but maybe not domains directly).
+          // Actually, let's use the browser's own IP first if empty.
+          // ipwhois.app or ipapi.co. We'll use ipapi.co/TARGET/json/
+
+          let endpoint = target ? `https://ipapi.co/${target}/json/` : `https://ipapi.co/json/`;
+
+          const response = await fetch(endpoint);
+
+          if (response.status === 429) {
+            throw new Error("Rate limit exceeded. Please try again later.");
+          }
+
+          const data = await response.json();
+
+          if (data.error) {
+            throw new Error(data.reason || "Unable to locate this address.");
+          }
+
+          // Populate data
+          resNodes.ip.textContent = data.ip || target;
+          resNodes.flag.textContent = getFlagEmoji(data.country_code);
+          resNodes.country.textContent = data.country_name || "--";
+          resNodes.region.textContent = data.region || "--";
+          resNodes.city.textContent = data.city || "--";
+          resNodes.zip.textContent = data.postal || "--";
+          resNodes.coords.textContent = (data.latitude && data.longitude) ? `${data.latitude}, ${data.longitude}` : "--";
+          resNodes.timezone.textContent = data.timezone || "--";
+          resNodes.isp.textContent = data.org || data.asn || "--";
+          resNodes.asn.textContent = data.asn || "--";
+
+          resultContainer.style.display = "block";
+
+        } catch (err) {
+          errorCard.textContent = err.message;
+          errorCard.style.display = "block";
+        } finally {
+          spinner.style.display = "none";
+        }
+      };
+
+      input.addEventListener("input", (e) => {
+        const val = e.target.value.trim();
+        clearTimeout(debounceTimer);
+
+        input.parentElement.classList.remove('error');
+        errorCard.style.display = "none";
+
+        if (val === "") {
+          resultContainer.style.display = "none";
+          return;
+        }
+
+        if (!isValidInput(val)) {
+          input.parentElement.classList.add('error');
+          resultContainer.style.display = "none";
+          return;
+        }
+
+        debounceTimer = setTimeout(() => {
+          fetchGeoData(val);
+        }, 800); // 800ms debounce to prevent API spam
+      });
+
+      // Optionally fetch user's own IP on load?
+      // User request did not specify, but it's a nice touch for a Geo Tracker.
+      // We will leave it blank until they type to save rate limits.
+    });
+  </script>
+
+  <style is:inline>
+    .page-content { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem; }
+    .hero { text-align: center; padding: 3rem 0 2rem; }
+    .hero h1 { font-size: 2.2rem; font-weight: 800; margin-bottom: 0.5rem; color: var(--text-primary); }
+    .subtitle { color: var(--text-secondary); font-size: 1.1rem; }
+
+    .calculator-container {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 2rem;
+      margin: 2rem 0;
+    }
+
+    .input-group { margin-bottom: 1.5rem; }
+    .input-group label { display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--text-primary); font-size: 1rem; }
+
+    input {
+      background: var(--bg-color);
+      color: var(--text-primary);
+      border: 1px solid var(--border-color);
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      width: 100%;
+      font-size: 1rem;
+      font-family: var(--font-mono);
+    }
+
+    input:focus {
+      outline: none;
+      border-color: var(--accent-color);
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-color) 20%, transparent);
+    }
+
+    .error-message {
+      color: #ef4444;
+      font-size: 0.875rem;
+      margin-top: 0.5rem;
+      display: none;
+    }
+
+    .error input {
+      border-color: #ef4444;
+    }
+
+    .error .error-message {
+      display: block;
+    }
+
+    .loader {
+      display: none;
+      width: 24px;
+      height: 24px;
+      border: 3px solid var(--border-color);
+      border-bottom-color: var(--accent-color);
+      border-radius: 50%;
+      animation: rotation 1s linear infinite;
+      margin: 2rem auto;
+    }
+
+    @keyframes rotation {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    .result-card {
+      background: var(--bg-color);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      overflow: hidden;
+      margin: 1.5rem 0;
+    }
+
+    .result-header {
+      background: color-mix(in srgb, var(--accent-color) 10%, transparent);
+      padding: 1.5rem;
+      border-bottom: 1px solid var(--border-color);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .result-ip {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      font-family: var(--font-mono);
+    }
+
+    .result-flag {
+      font-size: 2rem;
+      line-height: 1;
+    }
+
+    .result-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1.5rem;
+      padding: 1.5rem;
+    }
+
+    .data-point {
+      display: flex;
+      flex-direction: column;
+    }
+
+    .data-label {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-bottom: 0.25rem;
+      font-weight: 600;
+    }
+
+    .data-value {
+      font-size: 1.1rem;
+      color: var(--text-primary);
+      font-weight: 500;
+    }
+
+    .error-card {
+      background: rgba(239, 68, 68, 0.1);
+      border: 1px solid #ef4444;
+      border-radius: 8px;
+      padding: 1rem;
+      color: #ef4444;
+      text-align: center;
+      margin-top: 1rem;
+      display: none;
+    }
+
+    .explainer {
+      margin-top: 3rem;
+    }
+
+    .explainer h2, .explainer h3, .explainer h4 {
+      color: var(--text-primary);
+      margin-top: 2rem;
+      margin-bottom: 1rem;
+    }
+
+    .explainer p {
+      color: var(--text-secondary);
+      line-height: 1.7;
+      margin-bottom: 1.5rem;
+    }
+
+    .explainer a {
+      color: var(--accent-color);
+      text-decoration: underline;
+    }
+
+    .explainer ul {
+      color: var(--text-secondary);
+      margin-left: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .explainer li {
+      margin-bottom: 0.5rem;
+      line-height: 1.6;
+    }
+
+    .explainer code {
+      background: var(--bg-color);
+      padding: 0.2rem 0.4rem;
+      border-radius: 4px;
+      font-family: var(--font-mono);
+      color: var(--accent-color);
+    }
+
+    .faq-section { margin-top: 3rem; border-top: 1px solid var(--border-color); padding-top: 2rem; }
+    .faq-section h2 { margin-bottom: 1.5rem; color: var(--text-primary); }
+    .faq-section details {
+      margin: 1rem 0;
+      padding: 1.25rem;
+      background: var(--card-bg);
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+    }
+    .faq-section summary {
+      font-weight: 600;
+      cursor: pointer;
+      color: var(--text-primary);
+      font-size: 1.1rem;
+    }
+    .faq-section details p {
+      margin-top: 1rem;
+      margin-bottom: 0;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+  </style>
+</SiteLayout>
