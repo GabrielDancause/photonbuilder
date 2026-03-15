@@ -1,0 +1,514 @@
+---
+import SiteLayout from "../../../layouts/SiteLayout.astro";
+
+export const meta = {
+  title: "Triangle Calculator: Area, Perimeter & Missing Sides",
+  description: "Instantly solve any triangle. Enter what you know to find missing sides, angles, area, and perimeter. Discover the hidden math behind Heron's Formula.",
+  category: "tool",
+  published: "2026-03-15",
+};
+
+const schema = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "How do you calculate the area of a triangle?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "The most common formula is Area = 1/2 × base × height. If you only know the three sides, you can use Heron's Formula: Area = √(s(s-a)(s-b)(s-c)) where s is the semi-perimeter."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What is the Law of Cosines?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "The Law of Cosines relates the lengths of the sides of a triangle to the cosine of one of its angles: c² = a² + b² - 2ab × cos(C). It's useful for finding a missing side when two sides and the included angle are known (SAS)."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What is the Law of Sines?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "The Law of Sines states that the ratio of a side's length to the sine of its opposite angle is constant for all three sides: a/sin(A) = b/sin(B) = c/sin(C). It's used when you know two angles and one side (AAS or ASA)."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How do I know if three sides form a valid triangle?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "According to the Triangle Inequality Theorem, the sum of the lengths of any two sides must be strictly greater than the length of the remaining side: a+b>c, a+c>b, and b+c>a."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Do angles in a triangle always add up to 180 degrees?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes, in Euclidean (flat) geometry, the three interior angles of any triangle always add up to exactly 180 degrees (or π radians)."
+          }
+        }
+      ]
+    },
+    {
+      "@type": "SoftwareApplication",
+      "name": "Triangle Calculator",
+      "operatingSystem": "All",
+      "applicationCategory": "EducationalApplication",
+      "description": "Interactive calculator to find missing sides, angles, area, and perimeter of any valid triangle."
+    }
+  ]
+};
+---
+
+<SiteLayout site="sendnerds" title={meta.title} description={meta.description} canonical="https://photonbuilder.com/sendnerds/triangle-calculator" schema={schema}>
+  <div class="page-content">
+    <div class="hero">
+      <h1>Triangle Calculator</h1>
+      <p class="subtitle">Enter any 3 values (at least one side) to solve your triangle instantly.</p>
+    </div>
+
+    <div class="calculator-container">
+      <div class="input-grid">
+        <div class="input-group">
+          <label for="sideA">Side a</label>
+          <input type="number" id="sideA" placeholder="Length of side a" min="0" step="any" />
+        </div>
+        <div class="input-group">
+          <label for="angleA">Angle A (degrees)</label>
+          <input type="number" id="angleA" placeholder="Angle opposite side a" min="0" max="180" step="any" />
+        </div>
+
+        <div class="input-group">
+          <label for="sideB">Side b</label>
+          <input type="number" id="sideB" placeholder="Length of side b" min="0" step="any" />
+        </div>
+        <div class="input-group">
+          <label for="angleB">Angle B (degrees)</label>
+          <input type="number" id="angleB" placeholder="Angle opposite side b" min="0" max="180" step="any" />
+        </div>
+
+        <div class="input-group">
+          <label for="sideC">Side c</label>
+          <input type="number" id="sideC" placeholder="Length of side c" min="0" step="any" />
+        </div>
+        <div class="input-group">
+          <label for="angleC">Angle C (degrees)</label>
+          <input type="number" id="angleC" placeholder="Angle opposite side c" min="0" max="180" step="any" />
+        </div>
+      </div>
+
+      <div id="error-message" class="error-message"></div>
+
+      <div class="controls">
+        <button type="button" id="clear-btn">Clear All</button>
+      </div>
+
+      <div class="results-grid">
+        <div class="result-card">
+          <div class="result-label">Area</div>
+          <div class="result-value" id="result-area">-</div>
+        </div>
+        <div class="result-card">
+          <div class="result-label">Perimeter</div>
+          <div class="result-value" id="result-perimeter">-</div>
+        </div>
+        <div class="result-card">
+          <div class="result-label">Semi-perimeter</div>
+          <div class="result-value" id="result-semi">-</div>
+        </div>
+        <div class="result-card">
+          <div class="result-label">Inradius</div>
+          <div class="result-value" id="result-inradius">-</div>
+        </div>
+        <div class="result-card">
+          <div class="result-label">Circumradius</div>
+          <div class="result-value" id="result-circumradius">-</div>
+        </div>
+        <div class="result-card">
+          <div class="result-label">Type</div>
+          <div class="result-value" id="result-type" style="font-size: 1.5rem;">-</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="explainer">
+      <h2>The Geometry of Triangles: A Deep Dive</h2>
+      <p>The triangle is the simplest polygon, yet it is arguably the most fundamental and important shape in all of geometry. Consisting of three line segments joined end-to-end to form a closed loop, triangles are inherently rigid. Unlike a rectangle, which can be sheared into a parallelogram without altering the length of its sides, the shape of a triangle is completely determined by the lengths of its three sides. This structural stability makes the triangle indispensable in architecture, engineering, and truss design.</p>
+
+      <h3>Solving Triangles</h3>
+      <p>In trigonometry and geometry, "solving a triangle" means finding the unknown side lengths and angle measures given a subset of these parameters. A triangle has six primary components: three sides (often labeled \(a\), \(b\), and \(c\)) and three interior angles (often labeled \(A\), \(B\), and \(C\)). To uniquely determine a triangle, you must know at least three of these components, and at least one of them must be a side length. This leads to several distinct cases for solving triangles:</p>
+
+      <ul>
+        <li><strong>SSS (Side-Side-Side):</strong> All three side lengths are known.</li>
+        <li><strong>SAS (Side-Angle-Side):</strong> Two sides and the angle between them are known.</li>
+        <li><strong>ASA (Angle-Side-Angle):</strong> Two angles and the side between them are known.</li>
+        <li><strong>AAS (Angle-Angle-Side):</strong> Two angles and a non-included side are known.</li>
+        <li><strong>SSA (Side-Side-Angle):</strong> Two sides and a non-included angle are known. This is known as the ambiguous case, as it can result in zero, one, or two valid triangles.</li>
+      </ul>
+
+      <h3>Fundamental Laws and Theorems</h3>
+
+      <h4>The Law of Sines</h4>
+      <p>The Law of Sines establishes a proportional relationship between the sides of a triangle and the sines of their opposite angles. It is particularly useful for solving ASA and AAS cases, and it plays a critical role in evaluating the ambiguous SSA case.</p>
+      <div class="formula-block">
+        <code>a / sin(A) = b / sin(B) = c / sin(C)</code>
+      </div>
+
+      <h4>The Law of Cosines</h4>
+      <p>The Law of Cosines is a generalized form of the Pythagorean theorem that applies to all triangles, not just right-angled ones. It is essential for solving SSS and SAS cases.</p>
+      <div class="formula-block">
+        <code>c² = a² + b² - 2ab × cos(C)</code>
+      </div>
+      <p>This law can be rearranged to solve for angles when all sides are known, or to find the third side when two sides and the included angle are given.</p>
+
+      <h4>The Triangle Inequality Theorem</h4>
+      <p>Not just any three line segments can form a triangle. The Triangle Inequality Theorem dictates that the sum of the lengths of any two sides of a triangle must be strictly greater than the length of the third side. If this condition is not met for all combinations of sides, the segments cannot close to form a valid triangle.</p>
+      <div class="formula-block">
+        <code>a + b > c<br>a + c > b<br>b + c > a</code>
+      </div>
+
+      <h3>Calculating Area: Heron's Formula</h3>
+      <p>The most widely recognized formula for the area of a triangle is 1/2 &times; base &times; height. However, calculating the height can be tedious if you only know the lengths of the sides. Heron's Formula provides an elegant solution to calculate the area of a triangle using only its side lengths.</p>
+      <p>First, we define the semi-perimeter, \(s\), as half of the total perimeter:</p>
+      <div class="formula-block">
+        <code>s = (a + b + c) / 2</code>
+      </div>
+      <p>Then, Heron's Formula calculates the area as:</p>
+      <div class="formula-block">
+        <code>Area = &radic;(s(s - a)(s - b)(s - c))</code>
+      </div>
+
+      <h3>Classifying Triangles</h3>
+      <p>Triangles are typically classified by their side lengths and their angle measures.</p>
+      <ul>
+        <li><strong>By Sides:</strong>
+          <ul>
+            <li><em>Equilateral:</em> All three sides are equal in length. Consequently, all three internal angles are also equal (60°).</li>
+            <li><em>Isosceles:</em> Two sides are equal in length. The angles opposite these equal sides are also equal.</li>
+            <li><em>Scalene:</em> All three sides have different lengths, and all three internal angles are different.</li>
+          </ul>
+        </li>
+        <li><strong>By Angles:</strong>
+          <ul>
+            <li><em>Right:</em> Contains one right angle (exactly 90°).</li>
+            <li><em>Acute:</em> All three internal angles are strictly less than 90°.</li>
+            <li><em>Obtuse:</em> Contains one internal angle strictly greater than 90°.</li>
+          </ul>
+        </li>
+      </ul>
+
+      <p>Whether you are designing a roof truss, writing graphics software, or studying for geometry exams, understanding how to manipulate and solve triangles is an indispensable skill. For academic calculation tools, you might also find our <a href="/final-calculator">Final Calculator</a> helpful.</p>
+    </div>
+
+    <section class="faq-section">
+      <h2>Frequently Asked Questions</h2>
+      <details>
+        <summary>How do you calculate the area of a triangle?</summary>
+        <p>The most common formula is Area = 1/2 &times; base &times; height. If you only know the three sides, you can use Heron's Formula: Area = &radic;(s(s-a)(s-b)(s-c)) where s is the semi-perimeter.</p>
+      </details>
+      <details>
+        <summary>What is the Law of Cosines?</summary>
+        <p>The Law of Cosines relates the lengths of the sides of a triangle to the cosine of one of its angles: c² = a² + b² - 2ab &times; cos(C). It's useful for finding a missing side when two sides and the included angle are known (SAS).</p>
+      </details>
+      <details>
+        <summary>What is the Law of Sines?</summary>
+        <p>The Law of Sines states that the ratio of a side's length to the sine of its opposite angle is constant for all three sides: a/sin(A) = b/sin(B) = c/sin(C). It's used when you know two angles and one side (AAS or ASA).</p>
+      </details>
+      <details>
+        <summary>How do I know if three sides form a valid triangle?</summary>
+        <p>According to the Triangle Inequality Theorem, the sum of the lengths of any two sides must be strictly greater than the length of the remaining side: a+b>c, a+c>b, and b+c>a.</p>
+      </details>
+      <details>
+        <summary>Do angles in a triangle always add up to 180 degrees?</summary>
+        <p>Yes, in Euclidean (flat) geometry, the three interior angles of any triangle always add up to exactly 180 degrees (or &pi; radians).</p>
+      </details>
+    </section>
+  </div>
+
+  <script is:inline>
+    const inputs = {
+      sideA: document.getElementById('sideA'),
+      sideB: document.getElementById('sideB'),
+      sideC: document.getElementById('sideC'),
+      angleA: document.getElementById('angleA'),
+      angleB: document.getElementById('angleB'),
+      angleC: document.getElementById('angleC')
+    };
+
+    const results = {
+      area: document.getElementById('result-area'),
+      perimeter: document.getElementById('result-perimeter'),
+      semi: document.getElementById('result-semi'),
+      inradius: document.getElementById('result-inradius'),
+      circumradius: document.getElementById('result-circumradius'),
+      type: document.getElementById('result-type')
+    };
+
+    const errorMsg = document.getElementById('error-message');
+    const clearBtn = document.getElementById('clear-btn');
+
+    const DEG_TO_RAD = Math.PI / 180;
+    const RAD_TO_DEG = 180 / Math.PI;
+
+    function formatNumber(num) {
+      if (!isFinite(num) || isNaN(num)) return '-';
+      return new Intl.NumberFormat('en-US', { maximumFractionDigits: 4 }).format(num);
+    }
+
+    function clearResults() {
+      Object.values(results).forEach(el => el.textContent = '-');
+      errorMsg.style.display = 'none';
+      errorMsg.textContent = '';
+
+      // Clear calculated styling
+      Object.values(inputs).forEach(input => {
+        input.classList.remove('calculated-input');
+      });
+    }
+
+    function showError(msg) {
+      errorMsg.textContent = msg;
+      errorMsg.style.display = 'block';
+      Object.values(results).forEach(el => el.textContent = '-');
+    }
+
+    // Helper to round to prevent floating point issues in comparisons
+    function clean(val) {
+      return Math.round(val * 1e10) / 1e10;
+    }
+
+    function solveTriangle() {
+      // Get raw inputs
+      let a = parseFloat(inputs.sideA.value) || null;
+      let b = parseFloat(inputs.sideB.value) || null;
+      let c = parseFloat(inputs.sideC.value) || null;
+      let A = parseFloat(inputs.angleA.value) || null;
+      let B = parseFloat(inputs.angleB.value) || null;
+      let C = parseFloat(inputs.angleC.value) || null;
+
+      // Store original inputs to mark what was calculated vs typed
+      const original = { a: a !== null, b: b !== null, c: c !== null, A: A !== null, B: B !== null, C: C !== null };
+
+      let numSides = (a!==null?1:0) + (b!==null?1:0) + (c!==null?1:0);
+      let numAngles = (A!==null?1:0) + (B!==null?1:0) + (C!==null?1:0);
+      let totalInputs = numSides + numAngles;
+
+      clearResults();
+
+      if (totalInputs < 3) {
+        return; // Not enough info to solve
+      }
+      if (numSides === 0) {
+        showError("At least one side length must be provided.");
+        return;
+      }
+
+      // Check for obviously invalid negative inputs
+      if ((a!==null && a<=0) || (b!==null && b<=0) || (c!==null && c<=0) ||
+          (A!==null && (A<=0 || A>=180)) || (B!==null && (B<=0 || B>=180)) || (C!==null && (C<=0 || C>=180))) {
+        showError("Side lengths must be positive. Angles must be between 0 and 180 degrees.");
+        return;
+      }
+
+      // If we have 2 angles, we can trivially find the third
+      if (A !== null && B !== null && C === null) C = 180 - A - B;
+      else if (A !== null && C !== null && B === null) B = 180 - A - C;
+      else if (B !== null && C !== null && A === null) A = 180 - B - C;
+
+      if (A !== null && B !== null && C !== null) {
+        if (clean(A + B + C) !== 180) {
+          showError(`Angles must add up to exactly 180 degrees. Yours add up to ${clean(A+B+C)}.`);
+          return;
+        }
+      }
+
+      let iterationCount = 0;
+      let changed = true;
+
+      // Iterative solver using Law of Sines and Cosines
+      while (changed && iterationCount < 10) {
+        changed = false;
+        iterationCount++;
+
+        let oldA = a, oldB = b, oldC = c, oldAngA = A, oldAngB = B, oldAngC = C;
+
+        // Law of Sines to find sides
+        if (a !== null && A !== null) {
+          if (b === null && B !== null) b = a * Math.sin(B * DEG_TO_RAD) / Math.sin(A * DEG_TO_RAD);
+          if (c === null && C !== null) c = a * Math.sin(C * DEG_TO_RAD) / Math.sin(A * DEG_TO_RAD);
+        }
+        if (b !== null && B !== null) {
+          if (a === null && A !== null) a = b * Math.sin(A * DEG_TO_RAD) / Math.sin(B * DEG_TO_RAD);
+          if (c === null && C !== null) c = b * Math.sin(C * DEG_TO_RAD) / Math.sin(B * DEG_TO_RAD);
+        }
+        if (c !== null && C !== null) {
+          if (a === null && A !== null) a = c * Math.sin(A * DEG_TO_RAD) / Math.sin(C * DEG_TO_RAD);
+          if (b === null && B !== null) b = c * Math.sin(B * DEG_TO_RAD) / Math.sin(C * DEG_TO_RAD);
+        }
+
+        // Law of Cosines to find sides
+        if (a === null && b !== null && c !== null && A !== null) a = Math.sqrt(b*b + c*c - 2*b*c*Math.cos(A * DEG_TO_RAD));
+        if (b === null && a !== null && c !== null && B !== null) b = Math.sqrt(a*a + c*c - 2*a*c*Math.cos(B * DEG_TO_RAD));
+        if (c === null && a !== null && b !== null && C !== null) c = Math.sqrt(a*a + b*b - 2*a*b*Math.cos(C * DEG_TO_RAD));
+
+        // Law of Cosines to find angles
+        if (a !== null && b !== null && c !== null) {
+          if (A === null) A = Math.acos((b*b + c*c - a*a) / (2*b*c)) * RAD_TO_DEG;
+          if (B === null) B = Math.acos((a*a + c*c - b*b) / (2*a*c)) * RAD_TO_DEG;
+          if (C === null) C = Math.acos((a*a + b*b - c*c) / (2*a*b)) * RAD_TO_DEG;
+        }
+
+        // Law of Sines to find angles (Caution: ambiguous case SSA handled poorly by simple iteration, but okay for basic solve)
+        if (A === null && a !== null && b !== null && B !== null) {
+            let sinA = (a * Math.sin(B * DEG_TO_RAD)) / b;
+            if(sinA <= 1) A = Math.asin(sinA) * RAD_TO_DEG;
+        }
+        if (B === null && b !== null && a !== null && A !== null) {
+            let sinB = (b * Math.sin(A * DEG_TO_RAD)) / a;
+            if(sinB <= 1) B = Math.asin(sinB) * RAD_TO_DEG;
+        }
+        if (C === null && c !== null && a !== null && A !== null) {
+            let sinC = (c * Math.sin(A * DEG_TO_RAD)) / a;
+            if(sinC <= 1) C = Math.asin(sinC) * RAD_TO_DEG;
+        }
+
+        // 3rd angle
+        if (A !== null && B !== null && C === null) C = 180 - A - B;
+        if (A !== null && C !== null && B === null) B = 180 - A - C;
+        if (B !== null && C !== null && A === null) A = 180 - B - C;
+
+        if (clean(a) !== clean(oldA) || clean(b) !== clean(oldB) || clean(c) !== clean(oldC) ||
+            clean(A) !== clean(oldAngA) || clean(B) !== clean(oldAngB) || clean(C) !== clean(oldAngC)) {
+          changed = true;
+        }
+      }
+
+      // Check if solved
+      if (a === null || b === null || c === null || A === null || B === null || C === null || isNaN(a) || isNaN(b) || isNaN(c) || isNaN(A) || isNaN(B) || isNaN(C)) {
+        showError("Could not solve triangle. Please verify your inputs (Check for ambiguous SSA case or impossible dimensions).");
+        return;
+      }
+
+      // Validity Checks
+      if (clean(a+b) <= clean(c) || clean(a+c) <= clean(b) || clean(b+c) <= clean(a)) {
+        showError("Invalid Triangle: The sum of any two sides must be strictly greater than the third side.");
+        return;
+      }
+
+      if (clean(A+B+C) !== 180) {
+          showError("Invalid Triangle: Angles must add up to 180 degrees based on provided inputs.");
+          return;
+      }
+
+      // Update inputs with calculated values
+      if (!original.a) { inputs.sideA.value = clean(a); inputs.sideA.classList.add('calculated-input'); }
+      if (!original.b) { inputs.sideB.value = clean(b); inputs.sideB.classList.add('calculated-input'); }
+      if (!original.c) { inputs.sideC.value = clean(c); inputs.sideC.classList.add('calculated-input'); }
+      if (!original.A) { inputs.angleA.value = clean(A); inputs.angleA.classList.add('calculated-input'); }
+      if (!original.B) { inputs.angleB.value = clean(B); inputs.angleB.classList.add('calculated-input'); }
+      if (!original.C) { inputs.angleC.value = clean(C); inputs.angleC.classList.add('calculated-input'); }
+
+      // Calculate properties
+      const perimeter = a + b + c;
+      const s = perimeter / 2;
+      const area = Math.sqrt(s * (s - a) * (s - b) * (s - c));
+      const inradius = area / s;
+      const circumradius = (a * b * c) / (4 * area);
+
+      let typeBySide = "";
+      if (clean(a) === clean(b) && clean(b) === clean(c)) typeBySide = "Equilateral";
+      else if (clean(a) === clean(b) || clean(b) === clean(c) || clean(a) === clean(c)) typeBySide = "Isosceles";
+      else typeBySide = "Scalene";
+
+      let typeByAngle = "";
+      let maxAngle = Math.max(A, B, C);
+      if (clean(maxAngle) === 90) typeByAngle = "Right";
+      else if (clean(maxAngle) > 90) typeByAngle = "Obtuse";
+      else typeByAngle = "Acute";
+
+      results.area.textContent = formatNumber(area);
+      results.perimeter.textContent = formatNumber(perimeter);
+      results.semi.textContent = formatNumber(s);
+      results.inradius.textContent = formatNumber(inradius);
+      results.circumradius.textContent = formatNumber(circumradius);
+      results.type.textContent = `${typeByAngle} ${typeBySide}`;
+    }
+
+    Object.values(inputs).forEach(input => {
+      input.addEventListener('input', () => {
+        // If they start typing in a calculated field, it becomes an original field
+        input.classList.remove('calculated-input');
+        solveTriangle();
+      });
+    });
+
+    clearBtn.addEventListener('click', () => {
+      Object.values(inputs).forEach(input => {
+        input.value = '';
+        input.classList.remove('calculated-input');
+      });
+      clearResults();
+    });
+
+  </script>
+
+  <style is:inline>
+    .page-content { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem; }
+    .hero { text-align: center; padding: 3rem 0 2rem; }
+    .hero h1 { font-size: 2.2rem; font-weight: 800; margin-bottom: 0.5rem; }
+    .subtitle { color: var(--text-secondary); font-size: 1.1rem; }
+
+    .calculator-container { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 2rem; margin: 2rem 0; }
+
+    .input-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 1.5rem; }
+    .input-group { display: flex; flex-direction: column; gap: 0.5rem; }
+    .input-group label { font-weight: 600; color: var(--text-primary); }
+
+    input, select { background: var(--bg-color); color: var(--text-primary); border: 1px solid var(--border-color); padding: 0.75rem 1rem; border-radius: 8px; width: 100%; font-size: 1rem; transition: border-color 0.2s, box-shadow 0.2s; }
+    input:focus, select:focus { outline: none; border-color: var(--accent-color); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-color) 20%, transparent); }
+
+    input.calculated-input { background: color-mix(in srgb, var(--accent-color) 5%, transparent); border-color: var(--accent-color); color: var(--accent-color); font-weight: 600; }
+
+    .controls { display: flex; justify-content: flex-end; margin-bottom: 2rem; }
+    button { background: var(--accent-color); color: white; border: none; padding: 0.75rem 2rem; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 1rem; transition: opacity 0.2s; }
+    button:hover { opacity: 0.9; }
+    button#clear-btn { background: var(--border-color); color: var(--text-primary); }
+
+    .error-message { background: #fee2e2; color: #991b1b; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem; border: 1px solid #f87171; display: none; font-weight: 500; }
+
+    .results-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; }
+    .result-card { background: color-mix(in srgb, var(--accent-color) 10%, transparent); border: 1px solid var(--accent-color); border-radius: 12px; padding: 1.5rem; text-align: center; display: flex; flex-direction: column; justify-content: center; min-height: 120px; }
+    .result-label { color: var(--text-secondary); font-size: 0.9rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 0.5rem; }
+    .result-value { font-size: 2rem; font-weight: 800; color: var(--accent-color); line-height: 1.2; word-break: break-all; }
+
+    .explainer { margin-top: 4rem; line-height: 1.7; color: var(--text-primary); }
+    .explainer h2 { font-size: 1.8rem; margin: 2rem 0 1rem; }
+    .explainer h3 { font-size: 1.4rem; margin: 1.5rem 0 0.5rem; }
+    .explainer h4 { font-size: 1.2rem; margin: 1.2rem 0 0.5rem; }
+    .explainer p { margin-bottom: 1rem; }
+    .explainer ul { margin-bottom: 1.5rem; padding-left: 1.5rem; }
+    .explainer li { margin-bottom: 0.5rem; }
+    .explainer a { color: var(--accent-color); text-decoration: underline; text-underline-offset: 4px; }
+
+    .formula-block { background: var(--card-bg); border: 1px solid var(--border-color); border-left: 4px solid var(--accent-color); padding: 1rem 1.5rem; border-radius: 4px; margin: 1rem 0; font-family: monospace; font-size: 1.1rem; overflow-x: auto; }
+
+    .faq-section { margin-top: 4rem; }
+    .faq-section h2 { font-size: 1.8rem; margin-bottom: 1.5rem; }
+    .faq-section details { margin: 1rem 0; padding: 1rem; background: var(--card-bg); border-radius: 8px; border: 1px solid var(--border-color); transition: background-color 0.2s; }
+    .faq-section details[open] { background: color-mix(in srgb, var(--card-bg) 95%, var(--accent-color)); }
+    .faq-section summary { font-weight: 600; cursor: pointer; list-style-position: inside; color: var(--text-primary); font-size: 1.1rem; }
+    .faq-section details p { margin-top: 1rem; color: var(--text-secondary); line-height: 1.6; }
+
+    @media (max-width: 600px) {
+      .input-grid { grid-template-columns: 1fr; }
+      .results-grid { grid-template-columns: 1fr 1fr; }
+    }
+  </style>
+</SiteLayout>

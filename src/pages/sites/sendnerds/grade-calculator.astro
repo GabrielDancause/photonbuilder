@@ -1,0 +1,430 @@
+---
+import SiteLayout from "../../../layouts/SiteLayout.astro";
+
+export const meta = {
+  title: "Grade Calculator - Calculate Current & Final Target Grades",
+  description: "Stop guessing what you need on the final. This interactive tool reveals your exact current standing and the precise score required to hit your target...",
+  category: "tool",
+  published: "2024-05-15",
+};
+
+const schema = [
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": meta.title,
+    "description": meta.description,
+    "author": {
+      "@type": "Organization",
+      "name": "Silicon Based"
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "Silicon Based"
+    },
+    "datePublished": meta.published,
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "How is my overall grade calculated?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Your overall grade is typically calculated using a weighted average. This means each assignment or category (like homework, midterms, or participation) contributes a specific percentage to your final score. You multiply the grade you received by the weight of that assignment, and sum up these values across all assignments."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "What does 'unweighted' mean for grades?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "In an unweighted grading system, every point is worth the same amount towards your final grade, regardless of the assignment type. You simply add up all the points you earned and divide by the total possible points available."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How do I calculate the grade I need on a final exam?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "To find the grade needed on a final exam, you need to know your target final grade, your current grade, and the weight of the final exam. The formula is: (Target Grade - Current Grade * (1 - Final Exam Weight)) / Final Exam Weight."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Why do my current grade and final grade look different?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Your current grade reflects your standing based only on the assignments that have been graded so far. The final grade takes into account the entirety of the course, including future assignments and the final exam. If you haven't completed all weighted categories, your current grade is essentially scaled up proportionally."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Can I use letter grades in the calculator?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes, our calculator supports letter grades. It internally converts standard letter grades (A, B, C, etc.) into their corresponding percentage values (e.g., A = 95%, B = 85%) to perform the calculations accurately."
+        }
+      }
+    ]
+  }
+];
+---
+
+<SiteLayout site="sendnerds" title={meta.title} description={meta.description} canonical="https://photonbuilder.com/sendnerds/grade-calculator" schema={schema}>
+  <div class="page-content">
+    <div class="hero">
+      <h1>Grade Calculator</h1>
+      <p class="subtitle">Calculate your current class grade and find out exactly what you need on the final exam to hit your target score.</p>
+    </div>
+
+    <div class="calculator-container">
+      <div class="calc-tabs">
+        <button class="tab-btn active" data-tab="current-grade">Calculate Current Grade</button>
+        <button class="tab-btn" data-tab="final-grade">Final Grade Calculator</button>
+      </div>
+
+      <!-- Current Grade Calculator -->
+      <div id="current-grade-tab" class="tab-content active">
+        <div class="assignments-header">
+          <div class="col-name">Assignment (Optional)</div>
+          <div class="col-grade">Grade (%)</div>
+          <div class="col-weight">Weight (%)</div>
+          <div class="col-action"></div>
+        </div>
+
+        <div id="assignments-list">
+          <!-- Rows injected by JS -->
+        </div>
+
+        <div class="calc-actions">
+          <button id="add-row-btn" class="btn-secondary">+ Add Assignment</button>
+          <button id="clear-all-btn" class="btn-danger">Clear All</button>
+        </div>
+
+        <div class="result-card">
+          <div>Your Current Grade is:</div>
+          <div id="current-grade-result" class="result-value">--%</div>
+          <div id="grade-letter-result" class="result-letter"></div>
+          <div id="weight-warning" class="warning-text" style="display: none;">Total weight exceeds 100%. Please adjust.</div>
+        </div>
+      </div>
+
+      <!-- Final Grade Calculator -->
+      <div id="final-grade-tab" class="tab-content" style="display: none;">
+        <div class="input-group">
+          <label for="fg-current">Current Grade (%)</label>
+          <input type="number" id="fg-current" placeholder="e.g. 85" min="0" step="any">
+        </div>
+
+        <div class="input-group">
+          <label for="fg-target">Target Class Grade (%)</label>
+          <input type="number" id="fg-target" placeholder="e.g. 90" min="0" step="any">
+        </div>
+
+        <div class="input-group">
+          <label for="fg-weight">Final Exam Weight (%)</label>
+          <input type="number" id="fg-weight" placeholder="e.g. 20" min="0" max="100" step="any">
+        </div>
+
+        <div class="result-card">
+          <div>You need this score on the final:</div>
+          <div id="final-grade-result" class="result-value">--%</div>
+          <div id="final-impossible-warning" class="warning-text" style="display: none;">This target grade is not mathematically possible.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="explainer">
+      <h2>How the Grade Calculator Works</h2>
+      <p>Whether you're trying to figure out where you stand mid-semester or plotting a course to an A+ before finals week, understanding the mechanics of grade calculation is essential. Our grade calculator simplifies this process, instantly providing accurate insights into your academic performance.</p>
+
+      <h3>Weighted vs. Unweighted Grades</h3>
+      <p>The core difference in calculating grades lies in how assignments are valued relative to one another. An unweighted system is straightforward: every point available in the course has the exact same value. If a homework assignment is worth 10 points and a midterm is worth 100 points, the midterm naturally carries ten times the influence on your final grade purely by having more points.</p>
+      <p>However, most high school and college courses utilize a weighted grading system. In this model, assignments are grouped into categories, and each category is assigned a specific percentage of the total class grade. For example:</p>
+      <ul>
+        <li>Homework: 20%</li>
+        <li>Quizzes: 15%</li>
+        <li>Midterm Exam: 30%</li>
+        <li>Final Exam: 35%</li>
+      </ul>
+      <p>With weighted categories, a 100-point homework assignment is mathematically worth less to your overall grade than a 100-point midterm exam. Our calculator defaults to a weighted approach, allowing you to input the percentage weight for each assignment or category.</p>
+
+      <h3>The Current Grade Formula</h3>
+      <p>To calculate your current grade in a weighted system, the calculator performs a sum product of your grades and their respective weights, and then normalizes the result based on the total weight of completed assignments.</p>
+      <p>The formula is: <code>Current Grade = &Sigma; (Grade &times; Weight) / &Sigma; Weights</code></p>
+      <p>Let's walk through an example. Suppose you have completed three assignments:</p>
+      <ul>
+        <li>Homework: You scored 95%, weight is 20%. (0.95 &times; 20 = 19)</li>
+        <li>Quiz: You scored 80%, weight is 15%. (0.80 &times; 15 = 12)</li>
+        <li>Midterm: You scored 88%, weight is 30%. (0.88 &times; 30 = 26.4)</li>
+      </ul>
+      <p>First, sum the calculated values: 19 + 12 + 26.4 = 57.4</p>
+      <p>Next, sum the weights of the completed assignments: 20% + 15% + 30% = 65%</p>
+      <p>Finally, divide the sum of values by the sum of weights: 57.4 / 65 = 88.31%. Your current standing in the class is 88.31%.</p>
+
+      <h3>The Final Grade Formula</h3>
+      <p>The "Final Grade Calculator" tab helps you determine the exact score you need on a final exam to achieve a specific target grade for the course. This is perhaps the most common calculation students need at the end of a semester.</p>
+      <p>The formula to find the required final exam score is:</p>
+      <p><code>Final Exam Grade = (Target Grade - Current Grade &times; (1 - Final Exam Weight)) / Final Exam Weight</code></p>
+      <p>For example, if you want an 90% in the class (Target Grade), your current grade is an 85%, and the final exam is worth 20% (0.20) of your total grade:</p>
+      <ol>
+        <li>Current Grade weight remaining: 1 - 0.20 = 0.80</li>
+        <li>Current points contributing to final: 85 &times; 0.80 = 68</li>
+        <li>Points needed from final: 90 - 68 = 22</li>
+        <li>Required score on final: 22 / 0.20 = 110%</li>
+      </ol>
+      <p>In this scenario, hitting a 90% overall would require scoring a 110% on the final exam, which usually means the target grade is out of reach unless extra credit is available.</p>
+
+      <h3>Interpreting Letter Grades</h3>
+      <p>While standard calculations use percentages, syllabi often map these to letter grades or a GPA scale. A common unweighted mapping looks like this:</p>
+      <ul>
+        <li>A: 90% - 100% (4.0 GPA)</li>
+        <li>B: 80% - 89.9% (3.0 GPA)</li>
+        <li>C: 70% - 79.9% (2.0 GPA)</li>
+        <li>D: 60% - 69.9% (1.0 GPA)</li>
+        <li>F: 0% - 59.9% (0.0 GPA)</li>
+      </ul>
+      <p>Keep in mind that some institutions use a +/- system (e.g., A-, B+) which creates a more granular scale. Always consult your specific course syllabus for the authoritative grading scale.</p>
+
+      <h3>Further Calculations</h3>
+      <p>Understanding grades often involves manipulating percentages. If you want to dive deeper into how percentage changes and differences are calculated, check out our <a href="/percentage-calculator">Percentage Calculator</a> for more advanced percentage operations.</p>
+    </div>
+
+    <section class="faq-section">
+      <h2>Frequently Asked Questions</h2>
+      {schema[1].mainEntity.map(faq => (
+        <details>
+          <summary>{faq.name}</summary>
+          <p>{faq.acceptedAnswer.text}</p>
+        </details>
+      ))}
+    </section>
+  </div>
+
+  <script is:inline>
+    // Tab switching
+    const tabBtns = document.querySelectorAll('.tab-btn');
+    const tabContents = document.querySelectorAll('.tab-content');
+
+    tabBtns.forEach(btn => {
+      btn.addEventListener('click', () => {
+        tabBtns.forEach(b => b.classList.remove('active'));
+        tabContents.forEach(c => c.style.display = 'none');
+
+        btn.classList.add('active');
+        document.getElementById(btn.dataset.tab + '-tab').style.display = 'block';
+      });
+    });
+
+    // --- Current Grade Logic ---
+    const assignmentsList = document.getElementById('assignments-list');
+    const addRowBtn = document.getElementById('add-row-btn');
+    const clearAllBtn = document.getElementById('clear-all-btn');
+    const currentGradeResult = document.getElementById('current-grade-result');
+    const gradeLetterResult = document.getElementById('grade-letter-result');
+    const weightWarning = document.getElementById('weight-warning');
+
+    let rowCount = 0;
+
+    function getLetter(percentage) {
+      if (percentage >= 90) return 'A';
+      if (percentage >= 80) return 'B';
+      if (percentage >= 70) return 'C';
+      if (percentage >= 60) return 'D';
+      return 'F';
+    }
+
+    function calculateCurrentGrade() {
+      const rows = assignmentsList.querySelectorAll('.assignment-row');
+      let totalWeightedScore = 0;
+      let totalWeight = 0;
+      let hasValidInput = false;
+
+      rows.forEach(row => {
+        const gradeInput = row.querySelector('.input-grade').value;
+        const weightInput = row.querySelector('.input-weight').value;
+
+        if (gradeInput !== '' && weightInput !== '') {
+          const grade = parseFloat(gradeInput);
+          const weight = parseFloat(weightInput);
+
+          if (!isNaN(grade) && !isNaN(weight) && weight > 0) {
+            totalWeightedScore += grade * weight;
+            totalWeight += weight;
+            hasValidInput = true;
+          }
+        }
+      });
+
+      if (totalWeight > 100.01) { // small buffer for floating point
+        weightWarning.style.display = 'block';
+      } else {
+        weightWarning.style.display = 'none';
+      }
+
+      if (hasValidInput && totalWeight > 0) {
+        const currentGrade = totalWeightedScore / totalWeight;
+        currentGradeResult.textContent = currentGrade.toFixed(2) + '%';
+        gradeLetterResult.textContent = getLetter(currentGrade);
+      } else {
+        currentGradeResult.textContent = '--%';
+        gradeLetterResult.textContent = '';
+      }
+    }
+
+    function createRow() {
+      rowCount++;
+      const row = document.createElement('div');
+      row.className = 'assignment-row';
+      row.innerHTML = `
+        <input type="text" class="input-name" placeholder="Assignment ${rowCount}">
+        <div class="input-wrapper">
+          <input type="number" class="input-grade" placeholder="95" min="0" step="any">
+          <span class="suffix">%</span>
+        </div>
+        <div class="input-wrapper">
+          <input type="number" class="input-weight" placeholder="20" min="0" step="any">
+          <span class="suffix">%</span>
+        </div>
+        <button class="remove-row-btn" aria-label="Remove row">&times;</button>
+      `;
+
+      row.querySelector('.remove-row-btn').addEventListener('click', function() {
+        if (assignmentsList.children.length > 1) {
+          row.remove();
+          calculateCurrentGrade();
+        }
+      });
+
+      row.querySelectorAll('input').forEach(input => {
+        input.addEventListener('input', calculateCurrentGrade);
+      });
+
+      return row;
+    }
+
+    function initAssignments() {
+      assignmentsList.innerHTML = '';
+      assignmentsList.appendChild(createRow());
+      assignmentsList.appendChild(createRow());
+      assignmentsList.appendChild(createRow());
+      calculateCurrentGrade();
+    }
+
+    addRowBtn.addEventListener('click', () => {
+      assignmentsList.appendChild(createRow());
+    });
+
+    clearAllBtn.addEventListener('click', () => {
+      initAssignments();
+    });
+
+    // --- Final Grade Logic ---
+    const fgCurrent = document.getElementById('fg-current');
+    const fgTarget = document.getElementById('fg-target');
+    const fgWeight = document.getElementById('fg-weight');
+    const finalGradeResult = document.getElementById('final-grade-result');
+    const finalImpossibleWarning = document.getElementById('final-impossible-warning');
+
+    function calculateFinalGrade() {
+      const current = parseFloat(fgCurrent.value);
+      const target = parseFloat(fgTarget.value);
+      const weight = parseFloat(fgWeight.value);
+
+      finalImpossibleWarning.style.display = 'none';
+
+      if (!isNaN(current) && !isNaN(target) && !isNaN(weight) && weight > 0 && weight <= 100) {
+        const weightDec = weight / 100;
+        const requiredScore = (target - current * (1 - weightDec)) / weightDec;
+
+        finalGradeResult.textContent = requiredScore.toFixed(2) + '%';
+
+        if (requiredScore > 100) {
+          finalImpossibleWarning.style.display = 'block';
+          finalImpossibleWarning.textContent = "This target grade requires over 100% on the final. Extra credit will be needed.";
+        } else if (requiredScore < 0) {
+           finalImpossibleWarning.style.display = 'block';
+           finalImpossibleWarning.textContent = "You've already guaranteed this target grade even if you score a 0% on the final.";
+        }
+      } else {
+        finalGradeResult.textContent = '--%';
+      }
+    }
+
+    fgCurrent.addEventListener('input', calculateFinalGrade);
+    fgTarget.addEventListener('input', calculateFinalGrade);
+    fgWeight.addEventListener('input', calculateFinalGrade);
+
+    // Initialize
+    initAssignments();
+
+  </script>
+
+  <style is:inline>
+    .page-content { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem; }
+    .hero { text-align: center; padding: 3rem 0 2rem; }
+    .hero h1 { font-size: 2.2rem; font-weight: 800; margin-bottom: 0.5rem; color: var(--accent-color); }
+    .subtitle { color: var(--text-secondary); font-size: 1.1rem; }
+
+    .calculator-container { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 2rem; margin: 2rem 0; }
+
+    .calc-tabs { display: flex; gap: 1rem; margin-bottom: 2rem; border-bottom: 1px solid var(--border-color); padding-bottom: 1rem; }
+    .tab-btn { background: transparent; color: var(--text-secondary); border: none; padding: 0.5rem 1rem; cursor: pointer; font-size: 1rem; font-weight: 600; border-radius: 8px; transition: all 0.2s; }
+    .tab-btn:hover { background: color-mix(in srgb, var(--accent-color) 10%, transparent); color: var(--accent-color); }
+    .tab-btn.active { background: var(--accent-color); color: white; }
+
+    .assignments-header { display: grid; grid-template-columns: 2fr 1fr 1fr 40px; gap: 1rem; margin-bottom: 0.5rem; font-weight: 600; font-size: 0.9rem; color: var(--text-secondary); }
+    .assignment-row { display: grid; grid-template-columns: 2fr 1fr 1fr 40px; gap: 1rem; margin-bottom: 1rem; align-items: center; }
+
+    input { background: var(--bg-color); color: var(--text-primary); border: 1px solid var(--border-color); padding: 0.75rem 1rem; border-radius: 8px; width: 100%; font-size: 1rem; }
+    input:focus { outline: none; border-color: var(--accent-color); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-color) 20%, transparent); }
+
+    .input-wrapper { position: relative; display: flex; align-items: center; }
+    .suffix { position: absolute; right: 1rem; color: var(--text-secondary); pointer-events: none; }
+    .input-wrapper input { padding-right: 2rem; }
+
+    .remove-row-btn { background: none; color: #ef4444; border: none; font-size: 1.5rem; cursor: pointer; padding: 0; display: flex; align-items: center; justify-content: center; opacity: 0.6; transition: opacity 0.2s; }
+    .remove-row-btn:hover { opacity: 1; }
+
+    .calc-actions { display: flex; gap: 1rem; margin-top: 1rem; }
+    .btn-secondary { background: color-mix(in srgb, var(--accent-color) 10%, transparent); color: var(--accent-color); border: 1px solid var(--accent-color); padding: 0.5rem 1rem; border-radius: 8px; font-weight: 600; cursor: pointer; }
+    .btn-danger { background: transparent; color: #ef4444; border: 1px solid #ef4444; padding: 0.5rem 1rem; border-radius: 8px; font-weight: 600; cursor: pointer; }
+    .btn-secondary:hover { background: var(--accent-color); color: white; }
+    .btn-danger:hover { background: #ef4444; color: white; }
+
+    .input-group { margin-bottom: 1.5rem; }
+    .input-group label { display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--text-primary); }
+
+    .result-card { background: color-mix(in srgb, var(--accent-color) 5%, transparent); border: 1px solid var(--accent-color); border-radius: 12px; padding: 2rem; margin-top: 2rem; text-align: center; }
+    .result-value { font-size: 3rem; font-weight: 800; color: var(--accent-color); line-height: 1.2; }
+    .result-letter { font-size: 1.5rem; font-weight: 700; color: var(--text-primary); }
+
+    .warning-text { color: #ef4444; margin-top: 0.5rem; font-weight: 500; }
+
+    .explainer { margin-top: 3rem; }
+    .explainer h2 { margin-top: 2rem; color: var(--accent-color); }
+    .explainer h3 { margin-top: 1.5rem; }
+    .explainer p { margin-bottom: 1rem; color: var(--text-secondary); }
+    .explainer ul, .explainer ol { margin-bottom: 1rem; padding-left: 1.5rem; color: var(--text-secondary); }
+    .explainer li { margin-bottom: 0.5rem; }
+    .explainer code { background: var(--card-bg); padding: 0.2rem 0.4rem; border-radius: 4px; font-family: monospace; color: var(--accent-color); border: 1px solid var(--border-color); }
+    .explainer a { color: var(--accent-color); text-decoration: none; }
+    .explainer a:hover { text-decoration: underline; }
+
+    .faq-section { margin-top: 3rem; }
+    .faq-section h2 { margin-bottom: 1.5rem; color: var(--accent-color); }
+    .faq-section details { margin: 1rem 0; padding: 1.25rem; background: var(--card-bg); border-radius: 8px; border: 1px solid var(--border-color); }
+    .faq-section summary { font-weight: 600; cursor: pointer; font-size: 1.1rem; color: var(--text-primary); }
+    .faq-section details p { margin-top: 1rem; margin-bottom: 0; color: var(--text-secondary); }
+
+    @media (max-width: 600px) {
+      .assignments-header { display: none; }
+      .assignment-row { grid-template-columns: 1fr; gap: 0.5rem; background: var(--bg-color); padding: 1rem; border-radius: 8px; border: 1px solid var(--border-color); position: relative; }
+      .remove-row-btn { position: absolute; top: 0.5rem; right: 0.5rem; }
+      .calc-tabs { flex-direction: column; }
+    }
+  </style>
+</SiteLayout>

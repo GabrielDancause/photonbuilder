@@ -29,7 +29,7 @@ SITE_DOMAINS = {
     "nookienook": "nookienook.com",
     "siliconbased": "siliconbased.dev",
     "westmount": "westmountfundamentals.com",
-    "mathtools": "photonbuilder.com",
+    "sendnerds": "photonbuilder.com",
     "misc": "photonbuilder.com",
     "justonemoment": "photonbuilder.com",
     "bodycount": "health.example.com",

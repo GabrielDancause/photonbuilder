@@ -174,19 +174,19 @@ sites['getthebag'] = {
   footer: { text: '© 2026 Get The Bag', gabVentures: true },
 };
 
-sites['mathtools'] = {
-  id: 'mathtools',
-  name: 'Math Tools',
+sites['sendnerds'] = {
+  id: 'sendnerds',
+  name: 'Send Nerds',
   domain: 'photonbuilder.com',
   accent: '#3B82F6',
   theme: { bg: '#060812', cardBg: '#0a1020', border: '#152040', textPrimary: '#e2e8f0', textSecondary: '#94a3b8' },
   gaId: 'G-CYV604162T',
   nav: [
-    { label: 'Calculators', href: '/mathtools/#tools' },
-    { label: 'Guides', href: '/mathtools/#guides' },
-      { label: 'Roadmap', href: '/mathtools/coming-soon' },
+    { label: 'Calculators', href: '/sendnerds/#tools' },
+    { label: 'Guides', href: '/sendnerds/#guides' },
+      { label: 'Roadmap', href: '/sendnerds/coming-soon' },
   ],
-  footer: { text: '© 2026 Math Tools', gabVentures: true },
+  footer: { text: '© 2026 Send Nerds', gabVentures: true },
 };
 
 sites['justonemoment'] = {
