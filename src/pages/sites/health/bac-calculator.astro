@@ -1,0 +1,366 @@
+---
+import SiteLayout from "../../../layouts/SiteLayout.astro";
+
+export const meta = {
+  title: "Blood Alcohol Content (BAC) Calculator",
+  description: "Find out your estimated BAC instantly. The exact hour you’ll sober up might surprise you.",
+  category: "tool",
+  published: "2026-03-15",
+};
+
+const schema = [
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": meta.title,
+    "description": meta.description,
+    "datePublished": meta.published,
+    "author": {
+      "@type": "Organization",
+      "name": "photonbuilder.com/health"
+    }
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "How is BAC calculated?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "BAC is commonly estimated using the Widmark formula, which factors in the volume of alcohol consumed, body weight, a gender-specific distribution ratio, and the rate at which alcohol is metabolized over time."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "What is a standard drink?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "In the US, a standard drink contains about 14 grams of pure alcohol. This is roughly equivalent to a 12 oz beer (5% ABV), a 5 oz glass of wine (12% ABV), or 1.5 oz of distilled spirits (40% ABV)."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How fast does BAC go down?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "On average, a person's BAC drops by about 0.015% per hour. However, this metabolic rate can vary slightly depending on individual physiology, liver health, and other biological factors."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Does eating food lower my BAC?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Eating food does not directly lower your BAC if the alcohol is already in your bloodstream, nor does it speed up liver metabolism. However, eating a full meal before drinking can slow the absorption of alcohol into your bloodstream, potentially lowering your peak BAC."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Is this calculator legally binding?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "No. This tool provides an estimate based on mathematical averages. True BAC can only be determined through blood, breath, or urine tests. You should never use this calculator to determine if it is safe or legal for you to drive."
+        }
+      }
+    ]
+  }
+];
+---
+
+<SiteLayout site="health" title={meta.title} description={meta.description} canonical="https://photonbuilder.com/health/bac-calculator" schema={schema}>
+  <div class="page-content">
+    <div class="hero">
+      <h1>Blood Alcohol Content (BAC) Calculator</h1>
+      <p class="subtitle">Estimate your current BAC and time to sobriety</p>
+    </div>
+
+    <div class="calculator-container">
+      <div class="input-grid">
+        <div class="input-group">
+          <label for="weight">Weight (lbs)</label>
+          <input type="number" id="weight" min="50" max="500" step="1" value="160" placeholder="e.g. 160">
+        </div>
+
+        <div class="input-group">
+          <label for="gender">Biological Sex</label>
+          <select id="gender">
+            <option value="male">Male</option>
+            <option value="female">Female</option>
+          </select>
+        </div>
+
+        <div class="input-group">
+          <label for="drinks">Drinks Consumed (Standard)</label>
+          <input type="number" id="drinks" min="0" max="50" step="0.5" value="3" placeholder="Number of drinks">
+          <small class="helper-text">1 drink = 12oz beer, 5oz wine, or 1.5oz liquor</small>
+        </div>
+
+        <div class="input-group">
+          <label for="hours">Time Since First Drink (Hours)</label>
+          <input type="number" id="hours" min="0" max="48" step="0.5" value="2" placeholder="Hours elapsed">
+        </div>
+      </div>
+
+      <div id="error-message" class="error-message" style="display: none;"></div>
+
+      <div class="result-card">
+        <h3>Estimated BAC</h3>
+        <div class="result-value" id="bac-result">0.000%</div>
+        <p class="bac-status" id="bac-status">Sober</p>
+
+        <div class="metrics-grid">
+          <div class="metric-item">
+            <span class="metric-label">Legal Limit (US)</span>
+            <span class="metric-value">0.08%</span>
+          </div>
+          <div class="metric-item">
+            <span class="metric-label">Time to Sober (0.00%)</span>
+            <span class="metric-value" id="time-sober">0h 0m</span>
+          </div>
+        </div>
+
+        <div class="legal-warning">
+          <strong>Disclaimer:</strong> This is a mathematical estimate, not a legal or medical measurement. Never rely on these results to determine if you can safely drive.
+        </div>
+      </div>
+    </div>
+
+    <div class="explainer">
+      <h2>How the BAC Calculator Works</h2>
+      <p>
+        This calculator utilizes the widely accepted <strong>Widmark formula</strong> to provide an estimate of your Blood Alcohol Content (BAC). Created by Swedish physician Erik Widmark in the 1920s, the formula is the standard methodology for estimating the concentration of alcohol in the bloodstream over time based on an individual's basic physiological parameters.
+      </p>
+
+      <h3>The Widmark Formula</h3>
+      <p>The standard mathematical equation used in our tool is:</p>
+      <div style="background: var(--card-bg); padding: 1rem; border-radius: 8px; border: 1px solid var(--border-color); margin: 1rem 0; text-align: center; font-family: monospace; font-size: 1.1rem;">
+        BAC = [ (Alcohol Consumed in Grams) / (Body Weight in Grams × r) ] × 100 - (Metabolic Rate × Hours)
+      </div>
+      <p>Where the variables represent:</p>
+      <ul>
+        <li><strong>Alcohol Consumed:</strong> In the US, a standard drink contains approximately 14 grams of pure ethanol.</li>
+        <li><strong>Body Weight:</strong> The total mass of the individual, which determines the volume of fluid available to dilute the alcohol.</li>
+        <li><strong>r (Widmark Factor):</strong> A gender-specific constant that estimates the ratio of body water to total body weight. On average, this is <strong>0.68 for men</strong> and <strong>0.55 for women</strong>. Women typically have a higher body fat percentage and lower water content than men of the same weight, meaning the alcohol is less diluted.</li>
+        <li><strong>Metabolic Rate:</strong> The rate at which the liver processes and eliminates alcohol. The average metabolic clearance rate is roughly <strong>0.015% per hour</strong>.</li>
+      </ul>
+
+      <h3>What is a "Standard Drink"?</h3>
+      <p>
+        The accuracy of any BAC estimation heavily relies on accurately tracking the amount of alcohol consumed. Because different beverages have vastly different Alcohol By Volume (ABV) percentages, the concept of a "standard drink" normalizes consumption.
+      </p>
+      <p>In the United States, one standard drink (containing ~14 grams or 0.6 ounces of pure alcohol) is equivalent to:</p>
+      <ul>
+        <li><strong>12 ounces of regular beer</strong> (typically ~5% ABV)</li>
+        <li><strong>5 ounces of table wine</strong> (typically ~12% ABV)</li>
+        <li><strong>1.5 ounces of distilled spirits</strong> (like vodka, whiskey, or gin at ~40% ABV)</li>
+      </ul>
+      <p>
+        It is critical to note that many modern craft beers or poured mixed drinks contain significantly more alcohol than a single "standard" drink. A pint (16 oz) of an 8% IPA, for example, is actually equivalent to more than two standard drinks.
+      </p>
+
+      <h3>Metabolism and Time to Sober Up</h3>
+      <p>
+        Once alcohol enters the bloodstream, the body immediately begins breaking it down. The liver handles approximately 90-95% of this metabolic process. Regardless of how much you have had to drink, the human body can only metabolize alcohol at a relatively fixed rate—averaging a BAC drop of about 0.015 per hour.
+      </p>
+      <p>
+        Because this metabolic rate is fixed, the <em>only</em> factor that lowers your BAC over time is time itself. Popular remedies like drinking black coffee, taking a cold shower, or exercising will not speed up the liver's processing of ethanol. They may make a person feel more alert, but their blood alcohol concentration will remain entirely unchanged.
+      </p>
+
+      <h3>Limitations and Disclaimer</h3>
+      <p>
+        Mathematical formulas can only provide averages. An individual's actual BAC can fluctuate significantly from the Widmark estimate due to numerous variables:
+      </p>
+      <ul>
+        <li><strong>Food Consumption:</strong> Drinking on an empty stomach results in rapid absorption and a higher peak BAC. Eating a large meal beforehand delays gastric emptying, slowing absorption.</li>
+        <li><strong>Genetics and Liver Health:</strong> Enzyme levels (such as alcohol dehydrogenase) dictate metabolic efficiency.</li>
+        <li><strong>Medications:</strong> Various prescriptions can interact with alcohol metabolism.</li>
+      </ul>
+      <p>
+        Therefore, this calculator is strictly for educational purposes. It is not a substitute for a breathalyzer or blood test, and the results should never be used to make decisions regarding driving, operating machinery, or any safety-sensitive task.
+      </p>
+
+      <p>For more mathematical tools, you might also find our <a href="/pythagorean-theorem-calculator">Pythagorean Theorem Calculator</a> useful for solving geometric problems.</p>
+    </div>
+
+    <section class="faq-section">
+      <h2>Frequently Asked Questions</h2>
+      {schema[1].mainEntity.map((faq: any) => (
+        <details>
+          <summary>{faq.name}</summary>
+          <p>{faq.acceptedAnswer.text}</p>
+        </details>
+      ))}
+    </section>
+  </div>
+
+  <script is:inline>
+    function calculateBAC() {
+      const weightInput = document.getElementById('weight');
+      const genderInput = document.getElementById('gender');
+      const drinksInput = document.getElementById('drinks');
+      const hoursInput = document.getElementById('hours');
+      const resultEl = document.getElementById('bac-result');
+      const statusEl = document.getElementById('bac-status');
+      const timeSoberEl = document.getElementById('time-sober');
+      const errorEl = document.getElementById('error-message');
+
+      // Get values
+      const weightLbs = parseFloat(weightInput.value);
+      const gender = genderInput.value;
+      const drinks = parseFloat(drinksInput.value);
+      const hours = parseFloat(hoursInput.value);
+
+      // Validation
+      errorEl.style.display = 'none';
+      if (isNaN(weightLbs) || weightLbs <= 0) {
+        showError("Please enter a valid weight greater than 0.");
+        return;
+      }
+      if (isNaN(drinks) || drinks < 0) {
+        showError("Please enter a valid number of drinks (0 or more).");
+        return;
+      }
+      if (isNaN(hours) || hours < 0) {
+        showError("Please enter valid hours elapsed (0 or more).");
+        return;
+      }
+
+      // Constants for Widmark formula
+      // Volume of distribution (r)
+      const r = gender === 'male' ? 0.68 : 0.55;
+
+      // Weight in grams: lbs * 453.592
+      const weightGrams = weightLbs * 453.592;
+
+      // Alcohol in grams: 1 standard US drink = ~14 grams of pure ethanol
+      const alcoholGrams = drinks * 14;
+
+      // Metabolism rate per hour
+      const metabolicRate = 0.015;
+
+      let bac = 0;
+
+      if (drinks > 0) {
+        // Widmark formula: BAC = (Alcohol grams / (Weight grams * r)) * 100
+        const rawBAC = (alcoholGrams / (weightGrams * r)) * 100;
+
+        // Subtract metabolized alcohol
+        bac = rawBAC - (metabolicRate * hours);
+
+        // BAC cannot be negative
+        if (bac < 0) bac = 0;
+      }
+
+      // Display result
+      resultEl.textContent = bac.toFixed(3) + '%';
+
+      // Status colors and text
+      let statusText = "Sober";
+      let statusColor = "var(--text-secondary)";
+
+      if (bac > 0 && bac < 0.04) {
+        statusText = "Mild Impairment";
+        statusColor = "#10b981"; // green
+      } else if (bac >= 0.04 && bac < 0.08) {
+        statusText = "Impaired";
+        statusColor = "#f59e0b"; // yellow
+      } else if (bac >= 0.08 && bac < 0.15) {
+        statusText = "Legally Intoxicated (Do Not Drive)";
+        statusColor = "#ef4444"; // red
+      } else if (bac >= 0.15 && bac < 0.30) {
+        statusText = "Severely Intoxicated";
+        statusColor = "#b91c1c"; // dark red
+      } else if (bac >= 0.30) {
+        statusText = "Dangerously Intoxicated (Seek Medical Help)";
+        statusColor = "#7f1d1d"; // very dark red
+      }
+
+      statusEl.textContent = statusText;
+      statusEl.style.color = statusColor;
+
+      // Calculate time to sober
+      if (bac > 0) {
+        const hoursToSober = bac / metabolicRate;
+        const h = Math.floor(hoursToSober);
+        const m = Math.round((hoursToSober - h) * 60);
+        timeSoberEl.textContent = `${h}h ${m}m`;
+      } else {
+        timeSoberEl.textContent = "0h 0m";
+      }
+    }
+
+    function showError(msg) {
+      const errorEl = document.getElementById('error-message');
+      const resultEl = document.getElementById('bac-result');
+      const statusEl = document.getElementById('bac-status');
+      const timeSoberEl = document.getElementById('time-sober');
+
+      errorEl.textContent = msg;
+      errorEl.style.display = 'block';
+      resultEl.textContent = '---';
+      statusEl.textContent = '';
+      timeSoberEl.textContent = '---';
+    }
+
+    // Attach event listeners
+    document.addEventListener('DOMContentLoaded', () => {
+      const inputs = ['weight', 'gender', 'drinks', 'hours'];
+      inputs.forEach(id => {
+        document.getElementById(id).addEventListener('input', calculateBAC);
+        document.getElementById(id).addEventListener('change', calculateBAC);
+      });
+
+      // Initial calculation
+      calculateBAC();
+    });
+  </script>
+
+  <style is:inline>
+    .page-content { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem; }
+    .hero { text-align: center; padding: 3rem 0 2rem; }
+    .hero h1 { font-size: 2.2rem; font-weight: 800; margin-bottom: 0.5rem; }
+    .subtitle { color: var(--text-secondary); font-size: 1.1rem; }
+
+    .calculator-container { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 2rem; margin: 2rem 0; }
+
+    .input-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem; }
+    @media (max-width: 600px) {
+      .input-grid { grid-template-columns: 1fr; }
+    }
+
+    .input-group { display: flex; flex-direction: column; gap: 0.5rem; }
+    .input-group label { font-weight: 600; font-size: 0.95rem; }
+
+    input, select { background: var(--bg-color); color: var(--text-primary); border: 1px solid var(--border-color); padding: 0.75rem 1rem; border-radius: 8px; width: 100%; font-size: 1rem; }
+    input:focus, select:focus { outline: none; border-color: var(--accent-color); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-color) 20%, transparent); }
+
+    .helper-text { font-size: 0.8rem; color: var(--text-secondary); }
+
+    .error-message { background: rgba(239, 68, 68, 0.1); color: #ef4444; padding: 1rem; border-radius: 8px; border: 1px solid #ef4444; margin-bottom: 1.5rem; font-weight: 500; }
+
+    .result-card { background: color-mix(in srgb, var(--accent-color) 5%, transparent); border: 1px solid var(--accent-color); border-radius: 12px; padding: 2rem; text-align: center; }
+    .result-card h3 { margin: 0 0 0.5rem 0; color: var(--text-secondary); font-size: 1.1rem; text-transform: uppercase; letter-spacing: 1px; }
+    .result-value { font-size: 3.5rem; font-weight: 800; color: var(--text-primary); line-height: 1; margin-bottom: 0.5rem; }
+    .bac-status { font-size: 1.2rem; font-weight: 700; margin: 0 0 1.5rem 0; }
+
+    .metrics-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem; background: var(--bg-color); padding: 1.5rem; border-radius: 8px; border: 1px solid var(--border-color); }
+    .metric-item { display: flex; flex-direction: column; align-items: center; gap: 0.25rem; }
+    .metric-label { font-size: 0.85rem; color: var(--text-secondary); text-transform: uppercase; font-weight: 600; }
+    .metric-value { font-size: 1.25rem; font-weight: 700; }
+
+    .legal-warning { font-size: 0.85rem; color: var(--text-secondary); line-height: 1.4; text-align: left; background: rgba(245, 158, 11, 0.1); padding: 1rem; border-radius: 6px; border-left: 4px solid #f59e0b; }
+
+    .explainer { margin: 3rem 0; line-height: 1.7; }
+    .explainer h2, .explainer h3 { margin-top: 2rem; margin-bottom: 1rem; }
+    .explainer ul { margin-left: 1.5rem; margin-bottom: 1.5rem; }
+    .explainer li { margin-bottom: 0.5rem; }
+
+    .faq-section { margin-top: 3rem; }
+    .faq-section details { margin: 1rem 0; padding: 1.25rem; background: var(--card-bg); border-radius: 8px; border: 1px solid var(--border-color); }
+    .faq-section summary { font-weight: 600; cursor: pointer; font-size: 1.1rem; list-style-position: inside; }
+    .faq-section details[open] summary { margin-bottom: 1rem; color: var(--accent-color); }
+    .faq-section p { margin: 0; line-height: 1.6; color: var(--text-secondary); }
+  </style>
+</SiteLayout>
