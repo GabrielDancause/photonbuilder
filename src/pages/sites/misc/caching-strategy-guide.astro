@@ -1,0 +1,167 @@
+---
+import SiteLayout from "../../../layouts/SiteLayout.astro";
+
+const schema = {
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "Web Caching Strategy Guide",
+  "description": "Learn the best caching strategies for web performance, including Cache-Control headers, ETags, CDN caching, and Service Workers.",
+  "author": {
+    "@type": "Organization",
+    "name": "photonbuilder.com/misc"
+  },
+  "mainEntity": {
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "What does Cache-Control: no-cache mean?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Despite the name, 'no-cache' does not mean 'do not cache'. It means the browser can store the cache, but it must revalidate with the server (e.g., using an ETag) before using the cached version."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "What is cache busting?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Cache busting is a technique where you append a version number or hash to a filename (e.g., style.v2.css or app.a8b3c.js). This allows you to set extremely long cache expirations, knowing that when you update the file, the filename changes, forcing the browser to download the new version."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "What is stale-while-revalidate?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "stale-while-revalidate is a Cache-Control directive that tells the browser it can use a stale (expired) cached response immediately, while asynchronously checking the server in the background for an updated version for future use."
+        }
+      }
+    ]
+  }
+};
+
+export const meta = {
+  title: "Web Caching Strategy Guide",
+  description: "Master Cache-Control, ETags, CDNs, and stale-while-revalidate for blazing fast web performance.",
+  category: "guide",
+  published: "2026-03-15",
+};
+---
+
+<SiteLayout
+  site="misc"
+  title="Web Caching Strategy Guide"
+  description="Master Cache-Control, ETags, CDNs, and stale-while-revalidate for blazing fast web performance."
+  canonical="https://photonbuilder.com/misc/caching-strategy-guide"
+  schema={schema}
+>
+  <div class="page-content">
+    <div class="hero">
+      <h1>Web Caching Strategy Guide</h1>
+      <p>Master HTTP caching, CDNs, and Service Workers to dramatically reduce server load and improve load times.</p>
+    </div>
+
+    <div class="content">
+      <p>Caching is the single most effective way to improve <a href="/web-performance-guide">Web Performance</a>. By storing copies of resources closer to the user (in their browser or on a CDN edge server), you eliminate network latency and server processing time.</p>
+
+      <h2>The Layers of Web Caching</h2>
+      <p>A modern web application relies on multiple layers of caching:</p>
+      <ul>
+        <li><strong>Browser Cache:</strong> The user's local hard drive. The fastest cache, but only available after the user's first visit.</li>
+        <li><strong>CDN (Content Delivery Network):</strong> Servers distributed globally. Caches responses so users download from a server near them, not your origin server.</li>
+        <li><strong>Service Worker:</strong> A programmable JavaScript proxy running in the browser, allowing for complex offline and caching strategies.</li>
+        <li><strong>Server Cache:</strong> Redis, Memcached, or Varnish caching database queries or rendered HTML before it even hits the network.</li>
+      </ul>
+
+      <h2>The `Cache-Control` Header</h2>
+      <p>The HTTP `Cache-Control` header is the primary tool for managing how browsers and CDNs cache your resources. It defines who can cache the response and for how long.</p>
+
+      <div class="card">
+        <h3>1. The "Immutable" Strategy (For static, versioned assets)</h3>
+        <p>If you use a bundler like Webpack, Vite, or Rollup, your CSS and JS files probably look like <code>app.8f3a9b.js</code>. Because the filename changes whenever the content changes (Cache Busting), you can cache these files forever.</p>
+        <pre><code>Cache-Control: public, max-age=31536000, immutable</code></pre>
+        <ul>
+          <li><code>public</code>: Any cache (browser or CDN) can store this.</li>
+          <li><code>max-age=31536000</code>: Cache for 1 year (in seconds).</li>
+          <li><code>immutable</code>: Tells the browser the file will <em>never</em> change, so it shouldn't even check during page reloads.</li>
+        </ul>
+      </div>
+
+      <div class="card">
+        <h3>2. The "Revalidate" Strategy (For HTML documents)</h3>
+        <p>You never want to cache your <code>index.html</code> for a long time. If you do, users won't see updates, and they won't download the new hashed JS/CSS files.</p>
+        <pre><code>Cache-Control: no-cache</code></pre>
+        <p><em>Wait, doesn't that mean don't cache?</em> No! <code>no-cache</code> means the browser <em>can</em> store the file, but it <strong>must</strong> check with the server before using it. This is usually done using ETags or Last-Modified headers.</p>
+        <p>If you truly don't want the file written to disk at all (e.g., for sensitive banking data), use:</p>
+        <pre><code>Cache-Control: no-store</code></pre>
+      </div>
+
+      <div class="card">
+        <h3>3. The "stale-while-revalidate" Strategy (For dynamic, non-critical data)</h3>
+        <p>This is a modern, powerful directive. It tells the browser: "Use the cached version immediately (even if it's slightly old), but go fetch a fresh copy in the background so the next visit is up to date."</p>
+        <pre><code>Cache-Control: max-age=60, stale-while-revalidate=86400</code></pre>
+        <p>This means: "Use the cache if it's less than 60 seconds old. If it's between 1 minute and 1 day old, show the stale cache immediately, but fetch a new one in the background."</p>
+      </div>
+
+      <h2>Validation: ETags and Last-Modified</h2>
+      <p>When using <code>no-cache</code>, the browser needs a way to ask the server, "Has this changed?"</p>
+      <ul>
+        <li><strong>ETag (Entity Tag):</strong> A unique hash representing the file's content (e.g., <code>ETag: "33a64df5"</code>). The browser sends <code>If-None-Match: "33a64df5"</code>. If the file hasn't changed, the server sends a tiny <code>304 Not Modified</code> response instead of the whole file.</li>
+        <li><strong>Last-Modified:</strong> The server sends the date the file was last changed. The browser asks <code>If-Modified-Since: Tue, 15 Nov...</code>. It serves the same purpose as an ETag but uses timestamps.</li>
+      </ul>
+
+      <h2>Service Workers</h2>
+      <p>Service workers allow you to intercept network requests in JavaScript. This gives you absolute programmatic control over the cache, enabling offline functionality.</p>
+
+      <h3>Common Service Worker Strategies:</h3>
+      <ul>
+        <li><strong>Cache First:</strong> Check the cache. If it's there, return it. If not, go to the network. (Great for images and fonts).</li>
+        <li><strong>Network First:</strong> Go to the network. If the network fails (offline), fall back to the cache. (Great for articles or API data).</li>
+        <li><strong>Stale-While-Revalidate:</strong> Return the cache immediately, then update the cache from the network in the background.</li>
+      </ul>
+
+      <div class="faq-section">
+        <h2>Frequently Asked Questions</h2>
+        <div class="faq-item">
+          <h3>What does Cache-Control: no-cache mean?</h3>
+          <p>Despite the confusing name, <code>no-cache</code> does not mean "do not cache". It means the browser can store the response in its cache, but it must revalidate it with the origin server (usually via an ETag) before using it on subsequent requests.</p>
+        </div>
+        <div class="faq-item">
+          <h3>What is cache busting?</h3>
+          <p>Cache busting is a technique where you append a version number or hash to a filename (e.g., <code>style.v2.css</code> or <code>app.a8b3c.js</code>). This allows you to set extremely long cache expirations, knowing that when you update the file, the filename changes, forcing the browser to download the new version rather than using the old cached version.</p>
+        </div>
+        <div class="faq-item">
+          <h3>What is stale-while-revalidate?</h3>
+          <p><code>stale-while-revalidate</code> is a Cache-Control directive that tells the browser or CDN it can serve a stale (expired) cached response immediately to the user, while asynchronously checking the server in the background for an updated version to store for future use. It provides the speed of caching with the freshness of dynamic requests.</p>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <style is:inline>
+    .page-content { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem; color: var(--text-primary); }
+    .hero { text-align: center; padding: 3rem 0 2rem; border-bottom: 1px solid var(--border-color); margin-bottom: 2rem; }
+    .hero h1 { font-size: 2.2rem; font-weight: 800; margin-bottom: 0.5rem; color: #fff; }
+    .hero p { color: var(--text-secondary); font-size: 1.1rem; }
+
+    .content h2 { font-size: 1.8rem; margin-top: 2.5rem; margin-bottom: 1rem; color: #fff; }
+    .content h3 { font-size: 1.3rem; margin-top: 1.5rem; margin-bottom: 0.5rem; color: #fff; }
+    .content p { line-height: 1.7; margin-bottom: 1rem; color: #d1d5db; }
+    .content ul { margin-bottom: 1.5rem; padding-left: 1.5rem; color: #d1d5db; line-height: 1.7; }
+    .content li { margin-bottom: 0.5rem; }
+
+    .card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem; margin: 1.5rem 0; }
+
+    .content a { color: var(--accent-color); text-decoration: none; font-weight: 500; }
+    .content a:hover { text-decoration: underline; }
+
+    pre { background: #0f172a; padding: 1rem; border-radius: 8px; overflow-x: auto; border: 1px solid var(--border-color); margin-bottom: 1rem; }
+    code { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 0.9em; color: #e2e8f0; }
+    p code, li code { background: #1e293b; padding: 0.2rem 0.4rem; border-radius: 4px; }
+
+    .faq-section { margin-top: 4rem; padding-top: 2rem; border-top: 1px solid var(--border-color); }
+    .faq-item { margin-bottom: 2rem; }
+    .faq-item h3 { font-size: 1.2rem; margin-bottom: 0.5rem; margin-top: 0; }
+  </style>
+</SiteLayout>

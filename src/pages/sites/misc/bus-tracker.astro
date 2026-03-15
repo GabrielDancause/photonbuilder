@@ -1,0 +1,341 @@
+---
+import SiteLayout from "../../../layouts/SiteLayout.astro";
+
+export const meta = {
+  title: "Live Bus Tracker & Arrival Time Calculator",
+  description: "Calculate exact bus arrival times, track delays, and estimate total route duration. Why guess when your bus will arrive when you can calculate the exact minute?",
+  category: "tool",
+  published: "2026-03-15",
+};
+
+const title = meta.title;
+const description = meta.description;
+
+const schema = [
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "How does this bus tracker calculate arrival times?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "The calculator estimates your arrival time using basic kinematics. It evaluates the distance remaining on the route, the estimated average speed of the bus, and the accumulated delay from upcoming stops. By taking the remaining distance and dividing it by the average speed, it determines travel time. It then adds the estimated dwell time per remaining stop to output an estimated time of arrival (ETA)."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Why is the average speed of a bus so low?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Local transit buses often average between 10 to 15 mph (16 to 24 km/h). This seemingly low average speed accounts for frequent stops to load and unload passengers, dwell times, heavy urban traffic, traffic lights, and navigating dense city streets."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How do you account for dwell time in bus tracking?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Dwell time, or the time a bus spends at a stop, is critical for accurate tracking. Our calculator allows you to input an 'Average Time Per Stop' to dynamically factor in the delay caused by passenger boarding, alighting, and fare collection. Standard urban stops typically range from 30 seconds to over a minute."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What is the difference between real-time tracking and estimated tracking?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Real-time tracking relies on GPS modules installed on the actual transit vehicles, transmitting live coordinates to an API. Estimated tracking, such as this calculator, uses routing heuristics, known distances, and average historical transit data to calculate estimated arrival times when GPS tracking is either unavailable or has failed."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Can this calculator be used for road trips or intercity buses?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. While designed for urban bus routes, you can adapt it for intercity buses (like Greyhound or Megabus) by adjusting the inputs. Increase the average speed (e.g., to 60 mph) and adjust the total stops and stop time accordingly."
+      }
+    }
+  ]
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": title,
+    "description": description,
+    "author": {
+      "@type": "Organization",
+      "name": "Silicon Based"
+    },
+    "datePublished": meta.published
+  }
+];
+---
+
+<SiteLayout site="misc" title={title} description={description} canonical="https://photonbuilder.com/misc/bus-tracker" schema={schema}>
+  <div class="page-content">
+    <div class="hero">
+      <h1>{title}</h1>
+      <p class="subtitle">Enter your route details to calculate estimated arrival times, remaining distance, and average speed.</p>
+    </div>
+
+    <div class="calculator-container">
+      <div class="input-group">
+        <label for="totalDistance">Total Route Distance (miles)</label>
+        <div class="input-wrapper">
+          <input type="number" id="totalDistance" min="0.1" step="0.1" placeholder="e.g., 15">
+        </div>
+        <p id="distanceError" style="color: red; font-size: 0.85rem; display: none; margin-top: 0.25rem;">Please enter a valid positive number.</p>
+      </div>
+
+      <div class="input-group">
+        <label for="currentStop">Stops Completed</label>
+        <div class="input-wrapper">
+          <input type="number" id="currentStop" min="0" step="1" placeholder="e.g., 5">
+        </div>
+      </div>
+
+      <div class="input-group">
+        <label for="totalStops">Total Stops on Route</label>
+        <div class="input-wrapper">
+          <input type="number" id="totalStops" min="1" step="1" placeholder="e.g., 20">
+        </div>
+        <p id="stopsError" style="color: red; font-size: 0.85rem; display: none; margin-top: 0.25rem;">Total stops must be greater than zero and greater than or equal to completed stops.</p>
+      </div>
+
+      <div class="input-group">
+        <label for="avgSpeed">Average Speed (mph)</label>
+        <div class="input-wrapper">
+          <input type="number" id="avgSpeed" min="1" step="1" value="15" placeholder="e.g., 15">
+        </div>
+        <p id="speedError" style="color: red; font-size: 0.85rem; display: none; margin-top: 0.25rem;">Please enter a valid positive speed.</p>
+      </div>
+
+      <div class="input-group">
+        <label for="timePerStop">Average Time Per Stop (minutes)</label>
+        <div class="input-wrapper">
+          <input type="number" id="timePerStop" min="0" step="0.5" value="1.5" placeholder="e.g., 1.5">
+        </div>
+      </div>
+
+      <div class="result-card">
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; text-align: center;">
+          <div>
+            <div style="color: var(--text-secondary); font-size: 0.95rem; margin-bottom: 0.5rem;">Estimated Time Remaining</div>
+            <div class="result-value" id="timeRemainingResult">-- min</div>
+          </div>
+          <div>
+            <div style="color: var(--text-secondary); font-size: 0.95rem; margin-bottom: 0.5rem;">Distance Remaining</div>
+            <div class="result-value" id="distanceRemainingResult" style="font-size: 2rem;">-- mi</div>
+          </div>
+        </div>
+        <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid var(--accent-color); text-align: center;">
+           <div style="color: var(--text-secondary); font-size: 0.95rem; margin-bottom: 0.5rem;">Estimated Arrival Time</div>
+           <div class="result-value" id="etaResult" style="font-size: 2rem; color: var(--text-primary);">--:--</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="explainer">
+      <h2>How the Live Bus Tracker Calculates Your ETA</h2>
+      <p>Commuting can be a highly unpredictable endeavor, especially when you are at the mercy of public transit schedules. Often, digital transit boards break down, or a transit authority's live GPS API goes offline, leaving you standing at a stop wondering if you should wait or start walking. This <strong>Bus Tracker Calculator</strong> empowers you to manually estimate the remaining time and distance of a bus route by utilizing fundamental principles of kinematics, estimated route data, and stop delays.</p>
+
+      <h3>The Methodology Behind Transit Calculations</h3>
+      <p>Estimating when a bus will arrive is more complex than calculating a straight-line commute in a personal vehicle. While a car can maintain a relatively consistent speed, transit vehicles are subjected to frequent interruptions. These interruptions primarily come in the form of passenger stops, referred to in the transit industry as "dwell time".</p>
+      <p>To accurately track and predict a transit vehicle's arrival, a robust model must account for both the raw movement time and the stationary dwell time. Our calculator uses a deterministic model that breaks the journey down into two distinct phases: active travel and stationary boarding.</p>
+
+      <h3>The Formulas: Calculating Your Wait</h3>
+      <p>The core of the calculator relies on evaluating the remaining distance of the route. If the transit system consists of equally spaced stops, we can deduce the fraction of the route that is incomplete.</p>
+
+      <div class="formula-box">
+        Stops Remaining = Total Stops - Current Stop<br><br>
+        Remaining Distance = Total Distance &times; (Stops Remaining / Total Stops)
+      </div>
+
+      <p>Once the remaining physical distance is established, the calculator determines the <strong>Active Travel Time</strong>. This is derived from the standard kinematic equation relating time, distance, and velocity (Time = Distance / Speed). Because average bus speeds are relatively low (usually between 10-15 mph in urban environments), this component evaluates how long the bus will be actively moving.</p>
+
+      <div class="formula-box">
+        Travel Time (Hours) = Remaining Distance / Average Speed<br>
+        Travel Time (Minutes) = Travel Time (Hours) &times; 60
+      </div>
+
+      <p>However, travel time alone is insufficient. The defining characteristic of a bus route is its stops. The calculator must add the cumulative delay caused by these interruptions, multiplying the remaining stops by the average time spent at each stop (dwell time).</p>
+
+      <div class="formula-box">
+        Total Dwell Time (Minutes) = Stops Remaining &times; Average Time Per Stop<br><br>
+        <strong>Total Estimated Time Remaining = Travel Time (Minutes) + Total Dwell Time (Minutes)</strong>
+      </div>
+
+      <h3>Why Dwell Time Matters</h3>
+      <p>In transit planning, dwell time is a critical variable. It is influenced by fare collection methods (e.g., tap-to-pay versus cash), the physical design of the bus (low-floor vs. high-floor), passenger volume, and wheelchair ramp deployment. In heavily congested routes, dwell time can account for over 25% of the total journey duration. By allowing you to manually input the average time per stop, this calculator adapts to both express routes (low dwell time) and dense local routes (high dwell time).</p>
+      <p>If you are waiting for a bus and want to compare transit options, you might also find our <a href="/where-to-watch-tracker">Where To Watch Tracker</a> useful for planning your post-commute entertainment.</p>
+    </div>
+
+    <section class="faq-section">
+      <h2>Frequently Asked Questions</h2>
+
+      <details>
+        <summary>How does this bus tracker calculate arrival times?</summary>
+        <p>The calculator estimates your arrival time using basic kinematics. It evaluates the distance remaining on the route, the estimated average speed of the bus, and the accumulated delay from upcoming stops. By taking the remaining distance and dividing it by the average speed, it determines travel time. It then adds the estimated dwell time per remaining stop to output an estimated time of arrival (ETA).</p>
+      </details>
+
+      <details>
+        <summary>Why is the average speed of a bus so low?</summary>
+        <p>Local transit buses often average between 10 to 15 mph (16 to 24 km/h). This seemingly low average speed accounts for frequent stops to load and unload passengers, dwell times, heavy urban traffic, traffic lights, and navigating dense city streets.</p>
+      </details>
+
+      <details>
+        <summary>How do you account for dwell time in bus tracking?</summary>
+        <p>Dwell time, or the time a bus spends at a stop, is critical for accurate tracking. Our calculator allows you to input an 'Average Time Per Stop' to dynamically factor in the delay caused by passenger boarding, alighting, and fare collection. Standard urban stops typically range from 30 seconds to over a minute.</p>
+      </details>
+
+      <details>
+        <summary>What is the difference between real-time tracking and estimated tracking?</summary>
+        <p>Real-time tracking relies on GPS modules installed on the actual transit vehicles, transmitting live coordinates to an API. Estimated tracking, such as this calculator, uses routing heuristics, known distances, and average historical transit data to calculate estimated arrival times when GPS tracking is either unavailable or has failed.</p>
+      </details>
+
+      <details>
+        <summary>Can this calculator be used for road trips or intercity buses?</summary>
+        <p>Yes. While designed for urban bus routes, you can adapt it for intercity buses (like Greyhound or Megabus) by adjusting the inputs. Increase the average speed (e.g., to 60 mph) and adjust the total stops and stop time accordingly.</p>
+      </details>
+    </section>
+
+  </div>
+
+  <script is:inline>
+    document.addEventListener('DOMContentLoaded', () => {
+      const inputs = [
+        'totalDistance',
+        'currentStop',
+        'totalStops',
+        'avgSpeed',
+        'timePerStop'
+      ];
+
+      const elements = {};
+      inputs.forEach(id => {
+        elements[id] = document.getElementById(id);
+        elements[id].addEventListener('input', calculate);
+      });
+
+      const errors = {
+        distance: document.getElementById('distanceError'),
+        stops: document.getElementById('stopsError'),
+        speed: document.getElementById('speedError')
+      };
+
+      const results = {
+        timeRemaining: document.getElementById('timeRemainingResult'),
+        distanceRemaining: document.getElementById('distanceRemainingResult'),
+        eta: document.getElementById('etaResult')
+      };
+
+      function calculate() {
+        const totalDistance = parseFloat(elements.totalDistance.value);
+        const currentStop = parseInt(elements.currentStop.value) || 0;
+        const totalStops = parseInt(elements.totalStops.value);
+        const avgSpeed = parseFloat(elements.avgSpeed.value);
+        const timePerStop = parseFloat(elements.timePerStop.value) || 0;
+
+        let hasError = false;
+
+        // Hide all errors
+        Object.values(errors).forEach(err => err.style.display = 'none');
+
+        if (isNaN(totalDistance) || totalDistance <= 0) {
+          if (elements.totalDistance.value !== '') {
+            errors.distance.style.display = 'block';
+            hasError = true;
+          }
+        }
+
+        if (isNaN(totalStops) || totalStops <= 0 || currentStop > totalStops) {
+          if (elements.totalStops.value !== '' && elements.currentStop.value !== '') {
+            errors.stops.style.display = 'block';
+            hasError = true;
+          }
+        }
+
+        if (isNaN(avgSpeed) || avgSpeed <= 0) {
+          if (elements.avgSpeed.value !== '') {
+             errors.speed.style.display = 'block';
+             hasError = true;
+          }
+        }
+
+        if (hasError || isNaN(totalDistance) || isNaN(totalStops) || isNaN(avgSpeed)) {
+          results.timeRemaining.textContent = '-- min';
+          results.distanceRemaining.textContent = '-- mi';
+          results.eta.textContent = '--:--';
+          return;
+        }
+
+        const stopsRemaining = totalStops - currentStop;
+
+        // Assume stops are evenly distributed if current distance isn't provided
+        // Fraction of trip remaining based on stops
+        const fractionRemaining = stopsRemaining / totalStops;
+
+        const distanceRemaining = totalDistance * fractionRemaining;
+
+        // Time to travel remaining distance (hours)
+        const travelTimeHours = distanceRemaining / avgSpeed;
+        const travelTimeMinutes = travelTimeHours * 60;
+
+        // Total stop time remaining (minutes)
+        const stopTimeMinutes = stopsRemaining * timePerStop;
+
+        // Total estimated time remaining (minutes)
+        const totalTimeRemaining = Math.round(travelTimeMinutes + stopTimeMinutes);
+
+        results.distanceRemaining.textContent = distanceRemaining.toFixed(2) + ' mi';
+        results.timeRemaining.textContent = totalTimeRemaining + ' min';
+
+        // Calculate ETA
+        const now = new Date();
+        const etaDate = new Date(now.getTime() + totalTimeRemaining * 60000);
+
+        let hours = etaDate.getHours();
+        const minutes = etaDate.getMinutes().toString().padStart(2, '0');
+        const ampm = hours >= 12 ? 'PM' : 'AM';
+
+        hours = hours % 12;
+        hours = hours ? hours : 12; // the hour '0' should be '12'
+
+        results.eta.textContent = hours + ':' + minutes + ' ' + ampm;
+      }
+
+      // Initial calculation if values are pre-filled
+      calculate();
+
+      // Update ETA every minute
+      setInterval(calculate, 60000);
+    });
+  </script>
+
+  <style is:inline>
+    .page-content { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem; }
+    .hero { text-align: center; padding: 3rem 0 2rem; }
+    .hero h1 { font-size: 2.2rem; font-weight: 800; margin-bottom: 0.5rem; }
+    .subtitle { color: var(--text-secondary); font-size: 1.1rem; }
+    .calculator-container { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 2rem; margin: 2rem 0; }
+    input, select { background: var(--bg-color); color: var(--text-primary); border: 1px solid var(--border-color); padding: 0.75rem 1rem; border-radius: 8px; width: 100%; font-size: 1rem; }
+    input:focus, select:focus { outline: none; border-color: var(--accent-color); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-color) 20%, transparent); }
+    button { background: var(--accent-color); color: white; border: none; padding: 0.75rem 2rem; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 1rem; }
+    button:hover { opacity: 0.9; }
+    .result-card { background: color-mix(in srgb, var(--accent-color) 10%, transparent); border: 1px solid var(--accent-color); border-radius: 12px; padding: 1.5rem; margin: 1.5rem 0; text-align: center; }
+    .result-value { font-size: 2.5rem; font-weight: 800; color: var(--accent-color); }
+    .faq-section { margin-top: 3rem; }
+    .faq-section h2 { font-size: 1.75rem; margin-bottom: 1.5rem; color: var(--accent-color); }
+    .faq-section details { margin: 1rem 0; padding: 1rem; background: var(--card-bg); border-radius: 8px; border: 1px solid var(--border-color); }
+    .faq-section summary { font-weight: 600; cursor: pointer; font-size: 1.1rem; color: var(--text-primary); margin-bottom: 0.5rem; }
+    .faq-section p { margin-top: 0.5rem; color: var(--text-secondary); line-height: 1.6; }
+    .explainer { margin-top: 3rem; line-height: 1.7; color: var(--text-secondary); }
+    .explainer h2 { font-size: 1.75rem; margin-top: 2rem; margin-bottom: 1rem; color: var(--accent-color); }
+    .explainer h3 { font-size: 1.3rem; margin-top: 1.5rem; margin-bottom: 0.75rem; color: var(--text-primary); }
+    .explainer p { margin-bottom: 1.2rem; }
+    .explainer ul, .explainer ol { margin-bottom: 1.2rem; padding-left: 1.5rem; }
+    .explainer li { margin-bottom: 0.5rem; }
+    .formula-box { background: var(--bg-color); padding: 1rem; border-radius: 8px; border-left: 4px solid var(--accent-color); margin: 1rem 0; font-family: monospace; }
+  </style>
+</SiteLayout>

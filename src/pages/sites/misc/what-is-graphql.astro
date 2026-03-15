@@ -1,0 +1,235 @@
+---
+import SiteLayout from "../../../layouts/SiteLayout.astro";
+
+const schema = [
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": "What is GraphQL? GraphQL vs REST",
+    "description": "An in-depth guide to GraphQL architecture, how it compares to REST, understanding queries, mutations, and designing robust schemas.",
+    "author": {
+      "@type": "Organization",
+      "name": "photonbuilder.com/misc"
+    }
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "How is GraphQL different from REST?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "In REST, you make requests to multiple endpoints to gather different data types, which often leads to over-fetching or under-fetching. In GraphQL, there is a single endpoint, and the client dictates exactly what data structure it wants to receive."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "What is the N+1 problem in GraphQL?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "The N+1 problem occurs when a query fetches a list of N items, and then the server makes N additional database queries to resolve a nested field for each item. This is typically solved using DataLoader to batch and cache database requests."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Can you mutate data with GraphQL?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes. While REST uses POST, PUT, and DELETE methods to modify data, GraphQL uses a specialized operation type called a Mutation. A mutation acts similarly to a query but is explicitly designated for operations that cause side effects on the server."
+        }
+      }
+    ]
+  }
+];
+
+export const meta = {
+  title: "What is GraphQL? REST vs GraphQL & Schema Design",
+  description: "An in-depth guide to GraphQL architecture, how it compares to REST, understanding queries, mutations, and designing robust schemas.",
+  category: "guide",
+  published: "2026-03-15",
+};
+---
+
+<SiteLayout site="misc" title="What is GraphQL? REST vs GraphQL & Schema Design" description="An in-depth guide to GraphQL architecture, how it compares to REST, understanding queries, mutations, and designing robust schemas." canonical="https://photonbuilder.com/misc/what-is-graphql" schema={schema}>
+  <div class="page-content">
+    <div class="breadcrumb">
+      <a href="/web-dev-glossary">← Back to Web Dev Glossary</a>
+    </div>
+
+    <div class="hero">
+      <h1>What is GraphQL?</h1>
+      <p>Understanding the modern approach to API design: Queries, Mutations, and the REST comparison.</p>
+    </div>
+
+    <div class="content-body">
+      <p>For over a decade, Representational State Transfer (REST) has been the undisputed standard for designing web APIs. But as mobile applications grew and client-side web frameworks demanded more complex, nested data structures, REST began to show its limitations.</p>
+
+      <p>Enter <strong>GraphQL</strong>. Developed internally by Facebook in 2012 and open-sourced in 2015, GraphQL is a query language for your API, and a server-side runtime for executing those queries using a type system you define for your data.</p>
+
+      <h2>The Problem with REST</h2>
+      <p>To understand why GraphQL exists, we must understand the two biggest problems with traditional REST architectures:</p>
+
+      <ol>
+        <li><strong>Over-fetching:</strong> You hit an endpoint (e.g., <code>/api/users/123</code>) just to get the user's name, but the server returns the entire user object containing 50 fields, wasting bandwidth and memory.</li>
+        <li><strong>Under-fetching (and the N+1 problem):</strong> You hit <code>/api/posts</code> to get a list of a user's blog posts. But you also need the author's avatar for each post. Now you must make a separate request to <code>/api/users/id</code> for <em>every single post</em> returned in the first call.</li>
+      </ol>
+
+      <h2>How GraphQL Solves This</h2>
+      <p>GraphQL shifts the power from the server to the client. Instead of hitting multiple endpoints that return fixed data structures, a GraphQL client hits a <em>single endpoint</em> (usually <code>/graphql</code>) and sends a document describing exactly what it wants.</p>
+
+      <div class="code-block">
+        <pre><code># The Client Request (Query)
+query &#123;
+  user(id: "123") &#123;
+    name
+    email
+    posts &#123;
+      title
+      comments(limit: 2) &#123;
+        text
+        author &#123;
+          name
+        &#125;
+      &#125;
+    &#125;
+  &#125;
+&#125;</code></pre>
+      </div>
+
+      <p>In a single HTTP request, the client asked for a user, their posts, and the last two comments on each post (including the author of the comment). The server responds with JSON that exactly matches the shape of the query. No over-fetching, no under-fetching.</p>
+
+      <h2>Core Concepts of GraphQL</h2>
+
+      <h3>1. The Schema (SDL)</h3>
+      <p>At the heart of any GraphQL server is the schema. Written in the Schema Definition Language (SDL), it acts as a strict contract between the client and the server.</p>
+
+      <div class="code-block">
+        <pre><code>type User &#123;
+  id: ID!
+  name: String!
+  email: String
+  posts: [Post!]!
+&#125;
+
+type Post &#123;
+  id: ID!
+  title: String!
+  body: String!
+  author: User!
+&#125;</code></pre>
+      </div>
+      <p>The exclamation mark (<code>!</code>) denotes a non-nullable field, guaranteeing the client that the field will always return a value.</p>
+
+      <h3>2. Queries</h3>
+      <p>Queries are how you fetch data. They are analogous to GET requests in REST. They are read-only operations.</p>
+
+      <h3>3. Mutations</h3>
+      <p>Mutations are used to create, update, or delete data. They are analogous to POST, PUT, PATCH, and DELETE in REST. While they look syntactically similar to queries, GraphQL guarantees that mutations are executed serially (one after another) to prevent race conditions.</p>
+
+      <div class="code-block">
+        <pre><code>mutation &#123;
+  createPost(title: "GraphQL is awesome", body: "...") &#123;
+    id
+    title
+  &#125;
+&#125;</code></pre>
+      </div>
+
+      <h3>4. Resolvers</h3>
+      <p>If the schema is the blueprint, resolvers are the actual builders. A resolver is a function associated with a specific field in the schema. When a query asks for <code>user.name</code>, the server executes the resolver function for <code>name</code> on the <code>User</code> type to fetch the data from the database, a microservice, or a third-party API.</p>
+
+      <h2>GraphQL vs REST: A Summary</h2>
+
+      <div class="card">
+        <table style="width: 100%; text-align: left; border-collapse: collapse;">
+          <thead>
+            <tr>
+              <th style="padding-bottom: 10px; border-bottom: 1px solid var(--border-color);">Feature</th>
+              <th style="padding-bottom: 10px; border-bottom: 1px solid var(--border-color);">REST</th>
+              <th style="padding-bottom: 10px; border-bottom: 1px solid var(--border-color);">GraphQL</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td style="padding: 10px 0; border-bottom: 1px solid var(--border-color);"><strong>Endpoints</strong></td>
+              <td style="padding: 10px 0; border-bottom: 1px solid var(--border-color);">Multiple (URLs dictate resources)</td>
+              <td style="padding: 10px 0; border-bottom: 1px solid var(--border-color);">Single (<code>/graphql</code>)</td>
+            </tr>
+            <tr>
+              <td style="padding: 10px 0; border-bottom: 1px solid var(--border-color);"><strong>Data Shape</strong></td>
+              <td style="padding: 10px 0; border-bottom: 1px solid var(--border-color);">Determined by the Server</td>
+              <td style="padding: 10px 0; border-bottom: 1px solid var(--border-color);">Dictated by the Client</td>
+            </tr>
+            <tr>
+              <td style="padding: 10px 0; border-bottom: 1px solid var(--border-color);"><strong>Versioning</strong></td>
+              <td style="padding: 10px 0; border-bottom: 1px solid var(--border-color);">Required (<code>/v1/</code>, <code>/v2/</code>)</td>
+              <td style="padding: 10px 0; border-bottom: 1px solid var(--border-color);">Deprecate fields seamlessly</td>
+            </tr>
+            <tr>
+              <td style="padding: 10px 0;"><strong>HTTP Caching</strong></td>
+              <td style="padding: 10px 0;">Native (GET requests cache easily)</td>
+              <td style="padding: 10px 0;">Complex (Requires Apollo/Relay)</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2>The Challenges of GraphQL</h2>
+      <p>GraphQL is not a silver bullet. It introduces its own set of complexities:</p>
+      <ul>
+        <li><strong>Caching:</strong> Because all requests use POST to a single endpoint, standard HTTP caching at the CDN level breaks. You must rely on sophisticated client-side caches (like Apollo Client) or specialized edge services.</li>
+        <li><strong>The N+1 Problem:</strong> If a client requests 100 users, and their associated posts, a naive GraphQL server will hit the database 101 times. Tools like DataLoader are required to batch these queries.</li>
+        <li><strong>Security & Complexity:</strong> A malicious client could write a deeply nested query (e.g., User -> Posts -> Comments -> Author -> Posts) that brings down your server. You must implement query depth limiting and cost analysis.</li>
+      </ul>
+
+      <div class="related-clusters">
+        <h3>Continue Reading</h3>
+        <div class="cluster-links">
+          <a href="/what-is-ssr" class="cluster-link">
+            <h4>Server-Side Rendering</h4>
+            <p>How data fetching works on the server.</p>
+          </a>
+          <a href="/what-is-oauth" class="cluster-link">
+            <h4>OAuth 2.0</h4>
+            <p>Securing your API endpoints and authenticating users.</p>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <style is:inline>
+    .page-content { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem; }
+    .hero { text-align: center; padding: 3rem 0 2rem; border-bottom: 1px solid var(--border-color); margin-bottom: 2rem; }
+    .hero h1 { font-size: 2.5rem; font-weight: 800; margin-bottom: 0.5rem; color: var(--text-primary); }
+    .hero p { color: var(--text-secondary); font-size: 1.1rem; max-width: 600px; margin: 0 auto; }
+
+    .breadcrumb { margin-bottom: 1rem; }
+    .breadcrumb a { color: var(--accent-color); text-decoration: none; font-size: 0.9rem; font-weight: 600; }
+    .breadcrumb a:hover { text-decoration: underline; }
+
+    .content-body { color: var(--text-secondary); line-height: 1.7; font-size: 1.05rem; }
+    .content-body h2 { color: var(--text-primary); font-size: 1.8rem; margin-top: 2.5rem; margin-bottom: 1rem; }
+    .content-body h3 { color: var(--text-primary); font-size: 1.3rem; margin-top: 1.5rem; margin-bottom: 0.5rem; }
+    .content-body p { margin-bottom: 1.2rem; }
+
+    .content-body ul, .content-body ol { margin-bottom: 1.5rem; padding-left: 1.5rem; }
+    .content-body li { margin-bottom: 0.5rem; }
+    .content-body strong { color: var(--text-primary); }
+
+    .code-block { background: #0d1117; border: 1px solid var(--border-color); border-radius: 8px; padding: 1rem; margin: 1.5rem 0; overflow-x: auto; }
+    .code-block pre { margin: 0; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; font-size: 0.9rem; color: #c9d1d9; }
+
+    .card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem; margin: 2rem 0; overflow-x: auto; }
+
+    .related-clusters { margin-top: 4rem; border-top: 1px solid var(--border-color); padding-top: 2rem; }
+    .related-clusters h3 { color: var(--text-primary); margin-bottom: 1.5rem; }
+    .cluster-links { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1rem; }
+    .cluster-link { display: block; padding: 1.25rem; border: 1px solid var(--border-color); border-radius: 8px; text-decoration: none; transition: all 0.2s ease; background: color-mix(in srgb, var(--card-bg) 50%, transparent); }
+    .cluster-link:hover { border-color: var(--accent-color); transform: translateY(-2px); background: var(--card-bg); }
+    .cluster-link h4 { color: var(--accent-color); font-size: 1.1rem; margin-top: 0; margin-bottom: 0.5rem; }
+    .cluster-link p { color: var(--text-secondary); font-size: 0.9rem; margin: 0; line-height: 1.4; }
+  </style>
+</SiteLayout>

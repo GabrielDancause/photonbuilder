@@ -31,6 +31,7 @@ SITE_DOMAINS = {
     "siliconbased": "siliconbased.dev",
     "westmount": "westmountfundamentals.com",
     "mathtools": "photonbuilder.com",
+    "misc": "photonbuilder.com",
     "health": "health.example.com",
 }
 
