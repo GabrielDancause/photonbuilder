@@ -1,982 +1,209 @@
 ---
 import SiteLayout from '../../../layouts/SiteLayout.astro';
+import { sites } from '../../../config/sites';
+
+// SITE_ID is replaced per-site by the deploy script
+const SITE_ID = 'westmount';
+const siteConfig = sites[SITE_ID];
 
 const schema = {
   "@context": "https://schema.org",
   "@type": "WebSite",
-  "name": "Westmount Fundamentals — Equity Research & Analysis",
-  "url": "https://westmountfundamentals.com/",
-  "description": "In-depth stock market research, ETF analysis, portfolio tools, and investment guides."
+  "name": siteConfig.name,
+  "url": `https://${siteConfig.domain}/`,
+  "description": `${siteConfig.name} — tools, guides, studies, and resources.`
 };
+
+// Dynamically import all sibling .astro pages
+const allPages = import.meta.glob('./*.astro', { eager: true });
+
+// Extract meta from each page
+interface PageMeta {
+  title: string;
+  description: string;
+  category: string;
+  published?: string;
+  stat?: string;
+  statLabel?: string;
+  priority?: number;
+  emoji?: string;
+}
+
+interface PageEntry {
+  slug: string;
+  meta: PageMeta;
+}
+
+const pages: PageEntry[] = Object.entries(allPages)
+  .filter(([path]) => !path.includes('index'))
+  .map(([path, mod]: [string, any]) => ({
+    slug: path.replace('./', '').replace('.astro', ''),
+    meta: mod.meta || {
+      title: path.replace('./', '').replace('.astro', '').replace(/-/g, ' '),
+      description: '',
+      category: 'tool',
+    },
+  }))
+  .sort((a, b) => (b.meta.priority || 0) - (a.meta.priority || 0));
+
+// Group by category
+const tools = pages.filter(p => p.meta.category === 'tool');
+const studies = pages.filter(p => p.meta.category === 'study');
+const guides = pages.filter(p => p.meta.category === 'guide');
+const lists = pages.filter(p => p.meta.category === 'list');
+
+// Emoji assignment
+function getEmoji(slug: string, category: string): string {
+  if (slug.includes('calculator') || slug.includes('planner')) return '🧮';
+  if (slug.includes('checker') || slug.includes('analyzer')) return '🔍';
+  if (slug.includes('comparison') || slug.includes('vs')) return '⚖️';
+  if (slug.includes('guide')) return '📖';
+  if (slug.includes('glossary') || slug.includes('dictionary')) return '📚';
+  if (slug.includes('checklist')) return '✅';
+  if (slug.includes('dividend') || slug.includes('yield')) return '💰';
+  if (slug.includes('etf') || slug.includes('stock')) return '📈';
+  if (category === 'tool') return '🛠️';
+  if (category === 'study') return '🔬';
+  if (category === 'guide') return '📖';
+  if (category === 'list') return '📋';
+  return '📄';
+}
+
+// Truncate description
+function truncate(text: string, max: number): string {
+  if (!text || text.length <= max) return text || '';
+  return text.slice(0, max).replace(/\s+\S*$/, '') + '…';
+}
 ---
 
 <SiteLayout
-  site="westmount"
-  title="Westmount Fundamentals — Equity Research & Analysis"
-  description="In-depth stock market research, ETF analysis, portfolio tools, and investment guides."
-  canonical="https://westmountfundamentals.com/"
+  site={SITE_ID}
+  title={`${siteConfig.name}`}
+  description={`${siteConfig.name} — tools, guides, studies, and resources.`}
+  canonical={`https://${siteConfig.domain}/`}
   schema={schema}
 >
   <!-- Hero -->
   <div class="hero">
     <div class="hero-content">
-      <div class="tagline">Equity Research & Analysis</div>
-      <h1>Westmount Fundamentals</h1>
-      <p>In-depth stock market research, ETF analysis, portfolio tools, and investment guides.</p>
+      <h1>{siteConfig.name}</h1>
+      <p>{pages.length} free tools, guides, and resources. No sign-ups required.</p>
     </div>
   </div>
 
-  <!-- Pillar Guides -->
-  <div class="section-container" id="pillars">
-    <div class="section-header">
-      <span class="section-tag">📚 PILLAR GUIDES</span>
-      <h2 class="section-title">Complete Guides</h2>
-      <p class="section-sub">Comprehensive, in-depth guides covering entire topics.</p>
+  {tools.length > 0 && (
+    <div class="section-container" id="tools">
+      <div class="section-header">
+        <span class="section-tag">🛠️ TOOLS</span>
+        <h2 class="section-title">Calculators & Tools</h2>
+        <p class="section-sub">Free, instant calculators — no sign-ups required.</p>
+      </div>
+      <div class="tools-grid">
+        {tools.map(page => (
+          <a class="tool-card" href={`/${page.slug}`}>
+            <span class="tool-emoji">{getEmoji(page.slug, 'tool')}</span>
+            <h3 class="tool-name">{page.meta.title}</h3>
+            <p class="tool-desc">{truncate(page.meta.description, 120)}</p>
+          </a>
+        ))}
+      </div>
     </div>
-    <div class="tools-grid">
-      <a class="tool-card" href="/best-canadian-etfs-2026">
-        <span class="tool-emoji">🇨🇦</span>
-        <h3 class="tool-name">Best Canadian ETFs in 2026</h3>
-        <p class="tool-desc">Complete master guide comparing equity, bond, and specialized ETFs</p>
-      </a>
-      <a class="tool-card" href="/guide-etf-investing-complete">
-        <span class="tool-emoji">📚</span>
-        <h3 class="tool-name">Guide ETF Investing Complete</h3>
-        <p class="tool-desc">Comprehensive guide covering everything you need to know</p>
-      </a>
-      <a class="tool-card" href="/canadian-brokerages-2026">
-        <span class="tool-emoji">🏦</span>
-        <h3 class="tool-name">Best Canadian Brokerages 2026</h3>
-        <p class="tool-desc">Complete master guide comparing all major platforms and fees</p>
-      </a>
-    </div>
-  </div>
+  )}
 
-  <!-- Tools -->
-  <div class="section-container" id="tools">
-    <div class="section-header">
-      <span class="section-tag">🛠️ TOOLS</span>
-      <h2 class="section-title">Calculators & Tools</h2>
-      <p class="section-sub">Free, instant calculators — no sign-ups required.</p>
+  {studies.length > 0 && (
+    <div class="section-container" id="studies">
+      <div class="section-header">
+        <span class="section-tag">🔬 STUDIES</span>
+        <h2 class="section-title">Research & Analysis</h2>
+        <p class="section-sub">Data-driven research with real numbers.</p>
+      </div>
+      <div class="studies-grid">
+        {studies.map(page => (
+          <a class="study-card" href={`/${page.slug}`}>
+            <div class="study-content">
+              {page.meta.stat && (
+                <div class="study-stat">
+                  <span class="stat-value">{page.meta.stat}</span>
+                  {page.meta.statLabel && <span class="stat-label">{page.meta.statLabel}</span>}
+                </div>
+              )}
+              <h3 class="study-name">{page.meta.title}</h3>
+              <p class="study-desc">{truncate(page.meta.description, 150)}</p>
+            </div>
+          </a>
+        ))}
+      </div>
     </div>
-    <div class="tools-grid">
-      <a class="tool-card" href="/ai-stocks-to-watch-2026">
-        <span class="tool-emoji">📈</span>
-        <h3 class="tool-name">Ai Stocks to Watch (2026)</h3>
-        <p class="tool-desc">Calculate and analyze ai stocks to watch (2026)</p>
-      </a>
-      <a class="tool-card" href="/average-etf-expense-ratio-2026">
-        <span class="tool-emoji">📊</span>
-        <h3 class="tool-name">Average ETF Expense Ratio (2026)</h3>
-        <p class="tool-desc">Calculate and analyze average etf expense ratio (2026)</p>
-      </a>
-      <a class="tool-card" href="/average-institutional-ownership-2026">
-        <span class="tool-emoji">🔧</span>
-        <h3 class="tool-name">Average Institutional Ownership (2026)</h3>
-        <p class="tool-desc">Calculate and analyze average institutional ownership (2026)</p>
-      </a>
-      <a class="tool-card" href="/average-stock-market-return">
-        <span class="tool-emoji">📈</span>
-        <h3 class="tool-name">Average Stock Market Return</h3>
-        <p class="tool-desc">Calculate and analyze average stock market return</p>
-      </a>
-      <a class="tool-card" href="/best-bond-etfs-2026">
-        <span class="tool-emoji">📊</span>
-        <h3 class="tool-name">Best Bond ETFS (2026)</h3>
-        <p class="tool-desc">Calculate and analyze best bond etfs (2026)</p>
-      </a>
-      <a class="tool-card" href="/best-dividend-etfs-2026">
-        <span class="tool-emoji">📊</span>
-        <h3 class="tool-name">Best Dividend ETFS (2026)</h3>
-        <p class="tool-desc">Calculate and analyze best dividend etfs (2026)</p>
-      </a>
-      <a class="tool-card" href="/best-dividend-etfs-canada-2026">
-        <span class="tool-emoji">📊</span>
-        <h3 class="tool-name">Best Dividend ETFS Canada (2026)</h3>
-        <p class="tool-desc">Calculate and analyze best dividend etfs canada (2026)</p>
-      </a>
-      <a class="tool-card" href="/best-etfs-canada-2026">
-        <span class="tool-emoji">📊</span>
-        <h3 class="tool-name">Best ETFS Canada (2026)</h3>
-        <p class="tool-desc">Calculate and analyze best etfs canada (2026)</p>
-      </a>
-      <a class="tool-card" href="/best-growth-etfs-2026">
-        <span class="tool-emoji">📊</span>
-        <h3 class="tool-name">Best Growth ETFS (2026)</h3>
-        <p class="tool-desc">Calculate and analyze best growth etfs (2026)</p>
-      </a>
-      <a class="tool-card" href="/best-international-etfs-2026">
-        <span class="tool-emoji">📊</span>
-        <h3 class="tool-name">Best International ETFS (2026)</h3>
-        <p class="tool-desc">Calculate and analyze best international etfs (2026)</p>
-      </a>
-      <a class="tool-card" href="/best-performing-stocks-2026">
-        <span class="tool-emoji">📈</span>
-        <h3 class="tool-name">Best Performing Stocks (2026)</h3>
-        <p class="tool-desc">Calculate and analyze best performing stocks (2026)</p>
-      </a>
-      <a class="tool-card" href="/beta-volatility">
-        <span class="tool-emoji">🔧</span>
-        <h3 class="tool-name">Beta Volatility</h3>
-        <p class="tool-desc">Calculate and analyze beta volatility</p>
-      </a>
-      <a class="tool-card" href="/bond-yield-calculator">
-        <span class="tool-emoji">📊</span>
-        <h3 class="tool-name">Bond Yield Calculator</h3>
-        <p class="tool-desc">Calculate and analyze bond yield calculator</p>
-      </a>
-      <a class="tool-card" href="/bond-yield-curve-2026">
-        <span class="tool-emoji">📊</span>
-        <h3 class="tool-name">Bond Yield Curve (2026)</h3>
-        <p class="tool-desc">Calculate and analyze bond yield curve (2026)</p>
-      </a>
-      <a class="tool-card" href="/broker-fees">
-        <span class="tool-emoji">🏦</span>
-        <h3 class="tool-name">Broker Fees</h3>
-        <p class="tool-desc">Calculate and analyze broker fees</p>
-      </a>
-      <a class="tool-card" href="/canadian-tax-brackets-2026">
-        <span class="tool-emoji">🏛️</span>
-        <h3 class="tool-name">Canadian Tax Brackets (2026)</h3>
-        <p class="tool-desc">Calculate and analyze canadian tax brackets (2026)</p>
-      </a>
-      <a class="tool-card" href="/ceo-compensation">
-        <span class="tool-emoji">🔧</span>
-        <h3 class="tool-name">Ceo Compensation</h3>
-        <p class="tool-desc">Calculate and analyze ceo compensation</p>
-      </a>
-      <a class="tool-card" href="/compound-interest-calculator">
-        <span class="tool-emoji">📈</span>
-        <h3 class="tool-name">Compound Interest Calculator</h3>
-        <p class="tool-desc">Calculate and analyze compound interest calculator</p>
-      </a>
-      <a class="tool-card" href="/cost-of-living-by-state-2026">
-        <span class="tool-emoji">💰</span>
-        <h3 class="tool-name">Cost of Living by State (2026)</h3>
-        <p class="tool-desc">Calculate and analyze cost of living by state (2026)</p>
-      </a>
-      <a class="tool-card" href="/debt-to-equity">
-        <span class="tool-emoji">💳</span>
-        <h3 class="tool-name">Debt to Equity</h3>
-        <p class="tool-desc">Calculate and analyze debt to equity</p>
-      </a>
-      <a class="tool-card" href="/debt-to-income-ratio-calculator">
-        <span class="tool-emoji">💳</span>
-        <h3 class="tool-name">Debt to Income Ratio Calculator</h3>
-        <p class="tool-desc">Calculate and analyze debt to income ratio calculator</p>
-      </a>
-      <a class="tool-card" href="/dividend-reinvestment-calculator">
-        <span class="tool-emoji">📈</span>
-        <h3 class="tool-name">Dividend Reinvestment Calculator</h3>
-        <p class="tool-desc">Calculate and analyze dividend reinvestment calculator</p>
-      </a>
-      <a class="tool-card" href="/dividend-yield-calculator">
-        <span class="tool-emoji">💰</span>
-        <h3 class="tool-name">Dividend Yield Calculator</h3>
-        <p class="tool-desc">Calculate and analyze dividend yield calculator</p>
-      </a>
-      <a class="tool-card" href="/dividend-yield-vs-growth">
-        <span class="tool-emoji">💰</span>
-        <h3 class="tool-name">Dividend Yield vs Growth</h3>
-        <p class="tool-desc">Calculate and analyze dividend yield vs growth</p>
-      </a>
-      <a class="tool-card" href="/dollar-cost-averaging-calculator">
-        <span class="tool-emoji">🔧</span>
-        <h3 class="tool-name">Dollar Cost Averaging Calculator</h3>
-        <p class="tool-desc">Calculate and analyze dollar cost averaging calculator</p>
-      </a>
-      <a class="tool-card" href="/equity-risk-premium">
-        <span class="tool-emoji">🔧</span>
-        <h3 class="tool-name">Equity Risk Premium</h3>
-        <p class="tool-desc">Calculate and analyze equity risk premium</p>
-      </a>
-      <a class="tool-card" href="/ev-ebitda-sectors">
-        <span class="tool-emoji">📊</span>
-        <h3 class="tool-name">Ev Ebitda Sectors</h3>
-        <p class="tool-desc">Calculate and analyze ev ebitda sectors</p>
-      </a>
-      <a class="tool-card" href="/fire-calculator">
-        <span class="tool-emoji">🔥</span>
-        <h3 class="tool-name">Fire Calculator</h3>
-        <p class="tool-desc">Calculate and analyze fire calculator</p>
-      </a>
-      <a class="tool-card" href="/fire-retirement-calculator">
-        <span class="tool-emoji">🔥</span>
-        <h3 class="tool-name">Fire Retirement Calculator</h3>
-        <p class="tool-desc">Calculate and analyze fire retirement calculator</p>
-      </a>
-      <a class="tool-card" href="/free-cash-flow-yield">
-        <span class="tool-emoji">🔧</span>
-        <h3 class="tool-name">Free Cash Flow Yield</h3>
-        <p class="tool-desc">Calculate and analyze free cash flow yield</p>
-      </a>
-      <a class="tool-card" href="/highest-expense-ratio-etfs-2026">
-        <span class="tool-emoji">📊</span>
-        <h3 class="tool-name">Highest Expense Ratio ETFS (2026)</h3>
-        <p class="tool-desc">Calculate and analyze highest expense ratio etfs (2026)</p>
-      </a>
-      <a class="tool-card" href="/inflation-adjusted-stock-returns">
-        <span class="tool-emoji">📈</span>
-        <h3 class="tool-name">Inflation Adjusted Stock Returns</h3>
-        <p class="tool-desc">Calculate and analyze inflation adjusted stock returns</p>
-      </a>
-      <a class="tool-card" href="/insider-trading">
-        <span class="tool-emoji">👀</span>
-        <h3 class="tool-name">Insider Trading</h3>
-        <p class="tool-desc">Calculate and analyze insider trading</p>
-      </a>
-      <a class="tool-card" href="/institutional-ownership">
-        <span class="tool-emoji">🔧</span>
-        <h3 class="tool-name">Institutional Ownership</h3>
-        <p class="tool-desc">Calculate and analyze institutional ownership</p>
-      </a>
-      <a class="tool-card" href="/largest-stock-buybacks-2026">
-        <span class="tool-emoji">📈</span>
-        <h3 class="tool-name">Largest Stock Buybacks (2026)</h3>
-        <p class="tool-desc">Calculate and analyze largest stock buybacks (2026)</p>
-      </a>
-      <a class="tool-card" href="/lowest-expense-ratio-etfs-2026">
-        <span class="tool-emoji">📊</span>
-        <h3 class="tool-name">Lowest Expense Ratio ETFS (2026)</h3>
-        <p class="tool-desc">Calculate and analyze lowest expense ratio etfs (2026)</p>
-      </a>
-      <a class="tool-card" href="/magnificent-seven-stocks-2026">
-        <span class="tool-emoji">📈</span>
-        <h3 class="tool-name">Magnificent Seven Stocks (2026)</h3>
-        <p class="tool-desc">Calculate and analyze magnificent seven stocks (2026)</p>
-      </a>
-      <a class="tool-card" href="/margin-calculator">
-        <span class="tool-emoji">📊</span>
-        <h3 class="tool-name">Margin Calculator</h3>
-        <p class="tool-desc">Calculate and analyze margin calculator</p>
-      </a>
-      <a class="tool-card" href="/monte-carlo-portfolio-simulator">
-        <span class="tool-emoji">📊</span>
-        <h3 class="tool-name">Monte Carlo Portfolio Simulator</h3>
-        <p class="tool-desc">Calculate and analyze monte carlo portfolio simulator</p>
-      </a>
-      <a class="tool-card" href="/most-shorted-stocks-march-2026">
-        <span class="tool-emoji">📈</span>
-        <h3 class="tool-name">Most Shorted Stocks March (2026)</h3>
-        <p class="tool-desc">Calculate and analyze most shorted stocks march (2026)</p>
-      </a>
-      <a class="tool-card" href="/operating-margin-by-industry-2026">
-        <span class="tool-emoji">📊</span>
-        <h3 class="tool-name">Operating Margin by Industry (2026)</h3>
-        <p class="tool-desc">Calculate and analyze operating margin by industry (2026)</p>
-      </a>
-      <a class="tool-card" href="/options-profit-calculator">
-        <span class="tool-emoji">📊</span>
-        <h3 class="tool-name">Options Profit Calculator</h3>
-        <p class="tool-desc">Calculate and analyze options profit calculator</p>
-      </a>
-      <a class="tool-card" href="/options-trading-strategy-guide">
-        <span class="tool-emoji">📊</span>
-        <h3 class="tool-name">Options Trading Strategy Guide</h3>
-        <p class="tool-desc">Calculate and analyze options trading strategy guide</p>
-      </a>
-      <a class="tool-card" href="/pe-ratio-by-sector-2026">
-        <span class="tool-emoji">📊</span>
-        <h3 class="tool-name">Pe Ratio by Sector (2026)</h3>
-        <p class="tool-desc">Calculate and analyze pe ratio by sector (2026)</p>
-      </a>
-      <a class="tool-card" href="/portfolio-rebalancer">
-        <span class="tool-emoji">📊</span>
-        <h3 class="tool-name">Portfolio Rebalancer</h3>
-        <p class="tool-desc">Calculate and analyze portfolio rebalancer</p>
-      </a>
-      <a class="tool-card" href="/portfolio-risk-calculator">
-        <span class="tool-emoji">📊</span>
-        <h3 class="tool-name">Portfolio Risk Calculator</h3>
-        <p class="tool-desc">Calculate and analyze portfolio risk calculator</p>
-      </a>
-      <a class="tool-card" href="/position-size-calculator">
-        <span class="tool-emoji">📊</span>
-        <h3 class="tool-name">Position Size Calculator</h3>
-        <p class="tool-desc">Calculate and analyze position size calculator</p>
-      </a>
-      <a class="tool-card" href="/price-to-book">
-        <span class="tool-emoji">🔧</span>
-        <h3 class="tool-name">Price to Book</h3>
-        <p class="tool-desc">Calculate and analyze price to book</p>
-      </a>
-      <a class="tool-card" href="/real-return-calculator">
-        <span class="tool-emoji">🔧</span>
-        <h3 class="tool-name">Real Return Calculator</h3>
-        <p class="tool-desc">Calculate and analyze real return calculator</p>
-      </a>
-      <a class="tool-card" href="/reit-dividend-yields-2026">
-        <span class="tool-emoji">💰</span>
-        <h3 class="tool-name">REIT Dividend Yields (2026)</h3>
-        <p class="tool-desc">Calculate and analyze reit dividend yields (2026)</p>
-      </a>
-      <a class="tool-card" href="/retirement-withdrawal-calculator">
-        <span class="tool-emoji">🏖️</span>
-        <h3 class="tool-name">Retirement Withdrawal Calculator</h3>
-        <p class="tool-desc">Calculate and analyze retirement withdrawal calculator</p>
-      </a>
-      <a class="tool-card" href="/revenue-per-employee">
-        <span class="tool-emoji">🔧</span>
-        <h3 class="tool-name">Revenue per Employee</h3>
-        <p class="tool-desc">Calculate and analyze revenue per employee</p>
-      </a>
-      <a class="tool-card" href="/rrsp-contribution-limit-2026">
-        <span class="tool-emoji">🇨🇦</span>
-        <h3 class="tool-name">RRSP Contribution Limit (2026)</h3>
-        <p class="tool-desc">Calculate and analyze rrsp contribution limit (2026)</p>
-      </a>
-      <a class="tool-card" href="/short-interest">
-        <span class="tool-emoji">📉</span>
-        <h3 class="tool-name">Short Interest</h3>
-        <p class="tool-desc">Calculate and analyze short interest</p>
-      </a>
-      <a class="tool-card" href="/small-cap-value-stocks-2026">
-        <span class="tool-emoji">📈</span>
-        <h3 class="tool-name">Small Cap Value Stocks (2026)</h3>
-        <p class="tool-desc">Calculate and analyze small cap value stocks (2026)</p>
-      </a>
-      <a class="tool-card" href="/sp500-companies-complete-list-2026">
-        <span class="tool-emoji">📈</span>
-        <h3 class="tool-name">SP500 Companies Complete List (2026)</h3>
-        <p class="tool-desc">Calculate and analyze sp500 companies complete list (2026)</p>
-      </a>
-      <a class="tool-card" href="/sp500-earnings-calendar-2026">
-        <span class="tool-emoji">📈</span>
-        <h3 class="tool-name">SP500 Earnings Calendar (2026)</h3>
-        <p class="tool-desc">Calculate and analyze sp500 earnings calendar (2026)</p>
-      </a>
-      <a class="tool-card" href="/sp500-top-10-holdings-weight-2026">
-        <span class="tool-emoji">📈</span>
-        <h3 class="tool-name">SP500 Top 10 Holdings Weight (2026)</h3>
-        <p class="tool-desc">Calculate and analyze sp500 top 10 holdings weight (2026)</p>
-      </a>
-      <a class="tool-card" href="/stock-screener">
-        <span class="tool-emoji">📈</span>
-        <h3 class="tool-name">Stock Screener</h3>
-        <p class="tool-desc">Calculate and analyze stock screener</p>
-      </a>
-      <a class="tool-card" href="/tax-loss-harvesting-calculator">
-        <span class="tool-emoji">🏛️</span>
-        <h3 class="tool-name">Tax Loss Harvesting Calculator</h3>
-        <p class="tool-desc">Calculate and analyze tax loss harvesting calculator</p>
-      </a>
-      <a class="tool-card" href="/tfsa-contribution-room-2026">
-        <span class="tool-emoji">🇨🇦</span>
-        <h3 class="tool-name">TFSA Contribution Room (2026)</h3>
-        <p class="tool-desc">Calculate and analyze tfsa contribution room (2026)</p>
-      </a>
-      <a class="tool-card" href="/value-vs-growth-stocks-2026">
-        <span class="tool-emoji">📈</span>
-        <h3 class="tool-name">Value vs Growth Stocks (2026)</h3>
-        <p class="tool-desc">Calculate and analyze value vs growth stocks (2026)</p>
-      </a>
-      <a class="tool-card" href="/wage-growth-vs-inflation-2026">
-        <span class="tool-emoji">📉</span>
-        <h3 class="tool-name">Wage Growth vs Inflation (2026)</h3>
-        <p class="tool-desc">Calculate and analyze wage growth vs inflation (2026)</p>
-      </a>
-      <a class="tool-card" href="/warren-buffett-portfolio-2026">
-        <span class="tool-emoji">🏦</span>
-        <h3 class="tool-name">Warren Buffett Portfolio (2026)</h3>
-        <p class="tool-desc">Calculate and analyze warren buffett portfolio (2026)</p>
-      </a>
-      <a class="tool-card" href="/wealthsimple-vs-questrade-vs-ibkr-2026">
-        <span class="tool-emoji">🏦</span>
-        <h3 class="tool-name">Wealthsimple vs Questrade vs Ibkr (2026)</h3>
-        <p class="tool-desc">Calculate and analyze wealthsimple vs questrade vs ibkr (2026)</p>
-      </a>
-      <a class="tool-card" href="/working-capital">
-        <span class="tool-emoji">🔧</span>
-        <h3 class="tool-name">Working Capital</h3>
-        <p class="tool-desc">Calculate and analyze working capital</p>
-      </a>
-      <a class="tool-card" href="/etf-fee-comparison">
-        <span class="tool-emoji">🧮</span>
-        <h3 class="tool-name">ETF Fee Comparison Calculator</h3>
-        <p class="tool-desc">Interactive calculator to check the drag of MER fees</p>
-      </a>
-      <a class="tool-card" href="/brokerage-fee-calculator">
-        <span class="tool-emoji">🧮</span>
-        <h3 class="tool-name">Interactive Brokerage Fee Calculator</h3>
-        <p class="tool-desc">Calculate your exact annual trading costs across brokers</p>
-      </a>
+  )}
 
-      <a class="tool-card" href="/rrsp-contribution-calculator">
-        <span class="tool-emoji">🧮</span>
-        <h3 class="tool-name">RRSP Contribution Calculator</h3>
-        <p class="tool-desc">Calculate your room, optimal amount, and estimate your tax refund.</p>
-      </a>
+  {guides.length > 0 && (
+    <div class="section-container" id="guides">
+      <div class="section-header">
+        <span class="section-tag">📖 GUIDES</span>
+        <h2 class="section-title">Guides & Explainers</h2>
+        <p class="section-sub">Clear, jargon-free explanations.</p>
+      </div>
+      <div class="tools-grid">
+        {guides.map(page => (
+          <a class="tool-card" href={`/${page.slug}`}>
+            <span class="tool-emoji">{getEmoji(page.slug, 'guide')}</span>
+            <h3 class="tool-name">{page.meta.title}</h3>
+            <p class="tool-desc">{truncate(page.meta.description, 120)}</p>
+          </a>
+        ))}
+      </div>
     </div>
-  </div>
+  )}
 
-  <!-- Studies -->
-  <div class="section-container" id="studies">
-    <div class="section-header">
-      <span class="section-tag">🔬 STUDIES</span>
-      <h2 class="section-title">Original Research</h2>
-      <p class="section-sub">Data-driven analysis and insights.</p>
+  {lists.length > 0 && (
+    <div class="section-container" id="lists">
+      <div class="section-header">
+        <span class="section-tag">📋 LISTS</span>
+        <h2 class="section-title">Lists & Rankings</h2>
+        <p class="section-sub">Curated, ranked, and compared.</p>
+      </div>
+      <div class="tools-grid">
+        {lists.map(page => (
+          <a class="tool-card" href={`/${page.slug}`}>
+            <span class="tool-emoji">{getEmoji(page.slug, 'list')}</span>
+            <h3 class="tool-name">{page.meta.title}</h3>
+            <p class="tool-desc">{truncate(page.meta.description, 120)}</p>
+          </a>
+        ))}
+      </div>
     </div>
-    <div class="guides-grid">
-      <a class="guide-card" href="/best-sp500-index-funds-2026">
-        <span class="section-tag" style="margin-bottom: 8px;">RESEARCH</span>
-        <h3 class="guide-name">Best SP500 Index Funds (2026)</h3>
-        <p class="guide-desc">Data-driven analysis and research</p>
-      </a>
-      <a class="guide-card" href="/bond-etf-expense-ratio-comparison">
-        <span class="section-tag" style="margin-bottom: 8px;">RESEARCH</span>
-        <h3 class="guide-name">Bond ETF Expense Ratio Comparison</h3>
-        <p class="guide-desc">Data-driven analysis and research</p>
-      </a>
-      <a class="guide-card" href="/buyback-leaders">
-        <span class="section-tag" style="margin-bottom: 8px;">RESEARCH</span>
-        <h3 class="guide-name">Buyback Leaders</h3>
-        <p class="guide-desc">Data-driven analysis and research</p>
-      </a>
-      <a class="guide-card" href="/canadian-dividend-aristocrats-2026">
-        <span class="section-tag" style="margin-bottom: 8px;">RESEARCH</span>
-        <h3 class="guide-name">Canadian Dividend Aristocrats (2026)</h3>
-        <p class="guide-desc">Data-driven analysis and research</p>
-      </a>
-      <a class="guide-card" href="/dividend-aristocrats-analysis-2026">
-        <span class="section-tag" style="margin-bottom: 8px;">RESEARCH</span>
-        <h3 class="guide-name">Dividend Aristocrats Analysis (2026)</h3>
-        <p class="guide-desc">Data-driven analysis and research</p>
-      </a>
-      <a class="guide-card" href="/dividend-aristocrats-complete-list-2026">
-        <span class="section-tag" style="margin-bottom: 8px;">RESEARCH</span>
-        <h3 class="guide-name">Dividend Aristocrats Complete List (2026)</h3>
-        <p class="guide-desc">Data-driven analysis and research</p>
-      </a>
-      <a class="guide-card" href="/dividend-aristocrats">
-        <span class="section-tag" style="margin-bottom: 8px;">RESEARCH</span>
-        <h3 class="guide-name">Dividend Aristocrats</h3>
-        <p class="guide-desc">Data-driven analysis and research</p>
-      </a>
-      <a class="guide-card" href="/dividend-payout-ratios">
-        <span class="section-tag" style="margin-bottom: 8px;">RESEARCH</span>
-        <h3 class="guide-name">Dividend Payout Ratios</h3>
-        <p class="guide-desc">Data-driven analysis and research</p>
-      </a>
-      <a class="guide-card" href="/etf-comparison-tool">
-        <span class="section-tag" style="margin-bottom: 8px;">RESEARCH</span>
-        <h3 class="guide-name">ETF Comparison Tool</h3>
-        <p class="guide-desc">Data-driven analysis and research</p>
-      </a>
-      <a class="guide-card" href="/etf-expense-ratios">
-        <span class="section-tag" style="margin-bottom: 8px;">RESEARCH</span>
-        <h3 class="guide-name">ETF Expense Ratios</h3>
-        <p class="guide-desc">Data-driven analysis and research</p>
-      </a>
-      <a class="guide-card" href="/etf-flows-tracker-2026">
-        <span class="section-tag" style="margin-bottom: 8px;">RESEARCH</span>
-        <h3 class="guide-name">ETF Flows Tracker (2026)</h3>
-        <p class="guide-desc">Data-driven analysis and research</p>
-      </a>
-      <a class="guide-card" href="/etf-tax-efficiency-comparison">
-        <span class="section-tag" style="margin-bottom: 8px;">RESEARCH</span>
-        <h3 class="guide-name">ETF Tax Efficiency Comparison</h3>
-        <p class="guide-desc">Data-driven analysis and research</p>
-      </a>
-      <a class="guide-card" href="/etf-vs-index-funds-guide">
-        <span class="section-tag" style="margin-bottom: 8px;">RESEARCH</span>
-        <h3 class="guide-name">ETF vs Index Funds Guide</h3>
-        <p class="guide-desc">Data-driven analysis and research</p>
-      </a>
-      <a class="guide-card" href="/gold-vs-stocks-historical">
-        <span class="section-tag" style="margin-bottom: 8px;">RESEARCH</span>
-        <h3 class="guide-name">Gold vs Stocks Historical</h3>
-        <p class="guide-desc">Data-driven analysis and research</p>
-      </a>
-      <a class="guide-card" href="/housing-affordability-index-2026">
-        <span class="section-tag" style="margin-bottom: 8px;">RESEARCH</span>
-        <h3 class="guide-name">Housing Affordability Index (2026)</h3>
-        <p class="guide-desc">Data-driven analysis and research</p>
-      </a>
-      <a class="guide-card" href="/insider-buying-tracker-2026">
-        <span class="section-tag" style="margin-bottom: 8px;">RESEARCH</span>
-        <h3 class="guide-name">Insider Buying Tracker (2026)</h3>
-        <p class="guide-desc">Data-driven analysis and research</p>
-      </a>
-      <a class="guide-card" href="/ipo-performance">
-        <span class="section-tag" style="margin-bottom: 8px;">RESEARCH</span>
-        <h3 class="guide-name">IPO Performance</h3>
-        <p class="guide-desc">Data-driven analysis and research</p>
-      </a>
-      <a class="guide-card" href="/market-concentration-analysis-2026">
-        <span class="section-tag" style="margin-bottom: 8px;">RESEARCH</span>
-        <h3 class="guide-name">Market Concentration Analysis (2026)</h3>
-        <p class="guide-desc">Data-driven analysis and research</p>
-      </a>
-      <a class="guide-card" href="/market-concentration">
-        <span class="section-tag" style="margin-bottom: 8px;">RESEARCH</span>
-        <h3 class="guide-name">Market Concentration</h3>
-        <p class="guide-desc">Data-driven analysis and research</p>
-      </a>
-      <a class="guide-card" href="/market-sector-analysis-dashboard">
-        <span class="section-tag" style="margin-bottom: 8px;">RESEARCH</span>
-        <h3 class="guide-name">Market Sector Analysis Dashboard</h3>
-        <p class="guide-desc">Data-driven analysis and research</p>
-      </a>
-      <a class="guide-card" href="/qqq-etf-review-2026">
-        <span class="section-tag" style="margin-bottom: 8px;">RESEARCH</span>
-        <h3 class="guide-name">Qqq ETF Review (2026)</h3>
-        <p class="guide-desc">Data-driven analysis and research</p>
-      </a>
-      <a class="guide-card" href="/recession-indicator-dashboard-2026">
-        <span class="section-tag" style="margin-bottom: 8px;">RESEARCH</span>
-        <h3 class="guide-name">Recession Indicator Dashboard (2026)</h3>
-        <p class="guide-desc">Data-driven analysis and research</p>
-      </a>
-      <a class="guide-card" href="/roe-rankings">
-        <span class="section-tag" style="margin-bottom: 8px;">RESEARCH</span>
-        <h3 class="guide-name">Roe Rankings</h3>
-        <p class="guide-desc">Data-driven analysis and research</p>
-      </a>
-      <a class="guide-card" href="/schb-etf-review-2026">
-        <span class="section-tag" style="margin-bottom: 8px;">RESEARCH</span>
-        <h3 class="guide-name">Schb ETF Review (2026)</h3>
-        <p class="guide-desc">Data-driven analysis and research</p>
-      </a>
-      <a class="guide-card" href="/sector-pe-ratios">
-        <span class="section-tag" style="margin-bottom: 8px;">RESEARCH</span>
-        <h3 class="guide-name">Sector Pe Ratios</h3>
-        <p class="guide-desc">Data-driven analysis and research</p>
-      </a>
-      <a class="guide-card" href="/sector-rotation-analysis-2026">
-        <span class="section-tag" style="margin-bottom: 8px;">RESEARCH</span>
-        <h3 class="guide-name">Sector Rotation Analysis (2026)</h3>
-        <p class="guide-desc">Data-driven analysis and research</p>
-      </a>
-      <a class="guide-card" href="/short-squeeze-candidates-march-2026">
-        <span class="section-tag" style="margin-bottom: 8px;">RESEARCH</span>
-        <h3 class="guide-name">Short Squeeze Candidates March (2026)</h3>
-        <p class="guide-desc">Data-driven analysis and research</p>
-      </a>
-      <a class="guide-card" href="/sp500-dividend-yield-history">
-        <span class="section-tag" style="margin-bottom: 8px;">RESEARCH</span>
-        <h3 class="guide-name">SP500 Dividend Yield History</h3>
-        <p class="guide-desc">Data-driven analysis and research</p>
-      </a>
-      <a class="guide-card" href="/sp500-earnings-growth-rankings">
-        <span class="section-tag" style="margin-bottom: 8px;">RESEARCH</span>
-        <h3 class="guide-name">SP500 Earnings Growth Rankings</h3>
-        <p class="guide-desc">Data-driven analysis and research</p>
-      </a>
-      <a class="guide-card" href="/sp500-historical-returns-by-year">
-        <span class="section-tag" style="margin-bottom: 8px;">RESEARCH</span>
-        <h3 class="guide-name">SP500 Historical Returns by Year</h3>
-        <p class="guide-desc">Data-driven analysis and research</p>
-      </a>
-      <a class="guide-card" href="/sp500-pe-ratio-history">
-        <span class="section-tag" style="margin-bottom: 8px;">RESEARCH</span>
-        <h3 class="guide-name">SP500 Pe Ratio History</h3>
-        <p class="guide-desc">Data-driven analysis and research</p>
-      </a>
-      <a class="guide-card" href="/sp500-peg-ratios">
-        <span class="section-tag" style="margin-bottom: 8px;">RESEARCH</span>
-        <h3 class="guide-name">SP500 Peg Ratios</h3>
-        <p class="guide-desc">Data-driven analysis and research</p>
-      </a>
-      <a class="guide-card" href="/sp500-returns-by-month">
-        <span class="section-tag" style="margin-bottom: 8px;">RESEARCH</span>
-        <h3 class="guide-name">SP500 Returns by Month</h3>
-        <p class="guide-desc">Data-driven analysis and research</p>
-      </a>
-      <a class="guide-card" href="/sp500-sector-performance-study-2026">
-        <span class="section-tag" style="margin-bottom: 8px;">RESEARCH</span>
-        <h3 class="guide-name">SP500 Sector Performance Study (2026)</h3>
-        <p class="guide-desc">Data-driven analysis and research</p>
-      </a>
-      <a class="guide-card" href="/sp500-sector-weights">
-        <span class="section-tag" style="margin-bottom: 8px;">RESEARCH</span>
-        <h3 class="guide-name">SP500 Sector Weights</h3>
-        <p class="guide-desc">Data-driven analysis and research</p>
-      </a>
-      <a class="guide-card" href="/splg-etf-review-2026">
-        <span class="section-tag" style="margin-bottom: 8px;">RESEARCH</span>
-        <h3 class="guide-name">Splg ETF Review (2026)</h3>
-        <p class="guide-desc">Data-driven analysis and research</p>
-      </a>
-      <a class="guide-card" href="/spy-etf-review-2026">
-        <span class="section-tag" style="margin-bottom: 8px;">RESEARCH</span>
-        <h3 class="guide-name">Spy ETF Review (2026)</h3>
-        <p class="guide-desc">Data-driven analysis and research</p>
-      </a>
-      <a class="guide-card" href="/stock-comparison-tool">
-        <span class="section-tag" style="margin-bottom: 8px;">RESEARCH</span>
-        <h3 class="guide-name">Stock Comparison Tool</h3>
-        <p class="guide-desc">Data-driven analysis and research</p>
-      </a>
-      <a class="guide-card" href="/stock-correlation-matrix-2026">
-        <span class="section-tag" style="margin-bottom: 8px;">RESEARCH</span>
-        <h3 class="guide-name">Stock Correlation Matrix (2026)</h3>
-        <p class="guide-desc">Data-driven analysis and research</p>
-      </a>
-      <a class="guide-card" href="/stock-correlation-matrix">
-        <span class="section-tag" style="margin-bottom: 8px;">RESEARCH</span>
-        <h3 class="guide-name">Stock Correlation Matrix</h3>
-        <p class="guide-desc">Data-driven analysis and research</p>
-      </a>
-      <a class="guide-card" href="/stock-market-returns-by-year">
-        <span class="section-tag" style="margin-bottom: 8px;">RESEARCH</span>
-        <h3 class="guide-name">Stock Market Returns by Year</h3>
-        <p class="guide-desc">Data-driven analysis and research</p>
-      </a>
-      <a class="guide-card" href="/stock-splits-history">
-        <span class="section-tag" style="margin-bottom: 8px;">RESEARCH</span>
-        <h3 class="guide-name">Stock Splits History</h3>
-        <p class="guide-desc">Data-driven analysis and research</p>
-      </a>
-      <a class="guide-card" href="/vcsh-etf-review-2026">
-        <span class="section-tag" style="margin-bottom: 8px;">RESEARCH</span>
-        <h3 class="guide-name">Vcsh ETF Review (2026)</h3>
-        <p class="guide-desc">Data-driven analysis and research</p>
-      </a>
-      <a class="guide-card" href="/vea-etf-review-2026">
-        <span class="section-tag" style="margin-bottom: 8px;">RESEARCH</span>
-        <h3 class="guide-name">Vea ETF Review (2026)</h3>
-        <p class="guide-desc">Data-driven analysis and research</p>
-      </a>
-      <a class="guide-card" href="/vgro-etf-review-2026">
-        <span class="section-tag" style="margin-bottom: 8px;">RESEARCH</span>
-        <h3 class="guide-name">Vgro ETF Review (2026)</h3>
-        <p class="guide-desc">Data-driven analysis and research</p>
-      </a>
-      <a class="guide-card" href="/voo-etf-review-2026">
-        <span class="section-tag" style="margin-bottom: 8px;">RESEARCH</span>
-        <h3 class="guide-name">Voo ETF Review (2026)</h3>
-        <p class="guide-desc">Data-driven analysis and research</p>
-      </a>
-      <a class="guide-card" href="/vti-etf-review-2026">
-        <span class="section-tag" style="margin-bottom: 8px;">RESEARCH</span>
-        <h3 class="guide-name">Vti ETF Review (2026)</h3>
-        <p class="guide-desc">Data-driven analysis and research</p>
-      </a>
-      <a class="guide-card" href="/xeqt-etf-review-2026">
-        <span class="section-tag" style="margin-bottom: 8px;">RESEARCH</span>
-        <h3 class="guide-name">Xeqt ETF Review (2026)</h3>
-        <p class="guide-desc">Data-driven analysis and research</p>
-      </a>
-    </div>
-  </div>
+  )}
 
-  <!-- Guides -->
-  <div class="section-container" id="guides">
-    <div class="section-header">
-      <span class="section-tag">📚 GUIDES</span>
-      <h2 class="section-title">How-To Guides</h2>
-      <p class="section-sub">Step-by-step guides to get the job done right.</p>
-    </div>
-    <div class="guides-grid">
-      <a class="guide-card" href="/best-equity-etfs-canada">
-        <span class="guide-emoji">📈</span>
-        <h3 class="guide-name">Best Canadian Equity ETFs</h3>
-        <p class="guide-desc">Compare VCN, XIU, ZCN, and HXT</p>
-      </a>
-      <a class="guide-card" href="/best-bond-etfs-canada">
-        <span class="guide-emoji">🛡️</span>
-        <h3 class="guide-name">Best Canadian Bond ETFs</h3>
-        <p class="guide-desc">Compare ZAG, VAB, and short-term options</p>
-      </a>
-      <a class="guide-card" href="/best-dividend-etfs-canada">
-        <span class="guide-emoji">💰</span>
-        <h3 class="guide-name">Best Dividend ETFs in Canada</h3>
-        <p class="guide-desc">Compare VDY, XEI, XDV, and CDZ</p>
-      </a>
-      <a class="guide-card" href="/best-all-in-one-etfs">
-        <span class="guide-emoji">📦</span>
-        <h3 class="guide-name">Best All-in-One Asset Allocation ETFs</h3>
-        <p class="guide-desc">Compare XEQT, VGRO, VBAL, and more</p>
-      </a>
-      <a class="guide-card" href="/best-us-equity-etfs-canada">
-        <span class="guide-emoji">🇺🇸</span>
-        <h3 class="guide-name">Best US Equity ETFs for Canadians</h3>
-        <p class="guide-desc">Compare VFV, ZSP, and XUU</p>
-      </a>
-      <a class="guide-card" href="/best-international-etfs-canada">
-        <span class="guide-emoji">🌍</span>
-        <h3 class="guide-name">Best International ETFs in Canada</h3>
-        <p class="guide-desc">Compare XEF, VIU, and emerging markets</p>
-      </a>
-      <a class="guide-card" href="/best-reit-etfs-canada">
-        <span class="guide-emoji">🏢</span>
-        <h3 class="guide-name">Best REIT ETFs in Canada</h3>
-        <p class="guide-desc">Compare VRE, ZRE, and XRE</p>
-      </a>
-      <a class="guide-card" href="/guide-asset-allocation-by-age">
-        <span class="guide-emoji">📚</span>
-        <h3 class="guide-name">Guide Asset Allocation by Age</h3>
-        <p class="guide-desc">Step-by-step guide</p>
-      </a>
-      <a class="guide-card" href="/guide-bond-ratings">
-        <span class="guide-emoji">📊</span>
-        <h3 class="guide-name">Guide Bond Ratings</h3>
-        <p class="guide-desc">Step-by-step guide</p>
-      </a>
-      <a class="guide-card" href="/guide-dividend-investing-beginners">
-        <span class="guide-emoji">📈</span>
-        <h3 class="guide-name">Guide Dividend Investing Beginners</h3>
-        <p class="guide-desc">Step-by-step guide</p>
-      </a>
-      <a class="guide-card" href="/guide-dividend-portfolio">
-        <span class="guide-emoji">💰</span>
-        <h3 class="guide-name">Guide Dividend Portfolio</h3>
-        <p class="guide-desc">Step-by-step guide</p>
-      </a>
-      <a class="guide-card" href="/guide-dollar-cost-averaging">
-        <span class="guide-emoji">📚</span>
-        <h3 class="guide-name">Guide Dollar Cost Averaging</h3>
-        <p class="guide-desc">Step-by-step guide</p>
-      </a>
-      <a class="guide-card" href="/guide-emergency-fund">
-        <span class="guide-emoji">🚨</span>
-        <h3 class="guide-name">Guide Emergency Fund</h3>
-        <p class="guide-desc">Step-by-step guide</p>
-      </a>
-      <a class="guide-card" href="/guide-etf-investing">
-        <span class="guide-emoji">📈</span>
-        <h3 class="guide-name">Guide ETF Investing</h3>
-        <p class="guide-desc">Step-by-step guide</p>
-      </a>
-      <a class="guide-card" href="/guide-how-etf-expense-ratios-work">
-        <span class="guide-emoji">📊</span>
-        <h3 class="guide-name">Guide How ETF Expense Ratios Work</h3>
-        <p class="guide-desc">Step-by-step guide</p>
-      </a>
-      <a class="guide-card" href="/guide-index-fund-investing-beginners">
-        <span class="guide-emoji">📈</span>
-        <h3 class="guide-name">Guide Index Fund Investing Beginners</h3>
-        <p class="guide-desc">Step-by-step guide</p>
-      </a>
-      <a class="guide-card" href="/guide-market-cycles">
-        <span class="guide-emoji">📚</span>
-        <h3 class="guide-name">Guide Market Cycles</h3>
-        <p class="guide-desc">Step-by-step guide</p>
-      </a>
-      <a class="guide-card" href="/guide-options-basics">
-        <span class="guide-emoji">📊</span>
-        <h3 class="guide-name">Guide Options Basics</h3>
-        <p class="guide-desc">Step-by-step guide</p>
-      </a>
-      <a class="guide-card" href="/guide-portfolio-diversification">
-        <span class="guide-emoji">📊</span>
-        <h3 class="guide-name">Guide Portfolio Diversification</h3>
-        <p class="guide-desc">Step-by-step guide</p>
-      </a>
-      <a class="guide-card" href="/guide-read-balance-sheet">
-        <span class="guide-emoji">📚</span>
-        <h3 class="guide-name">Guide Read Balance Sheet</h3>
-        <p class="guide-desc">Step-by-step guide</p>
-      </a>
-      <a class="guide-card" href="/guide-reading-financial-statements">
-        <span class="guide-emoji">📚</span>
-        <h3 class="guide-name">Guide Reading Financial Statements</h3>
-        <p class="guide-desc">Step-by-step guide</p>
-      </a>
-      <a class="guide-card" href="/guide-rebalancing-strategies">
-        <span class="guide-emoji">📚</span>
-        <h3 class="guide-name">Guide Rebalancing Strategies</h3>
-        <p class="guide-desc">Step-by-step guide</p>
-      </a>
-      <a class="guide-card" href="/guide-roth-vs-traditional-ira">
-        <span class="guide-emoji">📚</span>
-        <h3 class="guide-name">Guide Roth vs Traditional Ira</h3>
-        <p class="guide-desc">Step-by-step guide</p>
-      </a>
-      <a class="guide-card" href="/guide-sp500-index-funds">
-        <span class="guide-emoji">📈</span>
-        <h3 class="guide-name">Guide SP500 Index Funds</h3>
-        <p class="guide-desc">Step-by-step guide</p>
-      </a>
-      <a class="guide-card" href="/guide-stock-market-basics">
-        <span class="guide-emoji">📈</span>
-        <h3 class="guide-name">Guide Stock Market Basics</h3>
-        <p class="guide-desc">Step-by-step guide</p>
-      </a>
-      <a class="guide-card" href="/guide-tax-efficient-investing">
-        <span class="guide-emoji">📈</span>
-        <h3 class="guide-name">Guide Tax Efficient Investing</h3>
-        <p class="guide-desc">Step-by-step guide</p>
-      </a>
-      <a class="guide-card" href="/guide-tax-loss-harvesting">
-        <span class="guide-emoji">🏛️</span>
-        <h3 class="guide-name">Guide Tax Loss Harvesting</h3>
-        <p class="guide-desc">Step-by-step guide</p>
-      </a>
-      <a class="guide-card" href="/guide-technical-analysis-basics">
-        <span class="guide-emoji">📚</span>
-        <h3 class="guide-name">Guide Technical Analysis Basics</h3>
-        <p class="guide-desc">Step-by-step guide</p>
-      </a>
-      <a class="guide-card" href="/guide-understanding-pe-ratio">
-        <span class="guide-emoji">📊</span>
-        <h3 class="guide-name">Guide Understanding Pe Ratio</h3>
-        <p class="guide-desc">Step-by-step guide</p>
-      </a>
-      <a class="guide-card" href="/guide-value-investing">
-        <span class="guide-emoji">📈</span>
-        <h3 class="guide-name">Guide Value Investing</h3>
-        <p class="guide-desc">Step-by-step guide</p>
-      </a>
-      <a class="guide-card" href="/wealthsimple-vs-questrade">
-        <span class="guide-emoji">⚖️</span>
-        <h3 class="guide-name">Wealthsimple vs Questrade</h3>
-        <p class="guide-desc">Detailed breakdown of fees, features, and USD accounts</p>
-      </a>
-      <a class="guide-card" href="/interactive-brokers-canada">
-        <span class="guide-emoji">🌐</span>
-        <h3 class="guide-name">Interactive Brokers (IBKR) Canada Review</h3>
-        <p class="guide-desc">Deep dive into forex conversions and margin rates</p>
-      </a>
-      <a class="guide-card" href="/questrade-vs-ibkr">
-        <span class="guide-emoji">⚖️</span>
-        <h3 class="guide-name">Questrade vs IBKR</h3>
-        <p class="guide-desc">Comparing platforms for active traders and margin users</p>
-      </a>
-      <a class="guide-card" href="/wealthsimple-review-2026">
-        <span class="guide-emoji">📱</span>
-        <h3 class="guide-name">Wealthsimple Trade Review 2026</h3>
-        <p class="guide-desc">Is the zero-commission model truly free?</p>
-      </a>
-      <a class="guide-card" href="/td-direct-vs-discount">
-        <span class="guide-emoji">🏦</span>
-        <h3 class="guide-name">TD Direct vs Discount Brokers</h3>
-        <p class="guide-desc">When does paying $9.99 per trade make sense?</p>
-      </a>
-      <a class="guide-card" href="/best-brokerage-for-beginners">
-        <span class="guide-emoji">🌱</span>
-        <h3 class="guide-name">Best Brokerage for Beginners</h3>
-        <p class="guide-desc">The perfect platform to buy your first stock or ETF</p>
-      </a>
-      <a class="guide-card" href="/best-brokerage-for-usd">
-        <span class="guide-emoji">💵</span>
-        <h3 class="guide-name">Best Brokerage for USD Trading</h3>
-        <p class="guide-desc">How to avoid the 1.5% FX markup in Canada</p>
-      </a>
-
-      <a class="guide-card" href="/rrsp-season-checklist">
-        <span class="guide-emoji">✅</span>
-        <h3 class="guide-name">Complete RRSP Season Checklist</h3>
-        <p class="guide-desc">Contribution room, deadline, strategies, tax optimization.</p>
-      </a>
-      <a class="guide-card" href="/rrsp-vs-tfsa-decision">
-        <span class="guide-emoji">⚖️</span>
-        <h3 class="guide-name">RRSP vs TFSA: How to Choose</h3>
-        <p class="guide-desc">Income-based decision tool and marginal rate analysis.</p>
-      </a>
-      <a class="guide-card" href="/spousal-rrsp-guide">
-        <span class="guide-emoji">👫</span>
-        <h3 class="guide-name">Spousal RRSP Guide</h3>
-        <p class="guide-desc">Income splitting, attribution rules, and withdrawal strategies.</p>
-      </a>
-      <a class="guide-card" href="/rrsp-home-buyers-plan">
-        <span class="guide-emoji">🏠</span>
-        <h3 class="guide-name">RRSP Home Buyers' Plan (HBP)</h3>
-        <p class="guide-desc">HBP rules, repayment schedules, and first-time buyer tips.</p>
-      </a>
-      <a class="guide-card" href="/rrsp-overcontribution-guide">
-        <span class="guide-emoji">⚠️</span>
-        <h3 class="guide-name">RRSP Over-Contribution Guide</h3>
-        <p class="guide-desc">Understanding the $2K buffer, penalties, and how to fix errors.</p>
-      </a>
-      <a class="guide-card" href="/rrsp-withdrawal-strategies">
-        <span class="guide-emoji">📉</span>
-        <h3 class="guide-name">RRSP Withdrawal Strategies</h3>
-        <p class="guide-desc">Minimize taxes and optimize RRIF conversion timing.</p>
-      </a>
-      <a class="guide-card" href="/rrsp-investment-options">
-        <span class="guide-emoji">📈</span>
-        <h3 class="guide-name">What to Hold in Your RRSP</h3>
-        <p class="guide-desc">Asset location strategies, US dividends, and bonds.</p>
-      </a>
-      <a class="guide-card" href="/rrsp-deadline-reminder">
-        <span class="guide-emoji">⏳</span>
-        <h3 class="guide-name">RRSP Deadline & Key Dates</h3>
-        <p class="guide-desc">Important contribution deadlines and carry-forward rules.</p>
-      </a>
-    </div>
-  </div>
-
-  <!-- Lists -->
-  <div class="section-container" id="lists">
-    <div class="section-header">
-      <span class="section-tag">📋 LISTS</span>
-      <h2 class="section-title">Curated Lists</h2>
-      <p class="section-sub">The best tools, products, and resources.</p>
-    </div>
-    <div class="lists-grid">
-      <a class="list-card" href="/list-best-all-in-one-etfs-canada-2026">
-        <span class="list-emoji">📊</span>
-        <h3 class="list-name">List Best All in One ETFS Canada (2026)</h3>
-        <p class="list-desc">Curated comparison and rankings</p>
-      </a>
-      <a class="list-card" href="/list-best-money-market-funds-2026">
-        <span class="list-emoji">📋</span>
-        <h3 class="list-name">List Best Money Market Funds (2026)</h3>
-        <p class="list-desc">Curated comparison and rankings</p>
-      </a>
-      <a class="list-card" href="/list-best-monthly-dividend-stocks">
-        <span class="list-emoji">📈</span>
-        <h3 class="list-name">List Best Monthly Dividend Stocks</h3>
-        <p class="list-desc">Curated comparison and rankings</p>
-      </a>
-      <a class="list-card" href="/list-best-robo-advisors-canada-2026">
-        <span class="list-emoji">📋</span>
-        <h3 class="list-name">List Best Robo Advisors Canada (2026)</h3>
-        <p class="list-desc">Curated comparison and rankings</p>
-      </a>
-      <a class="list-card" href="/list-best-target-date-funds-2026">
-        <span class="list-emoji">📋</span>
-        <h3 class="list-name">List Best Target Date Funds (2026)</h3>
-        <p class="list-desc">Curated comparison and rankings</p>
-      </a>
-      <a class="list-card" href="/list-highest-dividend-yield-stocks-2026">
-        <span class="list-emoji">📈</span>
-        <h3 class="list-name">List Highest Dividend Yield Stocks (2026)</h3>
-        <p class="list-desc">Curated comparison and rankings</p>
-      </a>
-      <a class="list-card" href="/list-safest-dividend-stocks-2026">
-        <span class="list-emoji">📈</span>
-        <h3 class="list-name">List Safest Dividend Stocks (2026)</h3>
-        <p class="list-desc">Curated comparison and rankings</p>
-      </a>
-      <a class="list-card" href="/best-stocks-to-buy-now">
-        <span class="list-emoji">🚀</span>
-        <h3 class="list-name">Best Stocks to Buy Now</h3>
-        <p class="list-desc">Top growth and value stocks for 2025 and 2026</p>
-      </a>
-    </div>
-  </div>
-
-<style>
-  .hero { text-align: center; padding: 100px 24px 70px; position: relative; }
-  .hero::before { content: ""; position: absolute; inset: 0; background: radial-gradient(circle at 50% 40%, color-mix(in srgb, var(--accent-color) 8%, transparent) 0%, transparent 60%); }
-  .hero-content { position: relative; z-index: 1; }
-  .hero .tagline { color: var(--accent-color); font-size: .85rem; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 16px; }
-  .hero h1 { font-size: 3rem; font-weight: 900; letter-spacing: -1.5px; margin-bottom: 20px; background: linear-gradient(135deg, #fff, var(--accent-color)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-align: left; }
-  .hero p { color: #5a6a80; font-size: 1.05rem; max-width: 540px; margin: 0 auto; }
-  .section-container { max-width: 1200px; margin: 0 auto; padding: 60px 24px; }
-  .section-header { text-align: center; margin-bottom: 40px; }
-  .section-tag { display: inline-block; background: color-mix(in srgb, var(--accent-color) 10%, transparent); color: var(--accent-color); font-size: .7rem; font-weight: 800; padding: 6px 16px; border-radius: 20px; letter-spacing: 1px; margin-bottom: 12px; }
-  .section-title { font-size: 2.2rem; font-weight: 900; color: #fff; margin-bottom: 8px; letter-spacing: -.8px; }
-  .section-sub { color: #5a6a80; font-size: 1rem; }
-  .tools-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
-  .tool-card { background: #0c1218; border: 1px solid #1a2230; border-radius: 12px; padding: 20px; text-decoration: none; color: inherit; display: block; transition: all .2s ease; }
-  .tool-card:hover { border-color: var(--accent-color); transform: translateY(-2px); }
-  .tool-emoji { font-size: 1.4rem; margin-bottom: 8px; display: block; }
-  .tool-name { font-size: .95rem; font-weight: 700; color: #e0e8f0; margin-bottom: 6px; }
-  .tool-desc { font-size: .8rem; color: #6a7a90; line-height: 1.4; }
-  .guides-grid, .lists-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
-  .guide-card, .list-card { background: #0c1218; border: 1px solid #1a2230; border-radius: 14px; padding: 24px 20px; text-decoration: none; color: inherit; display: block; transition: all .2s ease; }
-  .guide-card:hover, .list-card:hover { border-color: var(--accent-color); transform: translateY(-2px); }
-  .guide-emoji, .list-emoji { font-size: 1.5rem; margin-bottom: 10px; display: block; }
-  .guide-name, .list-name { font-size: 1rem; font-weight: 700; color: #e0e8f0; margin-bottom: 6px; }
-  .guide-desc, .list-desc { font-size: .85rem; color: #6a7a90; line-height: 1.4; }
-  @media (max-width: 768px) {
-    .hero h1 { font-size: 2.2rem; }
-    .hero { padding: 70px 20px 50px; }
-    .section-container { padding: 40px 20px; }
-    .tools-grid, .guides-grid, .lists-grid { grid-template-columns: 1fr; }
-  }
-</style>
+  <style is:inline>
+    .hero { text-align: center; padding: 4rem 1.5rem 3rem; }
+    .hero h1 { font-size: 2.5rem; font-weight: 800; margin-bottom: 0.5rem; }
+    .hero p { color: var(--text-secondary); font-size: 1.1rem; }
+    
+    .section-container { max-width: 1100px; margin: 0 auto 3rem; padding: 0 1.5rem; }
+    .section-header { text-align: center; margin-bottom: 2rem; }
+    .section-tag { display: inline-block; background: color-mix(in srgb, var(--accent-color) 10%, transparent); color: var(--accent-color); font-size: .7rem; font-weight: 800; padding: 6px 16px; border-radius: 20px; letter-spacing: 1px; margin-bottom: 12px; }
+    .section-title { font-size: 1.6rem; font-weight: 800; margin-bottom: 0.5rem; }
+    .section-sub { color: var(--text-secondary); font-size: 0.95rem; }
+    
+    .tools-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; }
+    .tool-card { display: block; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.25rem; text-decoration: none; color: inherit; transition: border-color 0.2s, transform 0.2s; }
+    .tool-card:hover { border-color: var(--accent-color); transform: translateY(-2px); }
+    .tool-emoji { font-size: 1.5rem; display: block; margin-bottom: 0.5rem; }
+    .tool-name { font-size: 1rem; font-weight: 700; margin-bottom: 0.35rem; line-height: 1.3; }
+    .tool-desc { font-size: 0.85rem; color: var(--text-secondary); line-height: 1.4; margin: 0; }
+    
+    .studies-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.25rem; }
+    .study-card { display: block; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem; text-decoration: none; color: inherit; transition: border-color 0.2s, transform 0.2s; }
+    .study-card:hover { border-color: var(--accent-color); transform: translateY(-2px); }
+    .study-stat { margin-bottom: 0.75rem; }
+    .stat-value { font-size: 2rem; font-weight: 800; color: var(--accent-color); display: block; }
+    .stat-label { font-size: 0.8rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; }
+    .study-name { font-size: 1.1rem; font-weight: 700; margin-bottom: 0.5rem; }
+    .study-desc { font-size: 0.85rem; color: var(--text-secondary); line-height: 1.5; margin: 0; }
+    
+    @media (max-width: 640px) {
+      .hero h1 { font-size: 1.8rem; }
+      .tools-grid, .studies-grid { grid-template-columns: 1fr; }
+    }
+  </style>
 </SiteLayout>

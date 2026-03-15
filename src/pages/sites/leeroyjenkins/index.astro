@@ -1,193 +1,209 @@
 ---
 import SiteLayout from '../../../layouts/SiteLayout.astro';
+import { sites } from '../../../config/sites';
+
+// SITE_ID is replaced per-site by the deploy script
+const SITE_ID = 'leeroyjenkins';
+const siteConfig = sites[SITE_ID];
 
 const schema = {
   "@context": "https://schema.org",
   "@type": "WebSite",
-  "name": "Leeroy Jenkins — Gaming Tools & Guides",
-  "url": "https://leeroyjenkins.quest/",
-  "description": "Gaming PC builds, competitive settings calculators, streaming tools, and gear guides."
+  "name": siteConfig.name,
+  "url": `https://${siteConfig.domain}/`,
+  "description": `${siteConfig.name} — tools, guides, studies, and resources.`
 };
+
+// Dynamically import all sibling .astro pages
+const allPages = import.meta.glob('./*.astro', { eager: true });
+
+// Extract meta from each page
+interface PageMeta {
+  title: string;
+  description: string;
+  category: string;
+  published?: string;
+  stat?: string;
+  statLabel?: string;
+  priority?: number;
+  emoji?: string;
+}
+
+interface PageEntry {
+  slug: string;
+  meta: PageMeta;
+}
+
+const pages: PageEntry[] = Object.entries(allPages)
+  .filter(([path]) => !path.includes('index'))
+  .map(([path, mod]: [string, any]) => ({
+    slug: path.replace('./', '').replace('.astro', ''),
+    meta: mod.meta || {
+      title: path.replace('./', '').replace('.astro', '').replace(/-/g, ' '),
+      description: '',
+      category: 'tool',
+    },
+  }))
+  .sort((a, b) => (b.meta.priority || 0) - (a.meta.priority || 0));
+
+// Group by category
+const tools = pages.filter(p => p.meta.category === 'tool');
+const studies = pages.filter(p => p.meta.category === 'study');
+const guides = pages.filter(p => p.meta.category === 'guide');
+const lists = pages.filter(p => p.meta.category === 'list');
+
+// Emoji assignment
+function getEmoji(slug: string, category: string): string {
+  if (slug.includes('calculator') || slug.includes('planner')) return '🧮';
+  if (slug.includes('checker') || slug.includes('analyzer')) return '🔍';
+  if (slug.includes('comparison') || slug.includes('vs')) return '⚖️';
+  if (slug.includes('guide')) return '📖';
+  if (slug.includes('glossary') || slug.includes('dictionary')) return '📚';
+  if (slug.includes('checklist')) return '✅';
+  if (slug.includes('dividend') || slug.includes('yield')) return '💰';
+  if (slug.includes('etf') || slug.includes('stock')) return '📈';
+  if (category === 'tool') return '🛠️';
+  if (category === 'study') return '🔬';
+  if (category === 'guide') return '📖';
+  if (category === 'list') return '📋';
+  return '📄';
+}
+
+// Truncate description
+function truncate(text: string, max: number): string {
+  if (!text || text.length <= max) return text || '';
+  return text.slice(0, max).replace(/\s+\S*$/, '') + '…';
+}
 ---
 
 <SiteLayout
-  site="leeroyjenkins"
-  title="Leeroy Jenkins — Gaming Tools & Guides"
-  description="Gaming PC builds, competitive settings calculators, streaming tools, and gear guides."
-  canonical="https://leeroyjenkins.quest/"
+  site={SITE_ID}
+  title={`${siteConfig.name}`}
+  description={`${siteConfig.name} — tools, guides, studies, and resources.`}
+  canonical={`https://${siteConfig.domain}/`}
   schema={schema}
 >
   <!-- Hero -->
   <div class="hero">
     <div class="hero-content">
-      <div class="tagline">Gaming Tools & Guides</div>
-      <h1>Leeroy Jenkins</h1>
-      <p>Gaming PC builds, competitive settings calculators, streaming tools, and gear guides.</p>
+      <h1>{siteConfig.name}</h1>
+      <p>{pages.length} free tools, guides, and resources. No sign-ups required.</p>
     </div>
   </div>
 
-  <!-- Pillar Guides -->
-  <div class="section-container" id="pillars">
-    <div class="section-header">
-      <span class="section-tag">📚 PILLAR GUIDES</span>
-      <h2 class="section-title">Complete Guides</h2>
-      <p class="section-sub">Comprehensive, in-depth guides covering entire topics.</p>
+  {tools.length > 0 && (
+    <div class="section-container" id="tools">
+      <div class="section-header">
+        <span class="section-tag">🛠️ TOOLS</span>
+        <h2 class="section-title">Calculators & Tools</h2>
+        <p class="section-sub">Free, instant calculators — no sign-ups required.</p>
+      </div>
+      <div class="tools-grid">
+        {tools.map(page => (
+          <a class="tool-card" href={`/${page.slug}`}>
+            <span class="tool-emoji">{getEmoji(page.slug, 'tool')}</span>
+            <h3 class="tool-name">{page.meta.title}</h3>
+            <p class="tool-desc">{truncate(page.meta.description, 120)}</p>
+          </a>
+        ))}
+      </div>
     </div>
-    <div class="tools-grid">
-      <a class="tool-card" href="/gaming-jargon-dictionary"><span class="tool-emoji">📖</span><h3 class="tool-name">Gaming Jargon Dictionary</h3><p class="tool-desc">200+ gaming terms explained: FPS, MOBA, MMO, competitive, streaming jargon.</p></a>
+  )}
 
+  {studies.length > 0 && (
+    <div class="section-container" id="studies">
+      <div class="section-header">
+        <span class="section-tag">🔬 STUDIES</span>
+        <h2 class="section-title">Research & Analysis</h2>
+        <p class="section-sub">Data-driven research with real numbers.</p>
+      </div>
+      <div class="studies-grid">
+        {studies.map(page => (
+          <a class="study-card" href={`/${page.slug}`}>
+            <div class="study-content">
+              {page.meta.stat && (
+                <div class="study-stat">
+                  <span class="stat-value">{page.meta.stat}</span>
+                  {page.meta.statLabel && <span class="stat-label">{page.meta.statLabel}</span>}
+                </div>
+              )}
+              <h3 class="study-name">{page.meta.title}</h3>
+              <p class="study-desc">{truncate(page.meta.description, 150)}</p>
+            </div>
+          </a>
+        ))}
+      </div>
+    </div>
+  )}
 
-      <a class="tool-card" href="/gaming-headsets-2026"><span class="tool-emoji">🎧</span><h3 class="tool-name">Best Gaming Headsets 2026</h3><p class="tool-desc">Ultimate buyer's guide for gaming audio, wired vs wireless, and acoustic designs.</p></a>
-      <a class="tool-card" href="/best-gaming-mice-2026"><span class="tool-emoji">🖱️</span><h3 class="tool-name">Best Gaming Mice 2026</h3><p class="tool-desc">Ranked list of the best gaming mice in 2026. FPS, MOBA, MMO, wireless.</p></a>
-      <a class="tool-card" href="/guide-competitive-gaming-complete"><span class="tool-emoji">📚</span><h3 class="tool-name">Guide Competitive Gaming Complete</h3><p class="tool-desc">Comprehensive guide covering everything you need to know</p></a>
-      <a class="tool-card" href="/guide-gaming-gear-complete"><span class="tool-emoji">📚</span><h3 class="tool-name">Guide Gaming Gear Complete</h3><p class="tool-desc">Comprehensive guide covering everything you need to know</p></a>
-      <a class="tool-card" href="/guide-gaming-pc-complete"><span class="tool-emoji">📚</span><h3 class="tool-name">Guide Gaming Pc Complete</h3><p class="tool-desc">Comprehensive guide covering everything you need to know</p></a>
-      <a class="tool-card" href="/guide-streaming-complete"><span class="tool-emoji">📚</span><h3 class="tool-name">Guide Streaming Complete</h3><p class="tool-desc">Comprehensive guide covering everything you need to know</p></a>
+  {guides.length > 0 && (
+    <div class="section-container" id="guides">
+      <div class="section-header">
+        <span class="section-tag">📖 GUIDES</span>
+        <h2 class="section-title">Guides & Explainers</h2>
+        <p class="section-sub">Clear, jargon-free explanations.</p>
+      </div>
+      <div class="tools-grid">
+        {guides.map(page => (
+          <a class="tool-card" href={`/${page.slug}`}>
+            <span class="tool-emoji">{getEmoji(page.slug, 'guide')}</span>
+            <h3 class="tool-name">{page.meta.title}</h3>
+            <p class="tool-desc">{truncate(page.meta.description, 120)}</p>
+          </a>
+        ))}
+      </div>
     </div>
-  </div>
+  )}
 
-  <!-- Tools -->
-  <div class="section-container" id="tools">
-    <div class="section-header">
-      <span class="section-tag">🛠️ TOOLS</span>
-      <h2 class="section-title">Calculators & Tools</h2>
-      <p class="section-sub">Free, instant calculators — no sign-ups required.</p>
+  {lists.length > 0 && (
+    <div class="section-container" id="lists">
+      <div class="section-header">
+        <span class="section-tag">📋 LISTS</span>
+        <h2 class="section-title">Lists & Rankings</h2>
+        <p class="section-sub">Curated, ranked, and compared.</p>
+      </div>
+      <div class="tools-grid">
+        {lists.map(page => (
+          <a class="tool-card" href={`/${page.slug}`}>
+            <span class="tool-emoji">{getEmoji(page.slug, 'list')}</span>
+            <h3 class="tool-name">{page.meta.title}</h3>
+            <p class="tool-desc">{truncate(page.meta.description, 120)}</p>
+          </a>
+        ))}
+      </div>
     </div>
-    <div class="tools-grid">
-      <a class="tool-card" href="/dpi-sensitivity-calculator"><span class="tool-emoji">🖱️</span><h3 class="tool-name">DPI & Sensitivity Calculator</h3><p class="tool-desc">Convert sensitivity between games. Input game, resolution, get optimal settings.</p></a>
-      <a class="tool-card" href="/aim-trainer-stats"><span class="tool-emoji">🎯</span><h3 class="tool-name">Aim Trainer Stats</h3><p class="tool-desc">Calculate and analyze aim trainer stats</p></a>
-      <a class="tool-card" href="/bottleneck-calculator"><span class="tool-emoji">⚙️</span><h3 class="tool-name">Bottleneck Calculator</h3><p class="tool-desc">Calculate and analyze bottleneck calculator</p></a>
-      <a class="tool-card" href="/color-blind-test"><span class="tool-emoji">👁️</span><h3 class="tool-name">Color Blind Test</h3><p class="tool-desc">Calculate and analyze color blind test</p></a>
-      <a class="tool-card" href="/crosshair-generator"><span class="tool-emoji">🎯</span><h3 class="tool-name">Crosshair Generator</h3><p class="tool-desc">Calculate and analyze crosshair generator</p></a>
-      <a class="tool-card" href="/damage-calculator"><span class="tool-emoji">🔧</span><h3 class="tool-name">Damage Calculator</h3><p class="tool-desc">Calculate and analyze damage calculator</p></a>
-      <a class="tool-card" href="/discord-timestamp"><span class="tool-emoji">💬</span><h3 class="tool-name">Discord Timestamp</h3><p class="tool-desc">Calculate and analyze discord timestamp</p></a>
-      <a class="tool-card" href="/dpi-calculator"><span class="tool-emoji">🖱️</span><h3 class="tool-name">DPI Calculator</h3><p class="tool-desc">Calculate and analyze dpi calculator</p></a>
-      <a class="tool-card" href="/esports-prize-pools"><span class="tool-emoji">🔧</span><h3 class="tool-name">Esports Prize Pools</h3><p class="tool-desc">Calculate and analyze esports prize pools</p></a>
-      <a class="tool-card" href="/fov-calculator"><span class="tool-emoji">👁️</span><h3 class="tool-name">FOV Calculator</h3><p class="tool-desc">Calculate and analyze fov calculator</p></a>
-      <a class="tool-card" href="/fps-calculator"><span class="tool-emoji">🎯</span><h3 class="tool-name">FPS Calculator</h3><p class="tool-desc">Calculate and analyze fps calculator</p></a>
-      <a class="tool-card" href="/gaming-pc-builder"><span class="tool-emoji">🎮</span><h3 class="tool-name">Gaming Pc Builder</h3><p class="tool-desc">Calculate and analyze gaming pc builder</p></a>
-      <a class="tool-card" href="/input-lag"><span class="tool-emoji">🔧</span><h3 class="tool-name">Input Lag</h3><p class="tool-desc">Calculate and analyze input lag</p></a>
-      <a class="tool-card" href="/keybind-planner"><span class="tool-emoji">⌨️</span><h3 class="tool-name">Keybind Planner</h3><p class="tool-desc">Calculate and analyze keybind planner</p></a>
-      <a class="tool-card" href="/loot-probability"><span class="tool-emoji">🎲</span><h3 class="tool-name">Loot Probability</h3><p class="tool-desc">Calculate and analyze loot probability</p></a>
-      <a class="tool-card" href="/randomizer"><span class="tool-emoji">🎲</span><h3 class="tool-name">Randomizer</h3><p class="tool-desc">Calculate and analyze randomizer</p></a>
-      <a class="tool-card" href="/reaction-time-test"><span class="tool-emoji">⚡</span><h3 class="tool-name">Reaction Time Test</h3><p class="tool-desc">Calculate and analyze reaction time test</p></a>
-      <a class="tool-card" href="/reaction-time"><span class="tool-emoji">⚡</span><h3 class="tool-name">Reaction Time</h3><p class="tool-desc">Calculate and analyze reaction time</p></a>
-      <a class="tool-card" href="/refresh-rate-test"><span class="tool-emoji">🔧</span><h3 class="tool-name">Refresh Rate Test</h3><p class="tool-desc">Calculate and analyze refresh rate test</p></a>
-      <a class="tool-card" href="/resolution-scaler"><span class="tool-emoji">🖥️</span><h3 class="tool-name">Resolution Scaler</h3><p class="tool-desc">Calculate and analyze resolution scaler</p></a>
-      <a class="tool-card" href="/stream-bitrate"><span class="tool-emoji">📺</span><h3 class="tool-name">Stream Bitrate</h3><p class="tool-desc">Calculate and analyze stream bitrate</p></a>
-      <a class="tool-card" href="/xp-calculator"><span class="tool-emoji">⭐</span><h3 class="tool-name">Xp Calculator</h3><p class="tool-desc">Calculate and analyze xp calculator</p></a>
-    </div>
-  </div>
+  )}
 
-  <!-- Studies -->
-  <div class="section-container" id="studies">
-    <div class="section-header">
-      <span class="section-tag">🔬 STUDIES</span>
-      <h2 class="section-title">Original Research</h2>
-      <p class="section-sub">Data-driven analysis and insights.</p>
-    </div>
-    <div class="guides-grid">
-      <a class="guide-card" href="/game-engine-comparison"><span class="section-tag" style="margin-bottom: 8px;">RESEARCH</span><h3 class="guide-name">Game Engine Comparison</h3><p class="guide-desc">Data-driven analysis and research</p></a>
-      <a class="guide-card" href="/game-fps-data"><span class="section-tag" style="margin-bottom: 8px;">RESEARCH</span><h3 class="guide-name">Game FPS Data</h3><p class="guide-desc">Data-driven analysis and research</p></a>
-      <a class="guide-card" href="/gpu-performance-index"><span class="section-tag" style="margin-bottom: 8px;">RESEARCH</span><h3 class="guide-name">Gpu Performance Index</h3><p class="guide-desc">Data-driven analysis and research</p></a>
-    </div>
-  </div>
-
-  <!-- Guides -->
-  <div class="section-container" id="guides">
-    <div class="section-header">
-      <span class="section-tag">📚 GUIDES</span>
-      <h2 class="section-title">How-To Guides</h2>
-      <p class="section-sub">Step-by-step guides to get the job done right.</p>
-    </div>
-    <div class="guides-grid">
-      <a class="guide-card" href="/fps-terms-glossary"><span class="guide-emoji">🔫</span><h3 class="guide-name">FPS Terms Glossary</h3><p class="guide-desc">FPS terms: peeker's advantage, spray pattern, crosshair placement, rotation.</p></a>
-      <a class="guide-card" href="/moba-terms-glossary"><span class="guide-emoji">🗺️</span><h3 class="guide-name">MOBA Terms Glossary</h3><p class="guide-desc">MOBA terms: lane, gank, CS, itemization, objective control, draft.</p></a>
-      <a class="guide-card" href="/competitive-gaming-terms"><span class="guide-emoji">🏆</span><h3 class="guide-name">Competitive Gaming Terms</h3><p class="guide-desc">Competitive terms: ELO, MMR, smurfing, meta, tier list, scrim.</p></a>
-      <a class="guide-card" href="/streaming-terms-glossary"><span class="guide-emoji">📺</span><h3 class="guide-name">Streaming Terms Glossary</h3><p class="guide-desc">Streaming terms: bitrate, OBS, VOD, sub, raid, emotes, alerts.</p></a>
-      <a class="guide-card" href="/pc-hardware-terms"><span class="guide-emoji">💻</span><h3 class="guide-name">PC Hardware Terms</h3><p class="guide-desc">PC hardware terms: GPU, CPU, RAM, SSD, bottleneck, thermal throttle.</p></a>
-      <a class="guide-card" href="/network-gaming-terms"><span class="guide-emoji">🌐</span><h3 class="guide-name">Network Gaming Terms</h3><p class="guide-desc">Network terms: ping, jitter, packet loss, tick rate, netcode, rollback.</p></a>
-      <a class="guide-card" href="/game-design-terms"><span class="guide-emoji">🎲</span><h3 class="guide-name">Game Design Terms</h3><p class="guide-desc">Game design terms: RNG, proc-gen, roguelike, metroidvania, souls-like.</p></a>
-      <a class="guide-card" href="/esports-terms"><span class="guide-emoji">🏟️</span><h3 class="guide-name">Esports Terms</h3><p class="guide-desc">Esports terms: bracket, bo3, group stage, LAN, bootcamp, franchise.</p></a>
-
-
-      <a class="guide-card" href="/mouse-grip-guide"><span class="guide-emoji">🖱️</span><h3 class="guide-name">Mouse Grip Guide</h3><p class="guide-desc">Mouse grip styles — palm vs claw vs fingertip, hand size guide</p></a>
-      <a class="guide-card" href="/gaming-mouse-sensor-guide"><span class="guide-emoji">🖱️</span><h3 class="guide-name">Gaming Mouse Sensor Guide</h3><p class="guide-desc">Mouse sensors explained — optical vs laser, DPI, polling rate, LOD</p></a>
-      <a class="guide-card" href="/mouse-pad-guide"><span class="guide-emoji">🖱️</span><h3 class="guide-name">Mouse Pad Guide</h3><p class="guide-desc">Gaming mouse pads — cloth vs hard, speed vs control, size guide</p></a>
-      <a class="guide-card" href="/mouse-switch-guide"><span class="guide-emoji">🖱️</span><h3 class="guide-name">Mouse Switch Guide</h3><p class="guide-desc">Mouse switches — mechanical vs optical, click latency, durability</p></a>
-      <a class="guide-card" href="/mouse-weight-mod-guide"><span class="guide-emoji">🖱️</span><h3 class="guide-name">Mouse Weight Mod Guide</h3><p class="guide-desc">Mouse weight modding — drilling, 3D shells, paracord, skates</p></a>
-      <a class="guide-card" href="/open-vs-closed-back-gaming"><span class="guide-emoji">🎧</span><h3 class="guide-name">Open vs Closed-Back Gaming Headsets</h3><p class="guide-desc">Understanding soundstage, immersion, and the competitive advantage.</p></a>
-      <a class="guide-card" href="/wireless-vs-wired-headset"><span class="guide-emoji">🎧</span><h3 class="guide-name">Wireless vs Wired Headsets</h3><p class="guide-desc">Comparing latency, battery life, and sound quality for gaming.</p></a>
-      <a class="guide-card" href="/gaming-dac-amp-guide"><span class="guide-emoji">🎧</span><h3 class="guide-name">Gaming DAC & AMP Guide</h3><p class="guide-desc">When your motherboard audio just isn't cutting it for your headphones.</p></a>
-      <a class="guide-card" href="/surround-sound-gaming"><span class="guide-emoji">🎧</span><h3 class="guide-name">Virtual Surround Sound in Gaming</h3><p class="guide-desc">Dolby Atmos, DTS:X, Windows Sonic, and the great stereo debate.</p></a>
-      <a class="guide-card" href="/headset-eq-guide"><span class="guide-emoji">🎧</span><h3 class="guide-name">Headset EQ Guide for Gaming</h3><p class="guide-desc">How to fix muddy audio and boost footsteps using software.</p></a>
-      <a class="guide-card" href="/headset-mic-vs-standalone"><span class="guide-emoji">🎙️</span><h3 class="guide-name">Headset Mic vs Standalone Microphone</h3><p class="guide-desc">Comparing audio quality for streaming, Discord, and content creation.</p></a>
-      <a class="guide-card" href="/network-optimization-guide"><span class="guide-emoji">🌐</span><h3 class="guide-name">Network Optimization Guide</h3><p class="guide-desc">Complete guide to optimizing your gaming network and fixing lag</p></a>
-      <a class="guide-card" href="/guide-fps-optimization"><span class="guide-emoji">🎯</span><h3 class="guide-name">Guide FPS Optimization</h3><p class="guide-desc">Step-by-step guide</p></a>
-      <a class="guide-card" href="/guide-mechanical-keyboards"><span class="guide-emoji">⌨️</span><h3 class="guide-name">Guide Mechanical Keyboards</h3><p class="guide-desc">Step-by-step guide</p></a>
-      <a class="guide-card" href="/guide-monitor-buying"><span class="guide-emoji">🖥️</span><h3 class="guide-name">Guide Monitor Buying</h3><p class="guide-desc">Step-by-step guide</p></a>
-      <a class="guide-card" href="/guide-mouse-grip"><span class="guide-emoji">🖱️</span><h3 class="guide-name">Guide Mouse Grip</h3><p class="guide-desc">Step-by-step guide</p></a>
-      <a class="guide-card" href="/guide-streaming-setup"><span class="guide-emoji">📺</span><h3 class="guide-name">Guide Streaming Setup</h3><p class="guide-desc">Step-by-step guide</p></a>
-    </div>
-  </div>
-
-  <!-- Lists -->
-  <div class="section-container" id="lists">
-    <div class="section-header">
-      <span class="section-tag">📋 LISTS</span>
-      <h2 class="section-title">Curated Lists</h2>
-      <p class="section-sub">The best tools, products, and resources.</p>
-    </div>
-    <div class="lists-grid">
-      <a class="list-card" href="/best-fps-mouse"><span class="list-emoji">🖱️</span><h3 class="list-name">Best FPS Mouse</h3><p class="list-desc">Best FPS mice — lightweight, fast sensors, Razer Viper, Superlight.</p></a>
-      <a class="list-card" href="/best-wireless-gaming-mouse"><span class="list-emoji">🖱️</span><h3 class="list-name">Best Wireless Gaming Mouse</h3><p class="list-desc">Best wireless gaming mice — latency, battery, weight comparison.</p></a>
-      <a class="list-card" href="/best-budget-gaming-headset"><span class="list-emoji">🎧</span><h3 class="list-name">Best Budget Gaming Headsets</h3><p class="list-desc">Great audio doesn't have to ruin your wallet. Top picks under $50.</p></a>
-      <a class="list-card" href="/best-competitive-headset"><span class="list-emoji">🎧</span><h3 class="list-name">Best Competitive FPS Headsets</h3><p class="list-desc">Focus on imaging and soundstage for Valorant, CS2, and Apex Legends.</p></a>
-      <a class="list-card" href="/list-discord-bots"><span class="list-emoji">💬</span><h3 class="list-name">List Discord Bots</h3><p class="list-desc">Curated comparison and rankings</p></a>
-      <a class="list-card" href="/list-free-games"><span class="list-emoji">📋</span><h3 class="list-name">List Free Games</h3><p class="list-desc">Curated comparison and rankings</p></a>
-      <a class="list-card" href="/list-game-engines"><span class="list-emoji">📋</span><h3 class="list-name">List Game Engines</h3><p class="list-desc">Curated comparison and rankings</p></a>
-      <a class="list-card" href="/list-gaming-headsets"><span class="list-emoji">🎮</span><h3 class="list-name">List Gaming Headsets</h3><p class="list-desc">Curated comparison and rankings</p></a>
-      <a class="list-card" href="/list-gaming-mice"><span class="list-emoji">🎮</span><h3 class="list-name">List Gaming Mice</h3><p class="list-desc">Curated comparison and rankings</p></a>
-      <a class="tool-card" href="/bandwidth-calculator"><span class="tool-emoji">📊</span><h3 class="tool-name">Bandwidth Calculator</h3><p class="tool-desc">Calculate required internet speed</p></a>
-      <a class="tool-card" href="/dns-optimizer"><span class="tool-emoji">🌍</span><h3 class="tool-name">DNS Optimizer</h3><p class="tool-desc">Test and find the fastest gaming DNS</p></a>
-      <a class="tool-card" href="/lag-troubleshooter"><span class="tool-emoji">🔍</span><h3 class="tool-name">Lag Troubleshooter</h3><p class="tool-desc">Interactive diagnostic decision tree</p></a>
-      <a class="tool-card" href="/ping-test-tool"><span class="tool-emoji">📶</span><h3 class="tool-name">Ping Test Tool</h3><p class="tool-desc">Interactive ping simulator and analyzer</p></a>
-      <a class="tool-card" href="/port-forwarding-guide"><span class="tool-emoji">🚪</span><h3 class="tool-name">Port Forwarding Guide</h3><p class="tool-desc">Find TCP/UDP ports for top games</p></a>
-      <a class="tool-card" href="/router-settings-guide"><span class="tool-emoji">🛜</span><h3 class="tool-name">Router Settings Guide</h3><p class="tool-desc">Optimal router configuration for gaming</p></a>
-      <a class="tool-card" href="/vpn-gaming-guide"><span class="tool-emoji">🛡️</span><h3 class="tool-name">Gaming VPN Guide</h3><p class="tool-desc">When to use a VPN and split tunneling</p></a>
-      <a class="tool-card" href="/wifi-vs-ethernet-gaming"><span class="tool-emoji">🔌</span><h3 class="tool-name">WiFi vs Ethernet</h3><p class="tool-desc">Latency comparison and network quiz</p></a>
-    </div>
-  </div>
+  <style is:inline>
+    .hero { text-align: center; padding: 4rem 1.5rem 3rem; }
+    .hero h1 { font-size: 2.5rem; font-weight: 800; margin-bottom: 0.5rem; }
+    .hero p { color: var(--text-secondary); font-size: 1.1rem; }
+    
+    .section-container { max-width: 1100px; margin: 0 auto 3rem; padding: 0 1.5rem; }
+    .section-header { text-align: center; margin-bottom: 2rem; }
+    .section-tag { display: inline-block; background: color-mix(in srgb, var(--accent-color) 10%, transparent); color: var(--accent-color); font-size: .7rem; font-weight: 800; padding: 6px 16px; border-radius: 20px; letter-spacing: 1px; margin-bottom: 12px; }
+    .section-title { font-size: 1.6rem; font-weight: 800; margin-bottom: 0.5rem; }
+    .section-sub { color: var(--text-secondary); font-size: 0.95rem; }
+    
+    .tools-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; }
+    .tool-card { display: block; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.25rem; text-decoration: none; color: inherit; transition: border-color 0.2s, transform 0.2s; }
+    .tool-card:hover { border-color: var(--accent-color); transform: translateY(-2px); }
+    .tool-emoji { font-size: 1.5rem; display: block; margin-bottom: 0.5rem; }
+    .tool-name { font-size: 1rem; font-weight: 700; margin-bottom: 0.35rem; line-height: 1.3; }
+    .tool-desc { font-size: 0.85rem; color: var(--text-secondary); line-height: 1.4; margin: 0; }
+    
+    .studies-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.25rem; }
+    .study-card { display: block; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem; text-decoration: none; color: inherit; transition: border-color 0.2s, transform 0.2s; }
+    .study-card:hover { border-color: var(--accent-color); transform: translateY(-2px); }
+    .study-stat { margin-bottom: 0.75rem; }
+    .stat-value { font-size: 2rem; font-weight: 800; color: var(--accent-color); display: block; }
+    .stat-label { font-size: 0.8rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; }
+    .study-name { font-size: 1.1rem; font-weight: 700; margin-bottom: 0.5rem; }
+    .study-desc { font-size: 0.85rem; color: var(--text-secondary); line-height: 1.5; margin: 0; }
+    
+    @media (max-width: 640px) {
+      .hero h1 { font-size: 1.8rem; }
+      .tools-grid, .studies-grid { grid-template-columns: 1fr; }
+    }
+  </style>
 </SiteLayout>
-
-<style>
-  .hero { text-align: center; padding: 100px 24px 70px; position: relative; }
-  .hero::before { content: ""; position: absolute; inset: 0; background: radial-gradient(circle at 50% 40%, color-mix(in srgb, var(--accent-color) 8%, transparent) 0%, transparent 60%); }
-  .hero-content { position: relative; z-index: 1; }
-  .hero .tagline { color: var(--accent-color); font-size: .85rem; font-weight: 700; letter-spacing: 3px; text-transform: uppercase; margin-bottom: 16px; }
-  .hero h1 { font-size: 3rem; font-weight: 900; letter-spacing: -1.5px; margin-bottom: 20px; background: linear-gradient(135deg, #fff, var(--accent-color)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; text-align: left; }
-  .hero p { color: #5a6a80; font-size: 1.05rem; max-width: 540px; margin: 0 auto; }
-  .section-container { max-width: 1200px; margin: 0 auto; padding: 60px 24px; }
-  .section-header { text-align: center; margin-bottom: 40px; }
-  .section-tag { display: inline-block; background: color-mix(in srgb, var(--accent-color) 10%, transparent); color: var(--accent-color); font-size: .7rem; font-weight: 800; padding: 6px 16px; border-radius: 20px; letter-spacing: 1px; margin-bottom: 12px; }
-  .section-title { font-size: 2.2rem; font-weight: 900; color: #fff; margin-bottom: 8px; letter-spacing: -.8px; }
-  .section-sub { color: #5a6a80; font-size: 1rem; }
-  .tools-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
-  .tool-card { background: #0c1218; border: 1px solid #1a2230; border-radius: 12px; padding: 20px; text-decoration: none; color: inherit; display: block; transition: all .2s ease; }
-  .tool-card:hover { border-color: var(--accent-color); transform: translateY(-2px); }
-  .tool-emoji { font-size: 1.4rem; margin-bottom: 8px; display: block; }
-  .tool-name { font-size: .95rem; font-weight: 700; color: #e0e8f0; margin-bottom: 6px; }
-  .tool-desc { font-size: .8rem; color: #6a7a90; line-height: 1.4; }
-  .guides-grid, .lists-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px; }
-  .guide-card, .list-card { background: #0c1218; border: 1px solid #1a2230; border-radius: 14px; padding: 24px 20px; text-decoration: none; color: inherit; display: block; transition: all .2s ease; }
-  .guide-card:hover, .list-card:hover { border-color: var(--accent-color); transform: translateY(-2px); }
-  .guide-emoji, .list-emoji { font-size: 1.5rem; margin-bottom: 10px; display: block; }
-  .guide-name, .list-name { font-size: 1rem; font-weight: 700; color: #e0e8f0; margin-bottom: 6px; }
-  .guide-desc, .list-desc { font-size: .85rem; color: #6a7a90; line-height: 1.4; }
-  @media (max-width: 768px) {
-    .hero h1 { font-size: 2.2rem; }
-    .hero { padding: 70px 20px 50px; }
-    .section-container { padding: 40px 20px; }
-    .tools-grid, .guides-grid, .lists-grid { grid-template-columns: 1fr; }
-  }
-</style>
