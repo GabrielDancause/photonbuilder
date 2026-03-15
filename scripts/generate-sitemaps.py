@@ -22,7 +22,6 @@ CONFIG_PATH = PHOTON_DIR / "src" / "config" / "sites.ts"
 SITE_DOMAINS = {
     "28grams": "28grams.vip",
     "firemaths": "firemaths.info",
-    "hpv-research": "hpvresearch.com",
     "ijustwantto": "ijustwantto.live",
     "leeroyjenkins": "leeroyjenkins.quest",
     "migratingmammals": "migratingmammals.com",

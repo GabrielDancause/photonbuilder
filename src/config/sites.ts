@@ -125,21 +125,6 @@ export const sites: Record<string, SiteConfig> = {
     footer: { text: '© 2026 I Just Want To', gabVentures: true },
   },
 };
-sites['hpv-research'] = {
-  id: 'hpv-research',
-  name: 'HPV Research',
-  domain: 'hpvresearch.com',
-  accent: '#10b981',
-  theme: { bg: '#060a12', cardBg: '#0a1020', border: '#152040', textPrimary: '#c8d0de', textSecondary: '#5a6a80' },
-  gaId: 'G-CYV604162T',
-  nav: [
-    { label: 'Tools', href: '/#tools' },
-    { label: 'Studies', href: '/#studies' },
-    { label: 'Guides', href: '/#guides' },
-      { label: 'Roadmap', href: '/coming-soon' },
-  ],
-  footer: { text: '© 2026 HPV Research', gabVentures: true },
-};
 
 sites['health'] = {
   id: 'health',
