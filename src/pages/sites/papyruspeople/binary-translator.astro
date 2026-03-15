@@ -1,0 +1,217 @@
+---
+import SiteLayout from '../../../layouts/SiteLayout.astro';
+
+export const meta = {
+  title: 'Binary Translator',
+  description: 'Translate text to binary and binary to text instantly with character-by-character breakdown.',
+  category: 'tool',
+  published: '2026-03-24'
+};
+
+const SITE_ID = 'papyruspeople';
+
+const schema = [{
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "Binary Translator",
+  "description": "Translate text to binary and binary to text instantly with character-by-character breakdown.",
+  "applicationCategory": "UtilityApplication",
+  "operatingSystem": "All"
+}];
+---
+
+<SiteLayout
+  site={SITE_ID}
+  title={meta.title}
+  description={meta.description}
+  schema={schema}
+>
+  <div class="page-content">
+    <div class="hero">
+      <h1>Binary Translator</h1>
+      <p>Convert plain text to binary code or binary code back to text instantly.</p>
+    </div>
+
+    <div class="tool-container card">
+      <div class="input-group">
+        <label for="text-input">Text</label>
+        <textarea id="text-input" placeholder="Type plain text here to convert to binary..." rows="4"></textarea>
+        <div class="actions">
+          <button id="copy-text-btn" class="copy-btn">Copy Text</button>
+        </div>
+      </div>
+
+      <div class="swap-icon">
+        <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M7 16V4M7 4L3 8M7 4L11 8M17 8v12M17 20l4-4M17 20l-4-4"/></svg>
+      </div>
+
+      <div class="input-group">
+        <label for="binary-input">Binary</label>
+        <textarea id="binary-input" placeholder="Type binary code here (e.g. 01001000 01101001) to convert to text..." rows="4"></textarea>
+        <div class="actions">
+          <button id="copy-binary-btn" class="copy-btn">Copy Binary</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="breakdown-container card" id="breakdown-container" style="display: none;">
+      <h2>Character Breakdown</h2>
+      <div id="breakdown-list" class="breakdown-list"></div>
+    </div>
+  </div>
+
+  <script is:inline>
+    document.addEventListener('DOMContentLoaded', () => {
+      const textInput = document.getElementById('text-input');
+      const binaryInput = document.getElementById('binary-input');
+      const copyTextBtn = document.getElementById('copy-text-btn');
+      const copyBinaryBtn = document.getElementById('copy-binary-btn');
+      const breakdownContainer = document.getElementById('breakdown-container');
+      const breakdownList = document.getElementById('breakdown-list');
+
+      function textToBinary(text) {
+        if (!text) return '';
+        const encoder = new TextEncoder();
+        const bytes = encoder.encode(text);
+        return Array.from(bytes).map(b => b.toString(2).padStart(8, '0')).join(' ');
+      }
+
+      function binaryToText(binary) {
+        const cleaned = binary.replace(/[^01\s]/g, '');
+        const byteStrings = cleaned.split(/\s+/).filter(b => b.length > 0);
+        const bytes = new Uint8Array(byteStrings.length);
+        for (let i = 0; i < byteStrings.length; i++) {
+          const num = parseInt(byteStrings[i], 2);
+          if (!isNaN(num)) bytes[i] = num;
+        }
+        const decoder = new TextDecoder('utf-8', { fatal: false });
+        try {
+          return decoder.decode(bytes);
+        } catch(e) {
+          return '';
+        }
+      }
+
+      function updateBreakdown(text) {
+        if (!text) {
+          breakdownContainer.style.display = 'none';
+          return;
+        }
+
+        breakdownContainer.style.display = 'block';
+        breakdownList.innerHTML = '';
+
+        // Split text by characters (supporting surrogate pairs)
+        Array.from(text).forEach(char => {
+          const encoder = new TextEncoder();
+          const bytes = encoder.encode(char);
+
+          const binaryStr = Array.from(bytes).map(b => b.toString(2).padStart(8, '0')).join(' ');
+          const decimalStr = Array.from(bytes).join(' ');
+
+          const item = document.createElement('div');
+          item.className = 'breakdown-item';
+
+          let displayChar = char;
+          if (char === ' ') displayChar = '[space]';
+          else if (char === '\\n') displayChar = '[newline]';
+          else if (char === '\\t') displayChar = '[tab]';
+
+          const charDiv = document.createElement('div');
+          charDiv.className = 'bd-char';
+          charDiv.textContent = displayChar;
+
+          const detailsDiv = document.createElement('div');
+          detailsDiv.className = 'bd-details';
+
+          const binSpan = document.createElement('span');
+          binSpan.className = 'bd-bin';
+          binSpan.textContent = binaryStr;
+
+          const decSpan = document.createElement('span');
+          decSpan.className = 'bd-dec';
+          decSpan.textContent = 'Dec: ' + decimalStr;
+
+          detailsDiv.appendChild(binSpan);
+          detailsDiv.appendChild(decSpan);
+
+          item.appendChild(charDiv);
+          item.appendChild(detailsDiv);
+
+          breakdownList.appendChild(item);
+        });
+      }
+
+      let isUpdating = false;
+
+      textInput.addEventListener('input', () => {
+        if (isUpdating) return;
+        isUpdating = true;
+
+        const text = textInput.value;
+        binaryInput.value = textToBinary(text);
+        updateBreakdown(text);
+
+        isUpdating = false;
+      });
+
+      binaryInput.addEventListener('input', () => {
+        if (isUpdating) return;
+        isUpdating = true;
+
+        const binary = binaryInput.value;
+        const text = binaryToText(binary);
+        textInput.value = text;
+        updateBreakdown(text);
+
+        isUpdating = false;
+      });
+
+      function copyToClipboard(element, button) {
+        navigator.clipboard.writeText(element.value).then(() => {
+          const originalText = button.textContent;
+          button.textContent = 'Copied!';
+          button.classList.add('copied');
+          setTimeout(() => {
+            button.textContent = originalText;
+            button.classList.remove('copied');
+          }, 2000);
+        });
+      }
+
+      copyTextBtn.addEventListener('click', () => copyToClipboard(textInput, copyTextBtn));
+      copyBinaryBtn.addEventListener('click', () => copyToClipboard(binaryInput, copyBinaryBtn));
+    });
+  </script>
+
+  <style is:inline>
+    .page-content { max-width: 800px; margin: 0 auto; padding: 2rem 1.5rem; }
+    .hero { text-align: center; margin-bottom: 2.5rem; }
+    .hero h1 { font-size: 2.5rem; font-weight: 800; margin-bottom: 0.5rem; color: var(--text-primary); }
+    .hero p { color: var(--text-secondary); font-size: 1.1rem; }
+
+    .card { background: var(--card-bg); border: 1px solid var(--border-color, #2a2418); border-radius: 12px; padding: 2rem; }
+    .input-group { position: relative; }
+    .input-group label { display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--text-primary); }
+    textarea { width: 100%; padding: 1rem; padding-bottom: 3rem; border-radius: 8px; border: 1px solid var(--border-color, #2a2418); background: var(--bg-color, #0a0806); color: var(--text-primary); font-family: inherit; font-size: 1.1rem; resize: vertical; transition: border-color 0.2s; }
+    textarea:focus { outline: none; border-color: var(--accent-color, #D4A574); }
+
+    .actions { position: absolute; bottom: 0.75rem; right: 0.75rem; }
+    .copy-btn { background: var(--card-bg); border: 1px solid var(--border-color, #2a2418); color: var(--text-primary); padding: 0.4rem 1rem; border-radius: 6px; font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+    .copy-btn:hover { background: var(--accent-color, #D4A574); color: #000; border-color: var(--accent-color, #D4A574); }
+    .copy-btn.copied { background: #10B981; color: #fff; border-color: #10B981; }
+
+    .swap-icon { display: flex; justify-content: center; margin: 1.5rem 0; color: var(--text-secondary); }
+    .swap-icon svg { width: 32px; height: 32px; opacity: 0.5; }
+
+    .breakdown-container { margin-top: 2rem; }
+    .breakdown-container h2 { font-size: 1.2rem; margin-bottom: 1rem; border-bottom: 1px solid var(--border-color, #2a2418); padding-bottom: 0.5rem; color: var(--text-primary); }
+
+    .breakdown-list { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem; }
+    .breakdown-item { display: flex; align-items: center; gap: 1rem; background: var(--bg-color, #0a0806); border: 1px solid var(--border-color, #2a2418); padding: 0.75rem 1rem; border-radius: 8px; }
+    .bd-char { font-size: 1.5rem; font-weight: 700; color: var(--accent-color, #D4A574); min-width: 2rem; text-align: center; }
+    .bd-details { display: flex; flex-direction: column; }
+    .bd-bin { font-family: monospace; font-size: 1rem; color: var(--text-primary); }
+    .bd-dec { font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.05em; }
+  </style>
+</SiteLayout>
