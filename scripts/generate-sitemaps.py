@@ -25,19 +25,21 @@ SITE_DOMAINS = {
     "ijustwantto": "ijustwantto.live",
     "leeroyjenkins": "leeroyjenkins.quest",
     "migratingmammals": "migratingmammals.com",
-    "montrealjobs": "montrealjobs.ca",
     "nookienook": "nookienook.com",
     "siliconbased": "siliconbased.dev",
     "westmount": "westmountfundamentals.com",
+    "bodycount": "photonbuilder.com",
     "sendnerds": "photonbuilder.com",
+    "justonemoment": "photonbuilder.com",
+    "getthebag": "photonbuilder.com",
     "fixitwithducttape": "photonbuilder.com",
     "papyruspeople": "photonbuilder.com",
     "eeniemeenie": "photonbuilder.com",
     "pleasestartplease": "photonbuilder.com",
-    "misc": "photonbuilder.com",
-    "justonemoment": "photonbuilder.com",
-    "bodycount": "health.example.com",
 }
+
+SUB_SITES = {"bodycount", "sendnerds", "justonemoment", "getthebag",
+             "fixitwithducttape", "papyruspeople", "eeniemeenie", "pleasestartplease"}
 
 TODAY = datetime.now().strftime("%Y-%m-%d")
 
@@ -54,9 +56,15 @@ def generate_sitemap(site_id):
     for page in pages:
         slug = page.stem
         if slug == "index":
-            urls.append(f"https://{domain}/")
+            if site_id in SUB_SITES:
+                urls.append(f"https://{domain}/{site_id}/")
+            else:
+                urls.append(f"https://{domain}/")
         else:
-            urls.append(f"https://{domain}/{slug}")
+            if site_id in SUB_SITES:
+                urls.append(f"https://{domain}/{site_id}/{slug}")
+            else:
+                urls.append(f"https://{domain}/{slug}")
 
     # Build XML
     xml_lines = [
@@ -95,7 +103,7 @@ def generate_robots_txt(site_id):
         f"User-agent: *\n"
         f"Allow: /\n"
         f"\n"
-        f"Sitemap: https://{domain}/sitemap.xml\n"
+        f"Sitemap: https://{domain}/{site_id}/sitemap.xml\n" if site_id in SUB_SITES else f"Sitemap: https://{domain}/sitemap.xml\n"
     )
 
 
