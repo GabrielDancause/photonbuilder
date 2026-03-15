@@ -29,6 +29,7 @@ export const sites: Record<string, SiteConfig> = {
       { label: 'Tools', href: '/#tools' },
       { label: 'Studies', href: '/#studies' },
       { label: 'Guides', href: '/#guides' },
+      { label: 'Roadmap', href: '/coming-soon' },
     ],
     footer: { text: '© 2026 Fire Maths', gabVentures: true },
   },
@@ -44,6 +45,7 @@ export const sites: Record<string, SiteConfig> = {
       { label: 'Tools', href: '/#tools' },
       { label: 'Guides', href: '/#guides' },
       { label: 'Lists', href: '/#lists' },
+      { label: 'Roadmap', href: '/coming-soon' },
     ],
     footer: { text: '© 2026 Westmount Fundamentals', gabVentures: true },
   },
@@ -58,6 +60,7 @@ export const sites: Record<string, SiteConfig> = {
       { label: 'Tools', href: '/#tools' },
       { label: 'Studies', href: '/#studies' },
       { label: 'Guides', href: '/#guides' },
+      { label: 'Roadmap', href: '/coming-soon' },
     ],
     footer: { text: '© 2026 Silicon Based', gabVentures: true },
   },
@@ -72,6 +75,7 @@ export const sites: Record<string, SiteConfig> = {
       { label: 'Tools', href: '/#tools' },
       { label: 'Guides', href: '/#guides' },
       { label: 'Lists', href: '/#lists' },
+      { label: 'Roadmap', href: '/coming-soon' },
     ],
     footer: { text: '© 2026 28 Grams', gabVentures: true },
   },
@@ -86,6 +90,7 @@ export const sites: Record<string, SiteConfig> = {
       { label: 'Tools', href: '/#tools' },
       { label: 'Guides', href: '/#guides' },
       { label: 'Lists', href: '/#lists' },
+      { label: 'Roadmap', href: '/coming-soon' },
     ],
     footer: { text: '© 2026 Migrating Mammals', gabVentures: true },
   },
@@ -100,6 +105,7 @@ export const sites: Record<string, SiteConfig> = {
       { label: 'Tools', href: '/#tools' },
       { label: 'Guides', href: '/#guides' },
       { label: 'Lists', href: '/#lists' },
+      { label: 'Roadmap', href: '/coming-soon' },
     ],
     footer: { text: '© 2026 Leeroy Jenkins', gabVentures: true },
   },
@@ -114,6 +120,7 @@ export const sites: Record<string, SiteConfig> = {
       { label: 'Tools', href: '/#tools' },
       { label: 'Guides', href: '/#guides' },
       { label: 'Lists', href: '/#lists' },
+      { label: 'Roadmap', href: '/coming-soon' },
     ],
     footer: { text: '© 2026 I Just Want To', gabVentures: true },
   },
@@ -129,6 +136,7 @@ sites['hpv-research'] = {
     { label: 'Tools', href: '/#tools' },
     { label: 'Studies', href: '/#studies' },
     { label: 'Guides', href: '/#guides' },
+      { label: 'Roadmap', href: '/coming-soon' },
   ],
   footer: { text: '© 2026 HPV Research', gabVentures: true },
 };
@@ -161,6 +169,7 @@ sites['health'] = {
     { label: 'Studies', href: '/health/#studies' },
     { label: 'Guides', href: '/health/#guides' },
     { label: 'Lists', href: '/health/#lists' },
+      { label: 'Roadmap', href: '/health/coming-soon' },
   ],
   footer: { text: '© 2026 Health Tools', gabVentures: true },
 };
@@ -176,6 +185,7 @@ sites['nookienook'] = {
     { label: 'Guides', href: '/#guides' },
     { label: 'Tools', href: '/#tools' },
     { label: 'Studies', href: '/#studies' },
+      { label: 'Roadmap', href: '/coming-soon' },
   ],
   footer: { text: '© 2026 The Nookie Nook · Educational content only. Not medical advice.', gabVentures: true },
 };
@@ -205,6 +215,7 @@ sites['mathtools'] = {
   nav: [
     { label: 'Calculators', href: '/mathtools/#tools' },
     { label: 'Guides', href: '/mathtools/#guides' },
+      { label: 'Roadmap', href: '/mathtools/coming-soon' },
   ],
   footer: { text: '© 2026 Math Tools', gabVentures: true },
 };
@@ -234,6 +245,7 @@ sites['justonemoment'] = {
   nav: [
     { label: 'Timers', href: '/justonemoment/#tools' },
     { label: 'Calculators', href: '/justonemoment/#calculators' },
+      { label: 'Roadmap', href: '/justonemoment/coming-soon' },
   ],
   footer: { text: '© 2026 Just One Moment', gabVentures: true },
 };
