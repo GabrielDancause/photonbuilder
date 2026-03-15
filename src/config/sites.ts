@@ -174,19 +174,19 @@ sites['nookienook'] = {
   footer: { text: '© 2026 The Nookie Nook · Educational content only. Not medical advice.', gabVentures: true },
 };
 
-sites['montrealjobs'] = {
-  id: 'montrealjobs',
-  name: 'Montreal Jobs',
-  domain: 'montrealjobs.photonbuilder.com',
+sites['getthebag'] = {
+  id: 'getthebag',
+  name: 'Get The Bag',
+  domain: 'photonbuilder.com',
   accent: '#3B82F6',
   theme: { bg: '#060a12', cardBg: '#0a1020', border: '#152040', textPrimary: '#e2e8f0', textSecondary: '#94a3b8' },
   gaId: 'G-CYV604162T',
   nav: [
-    { label: 'Market', href: '/#market' },
-    { label: 'Jobs', href: '/#jobs' },
-    { label: 'Skills', href: '/#skills' },
+    { label: 'Tools', href: '/getthebag/#tools' },
+    { label: 'Guides', href: '/getthebag/#guides' },
+    { label: 'Roadmap', href: '/getthebag/coming-soon' },
   ],
-  footer: { text: '© 2026 Montreal Jobs', gabVentures: true },
+  footer: { text: '© 2026 Get The Bag', gabVentures: true },
 };
 
 sites['mathtools'] = {
@@ -202,21 +202,6 @@ sites['mathtools'] = {
       { label: 'Roadmap', href: '/mathtools/coming-soon' },
   ],
   footer: { text: '© 2026 Math Tools', gabVentures: true },
-};
-
-sites['misc'] = {
-  id: 'misc',
-  name: 'Misc Tools',
-  domain: 'photonbuilder.com',
-  accent: '#8B5CF6',
-  theme: { bg: '#060812', cardBg: '#0a1020', border: '#152040', textPrimary: '#e2e8f0', textSecondary: '#94a3b8' },
-  gaId: 'G-CYV604162T',
-  nav: [
-    { label: 'Tools', href: '/misc/#tools' },
-    { label: 'Guides', href: '/misc/#guides' },
-    { label: 'Lists', href: '/misc/#lists' },
-  ],
-  footer: { text: '© 2026 Misc Tools', gabVentures: true },
 };
 
 sites['justonemoment'] = {
