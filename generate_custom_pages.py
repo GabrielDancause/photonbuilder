@@ -187,184 +187,188 @@ pages_config = [
     }
 ]
 
-for page in pages_config:
-    ticker = page['ticker']
-    t_data = data.get(ticker, {})
+def generate_pages():
+    for page in pages_config:
+        ticker = page['ticker']
+        t_data = data.get(ticker, {})
 
-    # EXACTLY sync JSON-LD schema with the HTML details blocks
-    schema = {
-        "@context": "https://schema.org",
-        "@type": ["Article", "FAQPage"],
-        "mainEntity": []
-    }
+        # EXACTLY sync JSON-LD schema with the HTML details blocks
+        schema = {
+            "@context": "https://schema.org",
+            "@type": ["Article", "FAQPage"],
+            "mainEntity": []
+        }
 
-    for q, a in page['faqs']:
-        schema["mainEntity"].append({
-            "@type": "Question",
-            "name": q,
-            "acceptedAnswer": {
-                "@type": "Answer",
-                "text": a
-            }
-        })
+        for q, a in page['faqs']:
+            schema["mainEntity"].append({
+                "@type": "Question",
+                "name": q,
+                "acceptedAnswer": {
+                    "@type": "Answer",
+                    "text": a
+                }
+            })
 
-    faqs_html = ""
-    for q, a in page['faqs']:
-        faqs_html += f"""
-      <details>
-        <summary>{q.title()}</summary>
-        <p>{a}</p>
-      </details>"""
+        faqs_html = ""
+        for q, a in page['faqs']:
+            faqs_html += f"""
+          <details>
+            <summary>{q.title()}</summary>
+            <p>{a}</p>
+          </details>"""
 
-    paragraphs_html = ""
-    for p in page['paragraphs']:
-        paragraphs_html += f"\n      <p>{p}</p>"
+        paragraphs_html = ""
+        for p in page['paragraphs']:
+            paragraphs_html += f"\n      <p>{p}</p>"
 
-    calc_annual_div = t_data.get('price', 100) * (t_data.get('yield', 0)/100)
+        calc_annual_div = t_data.get('price', 100) * (t_data.get('yield', 0)/100)
 
-    # Custom links block
-    links_html = ""
-    for link in page['internal_links']:
-        title_text = link.replace("/", "").replace("-", " ").title()
-        links_html += f"<a href=\"{link}\">{title_text}</a>, "
-    links_html = links_html.rstrip(", ")
+        # Custom links block
+        links_html = ""
+        for link in page['internal_links']:
+            title_text = link.replace("/", "").replace("-", " ").title()
+            links_html += f"<a href=\"{link}\">{title_text}</a>, "
+        links_html = links_html.rstrip(", ")
 
-    content = f"""---
-import SiteLayout from "../../../layouts/SiteLayout.astro";
+        content = f"""---
+    import SiteLayout from "../../../layouts/SiteLayout.astro";
 
-const schema = {json.dumps(schema, indent=2)};
+    const schema = {json.dumps(schema, indent=2)};
 
-export const meta = {{
-  title: "{page['title']}",
-  description: "{page['desc']}",
-  category: "tool",
-  published: "2026-03-15",
-}};
----
-<SiteLayout site="westmount" title="{page['title']}" description="{page['desc']}" canonical="https://westmountfundamentals.com/{page['slug']}" schema={{schema}}>
-  <div class="page-content">
-    <div class="hero">
-      <h1>{page['title']}</h1>
-      <p class="subtitle">A Deep Dive into Yield, Growth, and Payout Stability</p>
-    </div>
+    export const meta = {{
+      title: "{page['title']}",
+      description: "{page['desc']}",
+      category: "tool",
+      published: "2026-03-15",
+    }};
+    ---
+    <SiteLayout site="westmount" title="{page['title']}" description="{page['desc']}" canonical="https://westmountfundamentals.com/{page['slug']}" schema={{schema}}>
+      <div class="page-content">
+        <div class="hero">
+          <h1>{page['title']}</h1>
+          <p class="subtitle">A Deep Dive into Yield, Growth, and Payout Stability</p>
+        </div>
 
-    <section>
-      {paragraphs_html}
+        <section>
+          {paragraphs_html}
 
-      <h2>Current Dividend Yield & Payout Details</h2>
-      <p>Understanding the immediate income potential begins with its current yield. The yield represents the annual dividend income relative to the current share price. While market fluctuations cause this figure to move daily, tracking the average yield over time provides a more accurate picture of what an investor can expect. Furthermore, the payout frequency plays a significant role in how an investor manages their cash flow and plans their reinvestment strategies.</p>
+          <h2>Current Dividend Yield & Payout Details</h2>
+          <p>Understanding the immediate income potential begins with its current yield. The yield represents the annual dividend income relative to the current share price. While market fluctuations cause this figure to move daily, tracking the average yield over time provides a more accurate picture of what an investor can expect. Furthermore, the payout frequency plays a significant role in how an investor manages their cash flow and plans their reinvestment strategies.</p>
 
-      <div class="card">
-        <h3>Key Metrics</h3>
-        <ul>
-          <li><strong>Current Yield:</strong> {format_pct(t_data.get('yield'))}</li>
-          <li><strong>Price to Earnings (P/E):</strong> {t_data.get('pe') if t_data.get('pe') else 'N/A'}</li>
-          <li><strong>Assets Under Management (AUM):</strong> {format_large(t_data.get('aum'))}</li>
-          <li><strong>Current Price:</strong> {format_money(t_data.get('price'))}</li>
-        </ul>
+          <div class="card">
+            <h3>Key Metrics</h3>
+            <ul>
+              <li><strong>Current Yield:</strong> {format_pct(t_data.get('yield'))}</li>
+              <li><strong>Price to Earnings (P/E):</strong> {t_data.get('pe') if t_data.get('pe') else 'N/A'}</li>
+              <li><strong>Assets Under Management (AUM):</strong> {format_large(t_data.get('aum'))}</li>
+              <li><strong>Current Price:</strong> {format_money(t_data.get('price'))}</li>
+            </ul>
+          </div>
+
+          <h2>Historical Dividend Performance (5-Year Lookback)</h2>
+          <p>The true power lies not just in its starting yield, but in its ability to grow that payout over time. Let's examine the actual payouts from recent years to observe the trajectory of cash returned to shareholders. Historical performance is not a guarantee of future results, but it does serve as a powerful indicator of management's commitment to shareholder returns.</p>
+
+          <table>
+            <thead>
+              <tr>
+                <th>Year</th>
+                <th>Total Annual Amount (USD)</th>
+              </tr>
+            </thead>
+            <tbody>
+              {get_history_rows(ticker)}
+            </tbody>
+          </table>
+        </section>
+
+        <section>
+          <h2>Interactive Dividend Reinvestment Calculator</h2>
+          <p>To better visualize the income potential, use the calculator below. Input the number of shares you currently own (or plan to buy) to see your projected income. Dividend reinvestment is one of the most effective strategies for accelerating wealth creation. By automatically using your distributions to purchase additional shares, you increase your share count, which in turn increases your future dividend payments, creating a powerful snowball effect.</p>
+
+          <div class="card" id="calculator-card">
+            <h3>Income Projection Calculator</h3>
+            <div style="margin-bottom: 1rem;">
+              <label for="shares" style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Number of Shares Owned:</label>
+              <input type="number" id="shares" value="100" min="1" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-color); color: var(--text-primary); font-size: 1rem;">
+            </div>
+            <div style="margin-bottom: 1rem;">
+              <label for="estAnnualDiv" style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Estimated Annual Dividend per Share ($):</label>
+              <input type="number" id="estAnnualDiv" value="{format_money(calc_annual_div).replace('$', '').replace(',', '')}" step="0.01" min="0" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-color); color: var(--text-primary); font-size: 1rem;">
+            </div>
+            <button id="calcBtn" style="background: var(--accent-color); color: #fff; border: none; padding: 0.75rem 1.5rem; border-radius: 6px; font-weight: 600; cursor: pointer; width: 100%; font-size: 1rem;">Calculate Projected Income</button>
+
+            <div id="results" style="margin-top: 1.5rem; display: none; padding-top: 1.5rem; border-top: 1px solid var(--border-color);">
+              <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                <span>Projected Annual Income:</span>
+                <strong id="resAnnual" style="color: var(--accent-color); font-size: 1.2rem;">$0.00</strong>
+              </div>
+              <div style="display: flex; justify-content: space-between;">
+                <span>Average {'Monthly' if page['payout_freq'] == '12' else 'Quarterly'} Income:</span>
+                <strong id="resQuarterly">$0.00</strong>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section>
+          <h2>Comparison to Category Average</h2>
+          <p>When evaluated against its peers, this asset offers competitive metrics. Its sector breakdown provides a layer of diversification that can help mitigate risk, though investors should always assess how it fits within their broader portfolio strategy. No investment exists in a vacuum; understanding how an asset compares to the broader market and its direct competitors is essential for determining its relative value. Are you being adequately compensated for the risk you are taking compared to what you could earn in a standard index fund?</p>
+        </section>
+
+        <section>
+          <h2>Internal Links</h2>
+          <p>Explore more dividend strategies: {links_html}.</p>
+        </section>
+
+        <section class="faq-section">
+          <h2>Frequently Asked Questions</h2>
+          {faqs_html}
+        </section>
       </div>
 
-      <h2>Historical Dividend Performance (5-Year Lookback)</h2>
-      <p>The true power lies not just in its starting yield, but in its ability to grow that payout over time. Let's examine the actual payouts from recent years to observe the trajectory of cash returned to shareholders. Historical performance is not a guarantee of future results, but it does serve as a powerful indicator of management's commitment to shareholder returns.</p>
+      <script is:inline>
+        document.addEventListener('DOMContentLoaded', function() {{
+          const calcBtn = document.getElementById('calcBtn');
+          if(calcBtn) {{
+            calcBtn.addEventListener('click', function() {{
+              const shares = parseFloat(document.getElementById('shares').value) || 0;
+              const annualDiv = parseFloat(document.getElementById('estAnnualDiv').value) || 0;
 
-      <table>
-        <thead>
-          <tr>
-            <th>Year</th>
-            <th>Total Annual Amount (USD)</th>
-          </tr>
-        </thead>
-        <tbody>
-          {get_history_rows(ticker)}
-        </tbody>
-      </table>
-    </section>
+              const totalAnnual = shares * annualDiv;
+              const totalQuarterly = totalAnnual / {page['payout_freq']};
 
-    <section>
-      <h2>Interactive Dividend Reinvestment Calculator</h2>
-      <p>To better visualize the income potential, use the calculator below. Input the number of shares you currently own (or plan to buy) to see your projected income. Dividend reinvestment is one of the most effective strategies for accelerating wealth creation. By automatically using your distributions to purchase additional shares, you increase your share count, which in turn increases your future dividend payments, creating a powerful snowball effect.</p>
+              document.getElementById('resAnnual').textContent = '$' + totalAnnual.toLocaleString(undefined, {{minimumFractionDigits: 2, maximumFractionDigits: 2}});
+              document.getElementById('resQuarterly').textContent = '$' + totalQuarterly.toLocaleString(undefined, {{minimumFractionDigits: 2, maximumFractionDigits: 2}});
 
-      <div class="card" id="calculator-card">
-        <h3>Income Projection Calculator</h3>
-        <div style="margin-bottom: 1rem;">
-          <label for="shares" style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Number of Shares Owned:</label>
-          <input type="number" id="shares" value="100" min="1" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-color); color: var(--text-primary); font-size: 1rem;">
-        </div>
-        <div style="margin-bottom: 1rem;">
-          <label for="estAnnualDiv" style="display: block; font-weight: 600; margin-bottom: 0.5rem;">Estimated Annual Dividend per Share ($):</label>
-          <input type="number" id="estAnnualDiv" value="{format_money(calc_annual_div).replace('$', '').replace(',', '')}" step="0.01" min="0" style="width: 100%; padding: 0.75rem; border: 1px solid var(--border-color); border-radius: 6px; background: var(--bg-color); color: var(--text-primary); font-size: 1rem;">
-        </div>
-        <button id="calcBtn" style="background: var(--accent-color); color: #fff; border: none; padding: 0.75rem 1.5rem; border-radius: 6px; font-weight: 600; cursor: pointer; width: 100%; font-size: 1rem;">Calculate Projected Income</button>
-
-        <div id="results" style="margin-top: 1.5rem; display: none; padding-top: 1.5rem; border-top: 1px solid var(--border-color);">
-          <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
-            <span>Projected Annual Income:</span>
-            <strong id="resAnnual" style="color: var(--accent-color); font-size: 1.2rem;">$0.00</strong>
-          </div>
-          <div style="display: flex; justify-content: space-between;">
-            <span>Average {'Monthly' if page['payout_freq'] == '12' else 'Quarterly'} Income:</span>
-            <strong id="resQuarterly">$0.00</strong>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <section>
-      <h2>Comparison to Category Average</h2>
-      <p>When evaluated against its peers, this asset offers competitive metrics. Its sector breakdown provides a layer of diversification that can help mitigate risk, though investors should always assess how it fits within their broader portfolio strategy. No investment exists in a vacuum; understanding how an asset compares to the broader market and its direct competitors is essential for determining its relative value. Are you being adequately compensated for the risk you are taking compared to what you could earn in a standard index fund?</p>
-    </section>
-
-    <section>
-      <h2>Internal Links</h2>
-      <p>Explore more dividend strategies: {links_html}.</p>
-    </section>
-
-    <section class="faq-section">
-      <h2>Frequently Asked Questions</h2>
-      {faqs_html}
-    </section>
-  </div>
-
-  <script is:inline>
-    document.addEventListener('DOMContentLoaded', function() {{
-      const calcBtn = document.getElementById('calcBtn');
-      if(calcBtn) {{
-        calcBtn.addEventListener('click', function() {{
-          const shares = parseFloat(document.getElementById('shares').value) || 0;
-          const annualDiv = parseFloat(document.getElementById('estAnnualDiv').value) || 0;
-
-          const totalAnnual = shares * annualDiv;
-          const totalQuarterly = totalAnnual / {page['payout_freq']};
-
-          document.getElementById('resAnnual').textContent = '$' + totalAnnual.toLocaleString(undefined, {{minimumFractionDigits: 2, maximumFractionDigits: 2}});
-          document.getElementById('resQuarterly').textContent = '$' + totalQuarterly.toLocaleString(undefined, {{minimumFractionDigits: 2, maximumFractionDigits: 2}});
-
-          document.getElementById('results').style.display = 'block';
+              document.getElementById('results').style.display = 'block';
+            }});
+          }}
         }});
-      }}
-    }});
-  </script>
+      </script>
 
-  <style is:inline>
-    .page-content {{ max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem; }}
-    .hero {{ text-align: center; padding: 3rem 0 2rem; }}
-    .hero h1 {{ font-size: 2.2rem; font-weight: 800; margin-bottom: 0.5rem; }}
-    .subtitle {{ color: var(--text-secondary); font-size: 1.1rem; }}
-    .card {{ background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem; margin: 1.5rem 0; }}
-    table {{ width: 100%; border-collapse: collapse; margin: 1.5rem 0; }}
-    th, td {{ padding: 0.75rem 1rem; text-align: left; border-bottom: 1px solid var(--border-color); }}
-    th {{ font-weight: 600; color: var(--text-secondary); font-size: 0.85rem; text-transform: uppercase; }}
-    .faq-section details {{ margin: 1rem 0; padding: 1rem; background: var(--card-bg); border-radius: 8px; border: 1px solid var(--border-color); }}
-    .faq-section summary {{ font-weight: 600; cursor: pointer; }}
-    a {{ color: var(--accent-color); text-decoration: none; }}
-    a:hover {{ text-decoration: underline; }}
-    h2 {{ margin-top: 2rem; margin-bottom: 1rem; }}
-    p {{ line-height: 1.6; margin-bottom: 1rem; }}
-    ul {{ margin-bottom: 1rem; padding-left: 1.5rem; }}
-    li {{ margin-bottom: 0.5rem; }}
-  </style>
-</SiteLayout>
-"""
+      <style is:inline>
+        .page-content {{ max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem; }}
+        .hero {{ text-align: center; padding: 3rem 0 2rem; }}
+        .hero h1 {{ font-size: 2.2rem; font-weight: 800; margin-bottom: 0.5rem; }}
+        .subtitle {{ color: var(--text-secondary); font-size: 1.1rem; }}
+        .card {{ background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem; margin: 1.5rem 0; }}
+        table {{ width: 100%; border-collapse: collapse; margin: 1.5rem 0; }}
+        th, td {{ padding: 0.75rem 1rem; text-align: left; border-bottom: 1px solid var(--border-color); }}
+        th {{ font-weight: 600; color: var(--text-secondary); font-size: 0.85rem; text-transform: uppercase; }}
+        .faq-section details {{ margin: 1rem 0; padding: 1rem; background: var(--card-bg); border-radius: 8px; border: 1px solid var(--border-color); }}
+        .faq-section summary {{ font-weight: 600; cursor: pointer; }}
+        a {{ color: var(--accent-color); text-decoration: none; }}
+        a:hover {{ text-decoration: underline; }}
+        h2 {{ margin-top: 2rem; margin-bottom: 1rem; }}
+        p {{ line-height: 1.6; margin-bottom: 1rem; }}
+        ul {{ margin-bottom: 1rem; padding-left: 1.5rem; }}
+        li {{ margin-bottom: 0.5rem; }}
+      </style>
+    </SiteLayout>
+    """
 
-    with open(f"src/pages/sites/westmount/{page['filename']}", "w") as f:
-        f.write(content)
+        with open(f"src/pages/sites/westmount/{page['filename']}", "w") as f:
+            f.write(content)
+
+if __name__ == "__main__":
+    generate_pages()
