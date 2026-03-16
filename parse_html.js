@@ -49,9 +49,22 @@ function processFile(htmlPath, astroPath) {
   }
 
   // Handle { and } in body text for Astro, mostly in scripts but also inline HTML
-  // Actually replacing raw { with {"{"} isn't always easy if it's inside style or script.
-  // Astro <style> and <script is:inline> handles { naturally.
-  // We just need to make sure we escape any script tags.
+  // First, identify blocks we want to protect (scripts and styles)
+  const protectedBlocks = [];
+
+  // Replace <script>...</script> and <style>...</style> with placeholders
+  bodyContent = bodyContent.replace(/(<script\b[^>]*>[\s\S]*?<\/script>)|(<style\b[^>]*>[\s\S]*?<\/style>)/gi, (match) => {
+    protectedBlocks.push(match);
+    return `__PROTECTED_BLOCK_${protectedBlocks.length - 1}__`;
+  });
+
+  // Now replace { and } with escaped versions
+  bodyContent = bodyContent.replace(/\{/g, '&#123;').replace(/\}/g, '&#125;');
+
+  // Restore protected blocks
+  protectedBlocks.forEach((block, index) => {
+    bodyContent = bodyContent.replace(`__PROTECTED_BLOCK_${index}__`, () => block);
+  });
 
   // Generate astro component content
   let astroContent = `---
@@ -78,7 +91,6 @@ ${bodyContent}
   astroContent = astroContent.replace(/<script>/g, '<script is:inline>');
 
   // Fix the JSON example output if any page has raw { } not in script or style
-  // To avoid breaking valid astro, we'll let astro compile it first. If it complains, we will fix.
 
   // Make sure we create directories
   fs.mkdirSync(path.dirname(astroPath), { recursive: true });
