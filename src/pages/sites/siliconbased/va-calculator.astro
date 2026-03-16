@@ -1,0 +1,310 @@
+---
+import SiteLayout from "../../../layouts/SiteLayout.astro";
+
+export const meta = {
+  title: "VA Disability Calculator",
+  description: "Stop relying on confusing math. Calculate your exact combined VA disability rating and estimated 2024 monthly compensation with our interactive calculator.",
+  category: "tool",
+  published: "2026-03-15",
+};
+
+const schema = [
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "Why doesn't 50% plus 50% equal 100% in VA math?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Because the VA uses the \"Whole Person Theory.\" The first 50% is taken from a 100% healthy person, leaving them 50% healthy. The second 50% rating is applied only to the remaining 50% health. Half of 50 is 25. Therefore, 50% + 25% equals an exact combined rating of 75%, which rounds up to an 80% official rating."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Does a 95% rating round up to 100%?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes. Any exact combined rating that ends in a 5, 6, 7, 8, or 9 rounds up to the next highest 10. Therefore, an exact mathematical rating of 95% is officially rounded up to a 100% combined VA disability rating."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "What is the maximum VA disability rating?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "The maximum combined VA disability rating you can receive is 100%. Even if your individual ratings mathematically combine to over 100% under VA math, your compensation caps at the 100% rate. The only exception is Special Monthly Compensation (SMC) for specific severe circumstances."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Do I get extra money for my spouse or children?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes, but only if your combined disability rating is 30% or higher. If you are rated at 0%, 10%, or 20%, you receive the single veteran base rate regardless of how many dependents you have."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How often do VA disability compensation rates increase?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "VA disability compensation rates generally increase once a year, effective December 1st. The increase is tied to the Social Security Administration's Cost of Living Adjustment (COLA), which is based on national inflation metrics."
+        }
+      }
+    ]
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": meta.title,
+    "description": meta.description,
+    "datePublished": meta.published,
+    "author": {
+      "@type": "Organization",
+      "name": "SiliconBased"
+    }
+  }
+];
+---
+
+<SiteLayout site="siliconbased" title={meta.title} description={meta.description} canonical="https://siliconbased.dev/va-calculator" schema={schema}>
+  <div class="page-content">
+    <div class="hero">
+      <h1>VA Disability Rating Calculator</h1>
+      <p class="subtitle">Calculate your combined VA rating and estimated monthly compensation using official VA Math.</p>
+    </div>
+
+    <div class="calculator-container">
+      <div style="margin-bottom: 1.5rem;">
+        <label for="marital-status" style="display:block; font-weight:600; margin-bottom:0.5rem;">Marital Status</label>
+        <select id="marital-status">
+          <option value="single">Veteran Alone</option>
+          <option value="spouse">Veteran with Spouse</option>
+          <option value="child">Veteran with 1 Child</option>
+          <option value="spouse-child">Veteran with Spouse & 1 Child</option>
+        </select>
+      </div>
+
+      <p style="font-weight:600; margin-bottom:1rem;">Enter Individual Disability Ratings</p>
+      <div class="ratings-list" id="ratings-container">
+        <!-- JS will inject up to 6 select rows here -->
+      </div>
+
+      <button id="add-rating-btn" style="background: transparent; color: var(--accent-color); border: 2px dashed var(--accent-color); margin-bottom: 2rem; width: 100%;">+ Add Another Rating</button>
+
+      <div class="result-card" id="va-result" style="display: none;">
+        <h3 style="margin-top:0; font-size:1.2rem; color:var(--text-secondary);">Combined VA Rating</h3>
+        <div class="result-value" id="combined-rating-value" style="font-size: 3rem;"></div>
+        <p id="exact-rating-detail" style="margin-top: 0.5rem; color: var(--text-secondary);"></p>
+
+        <div style="margin-top: 1.5rem; padding-top: 1.5rem; border-top: 1px solid color-mix(in srgb, var(--accent-color) 30%, transparent);">
+          <h4 style="margin: 0 0 0.5rem 0; color: var(--text-secondary);">Estimated Monthly Compensation (2024 Rates)</h4>
+          <div id="est-compensation" style="font-size: 2rem; font-weight: 700; color: var(--text-primary);"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="explainer">
+      <h2>Understanding VA Math: How Disability Ratings are Combined</h2>
+      <p>When you have multiple service-connected disabilities, the Department of Veterans Affairs (VA) does not simply add your individual ratings together. For example, if you have a 50% rating for PTSD and a 30% rating for a back injury, your combined rating is not 80%. Instead, the VA uses a unique formula—commonly referred to as "VA Math"—to calculate your combined disability rating.</p>
+
+      <p>The core concept behind VA Math is the "Whole Person Theory." The VA assumes that a person starts at 100% efficiency. When a disability is applied, it is subtracted from your remaining efficiency, not your total efficiency. This means that as your rating gets higher, each subsequent disability adds less to your combined total.</p>
+
+      <h3>Step-by-Step Methodology of the Calculator</h3>
+      <p>Our interactive VA Calculator exactly mirrors the official process used by the VA to determine combined ratings. Here is the step-by-step methodology running under the hood:</p>
+
+      <ol>
+        <li><strong>Sort from Highest to Lowest:</strong> The calculator first takes all your individual disability ratings and sorts them from the highest percentage to the lowest. This is the official starting point for VA Math.</li>
+        <li><strong>Calculate the First Rating:</strong> You start with a 100% efficient person. If your highest rating is 50%, you subtract 50% from 100%. This leaves you with an efficiency of 50%. The disabled portion is 50%.</li>
+        <li><strong>Calculate the Second Rating:</strong> If your next rating is 30%, you do not subtract 30% from the whole person. Instead, you subtract 30% of your <em>remaining efficiency</em> (which is 50%). So, 30% of 50 is 15. Your total disabled portion becomes 50 + 15 = 65. Your remaining efficiency drops to 35%.</li>
+        <li><strong>Repeat for All Ratings:</strong> This process of multiplying the next rating by the remaining efficiency and adding it to the disabled total is repeated for every individual rating you input.</li>
+        <li><strong>Round to the Nearest 10:</strong> Once all calculations are complete, the exact combined percentage (e.g., 65%) is rounded to the nearest multiple of 10. A 65% rounds up to a 70% official VA combined rating. If the exact number was 64%, it would round down to 60%.</li>
+      </ol>
+
+      <p>Because the math is exponential and based on remaining efficiency, reaching a 100% combined rating requires significantly more individual ratings than simple addition would suggest. For example, to get from 90% to 100% combined rating, you essentially need an additional 50% standalone rating to cover the final 10% gap in efficiency.</p>
+
+      <h3>2024 VA Compensation Rates</h3>
+      <p>Once the combined rating is established, it corresponds to a specific monthly compensation amount. The VA updates these base rates annually to reflect the Cost of Living Adjustment (COLA). For 2024, the COLA increase was 3.2%.</p>
+
+      <p>Our calculator automatically looks up the 2024 compensation table based on your combined rating and your marital status. Having dependents (a spouse, children, or dependent parents) increases your monthly compensation rate for ratings of 30% or higher. For example, a single veteran at 100% disability in 2024 receives $3,737.85 per month, whereas a veteran at 100% with a spouse and one child receives $4,098.87 per month. Please note that our calculator provides estimates based on standard dependent scenarios; exact amounts may vary slightly if you have additional children or dependent parents.</p>
+
+      <h3>Bilateral Factor Considerations</h3>
+      <p>It is important to note that our basic calculator currently handles standard combined ratings. The VA also employs a "Bilateral Factor" rule. If you have disabilities that affect both arms, both legs, or paired skeletal muscles, the VA adds a 10% bonus to the combined value of those specific bilateral conditions <em>before</em> applying them to the rest of your ratings. If you have bilateral conditions, your actual rating may be slightly higher than what a standard calculator produces.</p>
+
+      <h3>Check Out Our Other Tools</h3>
+      <p>Staying active can be an important part of managing service-connected physical and mental conditions. If you're looking for tech to track your health metrics, be sure to use our <a href="/best-fitness-tracker">Best Fitness Tracker Matcher</a> to find a wearable that fits your budget and specific health goals.</p>
+    </div>
+
+    <section class="faq-section">
+      <h2>Frequently Asked Questions</h2>
+      <details>
+        <summary>Why doesn't 50% plus 50% equal 100% in VA math?</summary>
+        <p>Because the VA uses the "Whole Person Theory." The first 50% is taken from a 100% healthy person, leaving them 50% healthy. The second 50% rating is applied only to the remaining 50% health. Half of 50 is 25. Therefore, 50% + 25% equals an exact combined rating of 75%, which rounds up to an 80% official rating.</p>
+      </details>
+      <details>
+        <summary>Does a 95% rating round up to 100%?</summary>
+        <p>Yes. Any exact combined rating that ends in a 5, 6, 7, 8, or 9 rounds up to the next highest 10. Therefore, an exact mathematical rating of 95% is officially rounded up to a 100% combined VA disability rating.</p>
+      </details>
+      <details>
+        <summary>What is the maximum VA disability rating?</summary>
+        <p>The maximum combined VA disability rating you can receive is 100%. Even if your individual ratings mathematically combine to over 100% under VA math, your compensation caps at the 100% rate. The only exception is Special Monthly Compensation (SMC) for specific severe circumstances.</p>
+      </details>
+      <details>
+        <summary>Do I get extra money for my spouse or children?</summary>
+        <p>Yes, but only if your combined disability rating is 30% or higher. If you are rated at 0%, 10%, or 20%, you receive the single veteran base rate regardless of how many dependents you have.</p>
+      </details>
+      <details>
+        <summary>How often do VA disability compensation rates increase?</summary>
+        <p>VA disability compensation rates generally increase once a year, effective December 1st. The increase is tied to the Social Security Administration's Cost of Living Adjustment (COLA), which is based on national inflation metrics.</p>
+      </details>
+    </section>
+  </div>
+
+  <script is:inline>
+    document.addEventListener("DOMContentLoaded", () => {
+      const ratingsContainer = document.getElementById('ratings-container');
+      const addBtn = document.getElementById('add-rating-btn');
+      const maritalSelect = document.getElementById('marital-status');
+
+      const resultCard = document.getElementById('va-result');
+      const ratingValue = document.getElementById('combined-rating-value');
+      const exactDetail = document.getElementById('exact-rating-detail');
+      const compValue = document.getElementById('est-compensation');
+
+      let ratingCount = 1;
+
+      // 2024 Base Rates (Simplified estimates for Single, Spouse, Child, Spouse+Child)
+      // Array index corresponds to (rating / 10) - 1.  E.g. 10% is index 0.
+      const rates2024 = {
+        "single": [171.23, 338.49, 524.31, 755.28, 1075.16, 1361.88, 1716.28, 1995.01, 2241.91, 3737.85],
+        "spouse": [171.23, 338.49, 586.31, 838.28, 1179.16, 1486.88, 1861.28, 2161.01, 2428.91, 3946.25],
+        "child": [171.23, 338.49, 565.31, 810.28, 1144.16, 1443.88, 1812.28, 2105.01, 2366.91, 3877.11],
+        "spouse-child": [171.23, 338.49, 632.31, 899.28, 1255.16, 1576.88, 1966.28, 2281.01, 2564.91, 4098.87]
+      };
+
+      function createRatingRow(index) {
+        const row = document.createElement('div');
+        row.className = 'rating-row';
+        row.innerHTML = `
+          <span class="rating-label">Rating ${index}</span>
+          <select class="rating-select" aria-label="Rating percentage">
+            <option value="0">0%</option>
+            <option value="10">10%</option>
+            <option value="20">20%</option>
+            <option value="30">30%</option>
+            <option value="40">40%</option>
+            <option value="50">50%</option>
+            <option value="60">60%</option>
+            <option value="70">70%</option>
+            <option value="80">80%</option>
+            <option value="90">90%</option>
+            <option value="100">100%</option>
+          </select>
+        `;
+        row.querySelector('select').addEventListener('change', calculateVA);
+        return row;
+      }
+
+      function initRows() {
+        for(let i=1; i<=3; i++) {
+          ratingsContainer.appendChild(createRatingRow(i));
+          ratingCount++;
+        }
+      }
+
+      addBtn.addEventListener('click', () => {
+        if (ratingCount <= 10) {
+          ratingsContainer.appendChild(createRatingRow(ratingCount));
+          ratingCount++;
+          calculateVA();
+        }
+        if (ratingCount > 10) {
+           addBtn.style.display = 'none';
+        }
+      });
+
+      maritalSelect.addEventListener('change', calculateVA);
+
+      function calculateVA() {
+        const selects = document.querySelectorAll('.rating-select');
+        let ratings = [];
+
+        selects.forEach(sel => {
+          const val = parseInt(sel.value);
+          if (val > 0) ratings.push(val);
+        });
+
+        if (ratings.length === 0) {
+          resultCard.style.display = 'none';
+          return;
+        }
+
+        // VA Math: Sort highest to lowest
+        ratings.sort((a, b) => b - a);
+
+        let efficiency = 100;
+        let exactCombined = 0;
+
+        for (const rating of ratings) {
+          const disabledPortion = Math.round(efficiency * (rating / 100));
+          exactCombined += disabledPortion;
+          efficiency -= disabledPortion;
+        }
+
+        // Final rounding to nearest 10
+        let finalRating = Math.round(exactCombined / 10) * 10;
+
+        // Cap at 100
+        if (finalRating > 100) finalRating = 100;
+
+        // Display results
+        resultCard.style.display = 'block';
+        ratingValue.textContent = `${finalRating}%`;
+        exactDetail.textContent = `(Exact unrounded value: ${exactCombined}%)`;
+
+        // Calculate Compensation
+        if (finalRating === 0) {
+          compValue.textContent = "$0.00 / mo";
+        } else {
+          const status = maritalSelect.value;
+          const index = (finalRating / 10) - 1;
+          const rate = rates2024[status][index];
+
+          compValue.textContent = "$" + rate.toLocaleString("en-US", {minimumFractionDigits: 2, maximumFractionDigits: 2}) + " / mo";
+        }
+      }
+
+      // Initialize
+      initRows();
+      calculateVA();
+    });
+  </script>
+
+  <style is:inline>
+    .page-content { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem; }
+    .hero { text-align: center; padding: 3rem 0 2rem; }
+    .hero h1 { font-size: 2.2rem; font-weight: 800; margin-bottom: 0.5rem; }
+    .subtitle { color: var(--text-secondary); font-size: 1.1rem; }
+    .calculator-container { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 2rem; margin: 2rem 0; }
+
+    input, select { background: var(--bg-color); color: var(--text-primary); border: 1px solid var(--border-color); padding: 0.75rem 1rem; border-radius: 8px; width: 100%; font-size: 1rem; }
+    input:focus, select:focus { outline: none; border-color: var(--accent-color); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-color) 20%, transparent); }
+
+    button { background: var(--accent-color); color: white; border: none; padding: 0.75rem 2rem; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 1rem; }
+    button:hover { opacity: 0.9; }
+
+    .result-card { background: color-mix(in srgb, var(--accent-color) 10%, transparent); border: 1px solid var(--accent-color); border-radius: 12px; padding: 1.5rem; margin: 1.5rem 0; text-align: center; }
+    .result-value { font-size: 2.5rem; font-weight: 800; color: var(--accent-color); }
+
+    .faq-section details { margin: 1rem 0; padding: 1rem; background: var(--card-bg); border-radius: 8px; border: 1px solid var(--border-color); }
+    .faq-section summary { font-weight: 600; cursor: pointer; }
+
+    /* Custom layout for ratings inputs */
+    .ratings-list { display: flex; flex-direction: column; gap: 1rem; margin-bottom: 1.5rem; }
+    .rating-row { display: flex; align-items: center; gap: 1rem; }
+    .rating-row select { max-width: 150px; }
+    .rating-label { font-weight: 600; min-width: 80px; }
+  </style>
+</SiteLayout>
