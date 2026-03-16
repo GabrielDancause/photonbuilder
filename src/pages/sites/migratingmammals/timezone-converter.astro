@@ -518,55 +518,55 @@ export const meta = {
         const localParts = dateVal.split('-');
         const timeParts = timeVal.split(':');
 
-        const year = parseInt(localParts[0]);
-        const month = parseInt(localParts[1]) - 1;
-        const day = parseInt(localParts[2]);
-        const hours = parseInt(timeParts[0]);
-        const minutes = parseInt(timeParts[1]);
+        const year = parseInt(localParts[0], 10);
+        const month = parseInt(localParts[1], 10) - 1;
+        const day = parseInt(localParts[2], 10);
+        const hours = parseInt(timeParts[0], 10);
+        const minutes = parseInt(timeParts[1], 10);
 
         // This takes the input local time string (e.g. 2025-01-01 09:00:00)
         // and tries to parse it assuming it's in sourceTz
         // Since JS Date doesn't let you set timezone natively on parsing,
-        // We'll create a local date, see what offset that local date is natively vs target tz
+        // we start with a UTC guess and iteratively adjust based on formatted differences
 
-        const d = new Date(year, month, day, hours, minutes, 0);
+        const targetUtcMs = Date.UTC(year, month, day, hours, minutes, 0);
+        let guessMs = targetUtcMs;
 
         // Use an iterative approach to find the exact matching time
-        for(let i = 0; i < 3; i++) {
-            // Find what the current date 'd' prints as in the target timezone
+        for(let i = 0; i < 4; i++) {
+            let guessDate = new Date(guessMs);
+
+            // Find what the current date 'guessDate' prints as in the target timezone
             const parts = new Intl.DateTimeFormat('en-US', {
                 timeZone: sourceTz,
                 year: 'numeric', month: 'numeric', day: 'numeric',
                 hour: 'numeric', minute: 'numeric', second: 'numeric',
                 hour12: false
-            }).formatToParts(d);
+            }).formatToParts(guessDate);
 
             const p = {};
             parts.forEach(part => {
               if(part.type !== 'literal') {
-                p[part.type] = parseInt(part.value);
+                p[part.type] = parseInt(part.value, 10);
               }
             });
 
             // Adjust hour if it gave us 24 instead of 0
             if(p.hour === 24) p.hour = 0;
 
-            // Calculate differences
-            const minDiff = minutes - p.minute;
-            const hourDiff = hours - p.hour;
-            const dayDiff = day - p.day;
-            const monthDiff = (month + 1) - p.month;
-            const yearDiff = year - p.year;
+            // Calculate differences strictly in UTC time to avoid local daylight savings bugs
+            let formattedUtcMs = Date.UTC(p.year, p.month - 1, p.day, p.hour, p.minute, 0);
+            let diff = targetUtcMs - formattedUtcMs;
+
+            if (diff === 0) {
+                break;
+            }
 
             // Apply diffs
-            d.setFullYear(d.getFullYear() + yearDiff);
-            d.setMonth(d.getMonth() + monthDiff);
-            d.setDate(d.getDate() + dayDiff);
-            d.setHours(d.getHours() + hourDiff);
-            d.setMinutes(d.getMinutes() + minDiff);
+            guessMs += diff;
         }
 
-        return d;
+        return new Date(guessMs);
     }
 
     function formatTime(date, timeZone) {
