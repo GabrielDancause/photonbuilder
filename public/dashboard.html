@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>SEO Dashboard — Photon Network</title>
+<style>
+  :root {
+    --bg: #0f1117;
+    --bg2: #1a1d27;
+    --bg3: #242836;
+    --border: #2e3344;
+    --text: #e1e4ed;
+    --text2: #8b90a0;
+    --accent: #6c63ff;
+    --green: #22c55e;
+    --yellow: #eab308;
+    --red: #ef4444;
+    --orange: #f97316;
+    --blue: #3b82f6;
+    --cyan: #06b6d4;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+  
+  .header { background: var(--bg2); border-bottom: 1px solid var(--border); padding: 16px 24px; display: flex; align-items: center; gap: 16px; }
+  .header h1 { font-size: 18px; font-weight: 600; }
+  .header .subtitle { color: var(--text2); font-size: 13px; }
+  
+  .tabs { display: flex; gap: 0; background: var(--bg2); border-bottom: 1px solid var(--border); padding: 0 24px; }
+  .tab { padding: 12px 20px; cursor: pointer; font-size: 14px; color: var(--text2); border-bottom: 2px solid transparent; transition: all .15s; }
+  .tab:hover { color: var(--text); }
+  .tab.active { color: var(--accent); border-bottom-color: var(--accent); }
+  
+  .content { padding: 24px; max-width: 1600px; margin: 0 auto; }
+  .panel { display: none; }
+  .panel.active { display: block; }
+  
+  /* Stats cards */
+  .stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 12px; margin-bottom: 24px; }
+  .stat-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 16px; }
+  .stat-card .label { font-size: 11px; text-transform: uppercase; letter-spacing: .5px; color: var(--text2); margin-bottom: 4px; }
+  .stat-card .value { font-size: 28px; font-weight: 700; }
+  .stat-card .sub { font-size: 12px; color: var(--text2); margin-top: 2px; }
+  
+  /* Filters */
+  .filters { display: flex; flex-wrap: wrap; gap: 10px; margin-bottom: 16px; align-items: center; }
+  .filters label { font-size: 12px; color: var(--text2); }
+  .filters select, .filters input { background: var(--bg3); border: 1px solid var(--border); border-radius: 6px; padding: 6px 10px; color: var(--text); font-size: 13px; }
+  .filters input { width: 220px; }
+  .filter-group { display: flex; flex-direction: column; gap: 3px; }
+  
+  /* Table */
+  .table-wrap { overflow-x: auto; border: 1px solid var(--border); border-radius: 8px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  thead { background: var(--bg2); position: sticky; top: 0; z-index: 1; }
+  th { padding: 10px 12px; text-align: left; font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: .5px; color: var(--text2); cursor: pointer; user-select: none; white-space: nowrap; border-bottom: 1px solid var(--border); }
+  th:hover { color: var(--text); }
+  th .sort-arrow { margin-left: 4px; font-size: 10px; }
+  td { padding: 8px 12px; border-bottom: 1px solid var(--border); white-space: nowrap; }
+  tr:hover td { background: var(--bg3); }
+  
+  /* KD badge */
+  .kd { display: inline-block; width: 36px; text-align: center; padding: 2px 0; border-radius: 4px; font-weight: 600; font-size: 12px; }
+  .kd-easy { background: #22c55e22; color: var(--green); }
+  .kd-med { background: #eab30822; color: var(--yellow); }
+  .kd-hard { background: #f9731622; color: var(--orange); }
+  .kd-vhard { background: #ef444422; color: var(--red); }
+  
+  /* Status badge */
+  .status { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 500; }
+  .status-covered { background: #22c55e18; color: var(--green); }
+  .status-uncovered { background: #3b82f618; color: var(--blue); }
+  
+  /* Position badge */
+  .pos { font-weight: 600; }
+  .pos-top3 { color: var(--green); }
+  .pos-top10 { color: var(--yellow); }
+  .pos-top20 { color: var(--orange); }
+  .pos-rest { color: var(--text2); }
+  
+  /* Pagination */
+  .pagination { display: flex; gap: 8px; align-items: center; margin-top: 12px; justify-content: space-between; }
+  .pagination .info { font-size: 13px; color: var(--text2); }
+  .pagination .btns { display: flex; gap: 4px; }
+  .pagination button { background: var(--bg3); border: 1px solid var(--border); border-radius: 6px; padding: 6px 12px; color: var(--text); cursor: pointer; font-size: 13px; }
+  .pagination button:hover { background: var(--border); }
+  .pagination button:disabled { opacity: .4; cursor: default; }
+  
+  /* Domain colors */
+  .domain-tag { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 500; }
+  .domain-westmount { background: #4a8fe718; color: #4a8fe7; }
+  .domain-firemaths { background: #D4A01718; color: #D4A017; }
+  .domain-siliconbased { background: #818cf818; color: #818cf8; }
+  
+  /* Loading */
+  .loading { text-align: center; padding: 60px; color: var(--text2); }
+  .loading .spinner { display: inline-block; width: 24px; height: 24px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin .8s linear infinite; margin-bottom: 12px; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  
+  /* Topic bar chart */
+  .topic-bar { display: flex; align-items: center; gap: 8px; margin: 2px 0; }
+  .topic-bar .bar { height: 6px; border-radius: 3px; background: var(--accent); min-width: 2px; }
+  .topic-bar .name { font-size: 12px; min-width: 140px; }
+  .topic-bar .count { font-size: 11px; color: var(--text2); }
+  
+  /* Volume sparkline */
+  .vol { font-variant-numeric: tabular-nums; }
+  
+  /* Responsive */
+  @media (max-width: 768px) {
+    .stats { grid-template-columns: repeat(2, 1fr); }
+    .filters { flex-direction: column; }
+    .content { padding: 12px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <h1>⚡ SEO Dashboard</h1>
+  <span class="subtitle">Photon Network — Keyword Intelligence</span>
+</div>
+
+<div class="tabs">
+  <div class="tab active" data-panel="planner">🎯 Keyword Planner</div>
+  <div class="tab" data-panel="performance">📈 Performance</div>
+  <div class="tab" data-panel="opportunities">💎 Opportunities</div>
+</div>
+
+<div class="content">
+  <!-- KEYWORD PLANNER -->
+  <div class="panel active" id="planner">
+    <div class="loading" id="planner-loading">
+      <div class="spinner"></div>
+      <div>Loading keyword data...</div>
+    </div>
+    <div id="planner-content" style="display:none">
+      <div class="stats" id="planner-stats"></div>
+      <div class="filters" id="planner-filters">
+        <div class="filter-group">
+          <label>Search</label>
+          <input type="text" id="f-search" placeholder="Search keywords...">
+        </div>
+        <div class="filter-group">
+          <label>Domain</label>
+          <select id="f-domain"><option value="">All Domains</option></select>
+        </div>
+        <div class="filter-group">
+          <label>Topic</label>
+          <select id="f-topic"><option value="">All Topics</option></select>
+        </div>
+        <div class="filter-group">
+          <label>Status</label>
+          <select id="f-status">
+            <option value="">All</option>
+            <option value="covered">Covered</option>
+            <option value="uncovered">Uncovered</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label>KD Max</label>
+          <select id="f-kd">
+            <option value="">Any</option>
+            <option value="10">Easy (≤10)</option>
+            <option value="30">Medium (≤30)</option>
+            <option value="50">Moderate (≤50)</option>
+            <option value="70">Hard (≤70)</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label>Min Volume</label>
+          <select id="f-vol">
+            <option value="">Any</option>
+            <option value="100">100+</option>
+            <option value="500">500+</option>
+            <option value="1000">1K+</option>
+            <option value="5000">5K+</option>
+            <option value="10000">10K+</option>
+          </select>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table id="planner-table">
+          <thead>
+            <tr>
+              <th data-col="keyword">Keyword <span class="sort-arrow"></span></th>
+              <th data-col="domain">Domain <span class="sort-arrow"></span></th>
+              <th data-col="topic">Topic <span class="sort-arrow"></span></th>
+              <th data-col="kd">KD <span class="sort-arrow"></span></th>
+              <th data-col="volume">Volume <span class="sort-arrow"></span></th>
+              <th data-col="cpc">CPC <span class="sort-arrow"></span></th>
+              <th data-col="intents">Intent</th>
+              <th data-col="status">Status <span class="sort-arrow"></span></th>
+            </tr>
+          </thead>
+          <tbody id="planner-tbody"></tbody>
+        </table>
+      </div>
+      <div class="pagination" id="planner-pagination"></div>
+    </div>
+  </div>
+
+  <!-- PERFORMANCE -->
+  <div class="panel" id="performance">
+    <div class="loading" id="perf-loading">
+      <div class="spinner"></div>
+      <div>Loading GSC data...</div>
+    </div>
+    <div id="perf-content" style="display:none">
+      <div class="stats" id="perf-stats"></div>
+      <h3 style="margin: 20px 0 12px; font-size: 15px;">📄 Top Pages</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Page</th>
+              <th>Clicks</th>
+              <th>Impressions</th>
+              <th>CTR</th>
+              <th>Avg Position</th>
+            </tr>
+          </thead>
+          <tbody id="perf-pages-tbody"></tbody>
+        </table>
+      </div>
+      <h3 style="margin: 20px 0 12px; font-size: 15px;">🔍 Top Queries</h3>
+      <div class="filters">
+        <div class="filter-group">
+          <label>Search</label>
+          <input type="text" id="gsc-search" placeholder="Search queries...">
+        </div>
+        <div class="filter-group">
+          <label>Sort By</label>
+          <select id="gsc-sort">
+            <option value="impressions">Impressions</option>
+            <option value="clicks">Clicks</option>
+            <option value="position">Position</option>
+          </select>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Query</th>
+              <th>Clicks</th>
+              <th>Impressions</th>
+              <th>CTR</th>
+              <th>Avg Position</th>
+            </tr>
+          </thead>
+          <tbody id="perf-queries-tbody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <!-- OPPORTUNITIES -->
+  <div class="panel" id="opportunities">
+    <div id="opp-content" style="display:none">
+      <div class="stats" id="opp-stats"></div>
+      <h3 style="margin: 0 0 8px; font-size: 15px;">🏆 Low-Hanging Fruit — High Volume + Low KD + Uncovered</h3>
+      <p style="color: var(--text2); font-size: 13px; margin-bottom: 16px;">Keywords with KD ≤ 30, Volume ≥ 500, currently uncovered. Sorted by opportunity score (volume / KD).</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Keyword</th>
+              <th>Domain</th>
+              <th>Topic</th>
+              <th>KD</th>
+              <th>Volume</th>
+              <th>CPC</th>
+              <th>Score</th>
+            </tr>
+          </thead>
+          <tbody id="opp-tbody"></tbody>
+        </table>
+      </div>
+      <div class="pagination" id="opp-pagination"></div>
+      
+      <h3 style="margin: 30px 0 12px; font-size: 15px;">📊 Topics by Opportunity</h3>
+      <div id="topic-bars"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const DOMAINS = ['westmount', 'firemaths', 'siliconbased'];
+const DOMAIN_COLORS = { westmount: '#4a8fe7', firemaths: '#D4A017', siliconbased: '#818cf8' };
+const PAGE_SIZE = 100;
+
+let allKeywords = [];
+let gscQueries = [];
+let gscPages = [];
+let plannerPage = 0;
+let plannerFiltered = [];
+let plannerSort = { col: 'volume', dir: -1 };
+let oppPage = 0;
+let oppData = [];
+
+// Tabs
+document.querySelectorAll('.tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+    tab.classList.add('active');
+    document.getElementById(tab.dataset.panel).classList.add('active');
+  });
+});
+
+// Format helpers
+const fmt = n => n >= 1000000 ? (n/1000000).toFixed(1)+'M' : n >= 1000 ? (n/1000).toFixed(n >= 10000 ? 0 : 1)+'K' : String(n);
+const fmtPct = s => typeof s === 'string' ? s : (s*100).toFixed(1)+'%';
+function kdClass(kd) { return kd <= 15 ? 'kd-easy' : kd <= 40 ? 'kd-med' : kd <= 65 ? 'kd-hard' : 'kd-vhard'; }
+function posClass(p) { return p <= 3 ? 'pos-top3' : p <= 10 ? 'pos-top10' : p <= 20 ? 'pos-top20' : 'pos-rest'; }
+function domainClass(d) { return 'domain-' + d; }
+
+// Load data
+async function loadAll() {
+  const kws = await Promise.all(DOMAINS.map(async d => {
+    try {
+      const res = await fetch(`/data/seo/${d}/keywords.json`);
+      const data = await res.json();
+      return data.keywords.map(k => ({ ...k, domain: d }));
+    } catch { return []; }
+  }));
+  allKeywords = kws.flat();
+  
+  try {
+    const qRes = await fetch('/data/seo/westmount/gsc-queries.json');
+    const qData = await qRes.json();
+    gscQueries = qData.queries || [];
+  } catch {}
+  
+  try {
+    const pRes = await fetch('/data/seo/westmount/gsc-pages.json');
+    const pData = await pRes.json();
+    gscPages = pData.pages || [];
+  } catch {}
+  
+  initPlanner();
+  initPerformance();
+  initOpportunities();
+}
+
+// PLANNER
+function initPlanner() {
+  document.getElementById('planner-loading').style.display = 'none';
+  document.getElementById('planner-content').style.display = 'block';
+  
+  // Populate domain filter
+  const domSel = document.getElementById('f-domain');
+  DOMAINS.forEach(d => { const o = document.createElement('option'); o.value = d; o.textContent = d; domSel.appendChild(o); });
+  
+  // Populate topics
+  const topics = [...new Set(allKeywords.map(k => k.topic))].sort();
+  const topSel = document.getElementById('f-topic');
+  topics.forEach(t => { const o = document.createElement('option'); o.value = t; o.textContent = t; topSel.appendChild(o); });
+  
+  // Stats
+  const covered = allKeywords.filter(k => k.status === 'covered').length;
+  const totalVol = allKeywords.reduce((s, k) => s + k.volume, 0);
+  document.getElementById('planner-stats').innerHTML = `
+    <div class="stat-card"><div class="label">Total Keywords</div><div class="value">${fmt(allKeywords.length)}</div></div>
+    <div class="stat-card"><div class="label">Covered</div><div class="value" style="color:var(--green)">${fmt(covered)}</div><div class="sub">${(covered/allKeywords.length*100).toFixed(1)}% coverage</div></div>
+    <div class="stat-card"><div class="label">Uncovered</div><div class="value" style="color:var(--blue)">${fmt(allKeywords.length - covered)}</div></div>
+    <div class="stat-card"><div class="label">Total Search Vol</div><div class="value">${fmt(totalVol)}</div><div class="sub">monthly</div></div>
+    <div class="stat-card"><div class="label">Domains</div><div class="value">${DOMAINS.length}</div></div>
+    <div class="stat-card"><div class="label">Topics</div><div class="value">${topics.length}</div></div>
+  `;
+  
+  // Events
+  ['f-search','f-domain','f-topic','f-status','f-kd','f-vol'].forEach(id => {
+    document.getElementById(id).addEventListener(id === 'f-search' ? 'input' : 'change', () => { plannerPage = 0; renderPlanner(); });
+  });
+  
+  // Sort
+  document.querySelectorAll('#planner-table th[data-col]').forEach(th => {
+    th.addEventListener('click', () => {
+      const col = th.dataset.col;
+      if (plannerSort.col === col) plannerSort.dir *= -1;
+      else { plannerSort.col = col; plannerSort.dir = col === 'keyword' || col === 'domain' || col === 'topic' ? 1 : -1; }
+      renderPlanner();
+    });
+  });
+  
+  renderPlanner();
+}
+
+function filterKeywords() {
+  const search = document.getElementById('f-search').value.toLowerCase();
+  const domain = document.getElementById('f-domain').value;
+  const topic = document.getElementById('f-topic').value;
+  const status = document.getElementById('f-status').value;
+  const kdMax = document.getElementById('f-kd').value;
+  const volMin = document.getElementById('f-vol').value;
+  
+  return allKeywords.filter(k => {
+    if (search && !k.keyword.toLowerCase().includes(search)) return false;
+    if (domain && k.domain !== domain) return false;
+    if (topic && k.topic !== topic) return false;
+    if (status && k.status !== status) return false;
+    if (kdMax && k.kd > +kdMax) return false;
+    if (volMin && k.volume < +volMin) return false;
+    return true;
+  });
+}
+
+function sortKeywords(arr) {
+  const { col, dir } = plannerSort;
+  return arr.sort((a, b) => {
+    let va = a[col], vb = b[col];
+    if (typeof va === 'string') return dir * va.localeCompare(vb);
+    return dir * (va - vb);
+  });
+}
+
+function renderPlanner() {
+  plannerFiltered = sortKeywords(filterKeywords());
+  const start = plannerPage * PAGE_SIZE;
+  const page = plannerFiltered.slice(start, start + PAGE_SIZE);
+  
+  const tbody = document.getElementById('planner-tbody');
+  tbody.innerHTML = page.map(k => `<tr>
+    <td>${k.keyword}</td>
+    <td><span class="domain-tag ${domainClass(k.domain)}">${k.domain}</span></td>
+    <td>${k.topic}</td>
+    <td><span class="kd ${kdClass(k.kd)}">${k.kd}</span></td>
+    <td class="vol">${fmt(k.volume)}</td>
+    <td>$${k.cpc.toFixed(2)}</td>
+    <td style="font-size:11px;color:var(--text2)">${(k.intents||'').split(',')[0]}</td>
+    <td><span class="status status-${k.status}">${k.status}</span></td>
+  </tr>`).join('');
+  
+  const totalPages = Math.ceil(plannerFiltered.length / PAGE_SIZE);
+  document.getElementById('planner-pagination').innerHTML = `
+    <div class="info">Showing ${start+1}–${Math.min(start+PAGE_SIZE, plannerFiltered.length)} of ${plannerFiltered.length.toLocaleString()} keywords</div>
+    <div class="btns">
+      <button ${plannerPage === 0 ? 'disabled' : ''} onclick="plannerPage=0;renderPlanner()">⏮</button>
+      <button ${plannerPage === 0 ? 'disabled' : ''} onclick="plannerPage--;renderPlanner()">◀</button>
+      <span style="padding:6px 10px;font-size:13px;color:var(--text2)">Page ${plannerPage+1} / ${totalPages}</span>
+      <button ${plannerPage >= totalPages-1 ? 'disabled' : ''} onclick="plannerPage++;renderPlanner()">▶</button>
+      <button ${plannerPage >= totalPages-1 ? 'disabled' : ''} onclick="plannerPage=totalPages-1;renderPlanner()">⏭</button>
+    </div>
+  `;
+}
+
+// PERFORMANCE
+function initPerformance() {
+  document.getElementById('perf-loading').style.display = 'none';
+  document.getElementById('perf-content').style.display = 'block';
+  
+  const totalClicks = gscPages.reduce((s,p) => s + p.clicks, 0);
+  const totalImpressions = gscPages.reduce((s,p) => s + p.impressions, 0);
+  const avgPos = gscPages.length ? (gscPages.reduce((s,p) => s + p.position, 0) / gscPages.length).toFixed(1) : '-';
+  const avgCtr = totalImpressions ? (totalClicks/totalImpressions*100).toFixed(2)+'%' : '-';
+  
+  document.getElementById('perf-stats').innerHTML = `
+    <div class="stat-card"><div class="label">Total Clicks</div><div class="value" style="color:var(--green)">${totalClicks}</div></div>
+    <div class="stat-card"><div class="label">Total Impressions</div><div class="value">${fmt(totalImpressions)}</div></div>
+    <div class="stat-card"><div class="label">Avg CTR</div><div class="value">${avgCtr}</div></div>
+    <div class="stat-card"><div class="label">Avg Position</div><div class="value">${avgPos}</div></div>
+    <div class="stat-card"><div class="label">Pages Indexed</div><div class="value">${gscPages.length}</div></div>
+    <div class="stat-card"><div class="label">Queries</div><div class="value">${gscQueries.length}</div></div>
+  `;
+  
+  // Pages
+  const sortedPages = [...gscPages].sort((a,b) => b.impressions - a.impressions);
+  document.getElementById('perf-pages-tbody').innerHTML = sortedPages.map(p => `<tr>
+    <td><a href="${p.url}" target="_blank" style="color:var(--accent);text-decoration:none">${p.page}</a></td>
+    <td>${p.clicks}</td>
+    <td>${fmt(p.impressions)}</td>
+    <td>${p.ctr}</td>
+    <td><span class="pos ${posClass(p.position)}">${p.position.toFixed(1)}</span></td>
+  </tr>`).join('');
+  
+  // Queries
+  renderQueries();
+  document.getElementById('gsc-search').addEventListener('input', renderQueries);
+  document.getElementById('gsc-sort').addEventListener('change', renderQueries);
+}
+
+function renderQueries() {
+  const search = document.getElementById('gsc-search').value.toLowerCase();
+  const sortBy = document.getElementById('gsc-sort').value;
+  let qs = gscQueries.filter(q => !search || q.query.toLowerCase().includes(search));
+  qs.sort((a,b) => sortBy === 'position' ? a.position - b.position : b[sortBy] - a[sortBy]);
+  
+  document.getElementById('perf-queries-tbody').innerHTML = qs.map(q => `<tr>
+    <td>${q.query}</td>
+    <td>${q.clicks}</td>
+    <td>${fmt(q.impressions)}</td>
+    <td>${q.ctr}</td>
+    <td><span class="pos ${posClass(q.position)}">${q.position.toFixed(1)}</span></td>
+  </tr>`).join('');
+}
+
+// OPPORTUNITIES
+function initOpportunities() {
+  document.getElementById('opp-content').style.display = 'block';
+  
+  // Low-hanging fruit: uncovered, KD ≤ 30, volume ≥ 500
+  oppData = allKeywords
+    .filter(k => k.status === 'uncovered' && k.kd <= 30 && k.volume >= 500)
+    .map(k => ({ ...k, score: k.kd > 0 ? Math.round(k.volume / k.kd) : k.volume * 100 }))
+    .sort((a,b) => b.score - a.score);
+  
+  const totalOppVol = oppData.reduce((s,k) => s + k.volume, 0);
+  const avgKd = oppData.length ? (oppData.reduce((s,k) => s + k.kd, 0) / oppData.length).toFixed(0) : '-';
+  
+  document.getElementById('opp-stats').innerHTML = `
+    <div class="stat-card"><div class="label">Opportunities</div><div class="value" style="color:var(--cyan)">${fmt(oppData.length)}</div></div>
+    <div class="stat-card"><div class="label">Total Volume</div><div class="value">${fmt(totalOppVol)}</div><div class="sub">monthly searches</div></div>
+    <div class="stat-card"><div class="label">Avg KD</div><div class="value" style="color:var(--green)">${avgKd}</div></div>
+    <div class="stat-card"><div class="label">Top CPC</div><div class="value">$${oppData.length ? oppData.reduce((m,k) => Math.max(m,k.cpc),0).toFixed(2) : '0'}</div></div>
+  `;
+  
+  renderOpportunities();
+  
+  // Topic bars
+  const topicCounts = {};
+  oppData.forEach(k => { topicCounts[k.topic] = (topicCounts[k.topic]||0) + 1; });
+  const sortedTopics = Object.entries(topicCounts).sort((a,b) => b[1] - a[1]).slice(0, 20);
+  const maxCount = sortedTopics[0]?.[1] || 1;
+  document.getElementById('topic-bars').innerHTML = sortedTopics.map(([topic, count]) => 
+    `<div class="topic-bar"><span class="name">${topic}</span><div class="bar" style="width:${count/maxCount*300}px"></div><span class="count">${count}</span></div>`
+  ).join('');
+}
+
+function renderOpportunities() {
+  const start = oppPage * PAGE_SIZE;
+  const page = oppData.slice(start, start + PAGE_SIZE);
+  
+  document.getElementById('opp-tbody').innerHTML = page.map(k => `<tr>
+    <td>${k.keyword}</td>
+    <td><span class="domain-tag ${domainClass(k.domain)}">${k.domain}</span></td>
+    <td>${k.topic}</td>
+    <td><span class="kd ${kdClass(k.kd)}">${k.kd}</span></td>
+    <td class="vol">${fmt(k.volume)}</td>
+    <td>$${k.cpc.toFixed(2)}</td>
+    <td style="color:var(--cyan);font-weight:600">${fmt(k.score)}</td>
+  </tr>`).join('');
+  
+  const totalPages = Math.ceil(oppData.length / PAGE_SIZE);
+  document.getElementById('opp-pagination').innerHTML = `
+    <div class="info">Showing ${start+1}–${Math.min(start+PAGE_SIZE, oppData.length)} of ${oppData.length.toLocaleString()}</div>
+    <div class="btns">
+      <button ${oppPage === 0 ? 'disabled' : ''} onclick="oppPage=0;renderOpportunities()">⏮</button>
+      <button ${oppPage === 0 ? 'disabled' : ''} onclick="oppPage--;renderOpportunities()">◀</button>
+      <span style="padding:6px 10px;font-size:13px;color:var(--text2)">Page ${oppPage+1} / ${totalPages}</span>
+      <button ${oppPage >= totalPages-1 ? 'disabled' : ''} onclick="oppPage++;renderOpportunities()">▶</button>
+      <button ${oppPage >= totalPages-1 ? 'disabled' : ''} onclick="oppPage=totalPages-1;renderOpportunities()">⏭</button>
+    </div>
+  `;
+}
+
+loadAll();
+</script>
+</body>
+</html>
