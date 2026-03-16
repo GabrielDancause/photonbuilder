@@ -1,0 +1,410 @@
+---
+import SiteLayout from "../../../layouts/SiteLayout.astro";
+
+export const meta = {
+  title: "FHA Loan Calculator: Estimate Your Monthly Payments",
+  description: "Calculate your estimated monthly FHA mortgage payments, including interest, down payment, and insurance. Discover what you can afford today.",
+  category: "tool",
+  published: "2026-03-15",
+};
+
+const schema = {
+  "@context": "https://schema.org",
+  "@type": ["FAQPage", "Article"],
+  "headline": meta.title,
+  "description": meta.description,
+  "datePublished": meta.published,
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What is the minimum down payment for an FHA loan?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "The minimum down payment for an FHA loan is generally 3.5% of the home's purchase price, provided your credit score is 580 or higher. If your credit score is between 500 and 579, a 10% down payment is required."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Can I remove the FHA mortgage insurance premium (MIP)?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "For most modern FHA loans where the down payment is less than 10%, the MIP remains for the entire life of the loan. If you put down 10% or more, the MIP can be removed after 11 years. The most common way to remove FHA MIP is to refinance into a conventional loan once you have 20% equity in the property."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What is the Upfront Mortgage Insurance Premium (UFMIP)?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "The UFMIP is a one-time fee currently set at 1.75% of the base loan amount. Instead of paying this in cash at closing, most borrowers choose to roll it into the total mortgage balance, which increases the monthly payments and the total amount of interest paid over time."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Are FHA loans only for first-time homebuyers?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "No, FHA loans are not restricted to first-time homebuyers. Any borrower who meets the credit, income, and property requirements can utilize an FHA loan, provided they intend to use the home as their primary residence."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How does the amortization process work?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Amortization refers to the process of paying off debt through regular, equal payments over time. In the early years of an FHA loan, a large portion of your monthly payment goes toward interest. In the later years, the balance shifts, and the majority of your payment goes toward reducing the principal."
+      }
+    }
+  ]
+};
+---
+<SiteLayout site="siliconbased" title={meta.title} description={meta.description} canonical="https://siliconbased.dev/fha-loan-calculator" schema={schema}>
+  <div class="page-content">
+    <div class="hero">
+      <h1>FHA Loan Calculator</h1>
+      <p class="subtitle">Estimate your monthly mortgage payments with our interactive FHA tool</p>
+    </div>
+
+    <div class="calculator-container" id="fha-calculator">
+
+      <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem;">
+        <div class="input-group" style="grid-column: 1 / -1;">
+          <label for="home-price">Home Price</label>
+          <div class="input-wrapper">
+            <span class="input-prefix">$</span>
+            <input type="number" id="home-price" class="has-prefix" value="350000" min="0" step="1000">
+          </div>
+          <div class="error-message" id="price-error">Please enter a valid home price.</div>
+        </div>
+
+        <div class="input-group">
+          <label for="down-payment-percent">Down Payment (%)</label>
+          <div class="input-wrapper">
+            <input type="number" id="down-payment-percent" class="has-suffix" value="3.5" min="3.5" max="100" step="0.1">
+            <span class="input-suffix">%</span>
+          </div>
+          <div class="error-message" id="dp-percent-error">Must be at least 3.5% for FHA.</div>
+        </div>
+
+        <div class="input-group">
+          <label for="down-payment-amount">Down Payment Amount</label>
+          <div class="input-wrapper">
+            <span class="input-prefix">$</span>
+            <input type="number" id="down-payment-amount" class="has-prefix" value="12250" min="0" step="100">
+          </div>
+        </div>
+
+        <div class="input-group">
+          <label for="interest-rate">Interest Rate</label>
+          <div class="input-wrapper">
+            <input type="number" id="interest-rate" class="has-suffix" value="6.5" min="0" max="30" step="0.1">
+            <span class="input-suffix">%</span>
+          </div>
+          <div class="error-message" id="rate-error">Please enter a valid interest rate.</div>
+        </div>
+
+        <div class="input-group">
+          <label for="loan-term">Loan Term</label>
+          <select id="loan-term">
+            <option value="30">30 Years</option>
+            <option value="15">15 Years</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="result-card" id="result-container">
+        <div class="result-label">Estimated Monthly Principal & Interest</div>
+        <div class="result-value" id="monthly-payment">$2,135.00</div>
+
+        <div class="breakdown">
+          <div class="breakdown-item">
+            <div class="breakdown-label">Loan Amount</div>
+            <div class="breakdown-value" id="loan-amount-val">$337,750</div>
+          </div>
+          <div class="breakdown-item">
+            <div class="breakdown-label">Total Interest Paid</div>
+            <div class="breakdown-value" id="total-interest-val">$430,808</div>
+          </div>
+          <div class="breakdown-item">
+            <div class="breakdown-label">Total Payment (P&I)</div>
+            <div class="breakdown-value" id="total-payment-val">$768,558</div>
+          </div>
+          <div class="breakdown-item">
+            <div class="breakdown-label">FHA UFMIP (1.75%)</div>
+            <div class="breakdown-value" id="ufmip-val">$5,911</div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+
+    <div class="explainer">
+
+      <h2>Understanding FHA Loans and Mortgage Calculations</h2>
+      <p>Federal Housing Administration (FHA) loans represent a vital pathway to homeownership for millions of Americans, particularly first-time buyers or those with less-than-perfect credit histories. Unlike conventional mortgages that often demand substantial down payments and pristine credit scores, FHA loans are backed by the federal government, providing lenders with the security needed to offer more accessible terms to borrowers. To fully appreciate the nuances of an FHA mortgage, one must delve into the mechanics of the calculation, the unique insurance requirements, and the historical context that birthed this program.</p>
+
+      <h3>The Core Components of an FHA Mortgage</h3>
+      <p>When calculating the monthly payments for an FHA loan, several distinct variables interact to form the final figure. The most fundamental elements include the principal amount borrowed, the interest rate determined by the lender, and the amortization period—typically spanning 15 or 30 years. However, FHA loans introduce specific parameters that differentiate them from standard conventional products, most notably the minimum down payment and the mandatory Mortgage Insurance Premium (MIP).</p>
+      <p>The minimum down payment for an FHA loan is generally 3.5% of the purchase price, provided the borrower has a credit score of 580 or higher. For individuals with credit scores falling between 500 and 579, the minimum down payment requirement increases to 10%. This accessibility is a primary draw for the FHA program, allowing families to purchase homes without spending decades accumulating massive cash reserves. However, this lower barrier to entry necessitates government-backed insurance to protect the lender against potential default.</p>
+
+      <h3>Mortgage Insurance Premiums (MIP): The Upfront and Annual Costs</h3>
+      <p>The defining characteristic of an FHA loan calculation is the inclusion of the Mortgage Insurance Premium (MIP). Unlike private mortgage insurance (PMI) on conventional loans, which is often cancelable once a certain equity threshold is reached, FHA MIP typically remains for the life of the loan if the down payment is less than 10%. The MIP structure is twofold: an Upfront Mortgage Insurance Premium (UFMIP) and an Annual Mortgage Insurance Premium.</p>
+      <p>The UFMIP is currently assessed at 1.75% of the base loan amount. This fee is generally rolled into the total loan balance rather than paid out of pocket at closing. For example, if a borrower secures a base loan of $300,000, the UFMIP would amount to $5,250. Consequently, the actual loan amount being amortized becomes $305,250. This upfront addition increases both the monthly principal and interest payment and the total interest paid over the life of the loan.</p>
+      <p>The Annual MIP is calculated based on the loan term, the loan-to-value (LTV) ratio, and the total loan amount. It is divided by 12 and added to the borrower's monthly payment. While the annual premium rates are subject to change based on federal policy, they generally range from 0.15% to 0.75% of the outstanding loan balance. It is imperative to account for this recurring cost when estimating affordability, as it can significantly inflate the monthly financial obligation.</p>
+
+      <h3>The Mathematics of Amortization</h3>
+      <p>The mathematical foundation of an FHA loan calculator relies on the standard amortization formula used for all fixed-rate mortgages. The goal is to determine the fixed monthly payment required to fully retire the principal balance and all accumulated interest over the specified term. The formula is expressed as:</p>
+      <p><strong>M = P [ r(1 + r)^n ] / [ (1 + r)^n - 1 ]</strong></p>
+      <p>In this equation, <em>M</em> represents the total monthly payment (excluding taxes and insurance). <em>P</em> stands for the principal loan amount, which, in the case of an FHA loan, includes the base loan plus the rolled-in UFMIP. The variable <em>r</em> is the monthly interest rate, derived by dividing the annual interest rate by 12. Finally, <em>n</em> denotes the total number of payments—for a 30-year mortgage, this equals 360 monthly payments.</p>
+      <p>As the loan matures, the composition of the monthly payment shifts dramatically. During the initial years of a 30-year FHA mortgage, the vast majority of the payment is allocated toward servicing the interest, with only a small fraction reducing the principal balance. This phenomenon is known as the amortization curve. As time progresses, the interest portion gradually decreases, and the principal reduction accelerates, ultimately culminating in the full payoff of the debt at the end of the term.</p>
+
+      <h3>Comparing FHA and Conventional Loans</h3>
+      <p>Understanding when to utilize an FHA loan versus a conventional mortgage requires careful analysis of individual financial circumstances. Conventional loans, governed by Fannie Mae and Freddie Mac guidelines, generally require higher credit scores and more stringent debt-to-income (DTI) ratios. If a borrower can secure a conventional loan with a 20% down payment, they can entirely avoid mortgage insurance, resulting in significant long-term savings.</p>
+      <p>Conversely, FHA loans are far more forgiving of past credit blemishes and allow for higher DTI ratios. They are often the most pragmatic solution for borrowers who have experienced financial setbacks but have since stabilized their income. However, the mandatory MIP means that an FHA loan will typically be more expensive over its lifespan compared to a conventional loan of the same size, assuming identical interest rates.</p>
+
+      <h3>Historical Context of the FHA Program</h3>
+      <p>The Federal Housing Administration was established in 1934 during the depths of the Great Depression. Prior to its creation, the American housing market was precarious. Mortgages were typically short-term (often 3 to 5 years), required down payments of 50% or more, and culminated in massive balloon payments. Default rates were astronomical, leading to widespread foreclosures and a collapsed construction industry.</p>
+      <p>The FHA revolutionized the industry by pioneering the 30-year fixed-rate amortizing mortgage. By insuring lenders against loss, the FHA incentivized banks to issue loans with longer terms, lower interest rates, and minimal down payments. This systemic shift democratized homeownership, fueling the post-World War II housing boom and establishing the foundation of the modern middle-class wealth-building structure.</p>
+      <p>Today, the FHA continues to play a critical stabilizing role in the housing market. By providing liquidity and accessibility, it ensures that the dream of homeownership remains attainable for a broad spectrum of the American populace, continually adapting its guidelines to meet the evolving economic landscape.</p>
+
+      <div class="related-tools">
+        Related Tools: <a href="/pesos-to-dollars-calculator">Pesos to Dollars Calculator</a>
+      </div>
+
+    </div>
+
+    <section class="faq-section">
+      <h2>Frequently Asked Questions</h2>
+
+      <details>
+        <summary>What is the minimum down payment for an FHA loan?</summary>
+        <div class="faq-answer">The minimum down payment for an FHA loan is generally 3.5% of the home's purchase price, provided your credit score is 580 or higher. If your credit score is between 500 and 579, a 10% down payment is required.</div>
+      </details>
+      <details>
+        <summary>Can I remove the FHA mortgage insurance premium (MIP)?</summary>
+        <div class="faq-answer">For most modern FHA loans where the down payment is less than 10%, the MIP remains for the entire life of the loan. If you put down 10% or more, the MIP can be removed after 11 years. The most common way to remove FHA MIP is to refinance into a conventional loan once you have 20% equity in the property.</div>
+      </details>
+      <details>
+        <summary>What is the Upfront Mortgage Insurance Premium (UFMIP)?</summary>
+        <div class="faq-answer">The UFMIP is a one-time fee currently set at 1.75% of the base loan amount. Instead of paying this in cash at closing, most borrowers choose to roll it into the total mortgage balance, which increases the monthly payments and the total amount of interest paid over time.</div>
+      </details>
+      <details>
+        <summary>Are FHA loans only for first-time homebuyers?</summary>
+        <div class="faq-answer">No, FHA loans are not restricted to first-time homebuyers. Any borrower who meets the credit, income, and property requirements can utilize an FHA loan, provided they intend to use the home as their primary residence.</div>
+      </details>
+      <details>
+        <summary>How does the amortization process work?</summary>
+        <div class="faq-answer">Amortization refers to the process of paying off debt through regular, equal payments over time. In the early years of an FHA loan, a large portion of your monthly payment goes toward interest. In the later years, the balance shifts, and the majority of your payment goes toward reducing the principal.</div>
+      </details>
+
+    </section>
+  </div>
+
+  <script is:inline>
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const homePriceInput = document.getElementById("home-price");
+      const dpPercentInput = document.getElementById("down-payment-percent");
+      const dpAmountInput = document.getElementById("down-payment-amount");
+      const interestRateInput = document.getElementById("interest-rate");
+      const loanTermInput = document.getElementById("loan-term");
+
+      const monthlyPaymentEl = document.getElementById("monthly-payment");
+      const loanAmountValEl = document.getElementById("loan-amount-val");
+      const totalInterestValEl = document.getElementById("total-interest-val");
+      const totalPaymentValEl = document.getElementById("total-payment-val");
+      const ufmipValEl = document.getElementById("ufmip-val");
+      const resultContainer = document.getElementById("result-container");
+
+      const priceError = document.getElementById("price-error");
+      const dpPercentError = document.getElementById("dp-percent-error");
+      const rateError = document.getElementById("rate-error");
+
+      const formatter = new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+        maximumFractionDigits: 0
+      });
+
+      let isUpdatingDp = false;
+
+      function calculate() {
+        // Reset errors
+        homePriceInput.classList.remove('input-error');
+        dpPercentInput.classList.remove('input-error');
+        interestRateInput.classList.remove('input-error');
+        priceError.style.display = 'none';
+        dpPercentError.style.display = 'none';
+        rateError.style.display = 'none';
+
+        const price = parseFloat(homePriceInput.value);
+        const dpPercent = parseFloat(dpPercentInput.value);
+        const rate = parseFloat(interestRateInput.value);
+        const term = parseInt(loanTermInput.value);
+
+        let hasError = false;
+
+        if (isNaN(price) || price < 0 || homePriceInput.value === '') {
+          homePriceInput.classList.add('input-error');
+          priceError.style.display = 'block';
+          hasError = true;
+        }
+
+        if (isNaN(dpPercent) || dpPercent < 0 || dpPercentInput.value === '') {
+          dpPercentInput.classList.add('input-error');
+          dpPercentError.textContent = "Please enter a valid percentage.";
+          dpPercentError.style.display = 'block';
+          hasError = true;
+        } else if (dpPercent < 3.5) {
+          dpPercentInput.classList.add('input-error');
+          dpPercentError.textContent = "FHA minimum down payment is 3.5%.";
+          dpPercentError.style.display = 'block';
+          hasError = true;
+        } else if (dpPercent > 100) {
+          dpPercentInput.classList.add('input-error');
+          dpPercentError.textContent = "Cannot exceed 100%.";
+          dpPercentError.style.display = 'block';
+          hasError = true;
+        }
+
+        if (isNaN(rate) || rate < 0 || interestRateInput.value === '') {
+          interestRateInput.classList.add('input-error');
+          rateError.style.display = 'block';
+          hasError = true;
+        }
+
+        if (hasError) {
+          resultContainer.style.opacity = '0.5';
+          return;
+        }
+
+        resultContainer.style.opacity = '1';
+
+        const dpAmount = price * (dpPercent / 100);
+        const baseLoanAmount = price - dpAmount;
+
+        // FHA Upfront Mortgage Insurance Premium (UFMIP) is typically 1.75%
+        const ufmip = baseLoanAmount * 0.0175;
+        const totalLoanAmount = baseLoanAmount + ufmip;
+
+        const r = (rate / 100) / 12;
+        const n = term * 12;
+
+        let monthlyPI = 0;
+        if (r > 0) {
+          monthlyPI = totalLoanAmount * (r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1);
+        } else {
+          monthlyPI = totalLoanAmount / n;
+        }
+
+        const totalPayment = monthlyPI * n;
+        const totalInterest = totalPayment - totalLoanAmount;
+
+        monthlyPaymentEl.textContent = formatter.format(monthlyPI);
+        loanAmountValEl.textContent = formatter.format(totalLoanAmount);
+        totalInterestValEl.textContent = formatter.format(totalInterest);
+        totalPaymentValEl.textContent = formatter.format(totalPayment);
+        ufmipValEl.textContent = formatter.format(ufmip);
+      }
+
+      homePriceInput.addEventListener("input", () => {
+        if (!isUpdatingDp) {
+          isUpdatingDp = true;
+          const price = parseFloat(homePriceInput.value) || 0;
+          const pct = parseFloat(dpPercentInput.value) || 0;
+          dpAmountInput.value = (price * (pct / 100)).toFixed(0);
+          isUpdatingDp = false;
+        }
+        calculate();
+      });
+
+      dpPercentInput.addEventListener("input", () => {
+        if (!isUpdatingDp) {
+          isUpdatingDp = true;
+          const price = parseFloat(homePriceInput.value) || 0;
+          const pct = parseFloat(dpPercentInput.value) || 0;
+          dpAmountInput.value = (price * (pct / 100)).toFixed(0);
+          isUpdatingDp = false;
+        }
+        calculate();
+      });
+
+      dpAmountInput.addEventListener("input", () => {
+        if (!isUpdatingDp) {
+          isUpdatingDp = true;
+          const price = parseFloat(homePriceInput.value) || 0;
+          const amount = parseFloat(dpAmountInput.value) || 0;
+          if (price > 0) {
+            dpPercentInput.value = ((amount / price) * 100).toFixed(2);
+          }
+          isUpdatingDp = false;
+        }
+        calculate();
+      });
+
+      interestRateInput.addEventListener("input", calculate);
+      loanTermInput.addEventListener("change", calculate);
+
+      // Initial calc
+      calculate();
+    });
+
+  </script>
+
+  <style is:inline>
+    .page-content { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem; }
+    .hero { text-align: center; padding: 3rem 0 2rem; }
+    .hero h1 { font-size: 2.2rem; font-weight: 800; margin-bottom: 0.5rem; }
+    .subtitle { color: var(--text-secondary); font-size: 1.1rem; }
+
+    .calculator-container { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 2rem; margin: 2rem 0; }
+    .input-group { margin-bottom: 1.5rem; }
+    .input-group label { display: block; font-weight: 600; margin-bottom: 0.5rem; color: var(--text-primary); }
+    .input-wrapper { position: relative; display: flex; align-items: center; }
+    .input-prefix, .input-suffix { position: absolute; color: var(--text-secondary); padding: 0 1rem; }
+    .input-prefix { left: 0; }
+    .input-suffix { right: 0; }
+
+    input, select { background: var(--bg-color); color: var(--text-primary); border: 1px solid var(--border-color); padding: 0.75rem 1rem; border-radius: 8px; width: 100%; font-size: 1rem; box-sizing: border-box; }
+    input.has-prefix { padding-left: 2rem; }
+    input.has-suffix { padding-right: 2rem; }
+    input:focus, select:focus { outline: none; border-color: var(--accent-color); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-color) 20%, transparent); }
+
+    .error-message { color: #ef4444; font-size: 0.875rem; margin-top: 0.5rem; display: none; }
+    .input-error { border-color: #ef4444 !important; }
+
+    .result-card { background: color-mix(in srgb, var(--accent-color) 10%, transparent); border: 1px solid var(--accent-color); border-radius: 12px; padding: 1.5rem; margin: 1.5rem 0; text-align: center; }
+    .result-label { font-size: 1.1rem; color: var(--text-secondary); font-weight: 600; margin-bottom: 0.5rem; }
+    .result-value { font-size: 2.5rem; font-weight: 800; color: var(--accent-color); }
+
+    .breakdown { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-top: 1.5rem; }
+    .breakdown-item { background: var(--bg-color); padding: 1rem; border-radius: 8px; border: 1px solid var(--border-color); text-align: center; }
+    .breakdown-label { font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 0.25rem; }
+    .breakdown-value { font-size: 1.25rem; font-weight: 700; color: var(--text-primary); }
+
+    .explainer { margin-top: 3rem; line-height: 1.8; color: var(--text-primary); }
+    .explainer h2 { font-size: 1.8rem; margin: 2rem 0 1rem; color: var(--text-primary); }
+    .explainer h3 { font-size: 1.4rem; margin: 1.5rem 0 1rem; color: var(--text-primary); }
+    .explainer p { margin-bottom: 1.25rem; }
+    .explainer ul { margin: 0 0 1.5rem 2rem; }
+    .explainer li { margin-bottom: 0.5rem; }
+
+    .related-tools { margin: 2rem 0; padding: 1.5rem; background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 8px; font-weight: 600; }
+    .related-tools a { color: var(--accent-color); text-decoration: none; }
+    .related-tools a:hover { text-decoration: underline; }
+
+    .faq-section { margin-top: 3rem; }
+    .faq-section h2 { font-size: 1.8rem; margin-bottom: 1.5rem; text-align: center; }
+    .faq-section details { margin: 1rem 0; padding: 1rem; background: var(--card-bg); border-radius: 8px; border: 1px solid var(--border-color); transition: all 0.2s ease; }
+    .faq-section details[open] { border-color: var(--accent-color); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); }
+    .faq-section summary { font-weight: 600; cursor: pointer; list-style: none; display: flex; justify-content: space-between; align-items: center; color: var(--text-primary); }
+    .faq-section summary::-webkit-details-marker { display: none; }
+    .faq-section summary::after { content: "+"; font-size: 1.5rem; color: var(--accent-color); transition: transform 0.2s ease; }
+    .faq-section details[open] summary::after { transform: rotate(45deg); }
+    .faq-section .faq-answer { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border-color); color: var(--text-secondary); line-height: 1.6; }
+
+    @media (max-width: 640px) {
+      .breakdown { grid-template-columns: 1fr; }
+    }
+  </style>
+</SiteLayout>
