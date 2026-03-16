@@ -75,7 +75,10 @@ ${bodyContent}
 
   // Fix up astro issues: script tags should have is:inline
   // Ensure we only replace starting <script> and not </script> or <script type="application/ld+json">
-  astroContent = astroContent.replace(/<script>/g, '<script is:inline>');
+  astroContent = astroContent.replace(/<script\b(?![^>]*\btype="application\/ld\+json")[^>]*>/gi, match => {
+    if (match.includes('is:inline')) return match;
+    return match.replace(/<script/i, '<script is:inline');
+  });
 
   // Fix the JSON example output if any page has raw { } not in script or style
   // To avoid breaking valid astro, we'll let astro compile it first. If it complains, we will fix.
