@@ -1,0 +1,264 @@
+---
+import SiteLayout from "../../../layouts/SiteLayout.astro";
+
+export const meta = {
+  title: "RL Tracker — Live Match Stats & MMR Calculator",
+  description: "Want to know exactly how many matches you need to hit Grand Champ? Our RL Tracker runs the numbers so you don't have to guess your rank up.",
+  category: "tool",
+  published: "2026-03-15",
+};
+
+const schema = [
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": meta.title,
+    "description": meta.description,
+    "datePublished": meta.published,
+    "author": {
+      "@type": "Organization",
+      "name": "SiliconBased"
+    }
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+            "@type": "Question",
+            "name": "What is a good MMR in Rocket League?",
+            "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "A 'good' MMR is subjective and depends entirely on the playlist and your personal goals. Historically, the median player base sits around the Gold III to Platinum II range (roughly 500 to 700 MMR). Reaching Diamond (around 800-900 MMR) places you above the average player. Champion ranks typically represent the top 10-15% of the player base, while Grand Champion and Supersonic Legend are reserved for the top 1% and fractional percentiles, respectively."
+            }
+      },
+      {
+            "@type": "Question",
+            "name": "How many MMR points do I get for a win?",
+            "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "For an established account (where the system's uncertainty or 'Sigma' is low), you will typically gain between 8 and 10 MMR points per win in standard 2v2 or 3v3 playlists. This number can fluctuate slightly based on the comparative average MMR of your opponents. During placement matches or on new accounts, MMR gains and losses can be significantly higher, often exceeding 15 points per match."
+            }
+      },
+      {
+            "@type": "Question",
+            "name": "Why did I lose division on a win?",
+            "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "Losing a division after a win is a rare but known phenomenon caused by leaving the previous match too quickly. If you lose Game A and leave the lobby before the post-game screen updates your client's local MMR data, the game will sync both the loss from Game A and the win from Game B simultaneously after Game B concludes. If the MMR lost in Game A was greater than the MMR gained in Game B, your net MMR is negative, resulting in a visible demotion despite having just won."
+            }
+      },
+      {
+            "@type": "Question",
+            "name": "Does MVP or in-game score affect MMR?",
+            "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "No, your individual in-game score, goals, saves, assists, or earning the MVP title have zero impact on the amount of MMR you gain or lose. Rocket League's matchmaking system is entirely binary regarding match outcomes: winning increases your MMR, and losing decreases it. The only factors considered are the match result and the relative MMR disparity between the two competing teams."
+            }
+      },
+      {
+            "@type": "Question",
+            "name": "How can I find out my exact current MMR?",
+            "acceptedAnswer": {
+                  "@type": "Answer",
+                  "text": "If you play on PC, you can use third-party mods like BakkesMod to display your exact MMR and the MMR of other players directly in the game client. For console players (or PC players not using mods), you must rely on external tracking websites. By searching for your Epic Games, PlayStation Network, Xbox Live, or Steam username on these authorized API tracking sites, you can view your real-time numerical MMR across all active playlists."
+            }
+      }
+]
+  }
+];
+---
+<SiteLayout site="siliconbased" title={meta.title} description={meta.description} canonical="https://siliconbased.dev/rl-tracker" schema={schema}>
+  <div class="page-content">
+    <div class="hero">
+      <h1>{meta.title}</h1>
+      <p class="subtitle">Calculate your path to the next rank in Rocket League</p>
+    </div>
+
+    <div class="calculator-container">
+      <div style="display: grid; gap: 1.5rem; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));">
+        <div class="form-group">
+          <label for="currentMmr">Current MMR</label>
+          <input type="number" id="currentMmr" min="0" step="1" placeholder="e.g. 1000">
+          <div id="currentMmrError" class="error-msg">Please enter a valid positive number.</div>
+        </div>
+
+        <div class="form-group">
+          <label for="targetMmr">Target MMR (Next Rank)</label>
+          <input type="number" id="targetMmr" min="0" step="1" placeholder="e.g. 1075">
+          <div id="targetMmrError" class="error-msg">Target MMR must be greater than Current MMR.</div>
+        </div>
+
+        <div class="form-group" style="grid-column: 1 / -1;">
+          <label for="avgMmrPerWin">Average MMR Gained Per Win</label>
+          <input type="number" id="avgMmrPerWin" min="1" step="0.1" value="9" placeholder="e.g. 9">
+          <div id="avgMmrError" class="error-msg">Please enter a valid average (typically 8-10).</div>
+        </div>
+      </div>
+
+      <div id="resultCard" class="result-card">
+        <div class="result-label">Net Consecutive Wins Needed</div>
+        <div id="winsNeeded" class="result-value">--</div>
+        <p style="margin-top: 0.5rem; color: var(--text-secondary); font-size: 0.9rem;">
+          Assuming an average gain of <span id="displayAvgWin">9</span> MMR per match.
+        </p>
+      </div>
+    </div>
+
+    <div class="explainer">
+      <h2>Understanding Rocket League MMR and Rank Progression</h2>
+      <p>Rocket League's ranking system can often feel like a black box to players striving to reach the next tier. At its core, the system relies on Matchmaking Rating (MMR), a hidden numerical value that determines your skill level and pairs you against opponents of similar proficiency. While the game displays visually distinct ranks—from Bronze to Supersonic Legend—these are simply cosmetic overlays representing specific MMR thresholds. Our RL Tracker tool is designed to demystify this process by providing a clear, mathematical calculation of exactly how many net consecutive wins you need to bridge the gap between your current standing and your target rank.</p>
+
+      <p>To fully grasp how the tracker works, it is essential to understand the mechanics of MMR distribution. After completing your initial placement matches in a given playlist, your MMR stabilizes. In a standard 3v3 Standard or 2v2 Doubles match, an established player typically gains or loses around 8 to 10 MMR points per game. This variable fluctuation is dictated by the relative MMR of the opposing team. If your team defeats opponents with a significantly higher average MMR, you are rewarded with slightly more points—perhaps 11 or 12. Conversely, losing to a lower-ranked team results in a harsher penalty. However, when matchmaking functions optimally and pairs evenly matched teams, the standard 9 MMR point delta is a highly reliable baseline for calculations.</p>
+
+      <h3>How the Net Consecutive Wins Formula Works</h3>
+      <p>The RL Tracker utilizes a straightforward but effective formula to determine your path to promotion. The core calculation is: <strong>Wins Needed = Ceiling((Target MMR - Current MMR) / Average MMR Gained Per Win)</strong>. Because partial wins do not exist in Rocket League, the <code>Ceiling</code> function is applied to round up any decimal value to the next whole number. For instance, if you are 24 MMR points away from Champion I and you average 9 points per win, the raw calculation yields 2.66. The tracker rounds this up to 3, accurately reflecting that three net consecutive wins are required to cross the threshold.</p>
+
+      <p>The concept of "net consecutive wins" is crucial here. The calculator assumes a perfect win streak for the sake of setting a tangible goal. In reality, a player's session often involves a mix of wins and losses. Because a loss negates the MMR gained from a win (assuming an equal point spread), achieving three "net consecutive wins" might practically mean winning five games and losing two during a session. Understanding this dynamic is vital for managing ranked anxiety; the goal is not necessarily to go undefeated, but rather to maintain a positive win rate that yields a net positive MMR delta over time.</p>
+
+      <h3>Factors Influencing MMR Volatility</h3>
+      <p>While the standard 9 MMR adjustment applies to established accounts, several factors can cause temporary volatility in point distribution. The most prominent is the concept of "Sigma" or uncertainty. When a new season begins, Psyonix typically implements a soft reset, which compresses the player base towards a median MMR and increases the system's uncertainty regarding your actual skill level. During your initial matches in a new season (or on a completely new account), the MMR system will award or deduct significantly more points per match—often 15 to 20 or more. This accelerated movement allows players to quickly gravitate toward their appropriate skill bracket. If you are using the RL Tracker during your placement matches or shortly after a reset, you should adjust the "Average MMR Gained Per Win" input to reflect this heightened volatility.</p>
+
+      <p>Another factor is the playlist population. In highly populated playlists like 2v2 Doubles, the matchmaking algorithm can easily find opponents with almost identical MMRs, leading to predictable 9-point swings. In less populated extra modes like Snow Day or Dropshot, or at the extreme ends of the ranking bell curve (such as high Supersonic Legend), finding evenly matched opponents becomes difficult. In these scenarios, the system might match you against players with noticeably different MMRs, resulting in skewed point adjustments. A Grand Champion playing against slightly lower-ranked opponents might only gain 6 points for a win but risk losing 12 points for a defeat. Players operating in these environments must be hyper-aware of their match averages and adjust the tracker's parameters accordingly.</p>
+
+      <h3>Practical Strategies for Ranking Up</h3>
+      <p>Knowing how many wins you need is only half the battle; executing the gameplay required to secure those wins is another matter entirely. Using the RL Tracker provides a psychological advantage by breaking down a daunting rank-up journey into manageable, quantifiable milestones. Instead of vaguely hoping to "reach Diamond today," you can look at the data and say, "I need a net positive of four games." This shift in perspective helps prevent tilt and encourages session-based goal setting.</p>
+
+      <p>To maximize your chances of achieving those required wins, focus on consistency rather than flashy mechanics. In the lower and middle ranks, fundamental positioning, solid rotations, and powerful, accurate clears will consistently outperform inconsistent aerial attempts. As you approach the higher echelons—Champion and above—the margin for error shrinks drastically. Here, the focus shifts to maintaining momentum, managing boost efficiently, and reading the play speeds of both your teammates and opponents. The RL Tracker reminds you that every single match contributes to the larger statistical picture. A loss is merely a temporary setback in the MMR math; as long as you maintain a win rate above 50%, you will inevitably climb the ranks. The key is persistence, utilizing tools like this calculator to track your progress, and maintaining a clear-headed approach to competitive play.</p>
+    </div>
+
+    <div class="related-tools" style="margin: 2rem 0; padding: 1.5rem; background: var(--card-bg); border-radius: 12px; border: 1px solid var(--border-color);">
+      <h3 style="margin-bottom: 1rem; font-size: 1.25rem;">Related Tools</h3>
+      <p>Check out our <a href="/sig-fig-calculator" style="color: var(--accent-color); font-weight: 600; text-decoration: none;">Significant Figures Calculator</a> for precision math help.</p>
+    </div>
+
+    <section class="faq-section">
+      <h2>Frequently Asked Questions</h2>
+      <details>
+        <summary>What is a good MMR in Rocket League?</summary>
+        <p>A "good" MMR is subjective and depends entirely on the playlist and your personal goals. Historically, the median player base sits around the Gold III to Platinum II range (roughly 500 to 700 MMR). Reaching Diamond (around 800-900 MMR) places you above the average player. Champion ranks typically represent the top 10-15% of the player base, while Grand Champion and Supersonic Legend are reserved for the top 1% and fractional percentiles, respectively.</p>
+      </details>
+      <details>
+        <summary>How many MMR points do I get for a win?</summary>
+        <p>For an established account (where the system's uncertainty or "Sigma" is low), you will typically gain between 8 and 10 MMR points per win in standard 2v2 or 3v3 playlists. This number can fluctuate slightly based on the comparative average MMR of your opponents. During placement matches or on new accounts, MMR gains and losses can be significantly higher, often exceeding 15 points per match.</p>
+      </details>
+      <details>
+        <summary>Why did I lose division on a win?</summary>
+        <p>Losing a division after a win is a rare but known phenomenon caused by leaving the previous match too quickly. If you lose Game A and leave the lobby before the post-game screen updates your client's local MMR data, the game will sync both the loss from Game A and the win from Game B simultaneously after Game B concludes. If the MMR lost in Game A was greater than the MMR gained in Game B, your net MMR is negative, resulting in a visible demotion despite having just won.</p>
+      </details>
+      <details>
+        <summary>Does MVP or in-game score affect MMR?</summary>
+        <p>No, your individual in-game score, goals, saves, assists, or earning the MVP title have zero impact on the amount of MMR you gain or lose. Rocket League's matchmaking system is entirely binary regarding match outcomes: winning increases your MMR, and losing decreases it. The only factors considered are the match result and the relative MMR disparity between the two competing teams.</p>
+      </details>
+      <details>
+        <summary>How can I find out my exact current MMR?</summary>
+        <p>If you play on PC, you can use third-party mods like BakkesMod to display your exact MMR and the MMR of other players directly in the game client. For console players (or PC players not using mods), you must rely on external tracking websites. By searching for your Epic Games, PlayStation Network, Xbox Live, or Steam username on these authorized API tracking sites, you can view your real-time numerical MMR across all active playlists.</p>
+      </details>
+    </section>
+  </div>
+
+  <script is:inline>
+    document.addEventListener('DOMContentLoaded', () => {
+      const currentMmrInput = document.getElementById('currentMmr');
+      const targetMmrInput = document.getElementById('targetMmr');
+      const avgMmrInput = document.getElementById('avgMmrPerWin');
+
+      const currentError = document.getElementById('currentMmrError');
+      const targetError = document.getElementById('targetMmrError');
+      const avgError = document.getElementById('avgMmrError');
+
+      const resultCard = document.getElementById('resultCard');
+      const winsNeededDisplay = document.getElementById('winsNeeded');
+      const displayAvgWin = document.getElementById('displayAvgWin');
+
+      function calculateWins() {
+        const currentMmrStr = currentMmrInput.value;
+        const targetMmrStr = targetMmrInput.value;
+        const avgMmrStr = avgMmrInput.value;
+
+        // Reset errors
+        currentError.style.display = 'none';
+        targetError.style.display = 'none';
+        avgError.style.display = 'none';
+
+        if (currentMmrStr === '' || targetMmrStr === '') {
+          resultCard.style.display = 'none';
+          return;
+        }
+
+        const currentMmr = parseFloat(currentMmrStr);
+        const targetMmr = parseFloat(targetMmrStr);
+        const avgMmr = parseFloat(avgMmrStr) || 9; // Fallback to 9 if empty/invalid mid-typing
+
+        let hasError = false;
+
+        if (isNaN(currentMmr) || currentMmr < 0) {
+          currentError.style.display = 'block';
+          hasError = true;
+        }
+
+        if (isNaN(targetMmr) || targetMmr <= currentMmr) {
+          if (targetMmrStr !== '') {
+            targetError.style.display = 'block';
+            hasError = true;
+          }
+        }
+
+        if (isNaN(avgMmr) || avgMmr <= 0) {
+          avgError.style.display = 'block';
+          hasError = true;
+        }
+
+        if (hasError) {
+          resultCard.style.display = 'none';
+          return;
+        }
+
+        const mmrDifference = targetMmr - currentMmr;
+        const winsNeeded = Math.ceil(mmrDifference / avgMmr);
+
+        displayAvgWin.textContent = avgMmr;
+        winsNeededDisplay.textContent = winsNeeded;
+        resultCard.style.display = 'block';
+      }
+
+      currentMmrInput.addEventListener('input', calculateWins);
+      targetMmrInput.addEventListener('input', calculateWins);
+      avgMmrInput.addEventListener('input', calculateWins);
+    });
+  </script>
+
+  <style is:inline>
+    .page-content { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem; }
+    .hero { text-align: center; padding: 3rem 0 2rem; }
+    .hero h1 { font-size: 2.2rem; font-weight: 800; margin-bottom: 0.5rem; }
+    .subtitle { color: var(--text-secondary); font-size: 1.1rem; }
+    .calculator-container { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 2rem; margin: 2rem 0; }
+
+    .form-group { margin-bottom: 1.5rem; }
+    .form-group label { display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--text-primary); }
+
+    input, select { background: var(--bg-color); color: var(--text-primary); border: 1px solid var(--border-color); padding: 0.75rem 1rem; border-radius: 8px; width: 100%; font-size: 1rem; }
+    input:focus, select:focus { outline: none; border-color: var(--accent-color); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-color) 20%, transparent); }
+
+    .error-msg { color: #ef4444; font-size: 0.875rem; margin-top: 0.5rem; display: none; }
+
+    button { background: var(--accent-color); color: white; border: none; padding: 0.75rem 2rem; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 1rem; }
+    button:hover { opacity: 0.9; }
+
+    .result-card { background: color-mix(in srgb, var(--accent-color) 10%, transparent); border: 1px solid var(--accent-color); border-radius: 12px; padding: 1.5rem; margin: 1.5rem 0; text-align: center; display: none; }
+    .result-value { font-size: 2.5rem; font-weight: 800; color: var(--accent-color); margin-bottom: 0.5rem; }
+    .result-label { color: var(--text-secondary); font-size: 1.1rem; }
+
+    .explainer { margin: 3rem 0; line-height: 1.7; color: var(--text-primary); }
+    .explainer h2 { font-size: 1.8rem; margin: 2rem 0 1rem; }
+    .explainer h3 { font-size: 1.4rem; margin: 1.5rem 0 0.5rem; }
+    .explainer p { margin-bottom: 1.5rem; }
+    .explainer ul { margin-bottom: 1.5rem; padding-left: 1.5rem; }
+    .explainer li { margin-bottom: 0.5rem; }
+
+    .faq-section details { margin: 1rem 0; padding: 1rem; background: var(--card-bg); border-radius: 8px; border: 1px solid var(--border-color); }
+    .faq-section summary { font-weight: 600; cursor: pointer; list-style-position: inside; }
+    .faq-section p { margin-top: 1rem; margin-bottom: 0; line-height: 1.6; }
+  </style>
+</SiteLayout>
