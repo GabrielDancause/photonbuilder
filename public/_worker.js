@@ -1,24 +1,50 @@
+const MIME_TYPES = {
+  'html': 'text/html; charset=utf-8',
+  'css': 'text/css; charset=utf-8',
+  'js': 'application/javascript; charset=utf-8',
+  'json': 'application/json; charset=utf-8',
+  'xml': 'application/xml; charset=utf-8',
+  'svg': 'image/svg+xml',
+  'png': 'image/png',
+  'jpg': 'image/jpeg',
+  'jpeg': 'image/jpeg',
+  'gif': 'image/gif',
+  'webp': 'image/webp',
+  'woff2': 'font/woff2',
+  'woff': 'font/woff',
+  'ttf': 'font/ttf',
+  'ico': 'image/x-icon',
+  'txt': 'text/plain; charset=utf-8',
+};
+
+const SITE_MAP = {
+  'firemaths.info': 'firemaths',
+  'www.firemaths.info': 'firemaths',
+  'siliconbased.dev': 'siliconbased',
+  'www.siliconbased.dev': 'siliconbased',
+  'westmountfundamentals.com': 'westmount',
+  'www.westmountfundamentals.com': 'westmount',
+  '28grams.vip': '28grams',
+  'www.28grams.vip': '28grams',
+  'migratingmammals.com': 'migratingmammals',
+  'www.migratingmammals.com': 'migratingmammals',
+  'leeroyjenkins.quest': 'leeroyjenkins',
+  'www.leeroyjenkins.quest': 'leeroyjenkins',
+  'ijustwantto.live': 'ijustwantto',
+  'www.ijustwantto.live': 'ijustwantto',
+  'thenookienook.com': 'nookienook',
+  'www.thenookienook.com': 'nookienook',
+  'montrealjobs.photonbuilder.com': 'montrealjobs',
+};
+
+const SUB_SITES = [
+  'bodycount', 'sendnerds', 'justonemoment', 'getthebag',
+  'fixitwithducttape', 'papyruspeople', 'eeniemeenie', 'pleasestartplease'
+];
+
 function getMimeType(path) {
   const ext = path.split('.').pop()?.toLowerCase();
-  const types = {
-    'html': 'text/html; charset=utf-8',
-    'css': 'text/css; charset=utf-8',
-    'js': 'application/javascript; charset=utf-8',
-    'json': 'application/json; charset=utf-8',
-    'xml': 'application/xml; charset=utf-8',
-    'svg': 'image/svg+xml',
-    'png': 'image/png',
-    'jpg': 'image/jpeg',
-    'jpeg': 'image/jpeg',
-    'gif': 'image/gif',
-    'webp': 'image/webp',
-    'woff2': 'font/woff2',
-    'woff': 'font/woff',
-    'ttf': 'font/ttf',
-    'ico': 'image/x-icon',
-    'txt': 'text/plain; charset=utf-8',
-  };
-  return types[ext] || null;
+  return MIME_TYPES[ext] || null;
 }
 
 export default {
@@ -26,32 +52,10 @@ export default {
     const url = new URL(request.url);
     const host = url.hostname;
 
-    const SITE_MAP = {
-      'firemaths.info': 'firemaths',
-      'www.firemaths.info': 'firemaths',
-      'siliconbased.dev': 'siliconbased',
-      'www.siliconbased.dev': 'siliconbased',
-      'westmountfundamentals.com': 'westmount',
-      'www.westmountfundamentals.com': 'westmount',
-      '28grams.vip': '28grams',
-      'www.28grams.vip': '28grams',
-      'migratingmammals.com': 'migratingmammals',
-      'www.migratingmammals.com': 'migratingmammals',
-      'leeroyjenkins.quest': 'leeroyjenkins',
-      'www.leeroyjenkins.quest': 'leeroyjenkins',
-      'ijustwantto.live': 'ijustwantto',
-      'www.ijustwantto.live': 'ijustwantto',
-      'thenookienook.com': 'nookienook',
-      'www.thenookienook.com': 'nookienook',
-      'montrealjobs.photonbuilder.com': 'montrealjobs',
-    };
-
     const site = SITE_MAP[host];
 
     // For photonbuilder.com: check if path starts with a sub-site folder
     if (!site && (host === 'photonbuilder.com' || host === 'www.photonbuilder.com')) {
-      const SUB_SITES = ['bodycount','sendnerds','justonemoment','getthebag',
-                         'fixitwithducttape','papyruspeople','eeniemeenie','pleasestartplease'];
       const firstSegment = url.pathname.split('/')[1];
       if (SUB_SITES.includes(firstSegment)) {
         // Rewrite /bodycount/foo → /sites/bodycount/foo
