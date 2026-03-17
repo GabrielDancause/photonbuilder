@@ -51,10 +51,10 @@ else
 fi
 
 # Check a sample HTML file exists
-if [ -d "dist/sites/firemaths/401k-calculator" ]; then
-  echo "✅ Sample file (401k-calculator) found"
+if [ -f "dist/sites/firemaths/401k-calculator.html" ]; then
+  echo "✅ Sample file (401k-calculator.html) found"
 else
-  echo "❌ Sample file (401k-calculator) not found!"
+  echo "❌ Sample file (401k-calculator.html) not found!"
   exit 1
 fi
 
