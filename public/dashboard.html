@@ -89,6 +89,23 @@
 
   .source-file { font-size: 10px; color: var(--text2); max-width: 200px; overflow: hidden; text-overflow: ellipsis; }
 
+  .builder-tag { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 500; }
+  .builder-jules { background: #f9731622; color: var(--orange); }
+  .builder-david { background: #818cf822; color: #818cf8; }
+  .archetype-tag { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 500; background: var(--bg3); color: var(--text); }
+  .type-tag { display: inline-block; padding: 2px 8px; border-radius: 10px; font-size: 11px; font-weight: 600; }
+  .type-tool { background: #06b6d422; color: var(--cyan); }
+  .type-study { background: #6c63ff22; color: var(--accent); }
+  .type-guide { background: #22c55e22; color: var(--green); }
+  .type-list { background: #eab30822; color: var(--yellow); }
+  .rank-num { display: inline-flex; align-items: center; justify-content: center; width: 28px; height: 28px; border-radius: 50%; background: var(--bg3); font-weight: 700; font-size: 12px; color: var(--text); }
+  .rank-top10 { background: #6c63ff33; color: var(--accent); }
+  .cluster-kws { font-size: 11px; color: var(--text2); margin-top: 2px; }
+  .dispatch-summary { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+  .dispatch-chip { background: var(--bg2); border: 1px solid var(--border); border-radius: 8px; padding: 8px 14px; font-size: 13px; }
+  .dispatch-chip .chip-label { font-size: 11px; color: var(--text2); text-transform: uppercase; letter-spacing: .5px; }
+  .dispatch-chip .chip-value { font-size: 20px; font-weight: 700; margin-top: 2px; }
+
   .topic-bar { display: flex; align-items: center; gap: 8px; margin: 3px 0; }
   .topic-bar .bar { height: 8px; border-radius: 4px; background: var(--accent); min-width: 2px; transition: width .3s; }
   .topic-bar .name { font-size: 12px; min-width: 160px; text-align: right; }
@@ -119,6 +136,7 @@
   <div class="tab active" data-panel="planner">🎯 Keyword Planner</div>
   <div class="tab" data-panel="performance">📈 Performance</div>
   <div class="tab" data-panel="opportunities">💎 Opportunities</div>
+  <div class="tab" data-panel="dispatch">🚀 Dispatch Queue</div>
   <div class="tab" data-panel="files">📁 Sources</div>
 </div>
 
@@ -282,6 +300,57 @@
 
       <h3 style="margin: 30px 0 12px; font-size: 15px;">📊 Topics by Opportunity Count</h3>
       <div id="topic-bars"></div>
+    </div>
+  </div>
+
+  <!-- DISPATCH QUEUE -->
+  <div class="panel" id="dispatch">
+    <div class="loading" id="dispatch-loading">
+      <div class="spinner"></div>
+      <div>Loading dispatch queue...</div>
+    </div>
+    <div id="dispatch-content" style="display:none">
+      <div class="dispatch-summary" id="dispatch-summary"></div>
+      <h3 style="margin: 0 0 8px; font-size: 15px;">🚀 Next 100 Keywords — Dispatch Order</h3>
+      <p style="color: var(--text2); font-size: 13px; margin-bottom: 16px;">
+        Keywords sorted by factory priority score. This is the exact order they'll be dispatched to Jules.
+      </p>
+      <div class="filters">
+        <div class="filter-group">
+          <label>Search</label>
+          <input type="text" id="dq-search" placeholder="Search keywords...">
+        </div>
+        <div class="filter-group">
+          <label>Domain</label>
+          <select id="dq-domain"><option value="">All Domains</option></select>
+        </div>
+        <div class="filter-group">
+          <label>Content Type</label>
+          <select id="dq-type"><option value="">All Types</option></select>
+        </div>
+        <div class="filter-group">
+          <label>Archetype</label>
+          <select id="dq-arch"><option value="">All Archetypes</option></select>
+        </div>
+      </div>
+      <div class="table-wrap">
+        <table id="dispatch-table">
+          <thead>
+            <tr>
+              <th style="width:40px">#</th>
+              <th>Keyword</th>
+              <th>Domain</th>
+              <th>Content Type</th>
+              <th>Archetype</th>
+              <th>Builder</th>
+              <th>Volume</th>
+              <th>KD</th>
+              <th>Priority</th>
+            </tr>
+          </thead>
+          <tbody id="dispatch-tbody"></tbody>
+        </table>
+      </div>
     </div>
   </div>
 
@@ -673,8 +742,95 @@ function initFiles() {
   document.getElementById('file-list-content').innerHTML = html;
 }
 
+// --- DISPATCH QUEUE ---
+let dispatchData = null;
+
+async function loadDispatchQueue() {
+  try {
+    const res = await fetch('/data/dispatch-preview.json');
+    if (!res.ok) throw new Error('No dispatch data');
+    dispatchData = await res.json();
+    initDispatch();
+  } catch (e) {
+    document.getElementById('dispatch-loading').innerHTML =
+      '<p style="color:var(--text2);padding:40px;text-align:center">No dispatch queue data. Run <code>generate-dispatch-preview.py</code> to generate.</p>';
+  }
+}
+
+function initDispatch() {
+  document.getElementById('dispatch-loading').style.display = 'none';
+  document.getElementById('dispatch-content').style.display = 'block';
+
+  const items = dispatchData.items || [];
+
+  // Summary chips
+  const summaryEl = document.getElementById('dispatch-summary');
+  summaryEl.innerHTML = `
+    <div class="dispatch-chip"><div class="chip-label">Queued Clusters</div><div class="chip-value">${fmt(dispatchData.total_queued)}</div></div>
+    <div class="dispatch-chip"><div class="chip-label">Showing Next</div><div class="chip-value" style="color:var(--accent)">${dispatchData.preview_count}</div></div>
+    <div class="dispatch-chip"><div class="chip-label">Total Volume</div><div class="chip-value" style="color:var(--cyan)">${fmt(dispatchData.total_volume)}</div></div>
+    ${Object.entries(dispatchData.by_type || {}).map(([t,c]) =>
+      `<div class="dispatch-chip"><div class="chip-label">${t}</div><div class="chip-value">${c}</div></div>`
+    ).join('')}
+  `;
+
+  // Populate filters
+  const domains = [...new Set(items.map(i => i.domain))].sort();
+  const domSel = document.getElementById('dq-domain');
+  domains.forEach(d => { const o = document.createElement('option'); o.value = d; o.textContent = d; domSel.appendChild(o); });
+
+  const types = [...new Set(items.map(i => i.page_type_label))].sort();
+  const typeSel = document.getElementById('dq-type');
+  types.forEach(t => { const o = document.createElement('option'); o.value = t; o.textContent = t; typeSel.appendChild(o); });
+
+  const archs = [...new Set(items.map(i => i.archetype_label))].sort();
+  const archSel = document.getElementById('dq-arch');
+  archs.forEach(a => { const o = document.createElement('option'); o.value = a; o.textContent = a; archSel.appendChild(o); });
+
+  ['dq-search','dq-domain','dq-type','dq-arch'].forEach(id => {
+    document.getElementById(id).addEventListener(id === 'dq-search' ? 'input' : 'change', renderDispatch);
+  });
+
+  renderDispatch();
+}
+
+function renderDispatch() {
+  const items = dispatchData.items || [];
+  const search = document.getElementById('dq-search').value.toLowerCase();
+  const domain = document.getElementById('dq-domain').value;
+  const type = document.getElementById('dq-type').value;
+  const arch = document.getElementById('dq-arch').value;
+
+  const filtered = items.filter(item => {
+    if (search && !item.keyword.toLowerCase().includes(search) &&
+        !item.cluster_keywords.some(k => k.toLowerCase().includes(search))) return false;
+    if (domain && item.domain !== domain) return false;
+    if (type && item.page_type_label !== type) return false;
+    if (arch && item.archetype_label !== arch) return false;
+    return true;
+  });
+
+  const typeClass = t => t.includes('Tool') ? 'type-tool' : t.includes('Study') ? 'type-study' : t.includes('Guide') ? 'type-guide' : 'type-list';
+
+  document.getElementById('dispatch-tbody').innerHTML = filtered.map(item => `<tr>
+    <td><span class="rank-num ${item.rank <= 10 ? 'rank-top10' : ''}">${item.rank}</span></td>
+    <td>
+      <b>${item.keyword}</b>
+      ${item.cluster_size > 1 ? `<div class="cluster-kws">${item.cluster_keywords.slice(0,4).join(' · ')}${item.cluster_size > 4 ? ' · +' + (item.cluster_size-4) + ' more' : ''}</div>` : ''}
+    </td>
+    <td><span class="domain-tag" style="background:${item.domain_color}18;color:${item.domain_color}">${item.domain}</span></td>
+    <td><span class="type-tag ${typeClass(item.page_type_label)}">${item.page_type_label}</span></td>
+    <td><span class="archetype-tag">${item.archetype_label}</span></td>
+    <td><span class="builder-tag ${item.builder === 'Jules' ? 'builder-jules' : 'builder-david'}">${item.builder === 'Jules' ? '🤖 Jules' : '🐺 David'}</span></td>
+    <td>${fmt(item.volume)}</td>
+    <td><span class="kd ${kdClass(item.kd)}">${item.kd}</span></td>
+    <td style="color:var(--text2);font-size:12px">${fmt(item.priority)}</td>
+  </tr>`).join('');
+}
+
 // --- Init ---
 loadAll();
+loadDispatchQueue();
 </script>
 </body>
 </html>
