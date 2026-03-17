@@ -126,6 +126,15 @@
   .building-empty .emoji { font-size: 48px; margin-bottom: 12px; }
   .elapsed { font-family: monospace; font-size: 12px; color: var(--text2); }
 
+  .published-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 16px 20px; margin-bottom: 12px; border-left: 3px solid var(--green); }
+  .published-card .card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+  .published-card .card-keyword { font-size: 16px; font-weight: 600; }
+  .published-card .card-meta { display: flex; flex-wrap: wrap; gap: 10px; font-size: 13px; color: var(--text2); }
+  .published-card .card-meta span { display: flex; align-items: center; gap: 4px; }
+  .published-card .card-links { margin-top: 10px; display: flex; gap: 12px; }
+  .published-card .card-links a { color: var(--accent); text-decoration: none; font-size: 13px; }
+  .published-card .card-links a:hover { text-decoration: underline; }
+
   .topic-bar { display: flex; align-items: center; gap: 8px; margin: 3px 0; }
   .topic-bar .bar { height: 8px; border-radius: 4px; background: var(--accent); min-width: 2px; transition: width .3s; }
   .topic-bar .name { font-size: 12px; min-width: 160px; text-align: right; }
@@ -158,6 +167,7 @@
   <div class="tab" data-panel="opportunities">💎 Opportunities</div>
   <div class="tab" data-panel="dispatch">🚀 Queue</div>
   <div class="tab" data-panel="building">🔨 Building</div>
+  <div class="tab" data-panel="published">✅ Published</div>
   <div class="tab" data-panel="files">📁 Sources</div>
 </div>
 
@@ -333,6 +343,18 @@
     <div id="building-content" style="display:none">
       <div class="dispatch-summary" id="building-summary"></div>
       <div id="building-cards"></div>
+    </div>
+  </div>
+
+  <!-- PUBLISHED -->
+  <div class="panel" id="published">
+    <div class="loading" id="published-loading">
+      <div class="spinner"></div>
+      <div>Loading published pages...</div>
+    </div>
+    <div id="published-content" style="display:none">
+      <div class="dispatch-summary" id="published-summary"></div>
+      <div id="published-cards"></div>
     </div>
   </div>
 
@@ -775,6 +797,64 @@ function initFiles() {
   document.getElementById('file-list-content').innerHTML = html;
 }
 
+// --- PUBLISHED ---
+let publishedData = null;
+
+async function loadPublished() {
+  try {
+    const res = await fetch('/data/published.json');
+    if (!res.ok) throw new Error('No published data');
+    publishedData = await res.json();
+    initPublished();
+  } catch (e) {
+    document.getElementById('published-loading').style.display = 'none';
+    document.getElementById('published-content').style.display = 'block';
+    document.getElementById('published-cards').innerHTML =
+      '<div class="building-empty"><div class="emoji">📭</div><div>No published pages yet.<br>Merge a PR to see it here.</div></div>';
+    document.getElementById('published-summary').innerHTML = '';
+  }
+}
+
+function initPublished() {
+  document.getElementById('published-loading').style.display = 'none';
+  document.getElementById('published-content').style.display = 'block';
+
+  const items = publishedData.items || [];
+  if (!items.length) {
+    document.getElementById('published-cards').innerHTML =
+      '<div class="building-empty"><div class="emoji">📭</div><div>No published pages yet.</div></div>';
+    document.getElementById('published-summary').innerHTML = '';
+    return;
+  }
+
+  const totalVol = items.reduce((s,i) => s + (i.volume||0), 0);
+  document.getElementById('published-summary').innerHTML = `
+    <div class="dispatch-chip"><div class="chip-label">Pages Published</div><div class="chip-value" style="color:var(--green)">${items.length}</div></div>
+    <div class="dispatch-chip"><div class="chip-label">Total Target Volume</div><div class="chip-value" style="color:var(--cyan)">${fmt(totalVol)}</div></div>
+  `;
+
+  document.getElementById('published-cards').innerHTML = items.map(item => {
+    let links = '';
+    if (item.live_url) links += `<a href="${item.live_url}" target="_blank">🔗 Live Page</a>`;
+    if (item.pr_url) links += `<a href="${item.pr_url}" target="_blank">PR #${item.pr_number || '?'}</a>`;
+
+    return `<div class="published-card">
+      <div class="card-header">
+        <span class="card-keyword">${item.keyword}</span>
+        <span class="status-tag status-merged">✅ published</span>
+      </div>
+      <div class="card-meta">
+        <span><span class="domain-tag" style="background:${item.domain_color||'#66666618'};color:${item.domain_color||'#666'}">${item.domain||'westmount'}</span></span>
+        <span><span class="type-tag ${item.page_type === 'tool' ? 'type-tool' : item.page_type === 'study' ? 'type-study' : item.page_type === 'guide' ? 'type-guide' : 'type-list'}">${item.page_type_label || item.page_type || '?'}</span></span>
+        <span>📊 ${fmt(item.volume)} vol</span>
+        <span>🤖 ${item.builder || 'Jules'}</span>
+        ${item.merged_at ? `<span class="elapsed">📅 ${new Date(item.merged_at).toLocaleDateString()}</span>` : ''}
+      </div>
+      ${links ? `<div class="card-links">${links}</div>` : ''}
+    </div>`;
+  }).join('');
+}
+
 // --- BUILDING ---
 let buildingData = null;
 
@@ -952,6 +1032,7 @@ function renderDispatch() {
 loadAll();
 loadDispatchQueue();
 loadBuilding();
+loadPublished();
 </script>
 </body>
 </html>
