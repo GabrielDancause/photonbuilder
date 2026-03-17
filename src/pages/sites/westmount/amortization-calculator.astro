@@ -1,0 +1,436 @@
+---
+import SiteLayout from "../../../layouts/SiteLayout.astro";
+
+export const meta = {
+  title: "Amortization Calculator | See Your Loan Schedule & Payoff Date",
+  description: "Use our free amortization calculator to build a custom loan schedule. See how extra payments can save you money and shorten your loan term.",
+  category: "tool",
+};
+
+const schema = JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What is an amortization schedule?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "An amortization schedule is a complete table of periodic loan payments, showing the amount of principal and the amount of interest that comprise each payment until the loan is paid off at the end of its term."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How is the monthly payment calculated?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "The monthly payment is calculated using the formula: M = P [ i(1 + i)^n ] / [ (1 + i)^n - 1 ], where P is the principal loan amount, i is the monthly interest rate, and n is the total number of payments."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What happens if I make extra payments?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Making extra payments reduces the principal balance faster. This means less interest accrues over the life of the loan, saving you money and shortening the time it takes to pay off the debt."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Does an amortization schedule include taxes and insurance?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "A standard amortization schedule only includes principal and interest (P&I). It does not include property taxes, homeowners insurance, or HOA fees, which are often escrowed into your total monthly mortgage payment."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Why is so much interest paid at the beginning of a loan?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "In the early years of a loan, the principal balance is at its highest, so the interest charged on that balance is also highest. As the principal is paid down over time, the portion of each payment that goes toward interest decreases, while the portion going toward principal increases."
+      }
+    }
+  ]
+});
+---
+
+<SiteLayout site="westmount" title={meta.title} description={meta.description} canonical="https://westmountfundamentals.com/amortization-calculator" schema={schema}>
+  <div class="page-content">
+    <h1>Amortization Calculator</h1>
+
+    <div class="calculator-card">
+      <div class="calc-grid">
+        <div class="inputs-section">
+          <h3>Loan Details</h3>
+          <div class="input-group">
+            <label for="loanAmount">Loan Amount ($)</label>
+            <div class="input-wrapper">
+              <input type="number" id="loanAmount" value="300000" min="0" step="1000" />
+            </div>
+          </div>
+
+          <div class="input-group">
+            <label for="interestRate">Interest Rate (%)</label>
+            <div class="input-wrapper">
+              <input type="number" id="interestRate" value="6.5" min="0" step="0.1" />
+              <span class="suffix">%</span>
+            </div>
+          </div>
+
+          <div class="input-group">
+            <label for="loanTerm">Loan Term (Years)</label>
+            <div class="input-wrapper">
+              <input type="number" id="loanTerm" value="30" min="1" step="1" />
+              <span class="suffix">Yrs</span>
+            </div>
+          </div>
+
+          <div class="input-group">
+            <label for="extraPayment">Extra Monthly Payment ($)</label>
+            <div class="input-wrapper">
+              <input type="number" id="extraPayment" value="0" min="0" step="50" />
+            </div>
+          </div>
+        </div>
+
+        <div class="results-section">
+          <h3>Summary</h3>
+          <div class="stats-grid" id="statsGrid">
+            <div class="stat-card">
+              <span class="calc-result-label">Monthly Payment (P&I)</span>
+              <div class="calc-result-value" id="monthlyPaymentResult">$0</div>
+            </div>
+            <div class="stat-card">
+              <span class="calc-result-label">Total Interest Paid</span>
+              <div class="calc-result-value" id="totalInterestResult">$0</div>
+            </div>
+            <div class="stat-card">
+              <span class="calc-result-label">Total Amount Paid</span>
+              <div class="calc-result-value" id="totalPaidResult">$0</div>
+            </div>
+            <div class="stat-card">
+              <span class="calc-result-label">Payoff Date</span>
+              <div class="calc-result-value" id="payoffDateResult">-</div>
+            </div>
+          </div>
+          <div id="savingsMessage" class="savings-message" style="display: none;"></div>
+        </div>
+      </div>
+    </div>
+
+    <h2>Amortization Schedule</h2>
+    <div class="table-container">
+      <table id="amortizationTable">
+        <thead>
+          <tr>
+            <th>Year</th>
+            <th>Interest Paid</th>
+            <th>Principal Paid</th>
+            <th>Remaining Balance</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Populated by JS -->
+        </tbody>
+      </table>
+    </div>
+
+    <h2>How It Works</h2>
+    <p>
+      An amortization calculator helps you determine your monthly loan payments and shows how those payments are split between principal and interest over time. By seeing your exact loan schedule, you can make informed decisions about mortgages, auto loans, or personal loans.
+    </p>
+
+    <h3>The Amortization Formula</h3>
+    <p>
+      To calculate the fixed monthly payment, the standard amortization formula is used:
+    </p>
+    <div class="formula-box">
+      <strong>M = P [ i(1 + i)<sup>n</sup> ] / [ (1 + i)<sup>n</sup> - 1 ]</strong>
+    </div>
+    <ul>
+      <li><strong>M</strong> = Total monthly payment</li>
+      <li><strong>P</strong> = Principal loan amount</li>
+      <li><strong>i</strong> = Monthly interest rate (annual rate divided by 12)</li>
+      <li><strong>n</strong> = Number of months (loan term in years multiplied by 12)</li>
+    </ul>
+
+    <div class="faq-section">
+      <h2>Frequently Asked Questions</h2>
+
+      <details class="faq-item">
+        <summary><h3>What is an amortization schedule?</h3></summary>
+        <p>An amortization schedule is a complete table of periodic loan payments, showing the amount of principal and the amount of interest that comprise each payment until the loan is paid off at the end of its term.</p>
+      </details>
+
+      <details class="faq-item">
+        <summary><h3>How is the monthly payment calculated?</h3></summary>
+        <p>The monthly payment is calculated using the formula: M = P [ i(1 + i)^n ] / [ (1 + i)^n - 1 ], where P is the principal loan amount, i is the monthly interest rate, and n is the total number of payments.</p>
+      </details>
+
+      <details class="faq-item">
+        <summary><h3>What happens if I make extra payments?</h3></summary>
+        <p>Making extra payments reduces the principal balance faster. This means less interest accrues over the life of the loan, saving you money and shortening the time it takes to pay off the debt.</p>
+      </details>
+
+      <details class="faq-item">
+        <summary><h3>Does an amortization schedule include taxes and insurance?</h3></summary>
+        <p>A standard amortization schedule only includes principal and interest (P&I). It does not include property taxes, homeowners insurance, or HOA fees, which are often escrowed into your total monthly mortgage payment.</p>
+      </details>
+
+      <details class="faq-item">
+        <summary><h3>Why is so much interest paid at the beginning of a loan?</h3></summary>
+        <p>In the early years of a loan, the principal balance is at its highest, so the interest charged on that balance is also highest. As the principal is paid down over time, the portion of each payment that goes toward interest decreases, while the portion going toward principal increases.</p>
+      </details>
+    </div>
+  </div>
+</SiteLayout>
+
+<style>
+  .calc-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 2rem;
+  }
+
+  @media (min-width: 768px) {
+    .calc-grid {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  .stats-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+    margin: 2rem 0;
+  }
+
+  @media (min-width: 640px) {
+    .stats-grid {
+      grid-template-columns: 1fr 1fr;
+    }
+  }
+
+  .stat-card {
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.5rem;
+    text-align: center;
+  }
+
+  .formula-box {
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-left: 4px solid var(--accent-color);
+    padding: 1.5rem;
+    border-radius: 8px;
+    margin: 1.5rem 0;
+    font-family: var(--font-mono);
+    text-align: center;
+    font-size: 1.1rem;
+    color: var(--text-primary);
+  }
+
+  .savings-message {
+    margin-top: 1.5rem;
+    padding: 1rem;
+    background-color: color-mix(in srgb, var(--accent-color) 10%, transparent);
+    border: 1px solid var(--accent-color);
+    border-radius: 8px;
+    color: var(--text-primary);
+    font-weight: 500;
+    text-align: center;
+  }
+
+  details.faq-item summary {
+    cursor: pointer;
+    font-weight: 600;
+    color: var(--text-primary);
+    list-style: none;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  details.faq-item summary::-webkit-details-marker {
+    display: none;
+  }
+
+  details.faq-item summary::after {
+    content: '+';
+    color: var(--accent-color);
+    font-size: 1.5rem;
+    line-height: 1;
+  }
+
+  details.faq-item[open] summary::after {
+    content: '-';
+  }
+
+  details.faq-item p {
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border-color);
+  }
+
+  details.faq-item h3 {
+    display: inline;
+    margin: 0;
+    font-size: 1.15rem;
+  }
+</style>
+
+<script>
+  function initCalculator() {
+    const loanAmountInput = document.getElementById('loanAmount');
+    const interestRateInput = document.getElementById('interestRate');
+    const loanTermInput = document.getElementById('loanTerm');
+    const extraPaymentInput = document.getElementById('extraPayment');
+
+    const monthlyPaymentResult = document.getElementById('monthlyPaymentResult');
+    const totalInterestResult = document.getElementById('totalInterestResult');
+    const totalPaidResult = document.getElementById('totalPaidResult');
+    const payoffDateResult = document.getElementById('payoffDateResult');
+    const tableBody = document.querySelector('#amortizationTable tbody');
+    const savingsMessage = document.getElementById('savingsMessage');
+
+    // Check if element exists to avoid errors on other pages
+    if (!loanAmountInput) return;
+
+    function formatCurrency(num) {
+      return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(num);
+    }
+
+    function formatDate(monthsToAdd) {
+      const date = new Date();
+      date.setMonth(date.getMonth() + monthsToAdd);
+      return date.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+    }
+
+    function calculate() {
+      const P = parseFloat(loanAmountInput.value) || 0;
+      const annualRate = parseFloat(interestRateInput.value) || 0;
+      const years = parseFloat(loanTermInput.value) || 0;
+      const extra = parseFloat(extraPaymentInput.value) || 0;
+
+      if (P <= 0 || years <= 0) {
+        monthlyPaymentResult.textContent = '$0';
+        totalInterestResult.textContent = '$0';
+        totalPaidResult.textContent = '$0';
+        payoffDateResult.textContent = '-';
+        tableBody.innerHTML = '';
+        savingsMessage.style.display = 'none';
+        return;
+      }
+
+      const r = annualRate / 100 / 12;
+      const n = years * 12;
+
+      let baseMonthlyPayment = 0;
+      if (r === 0) {
+        baseMonthlyPayment = P / n;
+      } else {
+        baseMonthlyPayment = P * (r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1);
+      }
+
+      let balance = P;
+      let totalInterest = 0;
+      let monthCount = 0;
+
+      let currentYearInterest = 0;
+      let currentYearPrincipal = 0;
+      let yearCount = 1;
+
+      let html = '';
+
+      while (balance > 0 && monthCount < 1200) { // Cap at 100 years to prevent infinite loops
+        let interestPayment = balance * r;
+        let principalPayment = baseMonthlyPayment - interestPayment + extra;
+
+        if (balance < principalPayment) {
+          principalPayment = balance;
+        }
+
+        balance -= principalPayment;
+        totalInterest += interestPayment;
+
+        currentYearInterest += interestPayment;
+        currentYearPrincipal += principalPayment;
+        monthCount++;
+
+        if (monthCount % 12 === 0 || balance <= 0) {
+          html += `
+            <tr>
+              <td>Year ${yearCount}</td>
+              <td>${formatCurrency(currentYearInterest)}</td>
+              <td>${formatCurrency(currentYearPrincipal)}</td>
+              <td>${formatCurrency(Math.max(0, balance))}</td>
+            </tr>
+          `;
+          currentYearInterest = 0;
+          currentYearPrincipal = 0;
+          yearCount++;
+        }
+      }
+
+      const totalPaid = P + totalInterest;
+
+      monthlyPaymentResult.textContent = formatCurrency(baseMonthlyPayment);
+      totalInterestResult.textContent = formatCurrency(totalInterest);
+      totalPaidResult.textContent = formatCurrency(totalPaid);
+      payoffDateResult.textContent = formatDate(monthCount);
+      tableBody.innerHTML = html;
+
+      // Calculate savings if extra payment
+      if (extra > 0) {
+        let baseTotalInterest = 0;
+        let baseBalance = P;
+        let baseMonthCount = 0;
+        while(baseBalance > 0 && baseMonthCount < 1200) {
+          let iPay = baseBalance * r;
+          let pPay = baseMonthlyPayment - iPay;
+          if (baseBalance < pPay) pPay = baseBalance;
+          baseBalance -= pPay;
+          baseTotalInterest += iPay;
+          baseMonthCount++;
+        }
+        const interestSaved = baseTotalInterest - totalInterest;
+        const monthsSaved = baseMonthCount - monthCount;
+
+        if (interestSaved > 0) {
+          const yearsSaved = Math.floor(monthsSaved / 12);
+          const remainingMonths = monthsSaved % 12;
+          let timeStr = '';
+          if (yearsSaved > 0) timeStr += `${yearsSaved} year${yearsSaved > 1 ? 's' : ''}`;
+          if (yearsSaved > 0 && remainingMonths > 0) timeStr += ' and ';
+          if (remainingMonths > 0) timeStr += `${remainingMonths} month${remainingMonths > 1 ? 's' : ''}`;
+
+          savingsMessage.innerHTML = `By paying an extra ${formatCurrency(extra)} monthly, you save <strong>${formatCurrency(interestSaved)}</strong> in interest and pay off your loan <strong>${timeStr} earlier</strong>!`;
+          savingsMessage.style.display = 'block';
+        } else {
+          savingsMessage.style.display = 'none';
+        }
+      } else {
+        savingsMessage.style.display = 'none';
+      }
+    }
+
+    [loanAmountInput, interestRateInput, loanTermInput, extraPaymentInput].forEach(input => {
+      input.addEventListener('input', calculate);
+    });
+
+    calculate();
+  }
+
+  // Handle View Transitions
+  document.addEventListener('astro:page-load', () => {
+    // Prevent duplicate event listeners if already initialized
+    const loanAmountInput = document.getElementById('loanAmount');
+    if (loanAmountInput && loanAmountInput.dataset.initialized) return;
+    if (loanAmountInput) loanAmountInput.dataset.initialized = "true";
+
+    initCalculator();
+  });
+</script>
