@@ -37,13 +37,22 @@ const SITE_MAP = {
   'montrealjobs.photonbuilder.com': 'montrealjobs',
 };
 
+// ⚡ Bolt: Extract static array to module scope to avoid reallocation on every request
+const HTML_SUFFIXES = ['.html', '/index.html'];
+
 const SUB_SITES = [
   'bodycount', 'sendnerds', 'justonemoment', 'getthebag',
   'fixitwithducttape', 'papyruspeople', 'eeniemeenie', 'pleasestartplease'
 ];
 
+// ⚡ Bolt: Use Set for O(1) lookup
+const SUB_SITES_SET = new Set(SUB_SITES);
+
+// ⚡ Bolt: Use lastIndexOf instead of split().pop() to avoid array allocation on every request
 function getMimeType(path) {
-  const ext = path.split('.').pop()?.toLowerCase();
+  const lastDot = path.lastIndexOf('.');
+  if (lastDot === -1 || lastDot === path.length - 1) return null;
+  const ext = path.slice(lastDot + 1).toLowerCase();
   return MIME_TYPES[ext] || null;
 }
 
@@ -56,8 +65,10 @@ export default {
 
     // For photonbuilder.com: check if path starts with a sub-site folder
     if (!site && (host === 'photonbuilder.com' || host === 'www.photonbuilder.com')) {
-      const firstSegment = url.pathname.split('/')[1];
-      if (SUB_SITES.includes(firstSegment)) {
+      // ⚡ Bolt: Extract first segment using indexOf/slice instead of split to avoid array allocation
+      const secondSlash = url.pathname.indexOf('/', 1);
+      const firstSegment = secondSlash === -1 ? url.pathname.slice(1) : url.pathname.slice(1, secondSlash);
+      if (SUB_SITES_SET.has(firstSegment)) {
         // Rewrite /bodycount/foo → /sites/bodycount/foo
         const subPath = url.pathname.slice(firstSegment.length + 1) || '/';
         const base = `/sites/${firstSegment}`;
@@ -79,7 +90,7 @@ export default {
         }
         // Try .html and /index.html
         if (!subPath.includes('.')) {
-          for (const suffix of ['.html', '/index.html']) {
+          for (const suffix of HTML_SUFFIXES) {
             const tryPath = `${base}${subPath}${suffix}`;
             const tryResp = await env.ASSETS.fetch(new URL(tryPath, url.origin).toString());
             if (tryResp.ok) {
@@ -153,7 +164,7 @@ export default {
 
     // If no extension, try .html and /index.html
     if (!hasExtension) {
-      for (const suffix of ['.html', '/index.html']) {
+      for (const suffix of HTML_SUFFIXES) {
         const tryPath = `${base}${pathname}${suffix}`;
         const tryResp = await env.ASSETS.fetch(new URL(tryPath, url.origin).toString());
         if (tryResp.ok) {
