@@ -53,18 +53,22 @@ def generate_sitemap(site_id):
     pages = sorted(site_dir.glob("*.astro"))
     urls = []
 
+    page_data = []  # (url, lastmod)
     for page in pages:
         slug = page.stem
+        # Use file's actual modification time for lastmod
+        mtime = datetime.fromtimestamp(page.stat().st_mtime).strftime("%Y-%m-%d")
+
         if slug == "index":
             if site_id in SUB_SITES:
-                urls.append(f"https://{domain}/{site_id}/")
+                page_data.append((f"https://{domain}/{site_id}/", mtime))
             else:
-                urls.append(f"https://{domain}/")
+                page_data.append((f"https://{domain}/", mtime))
         else:
             if site_id in SUB_SITES:
-                urls.append(f"https://{domain}/{site_id}/{slug}")
+                page_data.append((f"https://{domain}/{site_id}/{slug}", mtime))
             else:
-                urls.append(f"https://{domain}/{slug}")
+                page_data.append((f"https://{domain}/{slug}", mtime))
 
     # Build XML
     xml_lines = [
@@ -72,10 +76,10 @@ def generate_sitemap(site_id):
         '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">',
     ]
 
-    for url in urls:
+    for url, lastmod in page_data:
         xml_lines.append(f"  <url>")
         xml_lines.append(f"    <loc>{url}</loc>")
-        xml_lines.append(f"    <lastmod>{TODAY}</lastmod>")
+        xml_lines.append(f"    <lastmod>{lastmod}</lastmod>")
         xml_lines.append(f"  </url>")
 
     xml_lines.append("</urlset>")
