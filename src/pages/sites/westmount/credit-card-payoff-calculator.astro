@@ -1,0 +1,483 @@
+---
+import SiteLayout from "../../../layouts/SiteLayout.astro";
+
+export const meta = {
+  title: "Credit Card Payoff Calculator",
+  description: "Find out how long it will take to pay off your credit card and how much interest you will pay with our free calculator.",
+  category: "tool",
+  published: "2026-03-24",
+};
+
+const schema = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "How is credit card interest calculated?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Credit card interest is typically calculated on a daily average balance. Your Annual Percentage Rate (APR) is divided by 365 to get your daily periodic rate. This rate is then multiplied by your average daily balance to determine your monthly interest charge."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What happens if I only make the minimum payment?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Making only the minimum payment means the majority of your payment goes towards interest, not the principal balance. This stretches out the time it takes to pay off the debt and significantly increases the total amount of interest you will pay over time."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How can I pay off my credit card faster?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "To pay off your credit card faster, you should pay more than the minimum payment each month. You can also try strategies like the debt avalanche method (paying off the highest interest rate first) or the debt snowball method (paying off the smallest balance first)."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Does carrying a balance help my credit score?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "No, carrying a balance does not help your credit score. In fact, it can hurt it by increasing your credit utilization ratio. The best practice for your credit score is to pay your statement balance in full every month."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What is a good credit utilization ratio?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "A good credit utilization ratio is generally considered to be below 30%. However, for the best possible credit score, it is recommended to keep your utilization ratio below 10%."
+      }
+    }
+  ]
+};
+---
+
+<SiteLayout site="westmount" title={meta.title} description={meta.description} canonical="https://westmountfundamentals.com/credit-card-payoff-calculator" schema={schema}>
+  <div class="page-content">
+    <div class="hero">
+      <h1>Credit Card Payoff Calculator</h1>
+      <p class="subtitle">Calculate how long it will take to pay off your credit card balance and the total interest you'll pay.</p>
+    </div>
+
+    <div class="calculator-container">
+      <div class="inputs-section">
+        <div class="input-group">
+          <label for="balance">Current Balance ($)</label>
+          <div class="input-wrapper">
+            <input type="number" id="balance" value="5000" min="0" step="10" />
+          </div>
+        </div>
+
+        <div class="input-group">
+          <label for="apr">Annual Percentage Rate (APR %)</label>
+          <div class="input-wrapper">
+            <input type="number" id="apr" value="19.9" min="0" step="0.1" />
+          </div>
+        </div>
+
+        <div class="input-group">
+          <label for="monthly-payment">Fixed Monthly Payment ($)</label>
+          <div class="input-wrapper">
+            <input type="number" id="monthly-payment" value="150" min="0" step="5" />
+          </div>
+        </div>
+      </div>
+
+      <div class="results-grid">
+        <div class="result-card primary-result">
+          <h3>Time to Payoff</h3>
+          <div class="result-value" id="months-to-payoff">--</div>
+          <p class="result-subtext" id="years-to-payoff-text"></p>
+        </div>
+
+        <div class="secondary-results">
+          <div class="sub-result">
+            <h4>Total Interest Paid</h4>
+            <div id="total-interest">$0.00</div>
+          </div>
+          <div class="sub-result">
+            <h4>Total Amount Paid</h4>
+            <div id="total-paid">$0.00</div>
+          </div>
+        </div>
+      </div>
+
+      <div id="error-message" class="error-text" style="display: none;"></div>
+    </div>
+
+    <script is:inline>
+      function formatCurrency(value) {
+        return new Intl.NumberFormat('en-US', {
+          style: 'currency',
+          currency: 'USD',
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2
+        }).format(value);
+      }
+
+      function calculatePayoff() {
+        const balanceInput = document.getElementById('balance');
+        const aprInput = document.getElementById('apr');
+        const paymentInput = document.getElementById('monthly-payment');
+        const errorMsg = document.getElementById('error-message');
+
+        const balance = parseFloat(balanceInput.value);
+        const apr = parseFloat(aprInput.value);
+        const payment = parseFloat(paymentInput.value);
+
+        const monthsToPayoffEl = document.getElementById('months-to-payoff');
+        const yearsToPayoffTextEl = document.getElementById('years-to-payoff-text');
+        const totalInterestEl = document.getElementById('total-interest');
+        const totalPaidEl = document.getElementById('total-paid');
+
+        // Reset text
+        yearsToPayoffTextEl.textContent = '';
+        errorMsg.style.display = 'none';
+
+        if (isNaN(balance) || isNaN(apr) || isNaN(payment) || balance <= 0) {
+          monthsToPayoffEl.textContent = '--';
+          totalInterestEl.textContent = '$0.00';
+          totalPaidEl.textContent = '$0.00';
+          return;
+        }
+
+        const dailyRate = (apr / 100) / 365;
+        // Average days in month
+        const monthlyRate = dailyRate * 30.4167;
+
+        // Check if payment covers interest
+        const monthlyInterest = balance * monthlyRate;
+        if (payment <= monthlyInterest) {
+          errorMsg.textContent = "Your monthly payment must be greater than the monthly interest charge (" + formatCurrency(monthlyInterest) + ").";
+          errorMsg.style.display = 'block';
+          monthsToPayoffEl.textContent = 'Never';
+          totalInterestEl.textContent = 'Infinite';
+          totalPaidEl.textContent = 'Infinite';
+          return;
+        }
+
+        // Calculate months to payoff using formula: N = -(ln(1 - (B * r) / P)) / ln(1 + r)
+        // B = Balance, r = monthly rate, P = Payment
+        const numerator = Math.log(1 - (balance * monthlyRate) / payment);
+        const denominator = Math.log(1 + monthlyRate);
+        const months = Math.ceil(-(numerator / denominator));
+
+        const totalPaid = months * payment;
+        const totalInterest = totalPaid - balance;
+
+        monthsToPayoffEl.textContent = `${months} Month${months !== 1 ? 's' : ''}`;
+
+        if (months > 12) {
+            const years = Math.floor(months / 12);
+            const remainingMonths = months % 12;
+            let yearText = `${years} year${years !== 1 ? 's' : ''}`;
+            if (remainingMonths > 0) {
+                yearText += ` and ${remainingMonths} month${remainingMonths !== 1 ? 's' : ''}`;
+            }
+            yearsToPayoffTextEl.textContent = yearText;
+        }
+
+        totalInterestEl.textContent = formatCurrency(totalInterest);
+        totalPaidEl.textContent = formatCurrency(totalPaid);
+      }
+
+      // Handle initial load and view transitions
+      function initCalculator() {
+        const inputs = ['balance', 'apr', 'monthly-payment'];
+        inputs.forEach(id => {
+          const el = document.getElementById(id);
+          if (el && !el.dataset.initialized) {
+            el.addEventListener('input', calculatePayoff);
+            el.dataset.initialized = 'true';
+          }
+        });
+
+        // Run initial calculation if elements exist
+        if (document.getElementById('balance')) {
+            calculatePayoff();
+        }
+      }
+
+      document.addEventListener('DOMContentLoaded', initCalculator);
+      document.addEventListener('astro:page-load', initCalculator);
+    </script>
+
+    <div class="explainer">
+      <h2>Understanding Credit Card Payoff Math</h2>
+      <p>
+        Credit card debt is one of the most expensive forms of consumer debt. Understanding how interest accrues and how different payment strategies affect your total cost can save you thousands of dollars.
+      </p>
+
+      <h3>How Daily Average Balance Works</h3>
+      <p>
+        Most credit card issuers calculate your interest using the daily average balance method. This means interest is calculated every single day on the outstanding balance.
+      </p>
+      <p>
+        First, the issuer takes your Annual Percentage Rate (APR) and divides it by 365 (or 360, depending on the issuer) to find your <strong>Daily Periodic Rate (DPR)</strong>. Then, they multiply that DPR by your balance at the end of each day.
+      </p>
+
+      <h3>The Minimum Payment Trap</h3>
+      <p>
+        If you only make the minimum payment required on your statement, you are likely only covering the interest that accrued that month, plus a tiny fraction of the principal (the actual amount you borrowed). This strategy extends your payoff timeline significantly and maximizes the amount of interest you pay to the bank.
+      </p>
+
+      <h3>Strategies for Faster Payoff</h3>
+      <p>
+        If you have multiple debts, you can use mathematical strategies to optimize your payoff:
+      </p>
+      <ul>
+        <li><strong>The Debt Avalanche Method:</strong> Focus all extra payments on the debt with the highest interest rate (APR) while making minimum payments on everything else. This mathematically saves you the most money in total interest.</li>
+        <li><strong>The Debt Snowball Method:</strong> Focus extra payments on the smallest balance first to get a quick psychological "win," then roll that payment amount into the next smallest debt. While not mathematically optimal, it often keeps people motivated.</li>
+        <li><strong>Fixed Payments:</strong> As our calculator demonstrates, simply setting a fixed payment that is higher than the minimum—and sticking to it even as the minimum required payment drops—drastically reduces the time and money spent paying off the balance.</li>
+      </ul>
+    </div>
+
+    <section class="faq-section">
+      <h2>Frequently Asked Questions</h2>
+
+      <details>
+        <summary>How is credit card interest calculated?</summary>
+        <p>Credit card interest is typically calculated on a daily average balance. Your Annual Percentage Rate (APR) is divided by 365 to get your daily periodic rate. This rate is then multiplied by your average daily balance to determine your monthly interest charge.</p>
+      </details>
+
+      <details>
+        <summary>What happens if I only make the minimum payment?</summary>
+        <p>Making only the minimum payment means the majority of your payment goes towards interest, not the principal balance. This stretches out the time it takes to pay off the debt and significantly increases the total amount of interest you will pay over time.</p>
+      </details>
+
+      <details>
+        <summary>How can I pay off my credit card faster?</summary>
+        <p>To pay off your credit card faster, you should pay more than the minimum payment each month. You can also try strategies like the debt avalanche method (paying off the highest interest rate first) or the debt snowball method (paying off the smallest balance first).</p>
+      </details>
+
+      <details>
+        <summary>Does carrying a balance help my credit score?</summary>
+        <p>No, carrying a balance does not help your credit score. In fact, it can hurt it by increasing your credit utilization ratio. The best practice for your credit score is to pay your statement balance in full every month.</p>
+      </details>
+
+      <details>
+        <summary>What is a good credit utilization ratio?</summary>
+        <p>A good credit utilization ratio is generally considered to be below 30%. However, for the best possible credit score, it is recommended to keep your utilization ratio below 10%.</p>
+      </details>
+    </section>
+  </div>
+
+  <style>
+    .page-content {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem;
+    }
+
+    .hero {
+      text-align: center;
+      padding: 3rem 0 2rem;
+    }
+
+    .hero h1 {
+      font-size: 2.2rem;
+      font-weight: 800;
+      margin-bottom: 0.5rem;
+      color: var(--accent-color);
+    }
+
+    .subtitle {
+      color: var(--text-secondary);
+      font-size: 1.1rem;
+    }
+
+    .calculator-container {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 2rem;
+      margin: 2rem 0;
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 2rem;
+    }
+
+    .inputs-section {
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+    }
+
+    .input-group label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 600;
+      font-size: 0.95rem;
+      color: var(--text-primary);
+    }
+
+    .input-wrapper {
+      position: relative;
+    }
+
+    input[type="number"] {
+      width: 100%;
+      background: var(--bg-color);
+      color: var(--text-primary);
+      border: 1px solid var(--border-color);
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      font-size: 1rem;
+      font-family: var(--font-mono);
+      transition: border-color 0.2s;
+    }
+
+    input[type="number"]:focus {
+      outline: none;
+      border-color: var(--accent-color);
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-color) 20%, transparent);
+    }
+
+    .results-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .primary-result {
+      background: color-mix(in srgb, var(--accent-color) 10%, transparent);
+      border: 1px solid var(--accent-color);
+      border-radius: 12px;
+      padding: 1.5rem;
+      text-align: center;
+    }
+
+    .primary-result h3 {
+      margin: 0 0 0.5rem 0;
+      font-size: 1.1rem;
+      color: var(--text-secondary);
+    }
+
+    .result-value {
+      font-size: 2.5rem;
+      font-weight: 800;
+      color: var(--accent-color);
+    }
+
+    .result-subtext {
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      margin-top: 0.25rem;
+    }
+
+    .secondary-results {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1rem;
+    }
+
+    .sub-result {
+      background: var(--bg-color);
+      border: 1px solid var(--border-color);
+      padding: 1.25rem;
+      border-radius: 8px;
+      text-align: center;
+    }
+
+    .sub-result h4 {
+      margin: 0 0 0.5rem 0;
+      font-size: 0.95rem;
+      color: var(--text-secondary);
+    }
+
+    .sub-result div {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      font-family: var(--font-mono);
+    }
+
+    .error-text {
+      color: #ef4444;
+      margin-top: 1rem;
+      font-weight: 600;
+      text-align: center;
+      padding: 1rem;
+      background: rgba(239, 68, 68, 0.1);
+      border-radius: 8px;
+      border: 1px solid #ef4444;
+    }
+
+    .explainer {
+      margin: 3rem 0;
+      line-height: 1.6;
+      color: var(--text-primary);
+    }
+
+    .explainer h2 {
+      font-size: 1.8rem;
+      margin: 2rem 0 1rem;
+      color: var(--accent-color);
+    }
+
+    .explainer h3 {
+      font-size: 1.4rem;
+      margin: 1.5rem 0 0.75rem;
+    }
+
+    .explainer p {
+      margin-bottom: 1.25rem;
+      color: var(--text-secondary);
+    }
+
+    .explainer ul {
+      margin-bottom: 1.25rem;
+      color: var(--text-secondary);
+      padding-left: 1.5rem;
+    }
+
+    .explainer li {
+      margin-bottom: 0.75rem;
+    }
+
+    .faq-section {
+      margin-top: 3rem;
+    }
+
+    .faq-section h2 {
+      font-size: 1.8rem;
+      margin-bottom: 1.5rem;
+      color: var(--accent-color);
+    }
+
+    .faq-section details {
+      margin: 1rem 0;
+      padding: 1rem;
+      background: var(--card-bg);
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+    }
+
+    .faq-section summary {
+      font-weight: 600;
+      cursor: pointer;
+      color: var(--text-primary);
+      font-size: 1.05rem;
+    }
+
+    .faq-section details p {
+      margin: 1rem 0 0 0;
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+
+    @media (min-width: 768px) {
+      .calculator-container {
+        grid-template-columns: 1fr 1fr;
+        align-items: start;
+      }
+      .secondary-results {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+  </style>
+</SiteLayout>
