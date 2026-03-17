@@ -1,90 +1,96 @@
----
+import json
+
+def generate_page(slug, keyword, category, title, description, h1, is_tool=True):
+    content = f"""---
 import SiteLayout from "../../../layouts/SiteLayout.astro";
 
-export const meta = {
-  title: "Options Profit Calculator | Visual P/L & Risk Tool",
-  description: "Discover exactly how much risk you take. Our interactive options profit calculator maps out scenarios so you never guess your max loss...",
-  category: "tool",
+export const meta = {{
+  title: "{title}",
+  description: "{description}",
+  category: "{category}",
   published: "2026-03-17"
-};
+}};
 
-const schema = {
+const schema = {{
   "@context": "https://schema.org",
   "@graph": [
-    {
+    {{
       "@type": "Article",
       "headline": meta.title,
       "description": meta.description,
-      "author": {
+      "author": {{
         "@type": "Organization",
         "name": "Westmount Fundamentals"
-      },
-      "publisher": {
+      }},
+      "publisher": {{
         "@type": "Organization",
         "name": "Westmount Fundamentals"
-      },
+      }},
       "datePublished": meta.published
-    },
-    {
+    }},
+    {{
       "@type": "FAQPage",
       "mainEntity": [
-        {
+        {{
           "@type": "Question",
-          "name": "What is an options profit calculator?",
-          "acceptedAnswer": {
+          "name": "What is an {keyword}?",
+          "acceptedAnswer": {{
             "@type": "Answer",
-            "text": "An options profit calculator is a specialized resource designed to help investors understand the potential outcomes of an options trade before risking capital. It factors in variables like strike price, underlying price, and premium paid."
-          }
-        },
-        {
+            "text": "An {keyword} is a specialized resource designed to help investors understand the potential outcomes of an options trade before risking capital. It factors in variables like strike price, underlying price, and premium paid."
+          }}
+        }},
+        {{
           "@type": "Question",
           "name": "How do you calculate profit on a call option?",
-          "acceptedAnswer": {
+          "acceptedAnswer": {{
             "@type": "Answer",
             "text": "For a long call, subtract the strike price and the premium paid from the current stock price, then multiply by 100 per contract. If the stock price is below the strike price, the loss is capped at the total premium paid."
-          }
-        },
-        {
+          }}
+        }},
+        {{
           "@type": "Question",
           "name": "What happens if an option expires worthless?",
-          "acceptedAnswer": {
+          "acceptedAnswer": {{
             "@type": "Answer",
             "text": "If an option expires out-of-the-money, it becomes worthless. The buyer loses the entire premium paid for the option, but has no further obligation."
-          }
-        },
-        {
+          }}
+        }},
+        {{
           "@type": "Question",
           "name": "Are options riskier than stocks?",
-          "acceptedAnswer": {
+          "acceptedAnswer": {{
             "@type": "Answer",
             "text": "Options can be riskier than stocks because they use leverage and have an expiration date. However, certain strategies can be used to limit risk or generate income, making them versatile tools for knowledgeable investors."
-          }
-        },
-        {
+          }}
+        }},
+        {{
           "@type": "Question",
-          "name": "Why use an options profit calculator?",
-          "acceptedAnswer": {
+          "name": "Why use an {keyword}?",
+          "acceptedAnswer": {{
             "@type": "Answer",
-            "text": "Using an options profit calculator helps visualize the profit and loss graph, clearly defining maximum risk, maximum reward, and breakeven points before entering a trade."
-          }
-        }
+            "text": "Using an {keyword} helps visualize the profit and loss graph, clearly defining maximum risk, maximum reward, and breakeven points before entering a trade."
+          }}
+        }}
       ]
-    }
+    }}
   ]
-};
+}};
 ---
 
-<SiteLayout site="westmount" title={meta.title} description={meta.description} canonical={`https://westmountfundamentals.com/options-profit-calculator`} schema={schema}>
+<SiteLayout site="westmount" title={{meta.title}} description={{meta.description}} canonical={{`https://westmountfundamentals.com/{slug}`}} schema={{schema}}>
   <div class="page-container">
     <header class="page-header">
-      <h1>Options Profit Calculator</h1>
+      <h1>{h1}</h1>
       <p class="subtitle">Understand your potential returns and risks before placing a trade.</p>
     </header>
 
+"""
 
+    if is_tool:
+        content += f"""
     <section class="calculator-section">
       <div class="calculator-card">
-        <h2>Options Profit Calculator Tool</h2>
+        <h2>{h1} Tool</h2>
         <div class="input-grid">
           <div class="input-group">
             <label for="optionType">Option Type</label>
@@ -153,7 +159,7 @@ const schema = {
     </section>
 
     <script is:inline>
-      document.addEventListener('DOMContentLoaded', () => {
+      document.addEventListener('DOMContentLoaded', () => {{
         const optionType = document.getElementById('optionType');
         const strikePrice = document.getElementById('strikePrice');
         const premiumPaid = document.getElementById('premiumPaid');
@@ -167,15 +173,15 @@ const schema = {
         const roi = document.getElementById('roi');
         const scenarioTableBody = document.getElementById('scenarioTableBody');
 
-        function formatCurrency(val) {
-          return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(val);
-        }
+        function formatCurrency(val) {{
+          return new Intl.NumberFormat('en-US', {{ style: 'currency', currency: 'USD' }}).format(val);
+        }}
 
-        function formatPercent(val) {
+        function formatPercent(val) {{
           return val.toFixed(2) + '%';
-        }
+        }}
 
-        function calculate() {
+        function calculate() {{
           const type = optionType.value;
           const strike = parseFloat(strikePrice.value) || 0;
           const premium = parseFloat(premiumPaid.value) || 0;
@@ -188,13 +194,13 @@ const schema = {
           let breakeven = 0;
           let intrinsic = 0;
 
-          if (type === 'call') {
+          if (type === 'call') {{
             breakeven = strike + premium;
             intrinsic = Math.max(0, expiryPrice - strike);
-          } else {
+          }} else {{
             breakeven = strike - premium;
             intrinsic = Math.max(0, strike - expiryPrice);
-          }
+          }}
 
           breakevenPrice.textContent = formatCurrency(breakeven);
 
@@ -214,14 +220,14 @@ const schema = {
           const endPrice = strike * 1.3;
           const step = (endPrice - startPrice) / 6;
 
-          for (let i = 0; i <= 6; i++) {
+          for (let i = 0; i <= 6; i++) {{
             const simPrice = startPrice + (step * i);
             let simIntrinsic = 0;
-            if (type === 'call') {
+            if (type === 'call') {{
               simIntrinsic = Math.max(0, simPrice - strike);
-            } else {
+            }} else {{
               simIntrinsic = Math.max(0, strike - simPrice);
-            }
+            }}
 
             const simTotalValue = simIntrinsic * 100 * qty;
             const simPl = simTotalValue - totalCost;
@@ -229,23 +235,25 @@ const schema = {
 
             const tr = document.createElement('tr');
             tr.innerHTML = `
-              <td>${formatCurrency(simPrice)}</td>
-              <td>${formatCurrency(simIntrinsic)}</td>
-              <td style="color: ${simPl >= 0 ? 'var(--accent-color)' : '#ff4444'}">${formatCurrency(simPl)}</td>
-              <td style="color: ${simPl >= 0 ? 'var(--accent-color)' : '#ff4444'}">${formatPercent(simRoi)}</td>
+              <td>${{formatCurrency(simPrice)}}</td>
+              <td>${{formatCurrency(simIntrinsic)}}</td>
+              <td style="color: ${{simPl >= 0 ? 'var(--accent-color)' : '#ff4444'}}">${{formatCurrency(simPl)}}</td>
+              <td style="color: ${{simPl >= 0 ? 'var(--accent-color)' : '#ff4444'}}">${{formatPercent(simRoi)}}</td>
             `;
             scenarioTableBody.appendChild(tr);
-          }
-        }
+          }}
+        }}
 
         calculateBtn.addEventListener('click', calculate);
         calculate(); // initial
-      });
+      }});
     </script>
+"""
 
+    content += f"""
     <article class="educational-content">
-      <h2>Comprehensive Guide to the Options Profit Calculator</h2>
-      <p>Understanding potential outcomes in options trading is paramount. The <strong>options profit calculator</strong> provides a crucial visual and numerical representation of what happens to a position at various expiration prices. Whether you are using an <a href="/options-calculator">options calculator</a> or a <a href="/stock-options-calculator">stock options calculator</a>, mapping your risk/reward scenario keeps your portfolio grounded.</p>
+      <h2>Comprehensive Guide to the {keyword.title()}</h2>
+      <p>Understanding potential outcomes in options trading is paramount. The <strong>{keyword}</strong> provides a crucial visual and numerical representation of what happens to a position at various expiration prices. Whether you are using an <a href="/options-calculator">options calculator</a> or a <a href="/stock-options-calculator">stock options calculator</a>, mapping your risk/reward scenario keeps your portfolio grounded.</p>
 
       <h3>The Core Mechanics of Options</h3>
       <p>Options contracts give buyers the right, but not the obligation, to buy or sell an underlying asset at a specified strike price. A <a href="/options-profit-calculator">options profit calculator</a> models the intrinsic value remaining at expiration. In contrast to standard equity trading discussed in our <a href="/options-vs-stocks">options vs stocks</a> guide, options carry a hard expiration date, which introduces time decay.</p>
@@ -267,7 +275,7 @@ const schema = {
 
       <h3>Common Pitfalls to Avoid</h3>
       <p>Many new traders focus solely on the maximum profit potential while ignoring the probability of success. A common mistake is buying deep out-of-the-money options because they are cheap. However, these require significant directional movement just to break even.</p>
-      <p>Moreover, ignoring the effects of implied volatility crush around earnings events can turn a seemingly correct directional prediction into a losing trade. A robust <strong>options profit calculator</strong> helps visualize how far the underlying needs to move to overcome both intrinsic and extrinsic factors before expiration.</p>
+      <p>Moreover, ignoring the effects of implied volatility crush around earnings events can turn a seemingly correct directional prediction into a losing trade. A robust <strong>{keyword}</strong> helps visualize how far the underlying needs to move to overcome both intrinsic and extrinsic factors before expiration.</p>
 
       <h3>Integration with Broader Strategy</h3>
       <p>Trading options should not exist in a vacuum. It requires an understanding of overall market conditions, similar to understanding the <a href="/average-stock-market-return">average stock market return</a> over decades. Using a <a href="/options-profit-calculator">options profit calculator</a> or an <a href="/options-trading-simulator">options trading simulator</a> forms the tactical layer of a much larger strategic framework. Always weigh the explicit leverage of an options contract against the straightforward equity ownership detailed in our <a href="/options-vs-stocks">options vs stocks</a> analysis.</p>
@@ -275,59 +283,59 @@ const schema = {
       <p>By making these calculations a mandatory step before order entry, traders can eliminate emotional decision-making, setting strict target exits and stop-loss boundaries based on actual structural math rather than mere intuition.</p>
 
       <h3>Further Exploration</h3>
-      <p>As you refine your approach, consider exploring different strike placements and expiration cycles. Adjusting the inputs in the <strong>options profit calculator</strong> above will dynamically recalculate the critical thresholds. Continually modeling these scenarios is the fastest way to internalize the relationship between premium cost, strike distance, and overall profitability.</p>
+      <p>As you refine your approach, consider exploring different strike placements and expiration cycles. Adjusting the inputs in the <strong>{keyword}</strong> above will dynamically recalculate the critical thresholds. Continually modeling these scenarios is the fastest way to internalize the relationship between premium cost, strike distance, and overall profitability.</p>
     </article>
   </div>
 </SiteLayout>
 
 <style>
-  .page-container {
+  .page-container {{
     max-width: 1000px;
     margin: 0 auto;
     padding: 2rem 1rem;
     font-family: system-ui, -apple-system, sans-serif;
-  }
-  .page-header {
+  }}
+  .page-header {{
     text-align: center;
     margin-bottom: 3rem;
-  }
-  .page-header h1 {
+  }}
+  .page-header h1 {{
     color: var(--text-primary, #fff);
     font-size: 2.5rem;
     margin-bottom: 0.5rem;
-  }
-  .subtitle {
+  }}
+  .subtitle {{
     color: var(--text-secondary, #a0aec0);
     font-size: 1.1rem;
-  }
-  .calculator-section {
+  }}
+  .calculator-section {{
     margin-bottom: 4rem;
-  }
-  .calculator-card {
+  }}
+  .calculator-card {{
     background: var(--card-bg, #1a202c);
     border: 1px solid var(--border-color, #2d3748);
     border-radius: 12px;
     padding: 2rem;
     margin-bottom: 2rem;
-  }
-  .calculator-card h2 {
+  }}
+  .calculator-card h2 {{
     color: var(--text-primary, #fff);
     margin-top: 0;
     margin-bottom: 1.5rem;
-  }
-  .input-grid {
+  }}
+  .input-grid {{
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 1.5rem;
     margin-bottom: 1.5rem;
-  }
-  .input-group label {
+  }}
+  .input-group label {{
     display: block;
     color: var(--text-secondary, #a0aec0);
     margin-bottom: 0.5rem;
     font-size: 0.9rem;
-  }
-  .input-group input, .input-group select {
+  }}
+  .input-group input, .input-group select {{
     width: 100%;
     padding: 0.75rem;
     background: var(--bg-color, #0f172a);
@@ -335,8 +343,8 @@ const schema = {
     border-radius: 6px;
     color: var(--text-primary, #fff);
     color-scheme: dark;
-  }
-  .calc-btn {
+  }}
+  .calc-btn {{
     width: 100%;
     padding: 1rem;
     background: var(--accent-color, #3b82f6);
@@ -347,85 +355,150 @@ const schema = {
     font-weight: 600;
     cursor: pointer;
     transition: opacity 0.2s;
-  }
-  .calc-btn:hover {
+  }}
+  .calc-btn:hover {{
     opacity: 0.9;
-  }
-  .results-grid {
+  }}
+  .results-grid {{
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 1.5rem;
-  }
-  .stat-card {
+  }}
+  .stat-card {{
     background: var(--card-bg, #1a202c);
     border: 1px solid var(--border-color, #2d3748);
     border-radius: 12px;
     padding: 1.5rem;
     text-align: center;
-  }
-  .stat-card.highlight {
+  }}
+  .stat-card.highlight {{
     border-color: var(--accent-color, #3b82f6);
-  }
-  .stat-card h3 {
+  }}
+  .stat-card h3 {{
     color: var(--text-secondary, #a0aec0);
     font-size: 0.9rem;
     margin-top: 0;
     margin-bottom: 0.5rem;
-  }
-  .stat-value {
+  }}
+  .stat-value {{
     color: var(--text-primary, #fff);
     font-size: 1.75rem;
     font-weight: 700;
     margin: 0;
-  }
-  .comparison-section {
+  }}
+  .comparison-section {{
     margin-bottom: 4rem;
-  }
-  .comparison-section h2 {
+  }}
+  .comparison-section h2 {{
     color: var(--text-primary, #fff);
     margin-bottom: 1.5rem;
-  }
-  .table-responsive {
+  }}
+  .table-responsive {{
     overflow-x: auto;
-  }
-  .comparison-table {
+  }}
+  .comparison-table {{
     width: 100%;
     border-collapse: collapse;
     background: var(--card-bg, #1a202c);
     border-radius: 12px;
     overflow: hidden;
-  }
-  .comparison-table th, .comparison-table td {
+  }}
+  .comparison-table th, .comparison-table td {{
     padding: 1rem;
     text-align: right;
     border-bottom: 1px solid var(--border-color, #2d3748);
     color: var(--text-primary, #fff);
-  }
-  .comparison-table th {
+  }}
+  .comparison-table th {{
     background: rgba(255,255,255,0.05);
     color: var(--text-secondary, #a0aec0);
     font-weight: 600;
-  }
-  .educational-content {
+  }}
+  .educational-content {{
     color: var(--text-primary, #e2e8f0);
     line-height: 1.7;
-  }
-  .educational-content h2, .educational-content h3 {
+  }}
+  .educational-content h2, .educational-content h3 {{
     color: #fff;
     margin-top: 2rem;
-  }
-  .educational-content a {
+  }}
+  .educational-content a {{
     color: var(--accent-color, #3b82f6);
     text-decoration: none;
-  }
-  .educational-content a:hover {
+  }}
+  .educational-content a:hover {{
     text-decoration: underline;
-  }
-  .educational-content ul {
+  }}
+  .educational-content ul {{
     margin-left: 1.5rem;
     margin-bottom: 1.5rem;
-  }
-  .educational-content li {
+  }}
+  .educational-content li {{
     margin-bottom: 0.5rem;
-  }
+  }}
 </style>
+"""
+    return content
+
+pages = [
+    {
+        "slug": "options-profit-calculator",
+        "keyword": "options profit calculator",
+        "category": "tool",
+        "title": "Options Profit Calculator | Visual P/L & Risk Tool",
+        "description": "Discover exactly how much risk you take. Our interactive options profit calculator maps out scenarios so you never guess your max loss...",
+        "h1": "Options Profit Calculator",
+        "is_tool": True
+    },
+    {
+        "slug": "options-calculator",
+        "keyword": "options calculator",
+        "category": "tool",
+        "title": "Options Calculator | Trade Scenarios & Returns",
+        "description": "Will your strike price hit profitability? Use this powerful options calculator to unearth hidden breakevens and project absolute returns...",
+        "h1": "Options Calculator",
+        "is_tool": True
+    },
+    {
+        "slug": "stock-options-calculator",
+        "keyword": "stock options calculator",
+        "category": "tool",
+        "title": "Stock Options Calculator | Equity Derivatives Modeler",
+        "description": "Are stock options right for your strategy? Crunch the precise numbers with our stock options calculator before exposing real capital to the market...",
+        "h1": "Stock Options Calculator",
+        "is_tool": True
+    },
+    {
+        "slug": "options-vs-stocks",
+        "keyword": "options vs stocks",
+        "category": "guide",
+        "title": "Options vs Stocks: The Ultimate Comparison",
+        "description": "What is the true cost of leverage? Our comprehensive options vs stocks guide reveals the staggering difference in risk and reward potential...",
+        "h1": "Options vs Stocks",
+        "is_tool": False
+    },
+    {
+        "slug": "options-trading-simulator",
+        "keyword": "options trading simulator",
+        "category": "tool",
+        "title": "Options Trading Simulator | Free Paper Trading Tool",
+        "description": "Can you beat the market without risking a dime? Try our options trading simulator to test robust strategies and uncover critical mistakes early...",
+        "h1": "Options Trading Simulator",
+        "is_tool": True
+    }
+]
+
+for p in pages:
+    content = generate_page(
+        slug=p["slug"],
+        keyword=p["keyword"],
+        category=p["category"],
+        title=p["title"],
+        description=p["description"],
+        h1=p["h1"],
+        is_tool=p["is_tool"]
+    )
+    with open(f"src/pages/sites/westmount/{p['slug']}.astro", "w") as f:
+        f.write(content)
+
+print("Generated pages successfully.")
