@@ -1,0 +1,811 @@
+---
+import SiteLayout from "../../../layouts/SiteLayout.astro";
+
+export const meta = {
+  title: "Mortgage Calculator: Estimate Your Monthly Payments",
+  description: "Calculate your monthly mortgage payments including principal, interest, taxes, and insurance. See how your interest rate and down payment affect your costs.",
+  category: "tool",
+  published: "2026-03-20"
+};
+
+const schema = JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "How is a monthly mortgage payment calculated?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Your monthly mortgage payment is calculated using the principal loan amount, the annual interest rate, and the loan term (usually 15 or 30 years). The formula standardizes the payment so that it remains the same each month, with the proportion of principal and interest changing over time."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What does PITI stand for in a mortgage?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "PITI stands for Principal, Interest, Taxes, and Insurance. These are the four main components of a typical monthly mortgage payment. While principal and interest go to the lender, taxes and insurance are often held in escrow to pay local governments and insurance providers."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How does my down payment affect my mortgage?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "A larger down payment reduces the total amount you need to borrow, which lowers your monthly payments and the total interest paid over the life of the loan. Additionally, a down payment of at least 20% typically eliminates the need for Private Mortgage Insurance (PMI)."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Should I choose a 15-year or 30-year mortgage?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "A 15-year mortgage has higher monthly payments but significantly lowers the total interest paid over the life of the loan. A 30-year mortgage offers lower, more manageable monthly payments but results in paying more interest overall. The choice depends on your monthly budget and long-term financial goals."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What is an amortization schedule?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "An amortization schedule is a complete table of periodic loan payments, showing the amount of principal and the amount of interest that comprise each payment until the loan is paid off at the end of its term."
+      }
+    }
+  ]
+});
+---
+
+<SiteLayout site="westmount" title={meta.title} description={meta.description} canonical="https://westmountfundamentals.com/mortgage-calculator" schema={schema}>
+  <div class="page-content">
+    <div class="hero">
+      <h1>Mortgage Calculator</h1>
+      <p class="subtitle">Estimate your monthly mortgage payments, including taxes and insurance.</p>
+    </div>
+
+    <div class="calculator-container">
+      <div class="inputs-section">
+        <div class="input-group">
+          <label for="homePrice">Home Price ($)</label>
+          <div class="input-wrapper">
+            <input type="number" id="homePrice" value="400000" min="0" step="1000" />
+          </div>
+        </div>
+
+        <div class="input-row">
+          <div class="input-group half-width">
+            <label for="downPayment">Down Payment ($)</label>
+            <div class="input-wrapper">
+              <input type="number" id="downPayment" value="80000" min="0" step="1000" />
+            </div>
+          </div>
+          <div class="input-group half-width">
+            <label for="downPaymentPercent">Down Payment (%)</label>
+            <div class="input-wrapper">
+              <input type="number" id="downPaymentPercent" value="20" min="0" max="100" step="0.1" />
+            </div>
+          </div>
+        </div>
+
+        <div class="input-group">
+          <label for="loanTerm">Loan Term (Years)</label>
+          <select id="loanTerm">
+            <option value="10">10 Years</option>
+            <option value="15">15 Years</option>
+            <option value="20">20 Years</option>
+            <option value="30" selected>30 Years</option>
+          </select>
+        </div>
+
+        <div class="input-group">
+          <label for="interestRate">Interest Rate (%)</label>
+          <div class="input-wrapper">
+            <input type="number" id="interestRate" value="6.5" min="0" max="20" step="0.1" />
+          </div>
+        </div>
+
+        <div class="advanced-options">
+          <button type="button" class="toggle-btn" id="toggleAdvanced">Show Advanced Options (Taxes, Insurance, HOA) <span>▼</span></button>
+
+          <div class="advanced-inputs" id="advancedInputs" style="display: none;">
+            <div class="input-group">
+              <label for="propertyTax">Property Tax ($ / Year)</label>
+              <div class="input-wrapper">
+                <input type="number" id="propertyTax" value="4800" min="0" step="100" />
+              </div>
+            </div>
+
+            <div class="input-group">
+              <label for="homeInsurance">Home Insurance ($ / Year)</label>
+              <div class="input-wrapper">
+                <input type="number" id="homeInsurance" value="1200" min="0" step="50" />
+              </div>
+            </div>
+
+            <div class="input-group">
+              <label for="hoaFees">HOA Fees ($ / Month)</label>
+              <div class="input-wrapper">
+                <input type="number" id="hoaFees" value="0" min="0" step="10" />
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="results-section">
+        <div class="main-result">
+          <h3>Estimated Monthly Payment</h3>
+          <div class="result-value" id="monthlyPayment">$0.00</div>
+        </div>
+
+        <div class="breakdown-chart">
+          <div class="chart-bar">
+            <div class="bar-segment principal" id="barPrincipal" style="width: 60%"></div>
+            <div class="bar-segment tax" id="barTax" style="width: 25%"></div>
+            <div class="bar-segment insurance" id="barInsurance" style="width: 10%"></div>
+            <div class="bar-segment hoa" id="barHoa" style="width: 5%"></div>
+          </div>
+        </div>
+
+        <div class="breakdown-list">
+          <div class="breakdown-item">
+            <div class="item-label">
+              <span class="color-dot principal-dot"></span>
+              Principal & Interest
+            </div>
+            <div class="item-value" id="piAmount">$0.00</div>
+          </div>
+          <div class="breakdown-item">
+            <div class="item-label">
+              <span class="color-dot tax-dot"></span>
+              Property Tax
+            </div>
+            <div class="item-value" id="taxAmount">$0.00</div>
+          </div>
+          <div class="breakdown-item">
+            <div class="item-label">
+              <span class="color-dot insurance-dot"></span>
+              Home Insurance
+            </div>
+            <div class="item-value" id="insuranceAmount">$0.00</div>
+          </div>
+          <div class="breakdown-item">
+            <div class="item-label">
+              <span class="color-dot hoa-dot"></span>
+              HOA Fees
+            </div>
+            <div class="item-value" id="hoaAmount">$0.00</div>
+          </div>
+        </div>
+
+        <div class="loan-summary">
+          <h4>Loan Summary</h4>
+          <div class="summary-grid">
+            <div class="summary-item">
+              <span class="summary-label">Loan Amount:</span>
+              <span class="summary-value" id="totalLoanAmount">$0.00</span>
+            </div>
+            <div class="summary-item">
+              <span class="summary-label">Total Interest Paid:</span>
+              <span class="summary-value" id="totalInterestPaid">$0.00</span>
+            </div>
+            <div class="summary-item">
+              <span class="summary-label">Total Cost of Loan:</span>
+              <span class="summary-value" id="totalCostOfLoan">$0.00</span>
+            </div>
+          </div>
+        </div>
+        <div id="error-message" class="error-text" style="display: none;">Please enter valid numbers.</div>
+      </div>
+    </div>
+
+    <div class="explainer">
+      <h2>Understanding Your Mortgage Payment</h2>
+      <p>
+        Buying a home is one of the largest financial decisions you will ever make. Understanding exactly what goes into your monthly mortgage payment is crucial for budgeting and long-term financial planning. A typical mortgage payment isn't just paying back the money you borrowed; it's often comprised of four distinct components, commonly referred to as <strong>PITI</strong>.
+      </p>
+
+      <h3>The Components of PITI</h3>
+      <ul>
+        <li><strong>Principal:</strong> This is the portion of your payment that goes toward paying down the actual balance of the loan. Initially, this is a small portion of your payment, but it grows larger over time as the loan is paid off.</li>
+        <li><strong>Interest:</strong> This is the fee the lender charges you for borrowing the money. It's calculated as a percentage of your remaining loan balance. In the early years of a mortgage, interest makes up the majority of your payment.</li>
+        <li><strong>Taxes:</strong> Most lenders collect a portion of your annual property taxes each month and hold it in an escrow account. When the tax bill is due, the lender pays it on your behalf. This ensures the taxes are paid and the property isn't subjected to a tax lien.</li>
+        <li><strong>Insurance:</strong> Similar to property taxes, lenders often collect a portion of your annual homeowners insurance premium each month to hold in escrow. This protects the lender's investment in case the home is damaged or destroyed.</li>
+      </ul>
+
+      <h3>How Down Payments Work</h3>
+      <p>
+        Your down payment is the initial upfront portion of the total cost of the home that you pay out of pocket. The size of your down payment has a profound impact on your mortgage.
+      </p>
+      <p>
+        A larger down payment means you need to borrow less money. This directly lowers your monthly principal and interest payments. Furthermore, if you make a down payment of at least 20% of the home's purchase price, you can typically avoid paying Private Mortgage Insurance (PMI). PMI is a specialized insurance policy that protects the lender if you default on the loan, and it adds an extra cost to your monthly payment.
+      </p>
+
+      <h3>15-Year vs. 30-Year Mortgages</h3>
+      <p>
+        The term of your loan—how long you have to pay it back—significantly affects your finances.
+      </p>
+      <ul>
+        <li><strong>30-Year Mortgage:</strong> This is the most common option. Because the loan is spread over a long period, your monthly payments are lower and more manageable. However, you will pay significantly more in total interest over the life of the loan.</li>
+        <li><strong>15-Year Mortgage:</strong> With a shorter term, your monthly payments will be noticeably higher. The major advantage is that you will build equity much faster and pay far less in total interest compared to a 30-year loan. Lenders also frequently offer slightly lower interest rates for 15-year mortgages.</li>
+      </ul>
+
+      <h3>The Amortization Process</h3>
+      <p>
+        Mortgages are structured so that your total monthly payment (principal + interest) remains identical for the entire fixed-rate term. However, the ratio of principal to interest within that payment changes every single month. This process is called amortization.
+      </p>
+      <p>
+        In the first year of a 30-year mortgage, roughly 70-80% of your payment might go entirely toward interest, with only a small fraction reducing the principal balance. As the balance slowly decreases, the amount of interest calculated on that balance also decreases. By year 25 of a 30-year mortgage, the vast majority of your payment goes toward principal. This means that making extra principal payments early in the life of a loan can save you massive amounts of interest over time.
+      </p>
+    </div>
+
+    <section class="faq-section">
+      <h2>Frequently Asked Questions</h2>
+
+      <details>
+        <summary>How is a monthly mortgage payment calculated?</summary>
+        <p>Your monthly mortgage payment is calculated using the principal loan amount, the annual interest rate, and the loan term (usually 15 or 30 years). The standard amortization formula ensures that your payment remains exactly the same each month, though the proportion going toward principal versus interest shifts over time.</p>
+      </details>
+
+      <details>
+        <summary>What does PITI stand for in a mortgage?</summary>
+        <p>PITI stands for Principal, Interest, Taxes, and Insurance. These are the four main components of a typical monthly mortgage payment. While principal and interest are paid to the lender for the loan itself, taxes and insurance are usually held in an escrow account by the lender to pay local governments and insurance providers on your behalf.</p>
+      </details>
+
+      <details>
+        <summary>How does my down payment affect my mortgage?</summary>
+        <p>A larger down payment reduces the total amount you need to borrow, which directly lowers your monthly payments and the total amount of interest you'll pay over the life of the loan. Additionally, making a down payment of at least 20% typically eliminates the requirement for Private Mortgage Insurance (PMI), further reducing your monthly cost.</p>
+      </details>
+
+      <details>
+        <summary>Should I choose a 15-year or 30-year mortgage?</summary>
+        <p>A 15-year mortgage requires higher monthly payments but significantly lowers the total interest paid over the life of the loan and builds equity much faster. A 30-year mortgage offers lower, more manageable monthly payments, giving you more flexibility in your monthly budget, but results in paying substantially more interest overall.</p>
+      </details>
+
+      <details>
+        <summary>What is an amortization schedule?</summary>
+        <p>An amortization schedule is a comprehensive table detailing every periodic loan payment over the life of the mortgage. It breaks down each specific payment, showing exactly how much is applied to the interest and how much goes toward reducing the principal balance until the loan is fully paid off.</p>
+      </details>
+    </section>
+  </div>
+
+  <script>
+    function formatCurrency(value) {
+      return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      }).format(value);
+    }
+
+    function initCalculator() {
+      const container = document.querySelector('.calculator-container');
+      if (!container || container.dataset.initialized) return;
+      container.dataset.initialized = 'true';
+
+      const homePriceInput = document.getElementById('homePrice');
+      const downPaymentInput = document.getElementById('downPayment');
+      const downPaymentPercentInput = document.getElementById('downPaymentPercent');
+      const loanTermSelect = document.getElementById('loanTerm');
+      const interestRateInput = document.getElementById('interestRate');
+
+      const propertyTaxInput = document.getElementById('propertyTax');
+      const homeInsuranceInput = document.getElementById('homeInsurance');
+      const hoaFeesInput = document.getElementById('hoaFees');
+
+      const toggleAdvancedBtn = document.getElementById('toggleAdvanced');
+      const advancedInputs = document.getElementById('advancedInputs');
+
+      const monthlyPaymentDiv = document.getElementById('monthlyPayment');
+      const piAmountDiv = document.getElementById('piAmount');
+      const taxAmountDiv = document.getElementById('taxAmount');
+      const insuranceAmountDiv = document.getElementById('insuranceAmount');
+      const hoaAmountDiv = document.getElementById('hoaAmount');
+
+      const totalLoanAmountDiv = document.getElementById('totalLoanAmount');
+      const totalInterestPaidDiv = document.getElementById('totalInterestPaid');
+      const totalCostOfLoanDiv = document.getElementById('totalCostOfLoan');
+
+      const barPrincipal = document.getElementById('barPrincipal');
+      const barTax = document.getElementById('barTax');
+      const barInsurance = document.getElementById('barInsurance');
+      const barHoa = document.getElementById('barHoa');
+
+      const errorMsg = document.getElementById('error-message');
+
+      let isUpdatingDownPayment = false;
+
+      // Toggle advanced options
+      toggleAdvancedBtn.addEventListener('click', () => {
+        if (advancedInputs.style.display === 'none') {
+          advancedInputs.style.display = 'block';
+          toggleAdvancedBtn.innerHTML = 'Hide Advanced Options <span>▲</span>';
+        } else {
+          advancedInputs.style.display = 'none';
+          toggleAdvancedBtn.innerHTML = 'Show Advanced Options (Taxes, Insurance, HOA) <span>▼</span>';
+        }
+      });
+
+      // Sync down payment amount and percentage
+      homePriceInput.addEventListener('input', () => {
+        if (!isUpdatingDownPayment) {
+          isUpdatingDownPayment = true;
+          const homePrice = parseFloat(homePriceInput.value) || 0;
+          const percent = parseFloat(downPaymentPercentInput.value) || 0;
+          downPaymentInput.value = (homePrice * (percent / 100)).toFixed(0);
+          isUpdatingDownPayment = false;
+        }
+      });
+
+      downPaymentInput.addEventListener('input', () => {
+        if (!isUpdatingDownPayment) {
+          isUpdatingDownPayment = true;
+          const homePrice = parseFloat(homePriceInput.value) || 0;
+          const amount = parseFloat(downPaymentInput.value) || 0;
+          if (homePrice > 0) {
+            downPaymentPercentInput.value = ((amount / homePrice) * 100).toFixed(1);
+          }
+          isUpdatingDownPayment = false;
+        }
+      });
+
+      downPaymentPercentInput.addEventListener('input', () => {
+        if (!isUpdatingDownPayment) {
+          isUpdatingDownPayment = true;
+          const homePrice = parseFloat(homePriceInput.value) || 0;
+          const percent = parseFloat(downPaymentPercentInput.value) || 0;
+          downPaymentInput.value = (homePrice * (percent / 100)).toFixed(0);
+          isUpdatingDownPayment = false;
+        }
+      });
+
+      function calculateMortgage() {
+        const homePrice = parseFloat(homePriceInput.value);
+        const downPayment = parseFloat(downPaymentInput.value);
+        const loanTerm = parseInt(loanTermSelect.value);
+        const interestRate = parseFloat(interestRateInput.value);
+        const propertyTaxAnnual = parseFloat(propertyTaxInput.value) || 0;
+        const homeInsuranceAnnual = parseFloat(homeInsuranceInput.value) || 0;
+        const hoaFeesMonthly = parseFloat(hoaFeesInput.value) || 0;
+
+        if (isNaN(homePrice) || isNaN(downPayment) || isNaN(interestRate) ||
+            homePrice < 0 || downPayment < 0 || interestRate < 0 ||
+            downPayment > homePrice) {
+          errorMsg.style.display = 'block';
+          monthlyPaymentDiv.textContent = '$0.00';
+          piAmountDiv.textContent = '$0.00';
+          taxAmountDiv.textContent = '$0.00';
+          insuranceAmountDiv.textContent = '$0.00';
+          hoaAmountDiv.textContent = '$0.00';
+          totalLoanAmountDiv.textContent = '$0.00';
+          totalInterestPaidDiv.textContent = '$0.00';
+          totalCostOfLoanDiv.textContent = '$0.00';
+          return;
+        }
+
+        errorMsg.style.display = 'none';
+
+        const principal = homePrice - downPayment;
+
+        let monthlyPI = 0;
+        let totalInterest = 0;
+
+        if (principal > 0) {
+          if (interestRate > 0) {
+            const monthlyRate = (interestRate / 100) / 12;
+            const numberOfPayments = loanTerm * 12;
+            monthlyPI = principal * (monthlyRate * Math.pow(1 + monthlyRate, numberOfPayments)) / (Math.pow(1 + monthlyRate, numberOfPayments) - 1);
+            totalInterest = (monthlyPI * numberOfPayments) - principal;
+          } else {
+            monthlyPI = principal / (loanTerm * 12);
+            totalInterest = 0;
+          }
+        }
+
+        const monthlyTax = propertyTaxAnnual / 12;
+        const monthlyInsurance = homeInsuranceAnnual / 12;
+        const totalMonthlyPayment = monthlyPI + monthlyTax + monthlyInsurance + hoaFeesMonthly;
+
+        monthlyPaymentDiv.textContent = formatCurrency(totalMonthlyPayment);
+        piAmountDiv.textContent = formatCurrency(monthlyPI);
+        taxAmountDiv.textContent = formatCurrency(monthlyTax);
+        insuranceAmountDiv.textContent = formatCurrency(monthlyInsurance);
+        hoaAmountDiv.textContent = formatCurrency(hoaFeesMonthly);
+
+        totalLoanAmountDiv.textContent = formatCurrency(principal);
+        totalInterestPaidDiv.textContent = formatCurrency(totalInterest);
+        totalCostOfLoanDiv.textContent = formatCurrency(principal + totalInterest + downPayment);
+
+        // Update chart bars
+        if (totalMonthlyPayment > 0) {
+          barPrincipal.style.width = `${(monthlyPI / totalMonthlyPayment) * 100}%`;
+          barTax.style.width = `${(monthlyTax / totalMonthlyPayment) * 100}%`;
+          barInsurance.style.width = `${(monthlyInsurance / totalMonthlyPayment) * 100}%`;
+          barHoa.style.width = `${(hoaFeesMonthly / totalMonthlyPayment) * 100}%`;
+        } else {
+          barPrincipal.style.width = '0%';
+          barTax.style.width = '0%';
+          barInsurance.style.width = '0%';
+          barHoa.style.width = '0%';
+        }
+      }
+
+      const inputs = [
+        homePriceInput, downPaymentInput, downPaymentPercentInput, loanTermSelect,
+        interestRateInput, propertyTaxInput, homeInsuranceInput, hoaFeesInput
+      ];
+
+      inputs.forEach(input => {
+        input.addEventListener('input', calculateMortgage);
+      });
+
+      // Initial calculation
+      calculateMortgage();
+    }
+
+    document.addEventListener('DOMContentLoaded', initCalculator);
+    document.addEventListener('astro:page-load', initCalculator);
+  </script>
+
+  <style>
+    .page-content {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem;
+    }
+
+    .hero {
+      text-align: center;
+      padding: 3rem 0 2rem;
+    }
+
+    .hero h1 {
+      font-size: 2.5rem;
+      font-weight: 800;
+      margin-bottom: 0.5rem;
+      color: var(--text-primary);
+    }
+
+    .subtitle {
+      color: var(--text-secondary);
+      font-size: 1.15rem;
+      margin-bottom: 0;
+    }
+
+    .calculator-container {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 2rem;
+      margin: 2rem 0;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    }
+
+    .inputs-section {
+      margin-bottom: 2rem;
+    }
+
+    .input-group {
+      margin-bottom: 1.25rem;
+    }
+
+    .input-row {
+      display: flex;
+      gap: 1rem;
+    }
+
+    .half-width {
+      flex: 1;
+    }
+
+    .input-group label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .input-wrapper {
+      position: relative;
+    }
+
+    input[type="number"], select {
+      width: 100%;
+      background-color: var(--bg-color);
+      border: 1px solid var(--border-color);
+      color: var(--text-primary);
+      font-family: var(--font-mono);
+      font-size: 1.1rem;
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      transition: border-color 0.2s;
+      -moz-appearance: textfield;
+    }
+
+    input[type="number"]::-webkit-outer-spin-button,
+    input[type="number"]::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+
+    input[type="number"]:focus, select:focus {
+      outline: none;
+      border-color: var(--accent-color);
+      box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent-color) 20%, transparent);
+    }
+
+    .advanced-options {
+      margin-top: 1.5rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--border-color);
+    }
+
+    .toggle-btn {
+      background: none;
+      border: none;
+      color: var(--accent-color);
+      font-weight: 600;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 0;
+      font-size: 0.95rem;
+    }
+
+    .toggle-btn:hover {
+      text-decoration: underline;
+    }
+
+    .toggle-btn span {
+      font-size: 0.8em;
+    }
+
+    .advanced-inputs {
+      margin-top: 1.5rem;
+    }
+
+    .results-section {
+      padding-top: 2rem;
+      border-top: 1px solid var(--border-color);
+    }
+
+    .main-result {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    .main-result h3 {
+      font-size: 1.1rem;
+      color: var(--text-secondary);
+      margin-bottom: 0.5rem;
+      margin-top: 0;
+    }
+
+    .result-value {
+      font-family: var(--font-mono);
+      font-size: 3rem;
+      font-weight: 800;
+      color: var(--accent-color);
+    }
+
+    .breakdown-chart {
+      margin-bottom: 2rem;
+    }
+
+    .chart-bar {
+      height: 24px;
+      border-radius: 12px;
+      display: flex;
+      overflow: hidden;
+      background-color: var(--bg-color);
+      border: 1px solid var(--border-color);
+    }
+
+    .bar-segment {
+      height: 100%;
+      transition: width 0.3s ease;
+    }
+
+    .bar-segment.principal { background-color: var(--accent-color); }
+    .bar-segment.tax { background-color: color-mix(in srgb, var(--accent-color) 70%, transparent); }
+    .bar-segment.insurance { background-color: color-mix(in srgb, var(--accent-color) 40%, transparent); }
+    .bar-segment.hoa { background-color: color-mix(in srgb, var(--accent-color) 20%, transparent); }
+
+    .breakdown-list {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .breakdown-item {
+      background-color: var(--bg-color);
+      padding: 1rem;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+    }
+
+    .item-label {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      margin-bottom: 0.5rem;
+    }
+
+    .color-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+    }
+
+    .principal-dot { background-color: var(--accent-color); }
+    .tax-dot { background-color: color-mix(in srgb, var(--accent-color) 70%, transparent); }
+    .insurance-dot { background-color: color-mix(in srgb, var(--accent-color) 40%, transparent); }
+    .hoa-dot { background-color: color-mix(in srgb, var(--accent-color) 20%, transparent); }
+
+    .item-value {
+      font-family: var(--font-mono);
+      font-weight: 700;
+      font-size: 1.1rem;
+      color: var(--text-primary);
+    }
+
+    .loan-summary {
+      background-color: color-mix(in srgb, var(--accent-color) 5%, transparent);
+      border: 1px solid color-mix(in srgb, var(--accent-color) 20%, transparent);
+      border-radius: 8px;
+      padding: 1.5rem;
+    }
+
+    .loan-summary h4 {
+      margin-top: 0;
+      margin-bottom: 1rem;
+      color: var(--text-primary);
+      font-size: 1.1rem;
+    }
+
+    .summary-grid {
+      display: grid;
+      gap: 0.75rem;
+    }
+
+    .summary-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      font-size: 0.95rem;
+    }
+
+    .summary-label {
+      color: var(--text-secondary);
+    }
+
+    .summary-value {
+      font-family: var(--font-mono);
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .error-text {
+      color: #ef4444;
+      margin-top: 1.5rem;
+      font-weight: 600;
+      text-align: center;
+    }
+
+    .explainer {
+      margin: 3rem 0;
+      line-height: 1.7;
+    }
+
+    .explainer h2 {
+      font-size: 1.8rem;
+      margin-top: 2.5rem;
+      margin-bottom: 1rem;
+      color: var(--text-primary);
+    }
+
+    .explainer h3 {
+      font-size: 1.4rem;
+      margin-top: 2rem;
+      margin-bottom: 0.75rem;
+      color: var(--text-primary);
+    }
+
+    .explainer p {
+      margin-bottom: 1.25rem;
+      color: var(--text-secondary);
+    }
+
+    .explainer ul {
+      margin-bottom: 1.5rem;
+      color: var(--text-secondary);
+      padding-left: 1.5rem;
+    }
+
+    .explainer li {
+      margin-bottom: 0.5rem;
+    }
+
+    .explainer strong {
+      color: var(--text-primary);
+    }
+
+    .faq-section {
+      margin-top: 4rem;
+      padding-top: 2rem;
+      border-top: 1px solid var(--border-color);
+    }
+
+    .faq-section h2 {
+      font-size: 1.8rem;
+      margin-bottom: 1.5rem;
+      color: var(--text-primary);
+    }
+
+    details {
+      margin-bottom: 1rem;
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    summary {
+      padding: 1.25rem;
+      font-weight: 600;
+      cursor: pointer;
+      color: var(--text-primary);
+      background-color: color-mix(in srgb, var(--bg-color) 50%, transparent);
+      transition: background-color 0.2s;
+    }
+
+    summary:hover {
+      background-color: color-mix(in srgb, var(--bg-color) 80%, transparent);
+    }
+
+    details p {
+      padding: 1.25rem;
+      padding-top: 0;
+      margin: 0;
+      color: var(--text-secondary);
+      border-top: 1px solid var(--border-color);
+      line-height: 1.6;
+    }
+
+    @media (min-width: 768px) {
+      .calculator-container {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 2.5rem;
+      }
+
+      .results-section {
+        padding-top: 0;
+        border-top: none;
+        border-left: 1px solid var(--border-color);
+        padding-left: 2.5rem;
+      }
+    }
+
+    @media (max-width: 600px) {
+      .input-row {
+        flex-direction: column;
+        gap: 0;
+      }
+
+      .breakdown-list {
+        grid-template-columns: 1fr;
+      }
+
+      .result-value {
+        font-size: 2.5rem;
+      }
+    }
+  </style>
+</SiteLayout>
