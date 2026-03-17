@@ -106,6 +106,26 @@
   .dispatch-chip .chip-label { font-size: 11px; color: var(--text2); text-transform: uppercase; letter-spacing: .5px; }
   .dispatch-chip .chip-value { font-size: 20px; font-weight: 700; margin-top: 2px; }
 
+  .status-tag { display: inline-block; padding: 3px 10px; border-radius: 10px; font-size: 11px; font-weight: 600; }
+  .status-dispatched { background: #3b82f622; color: var(--blue); }
+  .status-planning { background: #eab30822; color: var(--yellow); }
+  .status-coding { background: #f9731622; color: var(--orange); }
+  .status-pr-open { background: #6c63ff22; color: var(--accent); }
+  .status-merged { background: #22c55e22; color: var(--green); }
+  .status-failed { background: #ef444422; color: var(--red); }
+  .status-reviewing { background: #06b6d422; color: var(--cyan); }
+  .building-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 10px; padding: 16px 20px; margin-bottom: 12px; }
+  .building-card .card-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; }
+  .building-card .card-keyword { font-size: 16px; font-weight: 600; }
+  .building-card .card-meta { display: flex; flex-wrap: wrap; gap: 10px; font-size: 13px; color: var(--text2); }
+  .building-card .card-meta span { display: flex; align-items: center; gap: 4px; }
+  .building-card .card-links { margin-top: 10px; display: flex; gap: 12px; }
+  .building-card .card-links a { color: var(--accent); text-decoration: none; font-size: 13px; }
+  .building-card .card-links a:hover { text-decoration: underline; }
+  .building-empty { text-align: center; padding: 60px; color: var(--text2); }
+  .building-empty .emoji { font-size: 48px; margin-bottom: 12px; }
+  .elapsed { font-family: monospace; font-size: 12px; color: var(--text2); }
+
   .topic-bar { display: flex; align-items: center; gap: 8px; margin: 3px 0; }
   .topic-bar .bar { height: 8px; border-radius: 4px; background: var(--accent); min-width: 2px; transition: width .3s; }
   .topic-bar .name { font-size: 12px; min-width: 160px; text-align: right; }
@@ -136,7 +156,8 @@
   <div class="tab active" data-panel="planner">🎯 Keyword Planner</div>
   <div class="tab" data-panel="performance">📈 Performance</div>
   <div class="tab" data-panel="opportunities">💎 Opportunities</div>
-  <div class="tab" data-panel="dispatch">🚀 Dispatch Queue</div>
+  <div class="tab" data-panel="dispatch">🚀 Queue</div>
+  <div class="tab" data-panel="building">🔨 Building</div>
   <div class="tab" data-panel="files">📁 Sources</div>
 </div>
 
@@ -300,6 +321,18 @@
 
       <h3 style="margin: 30px 0 12px; font-size: 15px;">📊 Topics by Opportunity Count</h3>
       <div id="topic-bars"></div>
+    </div>
+  </div>
+
+  <!-- BUILDING -->
+  <div class="panel" id="building">
+    <div class="loading" id="building-loading">
+      <div class="spinner"></div>
+      <div>Loading build status...</div>
+    </div>
+    <div id="building-content" style="display:none">
+      <div class="dispatch-summary" id="building-summary"></div>
+      <div id="building-cards"></div>
     </div>
   </div>
 
@@ -742,6 +775,93 @@ function initFiles() {
   document.getElementById('file-list-content').innerHTML = html;
 }
 
+// --- BUILDING ---
+let buildingData = null;
+
+async function loadBuilding() {
+  try {
+    const res = await fetch('/data/building.json');
+    if (!res.ok) throw new Error('No building data');
+    buildingData = await res.json();
+    initBuilding();
+  } catch (e) {
+    document.getElementById('building-loading').style.display = 'none';
+    document.getElementById('building-content').style.display = 'block';
+    document.getElementById('building-cards').innerHTML =
+      '<div class="building-empty"><div class="emoji">🏗️</div><div>Nothing building yet.<br>Dispatch a keyword to get started.</div></div>';
+    document.getElementById('building-summary').innerHTML = '';
+  }
+}
+
+function initBuilding() {
+  document.getElementById('building-loading').style.display = 'none';
+  document.getElementById('building-content').style.display = 'block';
+
+  const items = buildingData.items || [];
+  if (!items.length) {
+    document.getElementById('building-cards').innerHTML =
+      '<div class="building-empty"><div class="emoji">🏗️</div><div>Nothing building yet.<br>Dispatch a keyword to get started.</div></div>';
+    document.getElementById('building-summary').innerHTML = '';
+    return;
+  }
+
+  // Summary
+  const statusCounts = {};
+  items.forEach(i => { statusCounts[i.status] = (statusCounts[i.status]||0) + 1; });
+  const active = items.filter(i => !['merged','failed','completed'].includes(i.status)).length;
+  const done = items.filter(i => ['merged','completed'].includes(i.status)).length;
+
+  document.getElementById('building-summary').innerHTML = `
+    <div class="dispatch-chip"><div class="chip-label">Active</div><div class="chip-value" style="color:var(--orange)">${active}</div></div>
+    <div class="dispatch-chip"><div class="chip-label">Completed</div><div class="chip-value" style="color:var(--green)">${done}</div></div>
+    <div class="dispatch-chip"><div class="chip-label">Total</div><div class="chip-value">${items.length}</div></div>
+    ${Object.entries(statusCounts).map(([s,c]) =>
+      `<div class="dispatch-chip"><div class="chip-label">${s}</div><div class="chip-value">${c}</div></div>`
+    ).join('')}
+  `;
+
+  // Render cards — active first, then completed
+  const sorted = [...items].sort((a,b) => {
+    const order = { dispatched: 0, planning: 1, coding: 2, reviewing: 3, 'pr-open': 4, merged: 5, completed: 5, failed: 6 };
+    return (order[a.status]||9) - (order[b.status]||9);
+  });
+
+  document.getElementById('building-cards').innerHTML = sorted.map(item => {
+    const statusClass = 'status-' + (item.status || 'dispatched');
+    const elapsed = item.dispatched_at ? getElapsed(item.dispatched_at) : '';
+
+    let links = '';
+    if (item.session_url) links += `<a href="${item.session_url}" target="_blank">Jules Session</a>`;
+    if (item.pr_url) links += `<a href="${item.pr_url}" target="_blank">Pull Request</a>`;
+    if (item.live_url) links += `<a href="${item.live_url}" target="_blank">🔗 Live Page</a>`;
+
+    return `<div class="building-card">
+      <div class="card-header">
+        <span class="card-keyword">${item.keyword}</span>
+        <span class="status-tag ${statusClass}">${item.status}</span>
+      </div>
+      <div class="card-meta">
+        <span><span class="domain-tag" style="background:${item.domain_color||'#66666618'};color:${item.domain_color||'#666'}">${item.domain||'westmount'}</span></span>
+        <span><span class="type-tag ${item.page_type === 'tool' ? 'type-tool' : item.page_type === 'study' ? 'type-study' : item.page_type === 'guide' ? 'type-guide' : 'type-list'}">${item.page_type_label || item.page_type || '?'}</span></span>
+        <span>🤖 ${item.builder || 'Jules'}</span>
+        <span>📊 ${fmt(item.volume)} vol</span>
+        ${elapsed ? `<span class="elapsed">⏱ ${elapsed}</span>` : ''}
+      </div>
+      ${links ? `<div class="card-links">${links}</div>` : ''}
+    </div>`;
+  }).join('');
+}
+
+function getElapsed(isoStr) {
+  const ms = Date.now() - new Date(isoStr).getTime();
+  if (ms < 0) return '';
+  const mins = Math.floor(ms / 60000);
+  if (mins < 60) return mins + 'm ago';
+  const hrs = Math.floor(mins / 60);
+  if (hrs < 24) return hrs + 'h ' + (mins % 60) + 'm ago';
+  return Math.floor(hrs / 24) + 'd ago';
+}
+
 // --- DISPATCH QUEUE ---
 let dispatchData = null;
 
@@ -831,6 +951,7 @@ function renderDispatch() {
 // --- Init ---
 loadAll();
 loadDispatchQueue();
+loadBuilding();
 </script>
 </body>
 </html>
