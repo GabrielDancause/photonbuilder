@@ -1,76 +1,76 @@
----
-import SiteLayout from "../../../layouts/SiteLayout.astro";
+import json
 
-export const meta = {
-  title: "Present Value Calculator",
-  description: "Curious what future cash is actually worth today? Discover the true value of tomorrow's money right now and stop overpaying for investments.",
-  category: "tool",
-  published: "2026-03-17",
-};
+title = "Present Value Calculator"
+description = "Curious what future cash is actually worth today? Discover the true value of tomorrow's money right now and stop overpaying for investments."
+category = "tool"
+published = "2026-03-17"
 
-const schema = {
-  "@context": "https://schema.org",
-  "@graph": [
+faq_items = [
     {
-      "@type": "FAQPage",
-      "mainEntity": [
-        {
-          "@type": "Question",
-          "name": "What is present value and why does it matter?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Present value (PV) is the current worth of a future sum of money or stream of cash flows given a specified rate of return. It matters because money today is worth more than the same amount in the future due to its potential earning capacity, a core principle known as the time value of money."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "How do I choose the right discount rate?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "The discount rate often represents your required rate of return or the opportunity cost of capital. If you could easily earn 7% annually in a broad market index fund, you might use 7% as your discount rate to evaluate an alternative investment."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "How is present value different from future value?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Present value works backwards, discounting future cash flows to determine what they are worth today. Future value works forwards, compounding current money to see what it will be worth at a future date."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "Does inflation affect present value calculations?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Yes, indirectly. You can account for inflation by using a real discount rate (nominal rate minus inflation rate) or by adjusting the future cash flows for inflation and using a nominal discount rate. Either way, inflation erodes purchasing power, reducing present value."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "Can present value be negative?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Present value itself is usually positive if the future value is positive. However, in concepts like Net Present Value (NPV), which subtracts the initial cost of an investment from the present value of its future cash flows, the result can be negative, indicating a bad investment."
-          }
-        }
-      ]
+        "question": "What is present value and why does it matter?",
+        "answer": "Present value (PV) is the current worth of a future sum of money or stream of cash flows given a specified rate of return. It matters because money today is worth more than the same amount in the future due to its potential earning capacity, a core principle known as the time value of money."
     },
     {
-      "@type": "Article",
-      "headline": "Present Value Calculator",
-      "description": "Curious what future cash is actually worth today? Discover the true value of tomorrow's money right now and stop overpaying for investments.",
-      "datePublished": "2026-03-17",
-      "author": {
-        "@type": "Organization",
-        "name": "Westmount Fundamentals"
-      }
+        "question": "How do I choose the right discount rate?",
+        "answer": "The discount rate often represents your required rate of return or the opportunity cost of capital. If you could easily earn 7% annually in a broad market index fund, you might use 7% as your discount rate to evaluate an alternative investment."
+    },
+    {
+        "question": "How is present value different from future value?",
+        "answer": "Present value works backwards, discounting future cash flows to determine what they are worth today. Future value works forwards, compounding current money to see what it will be worth at a future date."
+    },
+    {
+        "question": "Does inflation affect present value calculations?",
+        "answer": "Yes, indirectly. You can account for inflation by using a real discount rate (nominal rate minus inflation rate) or by adjusting the future cash flows for inflation and using a nominal discount rate. Either way, inflation erodes purchasing power, reducing present value."
+    },
+    {
+        "question": "Can present value be negative?",
+        "answer": "Present value itself is usually positive if the future value is positive. However, in concepts like Net Present Value (NPV), which subtracts the initial cost of an investment from the present value of its future cash flows, the result can be negative, indicating a bad investment."
     }
-  ]
-};
+]
+
+schema = {
+    "@context": "https://schema.org",
+    "@graph": [
+        {
+            "@type": "FAQPage",
+            "mainEntity": [
+                {
+                    "@type": "Question",
+                    "name": q["question"],
+                    "acceptedAnswer": {
+                        "@type": "Answer",
+                        "text": q["answer"]
+                    }
+                } for q in faq_items
+            ]
+        },
+        {
+            "@type": "Article",
+            "headline": title,
+            "description": description,
+            "datePublished": published,
+            "author": {
+                "@type": "Organization",
+                "name": "Westmount Fundamentals"
+            }
+        }
+    ]
+}
+
+content = f"""---
+import SiteLayout from "../../../layouts/SiteLayout.astro";
+
+export const meta = {{
+  title: "{title}",
+  description: "{description}",
+  category: "{category}",
+  published: "{published}",
+}};
+
+const schema = {json.dumps(schema, indent=2)};
 ---
 
-<SiteLayout site="westmount" title={meta.title} description={meta.description} canonical="https://westmountfundamentals.com/present-value-calculator" schema={schema}>
+<SiteLayout site="westmount" title={{meta.title}} description={{meta.description}} canonical="https://westmountfundamentals.com/present-value-calculator" schema={{schema}}>
   <div class="page-content">
     <div class="hero">
       <h1>Present Value Calculator</h1>
@@ -239,22 +239,22 @@ const schema = {
 </SiteLayout>
 
 <style is:inline>
-  .page-content { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem; }
-  .hero { text-align: center; padding: 3rem 0 2rem; }
-  .hero h1 { font-size: 2.2rem; font-weight: 800; margin-bottom: 0.5rem; color: var(--text-primary); }
-  .subtitle { color: var(--text-secondary); font-size: 1.1rem; }
+  .page-content {{ max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem; }}
+  .hero {{ text-align: center; padding: 3rem 0 2rem; }}
+  .hero h1 {{ font-size: 2.2rem; font-weight: 800; margin-bottom: 0.5rem; color: var(--text-primary); }}
+  .subtitle {{ color: var(--text-secondary); font-size: 1.1rem; }}
 
-  .calculator-container { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 2rem; margin: 2rem 0; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); }
+  .calculator-container {{ background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 2rem; margin: 2rem 0; box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06); }}
 
-  .calc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2.5rem; }
-  @media (max-width: 768px) { .calc-grid { grid-template-columns: 1fr; } }
+  .calc-grid {{ display: grid; grid-template-columns: 1fr 1fr; gap: 2.5rem; }}
+  @media (max-width: 768px) {{ .calc-grid {{ grid-template-columns: 1fr; }} }}
 
-  .calc-row { margin-bottom: 1.5rem; }
-  .input-wrapper { position: relative; display: flex; align-items: center; }
+  .calc-row {{ margin-bottom: 1.5rem; }}
+  .input-wrapper {{ position: relative; display: flex; align-items: center; }}
 
-  label { display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--text-primary); }
+  label {{ display: block; margin-bottom: 0.5rem; font-weight: 600; color: var(--text-primary); }}
 
-  input, select {
+  input, select {{
     background: var(--bg-color);
     color: var(--text-primary);
     border: 1px solid var(--border-color);
@@ -263,56 +263,56 @@ const schema = {
     width: 100%;
     font-size: 1rem;
     transition: all 0.2s ease;
-  }
+  }}
 
-  .currency-symbol { position: absolute; left: 1rem; color: var(--text-secondary); z-index: 10; }
-  #futureValue { padding-left: 2rem; }
+  .currency-symbol {{ position: absolute; left: 1rem; color: var(--text-secondary); z-index: 10; }}
+  #futureValue {{ padding-left: 2rem; }}
 
-  .percent-symbol { position: absolute; right: 1rem; color: var(--text-secondary); z-index: 10; }
-  #discountRate { padding-right: 2rem; }
+  .percent-symbol {{ position: absolute; right: 1rem; color: var(--text-secondary); z-index: 10; }}
+  #discountRate {{ padding-right: 2rem; }}
 
-  input:focus, select:focus { outline: none; border-color: var(--accent-color); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-color) 20%, transparent); }
+  input:focus, select:focus {{ outline: none; border-color: var(--accent-color); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-color) 20%, transparent); }}
 
-  .error-msg { color: var(--accent-color); font-size: 0.875rem; margin-top: 0.25rem; display: none; }
+  .error-msg {{ color: #ef4444; font-size: 0.875rem; margin-top: 0.25rem; display: none; }}
 
-  .result-section { display: flex; flex-direction: column; justify-content: center; }
-  .result-card { background: color-mix(in srgb, var(--accent-color) 10%, transparent); border: 1px solid var(--accent-color); border-radius: 12px; padding: 2rem 1.5rem; text-align: center; margin-bottom: 1.5rem; }
-  .result-card h3 { margin-top: 0; color: var(--text-primary); font-size: 1.1rem; }
-  .result-value { font-size: 3rem; font-weight: 800; color: var(--accent-color); line-height: 1; margin: 1rem 0; word-break: break-all; }
-  .result-subtext { color: var(--text-secondary); font-size: 0.95rem; margin-bottom: 0; }
+  .result-section {{ display: flex; flex-direction: column; justify-content: center; }}
+  .result-card {{ background: color-mix(in srgb, var(--accent-color) 10%, transparent); border: 1px solid var(--accent-color); border-radius: 12px; padding: 2rem 1.5rem; text-align: center; margin-bottom: 1.5rem; }}
+  .result-card h3 {{ margin-top: 0; color: var(--text-primary); font-size: 1.1rem; }}
+  .result-value {{ font-size: 3rem; font-weight: 800; color: var(--accent-color); line-height: 1; margin: 1rem 0; word-break: break-all; }}
+  .result-subtext {{ color: var(--text-secondary); font-size: 0.95rem; margin-bottom: 0; }}
 
-  .summary-stats { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-  .stat-box { background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 1rem; text-align: center; }
-  .stat-label { display: block; font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.5rem; }
-  .stat-val { display: block; font-size: 1.25rem; font-weight: 700; color: var(--text-primary); }
+  .summary-stats {{ display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }}
+  .stat-box {{ background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 1rem; text-align: center; }}
+  .stat-label {{ display: block; font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.5rem; }}
+  .stat-val {{ display: block; font-size: 1.25rem; font-weight: 700; color: var(--text-primary); }}
 
-  .table-container { margin-top: 3rem; overflow-x: auto; }
-  .table-container h3 { margin-bottom: 1rem; color: var(--text-primary); }
-  .data-table { width: 100%; border-collapse: collapse; text-align: left; font-size: 0.9rem; }
-  .data-table th, .data-table td { padding: 0.75rem 1rem; border-bottom: 1px solid var(--border-color); }
-  .data-table th { background: var(--bg-color); font-weight: 600; color: var(--text-secondary); white-space: nowrap; }
-  .data-table tr:hover td { background: color-mix(in srgb, var(--accent-color) 5%, transparent); }
-  .data-table td:first-child { font-weight: 600; }
-  .data-table td { color: var(--text-primary); font-variant-numeric: tabular-nums; }
+  .table-container {{ margin-top: 3rem; overflow-x: auto; }}
+  .table-container h3 {{ margin-bottom: 1rem; color: var(--text-primary); }}
+  .data-table {{ width: 100%; border-collapse: collapse; text-align: left; font-size: 0.9rem; }}
+  .data-table th, .data-table td {{ padding: 0.75rem 1rem; border-bottom: 1px solid var(--border-color); }}
+  .data-table th {{ background: var(--bg-color); font-weight: 600; color: var(--text-secondary); white-space: nowrap; }}
+  .data-table tr:hover td {{ background: color-mix(in srgb, var(--accent-color) 5%, transparent); }}
+  .data-table td:first-child {{ font-weight: 600; }}
+  .data-table td {{ color: var(--text-primary); font-variant-numeric: tabular-nums; }}
 
-  .educational-content { margin-top: 4rem; line-height: 1.8; color: var(--text-primary); }
-  .educational-content h2 { color: var(--text-primary); margin: 3rem 0 1.5rem; font-size: 1.8rem; }
-  .educational-content h3 { color: var(--text-primary); margin: 2.5rem 0 1rem; font-size: 1.4rem; }
-  .educational-content h4 { color: var(--text-primary); margin: 1.5rem 0 0.75rem; font-size: 1.1rem; }
-  .educational-content p { margin-bottom: 1.5rem; color: var(--text-secondary); }
-  .educational-content ul, .educational-content ol { margin-bottom: 1.5rem; padding-left: 1.5rem; color: var(--text-secondary); }
-  .educational-content li { margin-bottom: 0.5rem; }
-  .educational-content a { color: var(--accent-color); text-decoration: underline; }
+  .educational-content {{ margin-top: 4rem; line-height: 1.8; color: var(--text-primary); }}
+  .educational-content h2 {{ color: var(--text-primary); margin: 3rem 0 1.5rem; font-size: 1.8rem; }}
+  .educational-content h3 {{ color: var(--text-primary); margin: 2.5rem 0 1rem; font-size: 1.4rem; }}
+  .educational-content h4 {{ color: var(--text-primary); margin: 1.5rem 0 0.75rem; font-size: 1.1rem; }}
+  .educational-content p {{ margin-bottom: 1.5rem; color: var(--text-secondary); }}
+  .educational-content ul, .educational-content ol {{ margin-bottom: 1.5rem; padding-left: 1.5rem; color: var(--text-secondary); }}
+  .educational-content li {{ margin-bottom: 0.5rem; }}
+  .educational-content a {{ color: var(--accent-color); text-decoration: underline; }}
 
-  .formula-box { background: var(--bg-color); border: 1px solid var(--border-color); border-left: 4px solid var(--accent-color); padding: 1.5rem; border-radius: 8px; margin: 1.5rem 0; font-size: 1.2rem; text-align: center; font-family: monospace; }
-  .formula-list { list-style: none !important; padding-left: 0 !important; }
-  .formula-list li { margin-bottom: 0.75rem; background: var(--bg-color); padding: 0.75rem 1rem; border-radius: 6px; border: 1px solid var(--border-color); }
+  .formula-box {{ background: var(--bg-color); border: 1px solid var(--border-color); border-left: 4px solid var(--accent-color); padding: 1.5rem; border-radius: 8px; margin: 1.5rem 0; font-size: 1.2rem; text-align: center; font-family: monospace; }}
+  .formula-list {{ list-style: none !important; padding-left: 0 !important; }}
+  .formula-list li {{ margin-bottom: 0.75rem; background: var(--bg-color); padding: 0.75rem 1rem; border-radius: 6px; border: 1px solid var(--border-color); }}
 
-  .pro-tip { background: color-mix(in srgb, var(--accent-color) 10%, transparent); border: 1px solid color-mix(in srgb, var(--accent-color) 30%, transparent); padding: 1.5rem; border-radius: 8px; margin: 2rem 0; font-size: 0.95rem; color: var(--text-primary); }
+  .pro-tip {{ background: color-mix(in srgb, var(--accent-color) 10%, transparent); border: 1px solid color-mix(in srgb, var(--accent-color) 30%, transparent); padding: 1.5rem; border-radius: 8px; margin: 2rem 0; font-size: 0.95rem; color: var(--text-primary); }}
 </style>
 
 <script is:inline>
-  document.addEventListener('DOMContentLoaded', () => {
+  document.addEventListener('DOMContentLoaded', () => {{
     const fvInput = document.getElementById('futureValue');
     const rateInput = document.getElementById('discountRate');
     const yearsInput = document.getElementById('years');
@@ -324,10 +324,10 @@ const schema = {
     const lostToTime = document.getElementById('lostToTime');
     const tableBody = document.getElementById('tableBody');
 
-    const formatCurrency = (val) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(val);
-    const formatPercent = (val) => new Intl.NumberFormat('en-US', { style: 'percent', minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(val);
+    const formatCurrency = (val) => new Intl.NumberFormat('en-US', {{ style: 'currency', currency: 'USD' }}).format(val);
+    const formatPercent = (val) => new Intl.NumberFormat('en-US', {{ style: 'percent', minimumFractionDigits: 1, maximumFractionDigits: 1 }}).format(val);
 
-    function calculate() {
+    function calculate() {{
       const fv = parseFloat(fvInput.value);
       const annualRate = parseFloat(rateInput.value) / 100;
       const years = parseFloat(yearsInput.value);
@@ -336,33 +336,33 @@ const schema = {
       let hasError = false;
 
       // Basic validation
-      if (isNaN(fv) || fv < 0) { document.getElementById('fvError').textContent = 'Please enter a valid positive number'; document.getElementById('fvError').style.display = 'block'; hasError = true; }
-      else { document.getElementById('fvError').style.display = 'none'; }
+      if (isNaN(fv) || fv < 0) {{ document.getElementById('fvError').textContent = 'Please enter a valid positive number'; document.getElementById('fvError').style.display = 'block'; hasError = true; }}
+      else {{ document.getElementById('fvError').style.display = 'none'; }}
 
-      if (isNaN(annualRate) || annualRate < 0) { document.getElementById('rateError').textContent = 'Rate cannot be negative'; document.getElementById('rateError').style.display = 'block'; hasError = true; }
-      else { document.getElementById('rateError').style.display = 'none'; }
+      if (isNaN(annualRate) || annualRate < 0) {{ document.getElementById('rateError').textContent = 'Rate cannot be negative'; document.getElementById('rateError').style.display = 'block'; hasError = true; }}
+      else {{ document.getElementById('rateError').style.display = 'none'; }}
 
-      if (isNaN(years) || years < 0 || years > 100) { document.getElementById('yearsError').textContent = 'Years must be between 0 and 100'; document.getElementById('yearsError').style.display = 'block'; hasError = true; }
-      else { document.getElementById('yearsError').style.display = 'none'; }
+      if (isNaN(years) || years < 0 || years > 100) {{ document.getElementById('yearsError').textContent = 'Years must be between 0 and 100'; document.getElementById('yearsError').style.display = 'block'; hasError = true; }}
+      else {{ document.getElementById('yearsError').style.display = 'none'; }}
 
       if (hasError) return;
 
-      if (years === 0) {
+      if (years === 0) {{
          presentValueResult.textContent = formatCurrency(fv);
          discountText.textContent = `Total Discount: $0.00`;
          worthRatio.textContent = "100.0%";
          lostToTime.textContent = "0.0%";
-         tableBody.innerHTML = `<tr><td>0</td><td>${formatCurrency(fv)}</td><td>$0.00</td><td>${formatCurrency(fv)}</td></tr>`;
+         tableBody.innerHTML = `<tr><td>0</td><td>${{formatCurrency(fv)}}</td><td>$0.00</td><td>${{formatCurrency(fv)}}</td></tr>`;
          return;
-      }
-      if (fv === 0) {
+      }}
+      if (fv === 0) {{
          presentValueResult.textContent = formatCurrency(0);
          discountText.textContent = `Total Discount: $0.00`;
          worthRatio.textContent = "0.0%";
          lostToTime.textContent = "0.0%";
          tableBody.innerHTML = "";
          return;
-      }
+      }}
 
       // Calculate Present Value
       // PV = FV / (1 + r/n)^(n*t)
@@ -373,14 +373,14 @@ const schema = {
       let pvRaw = fv / Math.pow(1 + r_n, nt);
       let fixed = parseFloat(pvRaw.toPrecision(14));
       let pv = pvRaw;
-      if (Math.abs(fixed - Math.round(fixed)) < 1e-14) {
+      if (Math.abs(fixed - Math.round(fixed)) < 1e-14) {{
           pv = Math.round(fixed);
-      }
+      }}
 
       const totalDiscount = fv - pv;
 
       presentValueResult.textContent = formatCurrency(pv);
-      discountText.textContent = `Total Discount: ${formatCurrency(totalDiscount)}`;
+      discountText.textContent = `Total Discount: ${{formatCurrency(totalDiscount)}}`;
 
       const ratio = pv / fv;
       worthRatio.textContent = formatPercent(ratio);
@@ -395,7 +395,7 @@ const schema = {
       let currentVal = pv;
       const effectiveAnnualRate = Math.pow(1 + r_n, periodsPerYear) - 1;
 
-      for (let y = 1; y <= Math.min(years, 50); y++) {
+      for (let y = 1; y <= Math.min(years, 50); y++) {{
           const beginningVal = currentVal;
           const interestEarned = beginningVal * effectiveAnnualRate;
           currentVal = beginningVal + interestEarned;
@@ -405,26 +405,30 @@ const schema = {
 
           tableHTML += `
             <tr>
-              <td>Year ${y}</td>
-              <td>${formatCurrency(beginningVal)}</td>
-              <td>${formatCurrency(interestEarned)}</td>
-              <td>${formatCurrency(currentVal)}</td>
+              <td>Year ${{y}}</td>
+              <td>${{formatCurrency(beginningVal)}}</td>
+              <td>${{formatCurrency(interestEarned)}}</td>
+              <td>${{formatCurrency(currentVal)}}</td>
             </tr>
           `;
-      }
+      }}
 
-      if (years > 50) {
-          tableHTML += `<tr><td colspan="4" style="text-align:center; color: var(--text-secondary); font-style: italic;">Table truncated to 50 years. Final value at year ${years} is ${formatCurrency(fv)}.</td></tr>`;
-      }
+      if (years > 50) {{
+          tableHTML += `<tr><td colspan="4" style="text-align:center; color: var(--text-secondary); font-style: italic;">Table truncated to 50 years. Final value at year ${{years}} is ${{formatCurrency(fv)}}.</td></tr>`;
+      }}
 
       tableBody.innerHTML = tableHTML;
-    }
+    }}
 
-    [fvInput, rateInput, yearsInput, compoundingSelect].forEach(el => {
+    [fvInput, rateInput, yearsInput, compoundingSelect].forEach(el => {{
       el.addEventListener('input', calculate);
       el.addEventListener('change', calculate);
-    });
+    }});
 
     calculate();
-  });
+  }});
 </script>
+"""
+
+with open("src/pages/sites/westmount/present-value-calculator.astro", "w") as f:
+    f.write(content)
