@@ -29,7 +29,6 @@ export const sites: Record<string, SiteConfig> = {
       { label: 'Tools', href: '/#tools' },
       { label: 'Studies', href: '/#studies' },
       { label: 'Guides', href: '/#guides' },
-      { label: 'Roadmap', href: '/coming-soon' },
     ],
     footer: { text: '© 2026 Fire Maths', gabVentures: true },
   },
@@ -45,7 +44,6 @@ export const sites: Record<string, SiteConfig> = {
       { label: 'Tools', href: '/#tools' },
       { label: 'Guides', href: '/#guides' },
       { label: 'Lists', href: '/#lists' },
-      { label: 'Roadmap', href: '/coming-soon' },
     ],
     footer: { text: '© 2026 Westmount Fundamentals', gabVentures: true },
   },
@@ -60,7 +58,6 @@ export const sites: Record<string, SiteConfig> = {
       { label: 'Tools', href: '/#tools' },
       { label: 'Studies', href: '/#studies' },
       { label: 'Guides', href: '/#guides' },
-      { label: 'Roadmap', href: '/coming-soon' },
     ],
     footer: { text: '© 2026 Silicon Based', gabVentures: true },
   },
@@ -75,7 +72,6 @@ export const sites: Record<string, SiteConfig> = {
       { label: 'Tools', href: '/#tools' },
       { label: 'Guides', href: '/#guides' },
       { label: 'Lists', href: '/#lists' },
-      { label: 'Roadmap', href: '/coming-soon' },
     ],
     footer: { text: '© 2026 28 Grams', gabVentures: true },
   },
@@ -90,7 +86,6 @@ export const sites: Record<string, SiteConfig> = {
       { label: 'Tools', href: '/#tools' },
       { label: 'Guides', href: '/#guides' },
       { label: 'Lists', href: '/#lists' },
-      { label: 'Roadmap', href: '/coming-soon' },
     ],
     footer: { text: '© 2026 Migrating Mammals', gabVentures: true },
   },
@@ -105,7 +100,6 @@ export const sites: Record<string, SiteConfig> = {
       { label: 'Tools', href: '/#tools' },
       { label: 'Guides', href: '/#guides' },
       { label: 'Lists', href: '/#lists' },
-      { label: 'Roadmap', href: '/coming-soon' },
     ],
     footer: { text: '© 2026 Leeroy Jenkins', gabVentures: true },
   },
@@ -120,7 +114,6 @@ export const sites: Record<string, SiteConfig> = {
       { label: 'Tools', href: '/#tools' },
       { label: 'Guides', href: '/#guides' },
       { label: 'Lists', href: '/#lists' },
-      { label: 'Roadmap', href: '/coming-soon' },
     ],
     footer: { text: '© 2026 I Just Want To', gabVentures: true },
   },
@@ -138,7 +131,6 @@ sites['bodycount'] = {
     { label: 'Studies', href: '/bodycount/#studies' },
     { label: 'Guides', href: '/bodycount/#guides' },
     { label: 'Lists', href: '/bodycount/#lists' },
-      { label: 'Roadmap', href: '/bodycount/coming-soon' },
   ],
   footer: { text: '© 2026 Body Count', gabVentures: true },
 };
@@ -154,7 +146,6 @@ sites['nookienook'] = {
     { label: 'Guides', href: '/#guides' },
     { label: 'Tools', href: '/#tools' },
     { label: 'Studies', href: '/#studies' },
-      { label: 'Roadmap', href: '/coming-soon' },
   ],
   footer: { text: '© 2026 The Nookie Nook · Educational content only. Not medical advice.', gabVentures: true },
 };
@@ -169,7 +160,6 @@ sites['getthebag'] = {
   nav: [
     { label: 'Tools', href: '/getthebag/#tools' },
     { label: 'Guides', href: '/getthebag/#guides' },
-    { label: 'Roadmap', href: '/getthebag/coming-soon' },
   ],
   footer: { text: '© 2026 Get The Bag', gabVentures: true },
 };
@@ -184,7 +174,6 @@ sites['sendnerds'] = {
   nav: [
     { label: 'Calculators', href: '/sendnerds/#tools' },
     { label: 'Guides', href: '/sendnerds/#guides' },
-      { label: 'Roadmap', href: '/sendnerds/coming-soon' },
   ],
   footer: { text: '© 2026 Send Nerds', gabVentures: true },
 };
@@ -199,7 +188,6 @@ sites['justonemoment'] = {
   nav: [
     { label: 'Timers', href: '/justonemoment/#tools' },
     { label: 'Calculators', href: '/justonemoment/#calculators' },
-      { label: 'Roadmap', href: '/justonemoment/coming-soon' },
   ],
   footer: { text: '© 2026 Just One Moment', gabVentures: true },
 };
@@ -214,7 +202,6 @@ sites['fixitwithducttape'] = {
   nav: [
     { label: 'Reviews', href: '/fixitwithducttape/#tools' },
     { label: 'Comparisons', href: '/fixitwithducttape/#guides' },
-    { label: 'Roadmap', href: '/fixitwithducttape/coming-soon' },
   ],
   footer: { text: '© 2026 Fix It With Duct Tape', gabVentures: true },
 };
@@ -229,7 +216,6 @@ sites['papyruspeople'] = {
   nav: [
     { label: 'Translators', href: '/papyruspeople/#tools' },
     { label: 'Fonts', href: '/papyruspeople/#guides' },
-    { label: 'Roadmap', href: '/papyruspeople/coming-soon' },
   ],
   footer: { text: '© 2026 Papyrus People', gabVentures: true },
 };
@@ -244,7 +230,6 @@ sites['eeniemeenie'] = {
   nav: [
     { label: 'Generators', href: '/eeniemeenie/#tools' },
     { label: 'Spinners', href: '/eeniemeenie/#guides' },
-    { label: 'Roadmap', href: '/eeniemeenie/coming-soon' },
   ],
   footer: { text: '© 2026 Eenie Meenie', gabVentures: true },
 };
@@ -259,7 +244,6 @@ sites['pleasestartplease'] = {
   nav: [
     { label: 'Calculators', href: '/pleasestartplease/#tools' },
     { label: 'Guides', href: '/pleasestartplease/#guides' },
-    { label: 'Roadmap', href: '/pleasestartplease/coming-soon' },
   ],
   footer: { text: '© 2026 Please Start Please', gabVentures: true },
 };
