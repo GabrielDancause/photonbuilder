@@ -1,0 +1,736 @@
+---
+import SiteLayout from "../../../layouts/SiteLayout.astro";
+
+export const meta = {
+  title: "Paycheck Calculator | Estimate Your Take-Home Pay",
+  description: "Use our free paycheck calculator to estimate your net take-home pay. See how taxes, deductions, and allowances affect your real income.",
+  category: "tool",
+};
+
+const schema = JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "How is my take-home pay calculated?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Your take-home pay is calculated by subtracting mandatory taxes (federal, state, and local) and voluntary deductions (like retirement contributions or health insurance) from your gross income."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What is the difference between gross and net pay?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Gross pay is the total amount you earn before any taxes or deductions are taken out. Net pay, also known as take-home pay, is the amount you actually receive in your paycheck after all deductions."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What are common paycheck deductions?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Common deductions include federal and state income taxes, FICA taxes (Social Security and Medicare), health insurance premiums, retirement plan contributions (like a 401(k)), and flexible spending accounts."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How do allowances affect my paycheck?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "The more allowances you claim on your W-4, the less tax your employer will withhold from your paycheck, resulting in a higher net pay but potentially a smaller tax refund or even a tax bill when you file your return."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Why is my paycheck smaller than I expected?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "A paycheck is often smaller than expected because of the cumulative effect of taxes (federal, state, FICA) and pre-tax or post-tax deductions like insurance premiums and retirement contributions."
+      }
+    }
+  ]
+});
+---
+<SiteLayout site="westmount" title={meta.title} description={meta.description} canonical="https://westmountfundamentals.com/paycheck-calculator" schema={schema}>
+  <div class="page-content">
+    <h1>Paycheck Calculator: Estimate Your Take-Home Pay</h1>
+
+    <p class="intro">
+      Understanding exactly how much money you will take home each pay period is essential for effective budgeting.
+      Our paycheck calculator helps you estimate your net pay by accounting for gross income, estimated taxes, and common deductions.
+    </p>
+
+    <!-- Calculator UI -->
+    <div class="calculator-container card">
+      <form id="paycheckForm" onsubmit="event.preventDefault();">
+        <div class="input-grid">
+          <!-- Gross Income -->
+          <div class="input-group">
+            <label for="grossIncome">Gross Income</label>
+            <div class="input-wrapper">
+              <span class="prefix">$</span>
+              <input type="number" id="grossIncome" value="60000" min="0" step="100">
+            </div>
+          </div>
+
+          <!-- Pay Frequency -->
+          <div class="input-group">
+            <label for="payFrequency">Pay Frequency</label>
+            <select id="payFrequency">
+              <option value="52">Weekly (52/yr)</option>
+              <option value="26" selected>Bi-Weekly (26/yr)</option>
+              <option value="24">Semi-Monthly (24/yr)</option>
+              <option value="12">Monthly (12/yr)</option>
+              <option value="1">Annually (1/yr)</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="input-grid">
+          <!-- Filing Status (Simplistic tax estimation) -->
+          <div class="input-group">
+            <label for="filingStatus">Filing Status</label>
+            <select id="filingStatus">
+              <option value="single" selected>Single</option>
+              <option value="married">Married Filing Jointly</option>
+              <option value="head">Head of Household</option>
+            </select>
+          </div>
+
+          <!-- State Tax % (Simplistic estimation) -->
+          <div class="input-group">
+            <label for="stateTaxRate">Est. State/Local Tax Rate</label>
+            <div class="input-wrapper">
+              <input type="number" id="stateTaxRate" value="5" min="0" max="20" step="0.1">
+              <span class="suffix">%</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="input-grid">
+          <!-- 401k / Pre-tax Deductions % -->
+          <div class="input-group">
+            <label for="preTaxDeductions">Pre-tax Deductions (e.g. 401k)</label>
+            <div class="input-wrapper">
+              <input type="number" id="preTaxDeductions" value="5" min="0" max="50" step="0.5">
+              <span class="suffix">%</span>
+            </div>
+          </div>
+
+          <!-- Post-tax Deductions $ (per check) -->
+          <div class="input-group">
+            <label for="postTaxDeductions">Post-tax Deductions (per check)</label>
+            <div class="input-wrapper">
+              <span class="prefix">$</span>
+              <input type="number" id="postTaxDeductions" value="0" min="0" step="10">
+            </div>
+          </div>
+        </div>
+      </form>
+
+      <!-- Results Display -->
+      <div class="results-section">
+        <h3>Estimated Paycheck Results</h3>
+
+        <div class="summary-cards">
+          <div class="summary-card highlight">
+            <span class="label">Net Take-Home Pay</span>
+            <span class="value" id="resNetPay">$0.00</span>
+            <span class="subtitle" id="resFrequencyLabel">per bi-weekly check</span>
+          </div>
+        </div>
+
+        <div class="breakdown-table-wrapper">
+          <table class="breakdown-table">
+            <thead>
+              <tr>
+                <th>Category</th>
+                <th>Per Paycheck</th>
+                <th>Annual Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Gross Pay</td>
+                <td id="tdGrossPayCheck">$0.00</td>
+                <td id="tdGrossPayYear">$0.00</td>
+              </tr>
+              <tr class="deduction-row">
+                <td>Pre-Tax Deductions (401k, etc)</td>
+                <td id="tdPreTaxCheck">$0.00</td>
+                <td id="tdPreTaxYear">$0.00</td>
+              </tr>
+              <tr>
+                <td>Taxable Income</td>
+                <td id="tdTaxableCheck">$0.00</td>
+                <td id="tdTaxableYear">$0.00</td>
+              </tr>
+              <tr class="deduction-row">
+                <td>Federal Income Tax (Est.)</td>
+                <td id="tdFedTaxCheck">$0.00</td>
+                <td id="tdFedTaxYear">$0.00</td>
+              </tr>
+              <tr class="deduction-row">
+                <td>State/Local Tax (Est.)</td>
+                <td id="tdStateTaxCheck">$0.00</td>
+                <td id="tdStateTaxYear">$0.00</td>
+              </tr>
+              <tr class="deduction-row">
+                <td>FICA (Social Security + Medicare)</td>
+                <td id="tdFicaCheck">$0.00</td>
+                <td id="tdFicaYear">$0.00</td>
+              </tr>
+              <tr class="deduction-row">
+                <td>Post-Tax Deductions</td>
+                <td id="tdPostTaxCheck">$0.00</td>
+                <td id="tdPostTaxYear">$0.00</td>
+              </tr>
+              <tr class="net-row highlight-box">
+                <td><strong>Net Take-Home Pay</strong></td>
+                <td id="tdNetPayCheck"><strong>$0.00</strong></td>
+                <td id="tdNetPayYear"><strong>$0.00</strong></td>
+              </tr>
+            </tbody>
+          </table>
+          <p class="disclaimer text-small">
+            * Estimates are for educational purposes. Actual federal taxes are highly dependent on individual circumstances, exact tax brackets, and W-4 withholding settings. FICA is calculated at a standard 7.65% up to limits.
+          </p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Educational Prose -->
+    <section class="educational-content">
+      <h2>How is Take-Home Pay Calculated?</h2>
+      <p>
+        Calculating your paycheck involves more than just dividing your annual salary by your number of pay periods. Your employer withholds various taxes and deductions before issuing your net pay. The formula typically follows this structure:
+      </p>
+
+      <div class="highlight-box">
+        <strong>Net Pay = Gross Pay - Pre-Tax Deductions - Taxes - Post-Tax Deductions</strong>
+      </div>
+
+      <h3>1. Gross Pay</h3>
+      <p>
+        Your <strong>gross pay</strong> is the total amount you earn before any deductions. For salaried employees, this is your annual salary divided by the number of pay periods in the year. For hourly workers, it's your hourly wage multiplied by the hours worked, plus any overtime.
+      </p>
+
+      <h3>2. Pre-Tax Deductions</h3>
+      <p>
+        These deductions are subtracted from your gross pay <em>before</em> taxes are applied. This effectively lowers your taxable income, which can reduce your overall tax burden. Common pre-tax deductions include:
+      </p>
+      <ul>
+        <li>Contributions to traditional 401(k) or 403(b) retirement plans.</li>
+        <li>Health, dental, and vision insurance premiums.</li>
+        <li>Flexible Spending Accounts (FSAs) or Health Savings Accounts (HSAs).</li>
+      </ul>
+
+      <h3>3. Tax Withholdings</h3>
+      <p>
+        Once pre-tax deductions are removed, taxes are calculated on the remaining taxable income:
+      </p>
+      <ul>
+        <li><strong>Federal Income Tax:</strong> Based on your tax bracket, filing status, and W-4 settings.</li>
+        <li><strong>FICA Taxes:</strong> Mandatory taxes funding Social Security (6.2%) and Medicare (1.45%), totaling 7.65% for most earners (subject to wage base limits for Social Security).</li>
+        <li><strong>State and Local Taxes:</strong> Varies heavily by location; some states have no income tax, while others have significant progressive tax rates.</li>
+      </ul>
+
+      <h3>4. Post-Tax Deductions</h3>
+      <p>
+        These are taken from your pay <em>after</em> all taxes have been withheld. They do not reduce your taxable income. Examples include:
+      </p>
+      <ul>
+        <li>Roth 401(k) contributions.</li>
+        <li>Union dues.</li>
+        <li>Garnishments for child support or other legal obligations.</li>
+        <li>Disability insurance premiums.</li>
+      </ul>
+
+      <h2 class="faq-section">Frequently Asked Questions</h2>
+
+      <details class="faq-item">
+        <summary><h3>How is my take-home pay calculated?</h3></summary>
+        <p>Your take-home pay is calculated by subtracting mandatory taxes (federal, state, and local) and voluntary deductions (like retirement contributions or health insurance) from your gross income.</p>
+      </details>
+
+      <details class="faq-item">
+        <summary><h3>What is the difference between gross and net pay?</h3></summary>
+        <p>Gross pay is the total amount you earn before any taxes or deductions are taken out. Net pay, also known as take-home pay, is the amount you actually receive in your paycheck after all deductions.</p>
+      </details>
+
+      <details class="faq-item">
+        <summary><h3>What are common paycheck deductions?</h3></summary>
+        <p>Common deductions include federal and state income taxes, FICA taxes (Social Security and Medicare), health insurance premiums, retirement plan contributions (like a 401(k)), and flexible spending accounts.</p>
+      </details>
+
+      <details class="faq-item">
+        <summary><h3>How do allowances affect my paycheck?</h3></summary>
+        <p>The more allowances you claim on your W-4, the less tax your employer will withhold from your paycheck, resulting in a higher net pay but potentially a smaller tax refund or even a tax bill when you file your return. Note that the IRS introduced a new W-4 form in 2020 that replaces traditional allowances with more specific dollar amounts.</p>
+      </details>
+
+      <details class="faq-item">
+        <summary><h3>Why is my paycheck smaller than I expected?</h3></summary>
+        <p>A paycheck is often smaller than expected because of the cumulative effect of taxes (federal, state, FICA) and pre-tax or post-tax deductions like insurance premiums and retirement contributions.</p>
+      </details>
+    </section>
+
+  </div> <!-- Close page-content -->
+
+  <script>
+    function initPaycheckCalculator() {
+      const form = document.getElementById('paycheckForm');
+      if (!form || form.dataset.initialized) return;
+
+      const grossIncomeEl = document.getElementById('grossIncome');
+      const payFrequencyEl = document.getElementById('payFrequency');
+      const filingStatusEl = document.getElementById('filingStatus');
+      const stateTaxRateEl = document.getElementById('stateTaxRate');
+      const preTaxDeductionsEl = document.getElementById('preTaxDeductions');
+      const postTaxDeductionsEl = document.getElementById('postTaxDeductions');
+
+      const elements = [grossIncomeEl, payFrequencyEl, filingStatusEl, stateTaxRateEl, preTaxDeductionsEl, postTaxDeductionsEl];
+
+      elements.forEach(el => {
+        if (el) {
+          el.addEventListener('input', calculatePaycheck);
+        }
+      });
+
+      // Simple 2024 tax brackets simulation for educational purposes
+      function getEstimatedFederalTax(taxableIncome, filingStatus) {
+        if (taxableIncome <= 0) return 0;
+
+        let standardDeduction = 14600; // Single
+        if (filingStatus === 'married') standardDeduction = 29200;
+        else if (filingStatus === 'head') standardDeduction = 21900;
+
+        const taxable = Math.max(0, taxableIncome - standardDeduction);
+
+        // Highly simplified progressive brackets (Effective Tax Approximation)
+        let estimatedTax = 0;
+        if (filingStatus === 'single') {
+          if (taxable <= 11600) estimatedTax = taxable * 0.10;
+          else if (taxable <= 47150) estimatedTax = 1160 + (taxable - 11600) * 0.12;
+          else if (taxable <= 100525) estimatedTax = 5426 + (taxable - 47150) * 0.22;
+          else if (taxable <= 191950) estimatedTax = 17168 + (taxable - 100525) * 0.24;
+          else estimatedTax = 39110 + (taxable - 191950) * 0.32; // Simplified top bracket
+        } else {
+          // Married / Head (simplified scaling)
+          if (taxable <= 23200) estimatedTax = taxable * 0.10;
+          else if (taxable <= 94300) estimatedTax = 2320 + (taxable - 23200) * 0.12;
+          else if (taxable <= 201050) estimatedTax = 10852 + (taxable - 94300) * 0.22;
+          else estimatedTax = 34337 + (taxable - 201050) * 0.24;
+        }
+
+        return estimatedTax;
+      }
+
+      function calculatePaycheck() {
+        const annualGross = parseFloat(grossIncomeEl.value) || 0;
+        const frequency = parseInt(payFrequencyEl.value, 10) || 26;
+        const filingStatus = filingStatusEl.value;
+        const stateTaxPercent = (parseFloat(stateTaxRateEl.value) || 0) / 100;
+        const preTaxPercent = (parseFloat(preTaxDeductionsEl.value) || 0) / 100;
+
+        // Post-tax deduction is entered PER CHECK
+        const postTaxPerCheck = parseFloat(postTaxDeductionsEl.value) || 0;
+        const annualPostTax = postTaxPerCheck * frequency;
+
+        // Annual Calculations
+        const annualPreTaxDeduction = annualGross * preTaxPercent;
+        const annualTaxableIncome = Math.max(0, annualGross - annualPreTaxDeduction);
+
+        const annualFederalTax = getEstimatedFederalTax(annualTaxableIncome, filingStatus);
+        const annualStateTax = annualTaxableIncome * stateTaxPercent;
+
+        // FICA: 6.2% SS + 1.45% Medicare = 7.65% up to wage base
+        let annualFica = 0;
+        const ssLimit = 168600; // 2024 Limit
+        if (annualGross > ssLimit) {
+          annualFica = (ssLimit * 0.062) + (annualGross * 0.0145);
+        } else {
+          annualFica = annualGross * 0.0765;
+        }
+
+        const annualTotalTax = annualFederalTax + annualStateTax + annualFica;
+        const annualNetPay = Math.max(0, annualGross - annualPreTaxDeduction - annualTotalTax - annualPostTax);
+
+        // Per Check Calculations
+        const perCheckGross = annualGross / frequency;
+        const perCheckPreTax = annualPreTaxDeduction / frequency;
+        const perCheckTaxable = annualTaxableIncome / frequency;
+        const perCheckFedTax = annualFederalTax / frequency;
+        const perCheckStateTax = annualStateTax / frequency;
+        const perCheckFica = annualFica / frequency;
+        const perCheckNet = annualNetPay / frequency;
+
+        updateUI(frequency, perCheckGross, perCheckPreTax, perCheckTaxable, perCheckFedTax, perCheckStateTax, perCheckFica, postTaxPerCheck, perCheckNet,
+                 annualGross, annualPreTaxDeduction, annualTaxableIncome, annualFederalTax, annualStateTax, annualFica, annualPostTax, annualNetPay);
+      }
+
+      function updateUI(frequency, checkGross, checkPre, checkTaxable, checkFed, checkState, checkFica, checkPost, checkNet,
+                        annGross, annPre, annTaxable, annFed, annState, annFica, annPost, annNet) {
+
+        const fmt = (num) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(num);
+
+        document.getElementById('resNetPay').textContent = fmt(checkNet);
+
+        let freqLabel = "per check";
+        if (frequency === 52) freqLabel = "per weekly check";
+        else if (frequency === 26) freqLabel = "per bi-weekly check";
+        else if (frequency === 24) freqLabel = "per semi-monthly check";
+        else if (frequency === 12) freqLabel = "per monthly check";
+        else if (frequency === 1) freqLabel = "annually";
+
+        document.getElementById('resFrequencyLabel').textContent = freqLabel;
+
+        document.getElementById('tdGrossPayCheck').textContent = fmt(checkGross);
+        document.getElementById('tdGrossPayYear').textContent = fmt(annGross);
+
+        document.getElementById('tdPreTaxCheck').textContent = fmt(-checkPre);
+        document.getElementById('tdPreTaxYear').textContent = fmt(-annPre);
+
+        document.getElementById('tdTaxableCheck').textContent = fmt(checkTaxable);
+        document.getElementById('tdTaxableYear').textContent = fmt(annTaxable);
+
+        document.getElementById('tdFedTaxCheck').textContent = fmt(-checkFed);
+        document.getElementById('tdFedTaxYear').textContent = fmt(-annFed);
+
+        document.getElementById('tdStateTaxCheck').textContent = fmt(-checkState);
+        document.getElementById('tdStateTaxYear').textContent = fmt(-annState);
+
+        document.getElementById('tdFicaCheck').textContent = fmt(-checkFica);
+        document.getElementById('tdFicaYear').textContent = fmt(-annFica);
+
+        document.getElementById('tdPostTaxCheck').textContent = fmt(-checkPost);
+        document.getElementById('tdPostTaxYear').textContent = fmt(-annPost);
+
+        document.getElementById('tdNetPayCheck').innerHTML = `<strong>${fmt(checkNet)}</strong>`;
+        document.getElementById('tdNetPayYear').innerHTML = `<strong>${fmt(annNet)}</strong>`;
+      }
+
+      form.dataset.initialized = 'true';
+      calculatePaycheck(); // Initial calculation
+    }
+
+    document.addEventListener('DOMContentLoaded', initPaycheckCalculator);
+    document.addEventListener('astro:page-load', initPaycheckCalculator);
+  </script>
+
+  <style>
+    /*
+      Strict adherence to CSS Variables only. No :root tags.
+      Uses SiteLayout variables like var(--bg-color), var(--text-primary), var(--accent-color), etc.
+    */
+    .page-content {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 2rem 1rem;
+    }
+
+    .page-content h1 {
+      font-size: 2.5rem;
+      margin-bottom: 1rem;
+      color: var(--accent-color);
+      text-align: center;
+    }
+
+    .page-content p.intro {
+      font-size: 1.1rem;
+      color: var(--text-secondary);
+      text-align: center;
+      margin-bottom: 2.5rem;
+      max-width: 800px;
+      margin-left: auto;
+      margin-right: auto;
+    }
+
+    /* Calculator Container */
+    .calculator-container {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 2rem;
+      margin-bottom: 3rem;
+      box-shadow: 0 4px 6px -1px color-mix(in srgb, var(--text-primary) 10%, transparent);
+    }
+
+    /* Form Grid */
+    .input-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .input-group label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+
+    .input-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+
+    .input-wrapper .prefix {
+      position: absolute;
+      left: 1rem;
+      color: var(--text-secondary);
+      font-family: var(--font-mono);
+    }
+
+    .input-wrapper .suffix {
+      position: absolute;
+      right: 1rem;
+      color: var(--text-secondary);
+      font-family: var(--font-mono);
+    }
+
+    input[type="number"], select {
+      width: 100%;
+      background-color: var(--bg-color);
+      border: 1px solid var(--border-color);
+      color: var(--text-primary);
+      font-family: var(--font-ui);
+      font-size: 1rem;
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      transition: border-color 0.2s;
+    }
+
+    input[type="number"]:focus, select:focus {
+      outline: none;
+      border-color: var(--accent-color);
+    }
+
+    .input-wrapper input[type="number"].has-prefix,
+    .input-wrapper .prefix ~ input[type="number"] {
+      padding-left: 2rem;
+    }
+
+    .input-wrapper input[type="number"].has-suffix,
+    .input-wrapper input[type="number"]:has(~ .suffix) {
+      padding-right: 2rem;
+    }
+
+    /* Results Area */
+    .results-section {
+      margin-top: 2.5rem;
+      padding-top: 2rem;
+      border-top: 1px solid var(--border-color);
+    }
+
+    .results-section h3 {
+      text-align: center;
+      margin-bottom: 1.5rem;
+      color: var(--text-primary);
+    }
+
+    .summary-cards {
+      display: flex;
+      justify-content: center;
+      margin-bottom: 2rem;
+    }
+
+    .summary-card {
+      background-color: var(--bg-color);
+      border: 2px solid var(--accent-color);
+      border-radius: 12px;
+      padding: 1.5rem 2rem;
+      text-align: center;
+      min-width: 250px;
+    }
+
+    .summary-card .label {
+      display: block;
+      color: var(--text-secondary);
+      font-size: 0.95rem;
+      margin-bottom: 0.5rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+
+    .summary-card .value {
+      display: block;
+      font-family: var(--font-mono);
+      font-size: 2.5rem;
+      font-weight: 800;
+      color: var(--accent-color);
+      line-height: 1.2;
+    }
+
+    .summary-card .subtitle {
+      display: block;
+      color: var(--text-secondary);
+      font-size: 0.85rem;
+      margin-top: 0.5rem;
+    }
+
+    /* Breakdown Table */
+    .breakdown-table-wrapper {
+      overflow-x: auto;
+    }
+
+    .breakdown-table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-bottom: 1rem;
+    }
+
+    .breakdown-table th, .breakdown-table td {
+      padding: 1rem;
+      text-align: left;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .breakdown-table th {
+      color: var(--text-primary);
+      font-weight: 600;
+      background-color: color-mix(in srgb, var(--accent-color) 10%, transparent);
+    }
+
+    .breakdown-table td {
+      color: var(--text-secondary);
+      font-family: var(--font-mono);
+    }
+
+    .breakdown-table td:first-child {
+      font-family: var(--font-ui);
+    }
+
+    .breakdown-table tr.deduction-row td:not(:first-child) {
+      color: color-mix(in srgb, var(--text-primary) 70%, transparent);
+    }
+
+    .breakdown-table tr.net-row td {
+      border-bottom: none;
+      color: var(--accent-color);
+      font-size: 1.1rem;
+    }
+
+    .disclaimer.text-small {
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      font-style: italic;
+      text-align: center;
+      margin-top: 1rem;
+    }
+
+    /* Educational Prose */
+    .educational-content h2 {
+      font-size: 1.75rem;
+      color: var(--accent-color);
+      margin-top: 2.5rem;
+      margin-bottom: 1rem;
+    }
+
+    .educational-content h3 {
+      font-size: 1.25rem;
+      color: var(--text-primary);
+      margin-top: 1.5rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .educational-content p {
+      margin-bottom: 1.25rem;
+      line-height: 1.6;
+      color: var(--text-secondary);
+    }
+
+    .educational-content ul {
+      margin-bottom: 1.5rem;
+      padding-left: 1.5rem;
+      color: var(--text-secondary);
+    }
+
+    .educational-content li {
+      margin-bottom: 0.5rem;
+    }
+
+    .highlight-box {
+      background-color: color-mix(in srgb, var(--accent-color) 10%, var(--bg-color));
+      border-left: 4px solid var(--accent-color);
+      padding: 1rem 1.5rem;
+      border-radius: 0 8px 8px 0;
+      margin: 1.5rem 0;
+    }
+
+    .highlight-box strong {
+      color: var(--text-primary);
+    }
+
+    /* FAQ Section */
+    .faq-section {
+      margin-top: 3rem;
+    }
+
+    .faq-item {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      margin-bottom: 1rem;
+      padding: 1rem;
+    }
+
+    .faq-item summary {
+      cursor: pointer;
+      font-weight: 600;
+      color: var(--text-primary);
+      list-style-type: none; /* remove default triangle in some browsers */
+      position: relative;
+    }
+
+    .faq-item summary::-webkit-details-marker {
+      display: none;
+    }
+
+    .faq-item summary h3 {
+      margin: 0;
+      display: inline-block;
+      font-size: 1.1rem;
+    }
+
+    .faq-item summary::after {
+      content: '+';
+      position: absolute;
+      right: 0;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 1.5rem;
+      color: var(--accent-color);
+    }
+
+    .faq-item[open] summary::after {
+      content: '-';
+    }
+
+    .faq-item p {
+      margin-top: 1rem;
+      margin-bottom: 0;
+    }
+
+    /* Mobile Responsive */
+    @media (max-width: 768px) {
+      .input-grid {
+        grid-template-columns: 1fr;
+        gap: 1rem;
+      }
+
+      .summary-card .value {
+        font-size: 2rem;
+      }
+
+      .breakdown-table th, .breakdown-table td {
+        padding: 0.75rem 0.5rem;
+        font-size: 0.9rem;
+      }
+    }
+  </style>
+</SiteLayout>
