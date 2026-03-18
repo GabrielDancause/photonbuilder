@@ -1,858 +1,630 @@
 ---
 import SiteLayout from "../../../layouts/SiteLayout.astro";
 
-// --- METADATA ---
 export const meta = {
-  title: "Visa Inc. (V) Intrinsic Value - Gemini's DCF Analysis",
-  description: "An independent discounted cash flow (DCF) intrinsic value analysis of Visa Inc. (V) compiled entirely by Gemini 2.5 Pro.",
+  title: "Visa Inc. (V) Intrinsic Value",
+  description: "An independent intrinsic value estimate for Visa Inc. (V) using a two-stage discounted cash flow (DCF) model. Compiled by Gemini 2.5 Pro.",
   category: "study",
   published: "2026-03-18",
 };
 
-// --- DATA & ASSUMPTIONS (FY2025 Actuals) ---
-// Visa numbers based on recent financial data fetched.
-// FCF Growth (Y1-Y5): 11%. Visa operates a phenomenal toll-road business. While macro headwinds exist, 11% is deeply justified by their pricing power, B2B expansion, and Value-Added Services (VAS) growth.
-// Discount Rate (WACC): 8.5%. With a 10-year treasury at 4.18%, Visa's incredibly low beta, and near-monopoly characteristics, 8.5% is an appropriate hurdle rate for such a low-risk, high-margin cash compounder.
-// Terminal Growth: 3.5%. Visa's volumes are intrinsically linked to global inflation and GDP growth. They will grow at or slightly above global GDP into perpetuity.
-
-const baseFCF = 22928; // in Millions
-const sharesOut = 2180; // Diluted shares outstanding
-const currentPrice = 301.37;
-const cashAndShortTerm = 15240;
-const totalDebt = 21177;
-const netCash = cashAndShortTerm - totalDebt; // This will be negative (net debt)
-
-const fcfGrowthRate = 0.11;
-const discountRate = 0.085;
-const terminalGrowthRate = 0.035;
-
-// --- YEAR 1 TO 5 PROJECTIONS ---
-const projections = [];
-let prevFCF = baseFCF;
-
-for (let i = 1; i <= 5; i++) {
-  const projectedFCF = prevFCF * (1 + fcfGrowthRate);
-  const discountFactor = Math.pow(1 + discountRate, i);
-  const pvOfFCF = projectedFCF / discountFactor;
-
-  projections.push({
-    year: `Year ${i}`,
-    fcf: projectedFCF,
-    pv: pvOfFCF
-  });
-
-  prevFCF = projectedFCF;
-}
-
-const sumPvFcf = projections.reduce((sum, p) => sum + p.pv, 0);
-
-// --- TERMINAL VALUE ---
-const year5FCF = projections[4].fcf;
-const terminalValue = (year5FCF * (1 + terminalGrowthRate)) / (discountRate - terminalGrowthRate);
-const pvTerminalValue = terminalValue / Math.pow(1 + discountRate, 5);
-
-// --- INTRINSIC VALUE CALCULATION ---
-const enterpriseValue = sumPvFcf + pvTerminalValue;
-const totalEquityValue = enterpriseValue + netCash;
-const intrinsicValuePerShare = totalEquityValue / sharesOut;
-
-// Value vs Current Price
-const marginOfSafety = ((intrinsicValuePerShare - currentPrice) / currentPrice) * 100;
-const isUndervalued = intrinsicValuePerShare > currentPrice;
-
-// --- SENSITIVITY MATRIX ---
-const sensitivityDiscountRates = [0.075, 0.080, 0.085, 0.090, 0.095];
-const sensitivityGrowthRates = [0.025, 0.030, 0.035, 0.040, 0.045];
-
-const sensitivityMatrix = sensitivityGrowthRates.map(g => {
-  return {
-    growthRate: g,
-    values: sensitivityDiscountRates.map(d => {
-      // Re-calculate TV and PV with new rates
-      const currentTerminalValue = (year5FCF * (1 + g)) / (d - g);
-      const currentPvTerminalValue = currentTerminalValue / Math.pow(1 + d, 5);
-
-      // Re-calculate PV of FCFs with new discount rate
-      let currentSumPvFcf = 0;
-      let tempFcf = baseFCF;
-      for (let i = 1; i <= 5; i++) {
-        tempFcf = tempFcf * (1 + fcfGrowthRate);
-        currentSumPvFcf += tempFcf / Math.pow(1 + d, i);
-      }
-
-      const currentEV = currentSumPvFcf + currentPvTerminalValue;
-      const currentEquity = currentEV + netCash;
-      const currentIV = currentEquity / sharesOut;
-
-      return currentIV;
-    })
-  };
+const schema = JSON.stringify({
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": meta.title,
+  "description": meta.description,
+  "datePublished": meta.published,
+  "author": {
+    "@type": "Organization",
+    "name": "Gemini 2.5 Pro"
+  }
 });
 
-// Formatting helpers
-const formatMoney = (val) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(val);
-const formatMillions = (val) => '$' + new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(val) + 'M';
-const formatPercent = (val) => (val * 100).toFixed(1) + '%';
+// FINANCIAL INPUTS (in millions, from most recent FY)
+const currentPrice = 302.12;
+const fcf = 22928;
+const cash = 15240;
+const debt = 21177;
+const sharesOutstanding = 2180;
 
-// --- SCHEMA ---
-const schema = {
-  "@context": "https://schema.org",
-  "@graph": [
-    {
-      "@type": "Article",
-      "headline": meta.title,
-      "description": meta.description,
-      "author": {
-        "@type": "Organization",
-        "name": "Gemini 2.5 Pro"
-      },
-      "publisher": {
-        "@type": "Organization",
-        "name": "Westmount Fundamentals",
-        "logo": {
-          "@type": "ImageObject",
-          "url": "https://westmountfundamentals.com/logo.png"
-        }
-      },
-      "mainEntityOfPage": {
-        "@type": "WebPage",
-        "@id": "https://westmountfundamentals.com/visa-intrinsic-value"
-      }
-    },
-    {
-      "@type": "FAQPage",
-      "mainEntity": [
-        {
-          "@type": "Question",
-          "name": "Why did Gemini pick an 11% growth rate for Visa?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "Visa's core payments network acts as a global tollbooth. While consumer spending growth is stable, their expansion into B2B payments, cross-border transactions, and high-margin Value-Added Services (VAS) supports an 11% compound annual FCF growth over the next five years."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "What discount rate was used for Visa's DCF?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "An 8.5% discount rate was used. This relatively low WACC reflects Visa's extraordinarily strong business model, high operating margins (often exceeding 65%), and low revenue volatility compared to the broader market, offsetting the current 4.18% risk-free rate."
-          }
-        },
-        {
-          "@type": "Question",
-          "name": "What are the biggest risks to Visa's intrinsic value?",
-          "acceptedAnswer": {
-            "@type": "Answer",
-            "text": "The primary risks include antitrust regulations (such as the Credit Card Competition Act), disintermediation by alternative payment networks (like FedNow or digital wallets bypassing traditional rails), and global economic recessions dampening total payment volume."
-          }
-        }
-      ]
+// ASSUMPTIONS
+const wacc = 0.085; // 8.5% Discount Rate
+const growthRate1to5 = 0.12; // 12% FCF Growth Years 1-5
+const terminalGrowthRate = 0.035; // 3.5% Terminal Growth
+
+// --- DCF MATH ---
+
+// Stage 1: Present Value of FCFs for Years 1-5
+const fcfProjections = [];
+let pvSumStage1 = 0;
+let previousFcf = fcf;
+
+for (let year = 1; year <= 5; year++) {
+  const projectedFcf = previousFcf * (1 + growthRate1to5);
+  const discountFactor = Math.pow(1 + wacc, year);
+  const presentValue = projectedFcf / discountFactor;
+
+  fcfProjections.push({
+    year,
+    projectedFcf,
+    presentValue
+  });
+
+  pvSumStage1 += presentValue;
+  previousFcf = projectedFcf;
+}
+
+// Stage 2: Terminal Value
+const fcfYear6 = previousFcf * (1 + terminalGrowthRate);
+const terminalValue = fcfYear6 / (wacc - terminalGrowthRate);
+const pvTerminalValue = terminalValue / Math.pow(1 + wacc, 5);
+
+// Enterprise Value & Equity Value
+const enterpriseValue = pvSumStage1 + pvTerminalValue;
+const equityValue = enterpriseValue + cash - debt;
+
+// Intrinsic Value Per Share
+const intrinsicValue = equityValue / sharesOutstanding;
+const marginOfSafety = ((intrinsicValue - currentPrice) / intrinsicValue) * 100;
+
+// Formatting Utilities
+const formatCurrency = (val) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(val);
+const formatMillions = (val) => new Intl.NumberFormat('en-US', { style: 'decimal', maximumFractionDigits: 0 }).format(val);
+
+const isUndervalued = currentPrice < intrinsicValue;
+const verdictColor = isUndervalued ? "#4ade80" : "#f87171"; // green / red
+const verdictText = isUndervalued ? "Undervalued" : "Overvalued";
+
+// Sensitivity Matrix Data (WACC vs Terminal Growth)
+const sensitivityWaccs = [0.075, 0.080, 0.085, 0.090, 0.095];
+const sensitivityTgrs = [0.025, 0.030, 0.035, 0.040, 0.045];
+const sensitivityMatrix = sensitivityWaccs.map(w => {
+  return sensitivityTgrs.map(tgr => {
+    let tempFcf = fcf;
+    let tempPvSum = 0;
+    for (let y = 1; y <= 5; y++) {
+      tempFcf *= (1 + growthRate1to5);
+      tempPvSum += tempFcf / Math.pow(1 + w, y);
     }
-  ]
-};
----<SiteLayout site="westmount" title={meta.title} description={meta.description} canonical="https://westmountfundamentals.com/visa-intrinsic-value" schema={schema}>
-  <div class="page-content">
-    <div class="container">
-
-      <div class="gemini-header">
-        <div class="gemini-badge">COMPILED BY GEMINI 2.5 PRO</div>
-        <h1>Visa Inc. (V) Intrinsic Value</h1>
-        <p class="subtitle">An independent two-stage DCF analysis by a frontier AI model.</p>
+    const tempFcf6 = tempFcf * (1 + tgr);
+    const tempTv = tempFcf6 / (w - tgr);
+    const tempPvTv = tempTv / Math.pow(1 + w, 5);
+    const tempEv = tempPvSum + tempPvTv;
+    const tempEq = tempEv + cash - debt;
+    return tempEq / sharesOutstanding;
+  });
+});
+---
+<SiteLayout site="westmount" title={meta.title} description={meta.description} canonical="https://westmountfundamentals.com/visa-intrinsic-value" schema={schema}>
+  <div class="page-container">
+    <header class="page-header">
+      <h1>Visa Inc. (V) Intrinsic Value Estimate</h1>
+      <p class="subtitle">Compiled by Gemini 2.5 Pro</p>
+      <div class="meta-info">
+        <span>Published: {meta.published}</span> &bull; <span>Ticker: V</span>
       </div>
+    </header>
 
-      <div class="verdict-card">
-        <div class="verdict-header">
-          <h2>Fair Value Estimate</h2>
+    <section class="verdict-card">
+      <div class="verdict-header" style={`border-bottom-color: ${verdictColor};`}>
+        <h2>Current Valuation Verdict</h2>
+        <span class="badge" style={`background-color: ${verdictColor}20; color: ${verdictColor}; border: 1px solid ${verdictColor};`}>
+          {verdictText}
+        </span>
+      </div>
+      <div class="verdict-body">
+        <div class="metric-group">
+          <span class="metric-label">Current Market Price</span>
+          <span class="metric-value">{formatCurrency(currentPrice)}</span>
         </div>
-        <div class="verdict-body">
-          <div class="verdict-main">
-            <span class="iv-value">{formatMoney(intrinsicValuePerShare)}</span>
-            <span class="iv-label">per share</span>
-          </div>
-          <div class="verdict-stats">
-            <div class="stat">
-              <span class="stat-label">Current Price</span>
-              <span class="stat-value">{formatMoney(currentPrice)}</span>
-            </div>
-            <div class="stat">
-              <span class="stat-label">Margin of Safety</span>
-              <span class={`stat-value ${isUndervalued ? 'positive' : 'negative'}`}>
-                {isUndervalued ? '+' : ''}{marginOfSafety.toFixed(2)}%
-              </span>
-            </div>
-            <div class="stat">
-              <span class="stat-label">Verdict</span>
-              <span class={`badge ${isUndervalued ? 'positive' : 'negative'}`}>
-                {isUndervalued ? 'UNDERVALUED' : 'OVERVALUED'}
-              </span>
-            </div>
-          </div>
+        <div class="metric-group highlight">
+          <span class="metric-label">Estimated Intrinsic Value</span>
+          <span class="metric-value" style={`color: ${verdictColor};`}>{formatCurrency(intrinsicValue)}</span>
         </div>
-        <div class="verdict-footer">
-          <p>Based on FY2025 actuals. Data via S&P Global (Mar 17, 2026).</p>
+        <div class="metric-group">
+          <span class="metric-label">Margin of Safety</span>
+          <span class="metric-value">{marginOfSafety > 0 ? '+' : ''}{marginOfSafety.toFixed(2)}%</span>
         </div>
       </div>
+    </section>
 
-      <section class="content-section">
-        <h2>The AI Thesis: Why Visa's Moat is Indestructible</h2>
-        <p>Visa operates the world's premier electronic payments network, effectively functioning as a global tollbooth on consumer spending. Despite macroeconomic headwinds and inflationary pressures, Visa's business model is inherently insulated: as prices rise, so do nominal transaction values, translating directly to revenue growth with minimal incremental capital expenditure.</p>
-        <p>While skeptics point to regulatory pressure and the rise of alternative payment networks, my analysis reveals a different truth. The sheer scale of Visa's two-sided network—billions of cards and millions of merchants—creates a nearly insurmountable barrier to entry. Furthermore, their strategic pivot towards high-margin Value-Added Services (VAS), such as fraud management and data analytics, provides a massive runway for sustained double-digit free cash flow compounding. Visa is not just a payment rail; it's a global financial operating system.</p>
-      </section>
+    <section class="methodology-section">
+      <h2>DCF Methodology & Rationale</h2>
+      <p>This intrinsic value estimate utilizes a two-stage Discounted Cash Flow (DCF) model. Visa operates as a global payments technology company, essentially forming an oligopoly alongside Mastercard. Its business model is characterized by asset-light operations, extraordinary operating margins (typically exceeding 65%), and massive free cash flow generation. The analysis is built upon the most recent full-year financial data from StockAnalysis.com.</p>
+    </section>
 
-      <section class="content-section">
-        <h2>My Assumptions & Rationale</h2>
+    <section class="assumptions-grid">
+      <div class="assumption-card">
+        <h3>1. FCF Growth Rate (Years 1-5): {growthRate1to5 * 100}%</h3>
+        <p>Visa's historical revenue and FCF growth have been incredibly resilient. As the secular shift from cash to digital payments continues globally, especially in emerging markets and B2B segments, Visa's network effects deepen. I have modeled a 12% FCF growth rate for the next 5 years. This assumes sustained transaction volume growth and continuous margin expansion driven by their highly scalable infrastructure.</p>
+      </div>
+      <div class="assumption-card">
+        <h3>2. Discount Rate (WACC): {wacc * 100}%</h3>
+        <p>Using the Capital Asset Pricing Model (CAPM) with the 10-Year US Treasury Rate at 4.18% (March 2026), a beta of roughly 0.95 (reflecting Visa's lower-than-market volatility due to recurring, essential transaction revenue), and an Equity Risk Premium of 5%, the cost of equity is calculated near 8.9%. Factoring in Visa's ultra-low debt-to-equity ratio, I arrived at a Weighted Average Cost of Capital (WACC) of 8.5%. This is a relatively low discount rate, but entirely justified by Visa's profound economic moat and minimal default risk.</p>
+      </div>
+      <div class="assumption-card">
+        <h3>3. Terminal Growth Rate: {(terminalGrowthRate * 100).toFixed(1)}%</h3>
+        <p>For the terminal stage, I have applied a 3.5% perpetual growth rate. Given global inflation targets and standard real GDP growth expectations, Visa's transaction-based revenue model inherently captures inflation (as prices rise, the percentage cut yields more nominal dollars). A 3.5% terminal rate is conservative for a business of this caliber but aligns with long-term macroeconomic realities.</p>
+      </div>
+    </section>
 
-        <div class="assumption-grid">
-          <div class="assumption-card">
-            <div class="card-title">FCF Growth Rate (Y1-Y5)</div>
-            <div class="card-value">{formatPercent(fcfGrowthRate)}</div>
-            <p><strong>Rationale:</strong> An 11% compound annual growth rate in Free Cash Flow is highly achievable. While consumer volume growth may stabilize in the mid-single digits, Visa's aggressive expansion into B2B payments, cross-border transactions, and their rapidly scaling VAS segment provides tremendous margin leverage. The transition from cash to digital globally is still a massive tailwind.</p>
-          </div>
-
-          <div class="assumption-card">
-            <div class="card-title">Discount Rate (WACC)</div>
-            <div class="card-value">{formatPercent(discountRate)}</div>
-            <p><strong>Rationale:</strong> 8.5% is an appropriate discount rate for an exceptionally high-quality business. Visa commands incredible operating margins (consistently above 65%) and operates with extremely low capital intensity. With the 10-year Treasury rate at 4.18% and Visa's historically low beta, the risk premium demanded by investors is structurally lower than the broader market.</p>
-          </div>
-
-          <div class="assumption-card">
-            <div class="card-title">Terminal Growth Rate</div>
-            <div class="card-value">{formatPercent(terminalGrowthRate)}</div>
-            <p><strong>Rationale:</strong> 3.5% reflects Visa's enduring economic moat. As an inflation-protected asset whose fortunes are tied to global consumer spending, Visa will sustainably grow at a rate equal to or slightly exceeding long-term global nominal GDP growth. Their pricing power ensures terminal cash flows remain robust indefinitely.</p>
-          </div>
-        </div>
-      </section>
-
-      <section class="content-section">
-        <h2>Discounted Cash Flow (DCF) Projections</h2>
-        <p>Starting with the FY2025 base FCF of {formatMillions(baseFCF)}, the table below outlines the 5-year projection discounted back to Present Value (PV) using the {formatPercent(discountRate)} WACC.</p>
-
-        <div class="table-container">
-          <table>
-            <thead>
+    <section class="data-tables">
+      <h2>Stage 1: Free Cash Flow Projections</h2>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Year</th>
+              <th class="text-right">Projected FCF (in Millions)</th>
+              <th class="text-right">Present Value (Discounted at {wacc * 100}%)</th>
+            </tr>
+          </thead>
+          <tbody>
+            {fcfProjections.map((proj) => (
               <tr>
-                <th>Period</th>
-                <th>Projected FCF</th>
-                <th>PV Factor ({formatPercent(discountRate)})</th>
-                <th>Present Value</th>
+                <td>Year {proj.year}</td>
+                <td class="text-right number-font">${formatMillions(proj.projectedFcf)}</td>
+                <td class="text-right number-font">${formatMillions(proj.presentValue)}</td>
               </tr>
-            </thead>
-            <tbody>
-              {projections.map((p, index) => (
-                <tr>
-                  <td>{p.year}</td>
-                  <td>{formatMillions(p.fcf)}</td>
-                  <td>{(1 / Math.pow(1 + discountRate, index + 1)).toFixed(4)}</td>
-                  <td>{formatMillions(p.pv)}</td>
-                </tr>
+            ))}
+            <tr class="total-row">
+              <td><strong>Stage 1 Total PV</strong></td>
+              <td></td>
+              <td class="text-right number-font"><strong>${formatMillions(pvSumStage1)}</strong></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="valuation-summary">
+      <h2>Valuation Summary (in Millions)</h2>
+      <div class="table-wrapper">
+        <table>
+          <tbody>
+            <tr>
+              <td>Present Value of FCF (Years 1-5)</td>
+              <td class="text-right number-font">${formatMillions(pvSumStage1)}</td>
+            </tr>
+            <tr>
+              <td>Terminal Value (Year 6 FCF: ${formatMillions(fcfYear6)} / ({wacc * 100}% - {(terminalGrowthRate * 100).toFixed(1)}%))</td>
+              <td class="text-right number-font">${formatMillions(terminalValue)}</td>
+            </tr>
+            <tr>
+              <td>Present Value of Terminal Value</td>
+              <td class="text-right number-font">${formatMillions(pvTerminalValue)}</td>
+            </tr>
+            <tr class="subtotal-row">
+              <td><strong>Enterprise Value</strong></td>
+              <td class="text-right number-font"><strong>${formatMillions(enterpriseValue)}</strong></td>
+            </tr>
+            <tr>
+              <td>Plus: Cash & Equivalents</td>
+              <td class="text-right number-font">${formatMillions(cash)}</td>
+            </tr>
+            <tr>
+              <td>Less: Total Debt</td>
+              <td class="text-right number-font">-${formatMillions(debt)}</td>
+            </tr>
+            <tr class="subtotal-row">
+              <td><strong>Implied Equity Value</strong></td>
+              <td class="text-right number-font"><strong>${formatMillions(equityValue)}</strong></td>
+            </tr>
+            <tr>
+              <td>Shares Outstanding (Diluted)</td>
+              <td class="text-right number-font">{formatMillions(sharesOutstanding)}</td>
+            </tr>
+            <tr class="final-row">
+              <td><strong>Intrinsic Value Per Share</strong></td>
+              <td class="text-right number-font" style={`color: var(--accent-color); font-size: 1.25rem; font-weight: 700;`}>
+                {formatCurrency(intrinsicValue)}
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="sensitivity-matrix">
+      <h2>Sensitivity Analysis</h2>
+      <p>Intrinsic value is highly sensitive to the discount rate and terminal growth rate assumptions. The matrix below shows how the value per share changes under different WACC and Terminal Growth scenarios.</p>
+
+      <div class="table-wrapper">
+        <table class="matrix-table">
+          <thead>
+            <tr>
+              <th rowspan="2" colspan="2" class="matrix-label text-center" style="vertical-align: middle;">Value Per Share</th>
+              <th colspan="5" class="text-center matrix-header">Terminal Growth Rate</th>
+            </tr>
+            <tr>
+              {sensitivityTgrs.map(tgr => (
+                <th class="text-center number-font">{(tgr * 100).toFixed(1)}%</th>
               ))}
-              <tr class="highlight-row">
-                <td colspan="3"><strong>Sum of PV of FCFs (Years 1-5)</strong></td>
-                <td><strong>{formatMillions(sumPvFcf)}</strong></td>
-              </tr>
-            </tbody>
-          </table>
-        </div>
-      </section>
-
-      <section class="content-section">
-        <h2>Terminal & Final Valuation Math</h2>
-        <p>The Terminal Value captures all future cash flows beyond Year 5, calculated using the Gordon Growth Model and discounted to the present.</p>
-
-        <div class="math-card">
-          <div class="math-row">
-            <span>Year 5 FCF</span>
-            <span>{formatMillions(year5FCF)}</span>
-          </div>
-          <div class="math-row">
-            <span>Terminal Value (TV) Calculation</span>
-            <span>({formatMillions(year5FCF)} * {1 + terminalGrowthRate}) / ({discountRate} - {terminalGrowthRate})</span>
-          </div>
-          <div class="math-row">
-            <span>Terminal Value</span>
-            <span>{formatMillions(terminalValue)}</span>
-          </div>
-          <div class="math-row highlight">
-            <span>PV of Terminal Value</span>
-            <span>{formatMillions(pvTerminalValue)}</span>
-          </div>
-        </div>
-
-        <p style="margin-top: 2rem;">Adding it all together with Net Cash:</p>
-
-        <div class="math-card">
-          <div class="math-row">
-            <span>Sum of PV of FCFs (Years 1-5)</span>
-            <span>{formatMillions(sumPvFcf)}</span>
-          </div>
-          <div class="math-row">
-            <span>+ PV of Terminal Value</span>
-            <span>{formatMillions(pvTerminalValue)}</span>
-          </div>
-          <div class="math-row">
-            <span><strong>= Enterprise Value</strong></span>
-            <span><strong>{formatMillions(enterpriseValue)}</strong></span>
-          </div>
-          <div class="math-row">
-            <span>+ Net Cash (Cash - Debt)</span>
-            <span>{formatMillions(netCash)}</span>
-          </div>
-          <div class="math-row highlight">
-            <span><strong>= Total Equity Value</strong></span>
-            <span><strong>{formatMillions(totalEquityValue)}</strong></span>
-          </div>
-          <div class="math-row">
-            <span>÷ Shares Outstanding</span>
-            <span>{sharesOut.toLocaleString()}M</span>
-          </div>
-          <div class="math-row result">
-            <span><strong>Intrinsic Value Per Share</strong></span>
-            <span><strong>{formatMoney(intrinsicValuePerShare)}</strong></span>
-          </div>
-        </div>
-      </section>
-
-      <section class="content-section">
-        <h2>Sensitivity Matrix</h2>
-        <p>Because intrinsic value is highly sensitive to input variables, the matrix below explores how changes in the Discount Rate and Terminal Growth Rate affect Visa's estimated value per share.</p>
-
-        <div class="table-container sensitivity-table">
-          <table>
-            <thead>
+            </tr>
+          </thead>
+          <tbody>
+            {sensitivityMatrix.map((row, wIndex) => (
               <tr>
-                <th rowspan="2" class="corner-cell">Terminal<br/>Growth</th>
-                <th colspan="5" class="header-cell">Discount Rate (WACC)</th>
-              </tr>
-              <tr>
-                {sensitivityDiscountRates.map(d => <th>{formatPercent(d)}</th>)}
-              </tr>
-            </thead>
-            <tbody>
-              {sensitivityMatrix.map(row => (
-                <tr>
-                  <th class="row-header">{formatPercent(row.growthRate)}</th>
-                  {row.values.map(val => (
-                    <td class={
-                      val > currentPrice * 1.15 ? "cell-undervalued" :
-                      val < currentPrice * 0.85 ? "cell-overvalued" :
-                      "cell-neutral"
-                    }>
-                      {formatMoney(val)}
+                {wIndex === 0 && (
+                  <th rowspan="5" class="matrix-header rotate-text">Discount Rate (WACC)</th>
+                )}
+                <th class="number-font text-right">{(sensitivityWaccs[wIndex] * 100).toFixed(1)}%</th>
+                {row.map((val, tIndex) => {
+                  const isBaseCase = wIndex === 2 && tIndex === 2;
+                  return (
+                    <td class={`text-center number-font ${isBaseCase ? 'base-case' : ''}`}>
+                      {formatCurrency(val)}
                     </td>
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
-          <div class="matrix-legend">
-            <span class="legend-item"><span class="color-box cell-undervalued"></span> Undervalued (>15% Margin)</span>
-            <span class="legend-item"><span class="color-box cell-neutral"></span> Fair Value</span>
-            <span class="legend-item"><span class="color-box cell-overvalued"></span> Overvalued (&lt;-15% Margin)</span>
-          </div>
-        </div>
-      </section>
-
-      <section class="content-section risks-section">
-        <h2>Risks & Bear Case</h2>
-        <p>Even for a fortress compounder like Visa, systemic and structural risks must be heavily weighted in any valuation scenario:</p>
-        <div class="risk-grid">
-          <div class="risk-card">
-            <h3>1. Regulatory Overreach & The CCCA</h3>
-            <p>The Credit Card Competition Act (CCCA) aims to dismantle the Visa/Mastercard duopoly by forcing merchants to route transactions through alternative networks. If enacted, interchange revenues would plummet as merchants switch to the lowest-cost routing providers, materially compressing Visa's take-rates.</p>
-          </div>
-          <div class="risk-card">
-            <h3>2. Disintermediation by Next-Gen Payment Rails</h3>
-            <p>The global proliferation of real-time payment systems (like FedNow in the US, PIX in Brazil, or UPI in India) presents an existential threat to traditional credit card rails. If consumers increasingly bypass cards for direct account-to-account (A2A) transfers, Visa's transaction volume growth will stall permanently.</p>
-          </div>
-          <div class="risk-card">
-            <h3>3. Global Macroeconomic Contraction</h3>
-            <p>Visa's revenue model is a direct derivative of consumer spending velocity. In a protracted global recession characterized by high unemployment and depressed consumer sentiment, total payment volumes will shrink, exposing the cyclicality underlying their secular growth narrative.</p>
-          </div>
-        </div>
-      </section>
-
-      <section class="content-section faq-section">
-        <h2>Frequently Asked Questions</h2>
-
-        <div class="faq-item">
-          <h3>Why did Gemini pick an 11% growth rate for Visa?</h3>
-          <p>Visa's core payments network acts as a global tollbooth. While consumer spending growth is stable, their expansion into B2B payments, cross-border transactions, and high-margin Value-Added Services (VAS) supports an 11% compound annual FCF growth over the next five years.</p>
-        </div>
-
-        <div class="faq-item">
-          <h3>What discount rate was used for Visa's DCF?</h3>
-          <p>An 8.5% discount rate was used. This relatively low WACC reflects Visa's extraordinarily strong business model, high operating margins (often exceeding 65%), and low revenue volatility compared to the broader market, offsetting the current 4.18% risk-free rate.</p>
-        </div>
-
-        <div class="faq-item">
-          <h3>What are the biggest risks to Visa's intrinsic value?</h3>
-          <p>The primary risks include antitrust regulations (such as the Credit Card Competition Act), disintermediation by alternative payment networks (like FedNow or digital wallets bypassing traditional rails), and global economic recessions dampening total payment volume.</p>
-        </div>
-      </section>
-
-      <div class="disclaimer-box">
-        <p><strong>Disclaimer:</strong> The numbers presented on this page are for educational and entertainment purposes only. They are the result of a deterministic mathematical model fed with assumptions generated by an Artificial Intelligence (Gemini 2.5 Pro). This does not constitute investment advice. Always conduct your own due diligence before investing in the stock market.</p>
+                  );
+                })}
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
+    </section>
 
+    <section class="risks-section">
+      <h2>Key Risks to the Valuation</h2>
+      <ul>
+        <li><strong>Regulatory Pressures:</strong> Visa faces ongoing scrutiny regarding interchange fees (swipe fees). Legislation like the Credit Card Competition Act in the US could mandate routing competition, potentially pressuring margins.</li>
+        <li><strong>Alternative Payment Networks:</strong> The rise of closed-loop payment systems, digital wallets cutting out card networks, or Central Bank Digital Currencies (CBDCs) could slowly erode Visa's transaction volume.</li>
+        <li><strong>Macroeconomic Slowdown:</strong> Visa's revenue is heavily tied to global consumer and B2B spending. A severe global recession would immediately contract payment volumes and cross-border transactions (which carry higher margins).</li>
+      </ul>
+    </section>
+
+    <section class="faq-section">
+      <h2>Frequently Asked Questions</h2>
+
+      <details class="faq-item">
+        <summary>Why is Visa's discount rate (WACC) so low?</summary>
+        <div class="faq-content">
+          <p>Visa's WACC is modeled at 8.5% due to its incredibly low risk profile. The company essentially operates a toll-road duopoly on global commerce. Its revenues are highly diversified across geographies and deeply entrenched in the financial system. Furthermore, it carries minimal debt relative to its massive cash flows, driving down its cost of capital.</p>
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary>Does this DCF model account for Visa's share buybacks?</summary>
+        <div class="faq-content">
+          <p>Yes, indirectly. This model calculates total enterprise value based on operating free cash flows and divides it by the current diluted shares outstanding. While it doesn't dynamically model future share reductions year-by-year, the current intrinsic value calculation accurately reflects the per-share value today. If Visa continues aggressive buybacks, the intrinsic value per share will rise organically over time.</p>
+        </div>
+      </details>
+
+      <details class="faq-item">
+        <summary>Why use a 3.5% terminal growth rate instead of the standard 2%?</summary>
+        <div class="faq-content">
+          <p>A standard 2% terminal rate represents mature GDP growth. However, Visa has a structural advantage: inflation. Because Visa takes a percentage cut of total transaction volume, as the cost of goods rises (inflation), Visa's revenue scales automatically without requiring additional capital expenditure. A 3.5% terminal rate better reflects long-term global real GDP growth plus systemic inflation capture.</p>
+        </div>
+      </details>
+    </section>
+
+    <div class="disclaimer">
+      <strong>Disclaimer:</strong> This intrinsic value analysis is an independent study compiled by an AI model (Gemini 2.5 Pro). It is for educational and informational purposes only and does not constitute financial advice, investment recommendations, or an offer to buy or sell securities. Discounted Cash Flow models are highly sensitive to assumptions. Investors should conduct their own due diligence before making investment decisions.
     </div>
+
   </div>
 </SiteLayout>
 
 <style>
-  /* Base styles explicitly hardcoded for the Westmount theme as requested */
-  .page-content {
-    background-color: #060a12;
-    color: #c8d0de;
-    font-family: 'Inter', sans-serif;
-    padding-bottom: 4rem;
-  }
+  /* Base Variables Specific to this page */
+  .page-container {
+    --bg-color: #060a12;
+    --text-color: #c8d0de;
+    --accent-color: #4a8fe7;
+    --card-bg: #111827;
+    --border-color: #1f2937;
 
-  .container {
-    max-width: 800px;
+    max-width: 900px;
     margin: 0 auto;
-    padding: 2rem 1rem;
+    padding: 3rem 1.5rem;
+    font-family: 'Inter', sans-serif;
+    color: var(--text-color);
+    background-color: var(--bg-color);
+    line-height: 1.6;
   }
 
-  .gemini-header {
+  .number-font {
+    font-family: 'JetBrains Mono', monospace;
+    font-variant-numeric: tabular-nums;
+  }
+
+  h1, h2, h3 {
+    color: var(--text-color);
+    font-weight: 700;
+  }
+
+  /* Typography */
+  .page-header {
     text-align: center;
     margin-bottom: 3rem;
   }
 
-  .gemini-badge {
-    display: inline-block;
-    background: linear-gradient(135deg, #1e3a8a, #4a8fe7);
-    color: #fff;
-    padding: 0.5rem 1rem;
-    border-radius: 9999px;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.8rem;
-    font-weight: 700;
-    letter-spacing: 0.05em;
-    margin-bottom: 1rem;
-    text-transform: uppercase;
-  }
-
-  .gemini-header h1 {
+  .page-header h1 {
     font-size: 2.5rem;
-    color: #4a8fe7;
-    margin-bottom: 1rem;
+    margin-bottom: 0.5rem;
+    color: #fff;
   }
 
-  .gemini-header .subtitle {
-    font-size: 1.2rem;
-    color: #c8d0de;
-    opacity: 0.9;
+  .subtitle {
+    font-size: 1.25rem;
+    color: var(--accent-color);
     margin-bottom: 1rem;
+    font-weight: 600;
   }
 
+  .meta-info {
+    font-size: 0.875rem;
+    color: #9ca3af;
+  }
+
+  /* Verdict Card */
   .verdict-card {
-    background-color: #0d1522;
-    border: 1px solid #1e293b;
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
     border-radius: 12px;
     overflow: hidden;
     margin-bottom: 3rem;
   }
 
   .verdict-header {
-    background-color: rgba(74, 143, 231, 0.1);
     padding: 1.5rem;
-    border-bottom: 1px solid #1e293b;
-    text-align: center;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 3px solid transparent; /* Colored dynamically inline */
+    background-color: #0f172a;
   }
 
   .verdict-header h2 {
     margin: 0;
     font-size: 1.5rem;
-    color: #4a8fe7;
   }
 
-  .verdict-body {
-    padding: 2rem;
-    text-align: center;
-  }
-
-  .verdict-main {
-    margin-bottom: 2rem;
-  }
-
-  .iv-value {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 3.5rem;
-    font-weight: 800;
-    color: #4a8fe7;
-    display: block;
-  }
-
-  .iv-label {
-    font-size: 1rem;
-    color: #8899b6;
+  .badge {
+    padding: 0.5rem 1rem;
+    border-radius: 9999px;
+    font-weight: 700;
+    font-size: 0.875rem;
     text-transform: uppercase;
     letter-spacing: 0.05em;
   }
 
-  .verdict-stats {
+  .verdict-body {
+    padding: 1.5rem;
     display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 1rem;
-    border-top: 1px solid #1e293b;
-    padding-top: 1.5rem;
-  }
-
-  .stat {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.5rem;
-  }
-
-  .stat-label {
-    font-size: 0.85rem;
-    color: #8899b6;
-    text-transform: uppercase;
-  }
-
-  .stat-value {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 1.25rem;
-    font-weight: 600;
-  }
-
-  .stat-value.positive, .badge.positive {
-    color: #22c55e;
-  }
-
-  .stat-value.negative, .badge.negative {
-    color: #ef4444;
-  }
-
-  .badge {
-    padding: 0.25rem 0.75rem;
-    border-radius: 9999px;
-    font-size: 0.85rem;
-    font-weight: 700;
-    background-color: rgba(255, 255, 255, 0.05);
-  }
-
-  .badge.positive {
-    background-color: rgba(34, 197, 94, 0.1);
-  }
-
-  .badge.negative {
-    background-color: rgba(239, 68, 68, 0.1);
-  }
-
-  .verdict-footer {
-    background-color: #0a1018;
-    padding: 1rem;
-    text-align: center;
-    font-size: 0.8rem;
-    color: #64748b;
-  }
-
-  .content-section {
-    margin-bottom: 3rem;
-  }
-
-  .content-section h2 {
-    font-size: 1.75rem;
-    color: #4a8fe7;
-    margin-bottom: 1.5rem;
-    border-bottom: 1px solid #1e293b;
-    padding-bottom: 0.5rem;
-  }
-
-  .content-section p {
-    font-size: 1.05rem;
-    line-height: 1.7;
-    color: #c8d0de;
-    margin-bottom: 1.5rem;
-  }
-
-  .content-section strong {
-    color: #fff;
-  }
-
-  /* Assumption Grid */
-  .assumption-grid {
-    display: grid;
-    grid-template-columns: repeat(1, 1fr);
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 1.5rem;
   }
 
-  @media (min-width: 768px) {
-    .assumption-grid {
-      grid-template-columns: repeat(3, 1fr);
-    }
+  .metric-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+
+  .metric-label {
+    font-size: 0.875rem;
+    color: #9ca3af;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  .metric-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.75rem;
+    font-weight: 700;
+    color: #fff;
+  }
+
+  .highlight .metric-value {
+    /* Color set dynamically inline */
+  }
+
+  /* Methodology & Assumptions */
+  .methodology-section, .risks-section {
+    margin-bottom: 3rem;
+  }
+
+  .methodology-section h2, .risks-section h2 {
+    font-size: 1.75rem;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 0.5rem;
+  }
+
+  .assumptions-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 3rem;
   }
 
   .assumption-card {
-    background-color: #0d1522;
-    border: 1px solid #1e293b;
-    border-radius: 8px;
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
     padding: 1.5rem;
+    border-radius: 8px;
+    border-top: 3px solid var(--accent-color);
   }
 
-  .card-title {
-    font-size: 1rem;
-    font-weight: 600;
-    color: #4a8fe7;
-    margin-bottom: 0.5rem;
-  }
-
-  .card-value {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 2rem;
-    font-weight: 800;
-    color: #fff;
+  .assumption-card h3 {
+    margin-top: 0;
     margin-bottom: 1rem;
+    font-size: 1.1rem;
+    color: #fff;
   }
 
   .assumption-card p {
-    font-size: 0.9rem;
-    line-height: 1.5;
-    color: #8899b6;
     margin: 0;
+    font-size: 0.95rem;
+    color: #9ca3af;
   }
 
-  /* Table */
-  .table-container {
+  /* Tables */
+  .data-tables, .valuation-summary, .sensitivity-matrix {
+    margin-bottom: 3rem;
+  }
+
+  .data-tables h2, .valuation-summary h2, .sensitivity-matrix h2 {
+    font-size: 1.75rem;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 0.5rem;
+  }
+
+  .table-wrapper {
     overflow-x: auto;
-    margin: 2rem 0;
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
     border-radius: 8px;
-    border: 1px solid #1e293b;
   }
 
   table {
     width: 100%;
     border-collapse: collapse;
-    background-color: #0d1522;
+    text-align: left;
   }
 
   th, td {
     padding: 1rem;
-    text-align: right;
-    border-bottom: 1px solid #1e293b;
-  }
-
-  th:first-child, td:first-child {
-    text-align: left;
+    border-bottom: 1px solid var(--border-color);
   }
 
   th {
-    background-color: rgba(74, 143, 231, 0.05);
-    color: #4a8fe7;
+    background-color: #0f172a;
+    color: #e2e8f0;
     font-weight: 600;
-    font-size: 0.9rem;
+    font-size: 0.875rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
   }
 
-  td {
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.95rem;
-    color: #c8d0de;
+  .text-right {
+    text-align: right;
+  }
+  .text-center {
+    text-align: center;
   }
 
-  .highlight-row {
-    background-color: rgba(74, 143, 231, 0.1);
-  }
-
-  .highlight-row td {
-    color: #4a8fe7;
-    font-weight: 700;
-  }
-
-  /* Math Card */
-  .math-card {
-    background-color: #0d1522;
-    border: 1px solid #1e293b;
-    border-radius: 8px;
-    padding: 1.5rem;
-    margin: 1.5rem 0;
-  }
-
-  .math-row {
-    display: flex;
-    justify-content: space-between;
-    padding: 0.75rem 0;
-    border-bottom: 1px dashed #1e293b;
-    font-family: 'JetBrains Mono', monospace;
-    font-size: 0.95rem;
-  }
-
-  .math-row:last-child {
+  tbody tr:last-child td {
     border-bottom: none;
   }
 
-  .math-row.highlight {
-    background-color: rgba(74, 143, 231, 0.05);
-    color: #4a8fe7;
-    font-weight: 700;
-    padding: 0.75rem 0.5rem;
-    margin: 0 -0.5rem;
-    border-radius: 4px;
+  .total-row td, .subtotal-row td {
+    background-color: #1e293b;
+    border-top: 2px solid var(--border-color);
   }
 
-  .math-row.result {
-    border-top: 2px solid #4a8fe7;
-    padding-top: 1rem;
-    margin-top: 0.5rem;
-    font-size: 1.2rem;
-    color: #4a8fe7;
-  }
-
-  /* Sensitivity Matrix */
-  .sensitivity-table table {
-    text-align: center;
-  }
-
-  .sensitivity-table th, .sensitivity-table td {
-    text-align: center;
-    padding: 0.75rem;
-  }
-
-  .sensitivity-table .header-cell {
-    border-bottom: 2px solid #1e293b;
-  }
-
-  .sensitivity-table .corner-cell {
-    background-color: #060a12;
-    border-right: 2px solid #1e293b;
-    border-bottom: 2px solid #1e293b;
-  }
-
-  .sensitivity-table .row-header {
-    background-color: rgba(74, 143, 231, 0.05);
-    border-right: 2px solid #1e293b;
-  }
-
-  .cell-undervalued {
-    background-color: rgba(34, 197, 94, 0.15);
-    color: #4ade80;
-  }
-
-  .cell-overvalued {
-    background-color: rgba(239, 68, 68, 0.15);
-    color: #f87171;
-  }
-
-  .cell-neutral {
-    background-color: #0d1522;
-    color: #c8d0de;
-  }
-
-  .matrix-legend {
-    display: flex;
-    justify-content: center;
-    gap: 1.5rem;
-    padding: 1rem;
-    font-size: 0.85rem;
-    background-color: #0a1018;
-    border-top: 1px solid #1e293b;
-  }
-
-  .legend-item {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    color: #8899b6;
-  }
-
-  .color-box {
-    width: 12px;
-    height: 12px;
-    border-radius: 2px;
-  }
-
-  /* Risks Grid */
-  .risk-grid {
-    display: grid;
-    grid-template-columns: 1fr;
-    gap: 1.5rem;
-    margin-top: 1.5rem;
-  }
-
-  .risk-card {
-    background-color: rgba(239, 68, 68, 0.05);
-    border: 1px solid rgba(239, 68, 68, 0.2);
-    border-left: 4px solid #ef4444;
-    border-radius: 8px;
-    padding: 1.5rem;
-  }
-
-  .risk-card h3 {
-    margin-top: 0;
-    color: #f87171;
+  .final-row td {
+    background-color: #0f172a;
+    border-top: 2px solid var(--accent-color);
     font-size: 1.1rem;
-    margin-bottom: 0.5rem;
   }
 
-  .risk-card p {
-    margin-bottom: 0;
-    font-size: 0.95rem;
-    line-height: 1.6;
-    color: #c8d0de;
+  /* Sensitivity Matrix Specific Styles */
+  .matrix-table th.matrix-header {
+    background-color: #1e293b;
+    color: #94a3b8;
   }
 
-  /* FAQ */
-  .faq-item {
-    background-color: #0d1522;
-    border: 1px solid #1e293b;
-    border-radius: 8px;
-    padding: 1.5rem;
+  .rotate-text {
+    writing-mode: vertical-rl;
+    transform: rotate(180deg);
+    text-align: center;
+    padding: 1rem 0.5rem;
+  }
+
+  .base-case {
+    background-color: rgba(74, 143, 231, 0.2);
+    font-weight: 700;
+    color: var(--accent-color);
+    border: 2px solid var(--accent-color);
+  }
+
+  .risks-section ul {
+    list-style-type: disc;
+    padding-left: 1.5rem;
+    color: #9ca3af;
+  }
+
+  .risks-section li {
     margin-bottom: 1rem;
   }
 
-  .faq-item h3 {
-    margin-top: 0;
-    margin-bottom: 0.75rem;
-    color: #4a8fe7;
-    font-size: 1.1rem;
+  .risks-section strong {
+    color: #fff;
   }
 
-  .faq-item p {
+  /* FAQ Section */
+  .faq-section {
+    margin-bottom: 3rem;
+  }
+
+  .faq-section h2 {
+    font-size: 1.75rem;
+    margin-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 0.5rem;
+  }
+
+  .faq-item {
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    margin-bottom: 1rem;
+    overflow: hidden;
+  }
+
+  .faq-item summary {
+    padding: 1.25rem;
+    font-weight: 600;
+    font-size: 1.1rem;
+    color: #fff;
+    cursor: pointer;
+    list-style: none;
+    position: relative;
+  }
+
+  .faq-item summary::-webkit-details-marker {
+    display: none;
+  }
+
+  .faq-item summary::after {
+    content: '+';
+    position: absolute;
+    right: 1.25rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--accent-color);
+    font-size: 1.5rem;
+    font-family: monospace;
+  }
+
+  .faq-item[open] summary::after {
+    content: '−';
+  }
+
+  .faq-item[open] summary {
+    border-bottom: 1px solid var(--border-color);
+  }
+
+  .faq-content {
+    padding: 1.25rem;
+    color: #9ca3af;
+  }
+
+  .faq-content p {
     margin: 0;
-    font-size: 0.95rem;
   }
 
   /* Disclaimer */
-  .disclaimer-box {
-    background-color: #0a1018;
-    border-left: 4px solid #4a8fe7;
-    padding: 1.5rem;
+  .disclaimer {
+    background-color: #0f172a;
+    border-left: 4px solid #64748b;
+    padding: 1rem 1.5rem;
+    font-size: 0.875rem;
+    color: #64748b;
+    border-radius: 0 8px 8px 0;
     margin-top: 4rem;
-  }
-
-  .disclaimer-box p {
-    margin: 0;
-    font-size: 0.85rem;
-    color: #8899b6;
-  }
-
-  .disclaimer-box strong {
-    color: #4a8fe7;
-  }
-
-  @media (max-width: 600px) {
-    .verdict-stats {
-      grid-template-columns: 1fr;
-      gap: 1.5rem;
-    }
-    .iv-value {
-      font-size: 2.5rem;
-    }
-    .gemini-header h1 {
-      font-size: 2rem;
-    }
-    .math-row {
-      flex-direction: column;
-      text-align: left;
-      gap: 0.25rem;
-    }
-    .math-row span:last-child {
-      text-align: right;
-    }
-    .matrix-legend {
-      flex-direction: column;
-      gap: 0.5rem;
-    }
   }
 </style>
