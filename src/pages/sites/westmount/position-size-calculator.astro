@@ -1,780 +1,513 @@
 ---
 import SiteLayout from "../../../layouts/SiteLayout.astro";
 
-const schema = {
+export const meta = {
+  title: "Position Size Calculator: Manage Your Trading Risk",
+  description: "Stop blowing up your trading account. How many shares should you actually buy? Use our position size calculator to enforce strict risk management.",
+  category: "tool",
+  published: "2026-03-20"
+};
+
+const faqSchema = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What is position sizing?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Position sizing is the process of determining exactly how many shares or units of an asset you should buy in a given trade to ensure you only risk a predetermined percentage of your total account capital."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Why is position sizing important in trading?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "It is the core of risk management. Proper position sizing ensures that a single losing trade, or even a streak of losing trades, does not devastate your trading account, allowing you to survive long enough for your winning edge to play out."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How much of my account should I risk per trade?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "A widely accepted rule among professional traders is the '1% to 2% Rule'. This means you should structure your position size and stop loss so that if the trade hits your stop loss, you lose no more than 1% to 2% of your total account equity."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How do you calculate position size?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "The formula is: Account Risk Amount / Trade Risk per Share. For example, if you are willing to risk $100 on a trade, and the difference between your entry price and stop loss is $2 per share, your position size should be 50 shares ($100 / $2)."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Does position size change if I use leverage?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "The calculation of how much capital you are putting at risk remains the same, but leverage allows you to control that position size with less upfront cash. However, you must be extremely precise with stop losses when using leverage, as it magnifies both gains and losses."
+      }
+    }
+  ]
+};
+
+const articleSchema = {
   "@context": "https://schema.org",
   "@type": "Article",
-  "headline": "Position Size Calculator: Stock Risk Management Tool",
-  "description": "Calculate optimal stock position size based on account value, risk tolerance, entry price, and stop-loss. Includes Kelly Criterion.",
-  "datePublished": "2026-03-13T04:02:19.516Z",
-  "publisher": {
+  "headline": meta.title,
+  "description": meta.description,
+  "datePublished": meta.published,
+  "author": {
     "@type": "Organization",
-    "name": "Westmount Research"
+    "name": "Westmount Fundamentals",
+    "url": "https://westmountfundamentals.com/"
   }
 };
 
-export const meta = {
-  title: "Position Size Calculator: Stock Risk Management Tool",
-  description: "Calculate optimal stock position size based on account value, risk tolerance, entry price, and stop-loss. Includes Kelly Criterion.",
-  category: "tool",
-  published: "2026-03-15",
-};
+const schema = [faqSchema, articleSchema];
 ---
-
-<SiteLayout
-  site="westmount"
-  title="Position Size Calculator: Stock Risk Management Tool"
-  description="Calculate optimal stock position size based on account value, risk tolerance, entry price, and stop-loss. Includes Kelly Criterion."
-  canonical="https://westmountfundamentals.com/position-size-calculator" schema={schema}
->
-  <style>
-:root {
-            --danger: #ef4444;
-            --success: #10b981;
-
-}
-
-        * { margin: 0; padding: 0; box-sizing: border-box; }
-
-        body {
-            font-family: 'Inter', sans-serif;
-            background: var(--bg-color);
-            color: var(--text-primary);
-            line-height: 1.6;
-        }
-
-        nav {
-            position: sticky;
-            top: 0;
-            z-index: 1000;
-            background: rgba(6, 10, 18, 0.85);
-            backdrop-filter: blur(12px);
-            border-bottom: 1px solid var(--border-color);
-            padding: 16px 24px;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-        }
-
-        .nav-brand a {
-            color: #fff;
-            text-decoration: none;
-            font-weight: 800;
-            font-size: 1.1rem;
-            letter-spacing: -0.5px;
-        }
-
-        .nav-links {
-            display: flex;
-            gap: 24px;
-        }
-
-        .nav-links a {
-            color: var(--text-primary);
-            text-decoration: none;
-            font-size: 0.9rem;
-            font-weight: 500;
-            transition: color 0.2s;
-        }
-
-        .nav-links a:hover {
-            color: var(--accent-color);
-        }
-
-        main {
-            max-width: 1200px;
-            margin: 0 auto;
-            padding: 60px 24px;
-        }
-
-        h1 {
-            font-size: 3rem;
-            font-weight: 900;
-            letter-spacing: -1.5px;
-            margin-bottom: 24px;
-            background: linear-gradient(90deg, #fff, var(--text-muted));
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
-            text-align: center;
-        }
-
-        .subtitle {
-            text-align: center;
-            color: var(--text-muted);
-            font-size: 1.1rem;
-            max-width: 600px;
-            margin: 0 auto 60px;
-        }
-
-        .calc-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 32px;
-            margin-bottom: 60px;
-        }
-
-        @media (max-width: 768px) {
-            .calc-grid { grid-template-columns: 1fr; }
-            h1 { font-size: 2.2rem; }
-            .nav-links { display: none; }
-        }
-
-        .card {
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 16px;
-            padding: 32px;
-        }
-
-        .card h2 {
-            font-size: 1.4rem;
-            color: #fff;
-            margin-bottom: 24px;
-            padding-bottom: 16px;
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        .form-group {
-            margin-bottom: 20px;
-        }
-
-        .form-group label {
-            display: block;
-            font-size: 0.9rem;
-            font-weight: 600;
-            color: var(--text-primary);
-            margin-bottom: 8px;
-        }
-
-        .input-group {
-            position: relative;
-            display: flex;
-            align-items: center;
-        }
-
-        .input-prefix {
-            position: absolute;
-            left: 16px;
-            color: var(--text-muted);
-            font-family: 'JetBrains Mono', monospace;
-        }
-
-        .input-suffix {
-            position: absolute;
-            right: 16px;
-            color: var(--text-muted);
-            font-family: 'JetBrains Mono', monospace;
-        }
-
-        input {
-            width: 100%;
-            background: #0d1428;
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 12px 16px;
-            color: #fff;
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 1.1rem;
-            transition: all 0.2s;
-        }
-
-        .has-prefix input { padding-left: 32px; }
-        .has-suffix input { padding-right: 32px; }
-
-        input:focus {
-            outline: none;
-            border-color: var(--accent-color);
-            box-shadow: 0 0 0 3px rgba(74, 143, 231, 0.1);
-        }
-
-        .tabs {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 24px;
-            background: #0d1428;
-            padding: 6px;
-            border-radius: 10px;
-        }
-
-        .tab {
-            flex: 1;
-            text-align: center;
-            padding: 10px;
-            border-radius: 6px;
-            cursor: pointer;
-            font-weight: 600;
-            font-size: 0.9rem;
-            transition: all 0.2s;
-            color: var(--text-muted);
-        }
-
-        .tab.active {
-            background: var(--accent-color);
-            color: #fff;
-        }
-
-        .tab-content {
-            display: none;
-        }
-
-        .tab-content.active {
-            display: block;
-        }
-
-        .result-box {
-            background: #0d1428;
-            border-radius: 12px;
-            padding: 24px;
-            margin-bottom: 16px;
-            border-left: 4px solid var(--accent-color);
-        }
-
-        .result-label {
-            font-size: 0.85rem;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-bottom: 8px;
-            font-weight: 700;
-        }
-
-        .result-value {
-            font-size: 2.5rem;
-            font-weight: 900;
-            color: #fff;
-            font-family: 'JetBrains Mono', monospace;
-            line-height: 1.1;
-        }
-
-        .sub-results {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 16px;
-            margin-top: 24px;
-        }
-
-        .sub-result-box {
-            background: rgba(13, 20, 40, 0.5);
-            padding: 16px;
-            border-radius: 8px;
-            border: 1px solid var(--border-color);
-        }
-
-        .sub-result-value {
-            font-size: 1.5rem;
-            font-weight: 700;
-            color: #fff;
-            font-family: 'JetBrains Mono', monospace;
-        }
-
-        .data-table {
-            width: 100%;
-            border-collapse: collapse;
-            margin-top: 20px;
-        }
-
-        .data-table th, .data-table td {
-            padding: 14px 16px;
-            text-align: right;
-            border-bottom: 1px solid var(--border-color);
-            font-variant-numeric: tabular-nums;
-        }
-
-        .data-table th:first-child, .data-table td:first-child {
-            text-align: left;
-        }
-
-        .data-table th {
-            font-size: 0.8rem;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            font-weight: 600;
-        }
-
-        .data-table td {
-            font-family: 'JetBrains Mono', monospace;
-            font-size: 0.95rem;
-        }
-
-        .ticker-badge {
-            display: inline-block;
-            background: rgba(74, 143, 231, 0.1);
-            color: var(--accent-color);
-            padding: 4px 8px;
-            border-radius: 4px;
-            font-weight: 700;
-            font-size: 0.85rem;
-        }
-
-        .section {
-            margin-bottom: 60px;
-        }
-
-        .section h2 {
-            font-size: 2rem;
-            color: #fff;
-            margin-bottom: 24px;
-            letter-spacing: -0.5px;
-        }
-
-        .faq-item {
-            margin-bottom: 24px;
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 24px;
-        }
-
-        .faq-item h3 {
-            color: #fff;
-            font-size: 1.2rem;
-            margin-bottom: 12px;
-        }
-
-        footer {
-            border-top: 1px solid var(--border-color);
-            padding: 40px 24px;
-            text-align: center;
-            font-size: 0.85rem;
-            color: var(--text-muted);
-            background: #040810;
-        }
-
-        .range-slider {
-            width: 100%;
-            margin-top: 10px;
-        }
-
-        .chart-container {
-            margin-top: 24px;
-            height: 250px;
-            width: 100%;
-        }
-  </style>
-
-<main>
-        <h1>Position Size Calculator</h1>
-        <p class="subtitle">Calculate your optimal position size and risk per trade. Never risk more than you can afford to lose.</p>
-
-        <div class="calc-grid">
-            <div class="card">
-                <div class="tabs">
-                    <div class="tab active" onclick="switchTab('standard')">Standard</div>
-                    <div class="tab" onclick="switchTab('kelly')">Kelly Criterion</div>
-                </div>
-
-                <div id="standard-tab" class="tab-content active">
-                    <div class="form-group">
-                        <label>Account Size</label>
-                        <div class="input-group has-prefix">
-                            <span class="input-prefix">$</span>
-                            <input type="number" id="accountSize" value="10000" oninput="calculateStandard()">
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Risk Tolerance</label>
-                        <div class="input-group has-suffix">
-                            <input type="number" id="riskPercent" value="1.0" step="0.1" oninput="calculateStandard()">
-                            <span class="input-suffix">%</span>
-                        </div>
-                        <input type="range" class="range-slider" min="0.1" max="5" step="0.1" value="1.0" id="riskSlider" oninput="document.getElementById('riskPercent').value=this.value; calculateStandard()">
-                    </div>
-
-                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px;">
-                        <div class="form-group">
-                            <label>Entry Price</label>
-                            <div class="input-group has-prefix">
-                                <span class="input-prefix">$</span>
-                                <input type="number" id="entryPrice" value="150.00" step="0.01" oninput="calculateStandard()">
-                            </div>
-                        </div>
-
-                        <div class="form-group">
-                            <label>Stop Loss Price</label>
-                            <div class="input-group has-prefix">
-                                <span class="input-prefix">$</span>
-                                <input type="number" id="stopLoss" value="142.50" step="0.01" oninput="calculateStandard()">
-                            </div>
-                        </div>
-                    </div>
-                </div>
-
-                <div id="kelly-tab" class="tab-content">
-                    <div class="form-group">
-                        <label>Account Size</label>
-                        <div class="input-group has-prefix">
-                            <span class="input-prefix">$</span>
-                            <input type="number" id="kAccountSize" value="10000" oninput="calculateKelly()">
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Win Probability</label>
-                        <div class="input-group has-suffix">
-                            <input type="number" id="winProb" value="55" min="1" max="99" oninput="calculateKelly()">
-                            <span class="input-suffix">%</span>
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Reward-to-Risk Ratio</label>
-                        <div class="input-group">
-                            <input type="number" id="rrRatio" value="2.0" step="0.1" oninput="calculateKelly()">
-                        </div>
-                        <p style="font-size: 0.8rem; color: var(--text-muted); margin-top: 4px;">E.g. 2 means you aim to make $2 for every $1 risked.</p>
-                    </div>
-
-                    <div class="form-group">
-                        <label>Fraction (Optional)</label>
-                        <select id="kellyFraction" onchange="calculateKelly()" style="width: 100%; background: #0d1428; border: 1px solid var(--border-color); border-radius: 8px; padding: 12px 16px; color: #fff; font-family: 'Inter', sans-serif;">
-                            <option value="1">Full Kelly (Aggressive)</option>
-                            <option value="0.5" selected>Half Kelly (Recommended)</option>
-                            <option value="0.25">Quarter Kelly (Conservative)</option>
-                        </select>
-                    </div>
-                </div>
-            </div>
-
-            <div class="card">
-                <h2>Results</h2>
-
-                <div id="standard-results">
-                    <div class="result-box">
-                        <div class="result-label">Position Size (Shares)</div>
-                        <div class="result-value" id="resShares">13</div>
-                    </div>
-
-                    <div class="sub-results">
-                        <div class="sub-result-box">
-                            <div class="result-label">Total Capital</div>
-                            <div class="sub-result-value" id="resCapital">$1,950.00</div>
-                        </div>
-                        <div class="sub-result-box">
-                            <div class="result-label">Capital %</div>
-                            <div class="sub-result-value" id="resCapitalPct">19.5%</div>
-                        </div>
-                        <div class="sub-result-box">
-                            <div class="result-label">Total Risk</div>
-                            <div class="sub-result-value" id="resRisk" style="color: var(--danger)">$97.50</div>
-                        </div>
-                        <div class="sub-result-box">
-                            <div class="result-label">Risk Per Share</div>
-                            <div class="sub-result-value" id="resRiskPerShare">$7.50</div>
-                        </div>
-                    </div>
-                </div>
-
-                <div id="kelly-results" style="display: none;">
-                    <div class="result-box">
-                        <div class="result-label">Optimal Portfolio %</div>
-                        <div class="result-value" id="resKPercent">16.25%</div>
-                    </div>
-
-                    <div class="sub-results">
-                        <div class="sub-result-box">
-                            <div class="result-label">Position Capital</div>
-                            <div class="sub-result-value" id="resKCapital">$1,625.00</div>
-                        </div>
-                        <div class="sub-result-box">
-                            <div class="result-label">Full Kelly %</div>
-                            <div class="sub-result-value" id="resKFull">32.50%</div>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="chart-container">
-                    <canvas id="riskChart"></canvas>
-                </div>
-            </div>
+<SiteLayout site="westmount" title={meta.title} description={meta.description} canonical="https://westmountfundamentals.com/position-size-calculator" schema={JSON.stringify(schema)}>
+  <div class="container page-content">
+    <div class="hero">
+      <h1>Position Size Calculator</h1>
+      <p class="subtitle">Determine the exact number of shares to buy based on strict risk management rules.</p>
+    </div>
+
+    <div class="calculator-container" id="pos-calc-container">
+      <div class="calc-grid">
+        <div class="input-group">
+          <label for="account-size">Total Account Balance ($)</label>
+          <input type="number" id="account-size" min="0" value="10000" step="100">
         </div>
 
-        <div class="section">
-            <h2>Market Volatility Reference</h2>
-            <p style="margin-bottom: 20px;">Traders often use the Average True Range (ATR) to set stop losses. A common approach is setting the stop loss 2x or 3x the 14-day ATR below the entry price to avoid being stopped out by normal market noise. Here is current volatility data for reference.</p>
-
-            <div class="card" style="overflow-x: auto;">
-                <div><input type="text" id="tableSearch" placeholder="Search tickers..." onkeyup="filterTable()" style="margin-bottom: 16px; width: 100%; max-width: 300px;"></div><table class="data-table" id="volTable">
-                    <thead>
-                        <tr>
-                            <th style="cursor:pointer;" onclick="sortTable(0)">Ticker ↕</th>
-                            <th style="cursor:pointer;" onclick="sortTable(1)">Name ↕</th>
-                            <th style="cursor:pointer;" onclick="sortTable(2)">Price ↕</th>
-                            <th style="cursor:pointer;" onclick="sortTable(3)">14-Day ATR ↕</th>
-                            <th style="cursor:pointer;" onclick="sortTable(4)">ATR % of Price ↕</th>
-                        </tr>
-                    </thead>
-                    <tbody id="market-data">
-                    </tbody>
-                </table>
-            </div>
+        <div class="input-group">
+          <label for="risk-percentage">Risk per Trade (%)</label>
+          <input type="number" id="risk-percentage" min="0.1" max="100" value="1.0" step="0.1">
         </div>
 
-        <div class="section">
-            <h2>Methodology</h2>
-            <div class="card">
-                <p><strong>Standard Position Sizing:</strong> The calculator uses the fixed fractional model. It determines your maximum allowable risk in dollars (Account Size * Risk %) and divides that by your trade risk per share (Entry Price - Stop Loss Price). This ensures that if your stop loss is hit, you only lose your predefined risk percentage.</p>
-                <br>
-                <p><strong>Kelly Criterion:</strong> The Kelly formula is <code style="background:#152040;padding:2px 6px;border-radius:4px;">K% = W - [(1 - W) / R]</code> where W is win probability and R is the reward-to-risk ratio. The result is the percentage of your portfolio you should allocate to a trade to maximize compound growth. Because "Full Kelly" can lead to massive drawdowns, most professional traders use a "Half-Kelly" or "Quarter-Kelly" fraction.</p>
-                <br>
-                <p><strong>Market Data:</strong> The Average True Range (ATR) data is calculated dynamically using the most recent 14 trading days of high, low, and close prices sourced via the Yahoo Finance API.</p>
-            </div>
+        <div class="input-group">
+          <label for="entry-price">Entry Price per Share ($)</label>
+          <input type="number" id="entry-price" min="0.01" value="50.00" step="0.01">
         </div>
 
-        <div class="section">
-            <h2>Frequently Asked Questions</h2>
-
-            <div class="faq-item">
-                <h3>How do you calculate position size in stocks?</h3>
-                <p>Position size is calculated by dividing your total allowable risk amount (e.g., 1% of your account) by your trade risk per share (entry price minus stop-loss price). This tells you exactly how many shares to buy.</p>
-            </div>
-
-            <div class="faq-item">
-                <h3>What is a good position size for a stock?</h3>
-                <p>A common rule of thumb is to risk no more than 1% to 2% of your total account equity on a single trade. This prevents a single loss from severely impacting your portfolio.</p>
-            </div>
-
-            <div class="faq-item">
-                <h3>How does the Kelly Criterion calculate position size?</h3>
-                <p>The Kelly Criterion calculates the optimal fraction of your bankroll to wager based on your historical win probability and reward-to-risk ratio. It maximizes long-term compound growth but can be highly volatile, so many traders use a 'Half-Kelly' fraction.</p>
-            </div>
-
-            <div class="faq-item">
-                <h3>Why is position sizing important in trading?</h3>
-                <p>Position sizing is critical because it dictates risk management. Proper sizing ensures that you survive losing streaks (drawdowns) without ruining your account, allowing your profitable strategies time to work.</p>
-            </div>
-
-            <div class="faq-item">
-                <h3>How does ATR affect stop loss and position size?</h3>
-                <p>Average True Range (ATR) measures market volatility. Traders often set stop losses as a multiple of ATR (e.g., 2x ATR) to avoid being stopped out by normal noise. A wider ATR stop loss reduces position size to keep total dollar risk constant.</p>
-            </div>
+        <div class="input-group">
+          <label for="stop-loss">Stop Loss Price ($)</label>
+          <input type="number" id="stop-loss" min="0" value="48.00" step="0.01">
         </div>
-    </main>
-  <script is:inline>
-// Inline Data from Build
-        const marketData = [{"ticker":"SPY","name":"State Street SPDR S&P 500 ETF T","price":666.06,"atr":9.76},{"ticker":"QQQ","name":"Invesco QQQ Trust, Series 1","price":597.26,"atr":10.67},{"ticker":"DIA","name":"State Street SPDR Dow Jones Ind","price":467.48,"atr":7.53},{"ticker":"AAPL","name":"Apple Inc.","price":255.76,"atr":5.9},{"ticker":"NVDA","name":"NVIDIA Corporation","price":183.14,"atr":6.07},{"ticker":"TSLA","name":"Tesla, Inc.","price":395.01,"atr":13.55}];
+      </div>
 
-        // Render Market Data Table
-        const tbody = document.getElementById('market-data');
-        if (marketData && marketData.length > 0) {
-            marketData.forEach(d => {
-                const atrPct = ((d.atr / d.price) * 100).toFixed(2);
-                const tr = document.createElement('tr');
-                tr.innerHTML = `
-                    <td><span class="ticker-badge">${d.ticker}</span></td>
-                    <td>${d.name}</td>
-                    <td>$${d.price.toFixed(2)}</td>
-                    <td>$${d.atr.toFixed(2)}</td>
-                    <td>${atrPct}%</td>
-                `;
-                tbody.appendChild(tr);
-            });
+      <div class="results-grid">
+        <div class="result-card main-result">
+          <h3>Position Size (Shares)</h3>
+          <div class="result-value" id="position-shares">0</div>
+        </div>
+
+        <div class="secondary-results">
+          <div class="result-box">
+            <h4>Total Capital Required</h4>
+            <div id="capital-required" class="sub-value">$0.00</div>
+          </div>
+          <div class="result-box">
+            <h4>Amount at Risk</h4>
+            <div id="risk-amount" class="sub-value">$0.00</div>
+          </div>
+          <div class="result-box">
+            <h4>Risk per Share</h4>
+            <div id="risk-per-share" class="sub-value">$0.00</div>
+          </div>
+          <div class="result-box">
+            <h4>Distance to Stop</h4>
+            <div id="distance-to-stop" class="sub-value">0%</div>
+          </div>
+        </div>
+      </div>
+
+      <div id="error-message" class="error-state" style="display: none;"></div>
+    </div>
+
+    <div class="explainer">
+      <h2>Why Professional Traders Rely on Position Sizing</h2>
+      <p>In the world of investing and trading, survival is more important than massive immediate profits. Position sizing is the critical practice of determining precisely how many units of an asset—like shares of a stock or contracts of a derivative—you should trade to ensure that no single mistake wipes out your trading capital. By controlling the amount of risk taken on each individual trade, you preserve your bankroll during cold streaks and allow your statistical edge to play out over a large number of trades.</p>
+
+      <p>Many novice traders fail because they size their positions based on "gut feeling" or sheer excitement. They might have a $10,000 account and decide to buy $5,000 worth of a volatile stock just because they feel highly confident. If that stock suddenly drops 20% on bad news before they can exit, they instantly lose 10% of their entire account equity. Recovering from significant drawdowns is mathematically grueling; an account that loses 50% must gain 100% just to return to breakeven.</p>
+
+      <h3>The 1% Risk Rule: The Gold Standard</h3>
+      <p>The most widely accepted risk management principle among professional traders is the 1% to 2% Rule. This rule states that you should never risk more than 1% or 2% of your total account capital on a single trade. Note that "risking 1%" does not mean you only buy $100 worth of stock with a $10,000 account. It means that if your predefined stop loss is triggered, the total monetary loss realized on the trade will equal exactly $100.</p>
+
+      <p>By enforcing this discipline, you would have to suffer 100 consecutive losing trades to completely blow up your account. In a real-world scenario, this allows traders to comfortably weather the inevitable losing streaks that are an unavoidable part of engaging with the financial markets.</p>
+
+      <h3>How the Position Size Formula Works</h3>
+      <p>Calculating the correct position size manually requires basic arithmetic. Our calculator handles this for you instantly based on four key inputs:</p>
+      <ol>
+        <li><strong>Account Size:</strong> The total liquid capital available in your trading account.</li>
+        <li><strong>Risk Percentage:</strong> The percentage of your total account you are willing to lose if the trade goes wrong (typically 1%).</li>
+        <li><strong>Entry Price:</strong> The exact price at which you plan to purchase the asset.</li>
+        <li><strong>Stop Loss Price:</strong> The predetermined price level where you will exit the trade if the market moves against you, admitting you were wrong.</li>
+      </ol>
+
+      <p>The calculation happens in three distinct steps:</p>
+
+      <h4>Step 1: Determine the Risk Amount</h4>
+      <p>First, calculate exactly how many dollars you are willing to lose. If you have a $10,000 account and are using a 1% risk parameter:</p>
+      <p><code>Risk Amount = Account Size × Risk Percentage</code></p>
+      <p><code>$10,000 × 0.01 = $100</code></p>
+
+      <h4>Step 2: Calculate Risk Per Share</h4>
+      <p>Next, figure out how much money you stand to lose on a single share if your stop loss is hit. For example, if you plan to enter at $50.00 and set a stop loss at $48.00:</p>
+      <p><code>Risk Per Share = Entry Price - Stop Loss Price</code></p>
+      <p><code>$50.00 - $48.00 = $2.00</code></p>
+
+      <h4>Step 3: Calculate the Position Size</h4>
+      <p>Finally, divide the total Risk Amount by the Risk Per Share to determine the exact number of shares you should buy.</p>
+      <p><code>Position Size = Risk Amount / Risk Per Share</code></p>
+      <p><code>$100 / $2.00 = 50 Shares</code></p>
+
+      <p>In this scenario, to keep your risk strictly capped at $100, you should purchase exactly 50 shares. This means your total capital outlay (the position value) will be $2,500 (50 shares × $50 entry price). You are investing $2,500 of your capital, but you are only risking $100.</p>
+
+      <h3>Handling Edge Cases and Limitations</h3>
+      <p>While the formula is straightforward, real-world trading introduces several nuances that a strict mathematical calculation cannot always perfectly accommodate.</p>
+
+      <p><strong>Slippage and Gaps:</strong> The most dangerous threat to position sizing is market slippage or overnight gaps. If you hold a position overnight and catastrophic news breaks before the market opens, the stock might open violently lower than your stop loss price. For instance, if your stop loss was at $48.00 but the stock opens at $40.00, your broker will execute your market order at the first available price near $40.00. In this case, your actual loss would vastly exceed your planned $100 risk. Traders must adjust their position sizing or avoid holding through major catalysts (like earnings reports) to mitigate this overnight gap risk.</p>
+
+      <p><strong>Insufficient Capital:</strong> Sometimes, the formula will dictate a position size that requires more capital than you have available in your account. In the example above, if your stop loss was very tight (e.g., $49.50), the calculated position size might require $10,000 in capital to enforce a $100 risk. If your account size is exactly $10,000, you physically cannot afford the transaction fees or margin requirements to execute the trade safely. In these instances, you either need to widen your stop loss or use a margin account with leverage, though the latter significantly increases danger.</p>
+
+      <p><strong>Fractional Shares:</strong> Until recently, traders had to round down their position sizes to the nearest whole share to avoid risking slightly more than their calculated limit. Today, many brokerages support fractional share investing, allowing for extremely precise position sizing, even on expensive stocks trading at hundreds of dollars per share.</p>
+
+      <h3>Managing the Portfolio After the Entry</h3>
+      <p>Position sizing is only the first step in risk management. Once you are properly sized and in the trade, you must manage it effectively. Some traders choose to scale out of their position as the stock moves in their favor. For example, if you bought 50 shares, you might sell 25 shares (half your position) when the stock reaches a 1:1 risk/reward ratio. This locks in profits and essentially guarantees the trade cannot be a total loss if you simultaneously move your stop loss up to your original entry price. This strategy, known as taking partial profits or "scaling out," is highly effective for reducing emotional stress during volatile market conditions.</p>
+
+      <p>However, scaling out also reduces your total upside if the stock goes on a massive run. Conversely, some advanced traders will actually add to a winning position (scaling in) as it moves in their favor. The key here is that they only add to the position once their initial stop loss has been moved up to breakeven, ensuring they never increase their original $100 risk limit, even though they now hold more total shares.</p>
+
+      <h3>Position Sizing and Passive Income Portfolios</h3>
+      <p>While strict stop-loss position sizing is primarily a tool for active traders, the underlying concept of measuring your total exposure is also crucial for long-term investors. If you are building a passive dividend portfolio, you might not use hard stop losses, but you still need to ensure no single stock dictates your entire net worth.</p>
+
+      <p>For example, if you rely heavily on dividends for passive income, you want to ensure your capital is evenly distributed across multiple strong companies. If you are calculating the future value of your portfolio using a tool like our <a href="/drip-calculator" style="color: var(--accent-color); text-decoration: underline;">DRIP Calculator</a> to see how your dividend reinvestment plan will perform over 20 years, remember that those projections rely on survival. If you put 50% of your account into a single high-yield, extremely risky stock without considering position sizing, a dividend cut or bankruptcy could derail decades of expected compound interest.</p>
+
+      <p>Ultimately, position sizing is about longevity. It removes the emotional thrill of gambling from the equation and replaces it with the cold, calculated mathematics of professional risk management. Protect your downside first, and the upside will take care of itself over a large enough sample size of trades.</p>
+    </div>
+
+    <section class="faq-section">
+      <h2>Frequently Asked Questions</h2>
+
+      <details>
+        <summary>What is position sizing?</summary>
+        <p>Position sizing is the process of determining exactly how many shares or units of an asset you should buy in a given trade to ensure you only risk a predetermined percentage of your total account capital.</p>
+      </details>
+
+      <details>
+        <summary>Why is position sizing important in trading?</summary>
+        <p>It is the core of risk management. Proper position sizing ensures that a single losing trade, or even a streak of losing trades, does not devastate your trading account, allowing you to survive long enough for your winning edge to play out.</p>
+      </details>
+
+      <details>
+        <summary>How much of my account should I risk per trade?</summary>
+        <p>A widely accepted rule among professional traders is the '1% to 2% Rule'. This means you should structure your position size and stop loss so that if the trade hits your stop loss, you lose no more than 1% to 2% of your total account equity.</p>
+      </details>
+
+      <details>
+        <summary>How do you calculate position size?</summary>
+        <p>The formula is: Account Risk Amount / Trade Risk per Share. For example, if you are willing to risk $100 on a trade, and the difference between your entry price and stop loss is $2 per share, your position size should be 50 shares ($100 / $2).</p>
+      </details>
+
+      <details>
+        <summary>Does position size change if I use leverage?</summary>
+        <p>The calculation of how much capital you are putting at risk remains the same, but leverage allows you to control that position size with less upfront cash. However, you must be extremely precise with stop losses when using leverage, as it magnifies both gains and losses.</p>
+      </details>
+    </section>
+  </div>
+  <script>
+    function initPositionCalculator() {
+      const container = document.getElementById('pos-calc-container');
+      if (!container || container.dataset.initialized) return;
+      container.dataset.initialized = 'true';
+
+      const inputs = {
+        account: document.getElementById('account-size'),
+        riskPct: document.getElementById('risk-percentage'),
+        entry: document.getElementById('entry-price'),
+        stop: document.getElementById('stop-loss')
+      };
+
+      const outputs = {
+        shares: document.getElementById('position-shares'),
+        capital: document.getElementById('capital-required'),
+        riskAmount: document.getElementById('risk-amount'),
+        riskPerShare: document.getElementById('risk-per-share'),
+        distance: document.getElementById('distance-to-stop'),
+        errorMsg: document.getElementById('error-message')
+      };
+
+      const formatCurrency = (val) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(val);
+      const formatNumber = (val) => new Intl.NumberFormat('en-US', { maximumFractionDigits: 2 }).format(val);
+      const formatPct = (val) => new Intl.NumberFormat('en-US', { style: 'percent', maximumFractionDigits: 2 }).format(val / 100);
+
+      function calculatePosition() {
+        // Reset error state
+        outputs.errorMsg.style.display = 'none';
+        outputs.errorMsg.textContent = '';
+
+        // Parse inputs
+        const account = parseFloat(inputs.account.value) || 0;
+        const riskPct = parseFloat(inputs.riskPct.value) || 0;
+        const entry = parseFloat(inputs.entry.value) || 0;
+        const stop = parseFloat(inputs.stop.value) || 0;
+
+        // Validation
+        if (account <= 0 || riskPct <= 0 || entry <= 0 || stop <= 0) {
+          showError("All fields must be greater than zero.");
+          resetOutputs();
+          return;
+        }
+
+        if (stop >= entry) {
+          showError("Stop loss must be lower than entry price for a long position.");
+          resetOutputs();
+          return;
+        }
+
+        // Calculations
+        const riskAmount = account * (riskPct / 100);
+        const riskPerShare = entry - stop;
+        const shares = riskAmount / riskPerShare;
+        const capitalRequired = shares * entry;
+        const distancePct = (riskPerShare / entry) * 100;
+
+        // Display results
+        outputs.shares.textContent = formatNumber(Math.floor(shares)); // Conventionally round down shares to not exceed risk
+        outputs.capital.textContent = formatCurrency(capitalRequired);
+        outputs.riskAmount.textContent = formatCurrency(riskAmount);
+        outputs.riskPerShare.textContent = formatCurrency(riskPerShare);
+        outputs.distance.textContent = formatPct(distancePct);
+
+        // Warning if capital required exceeds account size
+        if (capitalRequired > account) {
+          outputs.capital.style.color = 'var(--error-color, #ef4444)';
+          showError(`Warning: Trade requires ${formatCurrency(capitalRequired)} which exceeds your account balance. You will need leverage/margin.`);
         } else {
-            tbody.innerHTML = '<tr><td colspan="5" style="text-align:center">Data temporarily unavailable.</td></tr>';
+          outputs.capital.style.color = 'var(--text-primary)';
         }
+      }
 
-        // Chart Instance
-        let riskChart = null;
+      function showError(msg) {
+        outputs.errorMsg.textContent = msg;
+        outputs.errorMsg.style.display = 'block';
+      }
 
-        function initChart() {
-            const ctx = document.getElementById('riskChart').getContext('2d');
-            Chart.defaults.color = '#6a7a90';
-            Chart.defaults.font.family = 'Inter';
+      function resetOutputs() {
+        outputs.shares.textContent = '0';
+        outputs.capital.textContent = '$0.00';
+        outputs.riskAmount.textContent = '$0.00';
+        outputs.riskPerShare.textContent = '$0.00';
+        outputs.distance.textContent = '0%';
+      }
 
-            riskChart = new Chart(ctx, {
-                type: 'doughnut',
-                data: {
-                    labels: ['Allocated Capital', 'Remaining Cash'],
-                    datasets: [{
-                        data: [20, 80],
-                        backgroundColor: ['#4a8fe7', '#152040'],
-                        borderWidth: 0,
-                        cutout: '75%'
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: {
-                        legend: { position: 'bottom' },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    return ' ' + context.label + ': $' + context.raw.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
-                                }
-                            }
-                        }
-                    }
-                }
-            });
+      // Attach event listeners
+      Object.values(inputs).forEach(input => {
+        if (input) {
+          input.addEventListener('input', calculatePosition);
         }
+      });
 
-        function switchTab(tab) {
-            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-            document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+      // Initial calculation
+      calculatePosition();
+    }
 
-            if (tab === 'standard') {
-                document.querySelector('.tab:nth-child(1)').classList.add('active');
-                document.getElementById('standard-tab').classList.add('active');
-                document.getElementById('standard-results').style.display = 'block';
-                document.getElementById('kelly-results').style.display = 'none';
-                calculateStandard();
-            } else {
-                document.querySelector('.tab:nth-child(2)').classList.add('active');
-                document.getElementById('kelly-tab').classList.add('active');
-                document.getElementById('standard-results').style.display = 'none';
-                document.getElementById('kelly-results').style.display = 'block';
-                calculateKelly();
-            }
-        }
-
-        function calculateStandard() {
-            const account = parseFloat(document.getElementById('accountSize').value) || 0;
-            const riskPct = parseFloat(document.getElementById('riskPercent').value) || 0;
-            const entry = parseFloat(document.getElementById('entryPrice').value) || 0;
-            const stop = parseFloat(document.getElementById('stopLoss').value) || 0;
-
-            if (account <= 0 || riskPct <= 0 || entry <= 0 || stop >= entry) {
-                document.getElementById('resShares').innerText = '0';
-                return;
-            }
-
-            const riskAmount = account * (riskPct / 100);
-            const riskPerShare = entry - stop;
-            const shares = Math.floor(riskAmount / riskPerShare);
-
-            const positionCapital = shares * entry;
-            const positionPct = (positionCapital / account) * 100;
-            const actualRisk = shares * riskPerShare;
-
-            document.getElementById('resShares').innerText = shares.toLocaleString();
-            document.getElementById('resCapital').innerText = '$' + positionCapital.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
-            document.getElementById('resCapitalPct').innerText = positionPct.toFixed(2) + '%';
-            document.getElementById('resRisk').innerText = '$' + actualRisk.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
-            document.getElementById('resRiskPerShare').innerText = '$' + riskPerShare.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
-
-            if (riskChart) {
-                riskChart.data.datasets[0].data = [positionCapital, Math.max(0, account - positionCapital)];
-                riskChart.update();
-            }
-        }
-
-        function calculateKelly() {
-            const account = parseFloat(document.getElementById('kAccountSize').value) || 0;
-            const winProb = parseFloat(document.getElementById('winProb').value) / 100 || 0;
-            const rrRatio = parseFloat(document.getElementById('rrRatio').value) || 0;
-            const fraction = parseFloat(document.getElementById('kellyFraction').value) || 1;
-
-            if (account <= 0 || winProb <= 0 || winProb >= 1 || rrRatio <= 0) {
-                document.getElementById('resKPercent').innerText = '0.00%';
-                return;
-            }
-
-            // Kelly % = W - [(1 - W) / R]
-            const kellyFull = winProb - ((1 - winProb) / rrRatio);
-
-            if (kellyFull <= 0) {
-                document.getElementById('resKPercent').innerText = '0.00%';
-                document.getElementById('resKPercent').style.color = 'var(--danger)';
-                document.getElementById('resKCapital').innerText = '$0.00';
-                document.getElementById('resKFull').innerText = (kellyFull * 100).toFixed(2) + '%';
-
-                if (riskChart) {
-                    riskChart.data.datasets[0].data = [0, account];
-                    riskChart.update();
-                }
-                return;
-            }
-
-            const kellyAdjusted = kellyFull * fraction;
-            const positionCapital = account * kellyAdjusted;
-
-            document.getElementById('resKPercent').style.color = '#fff';
-            document.getElementById('resKPercent').innerText = (kellyAdjusted * 100).toFixed(2) + '%';
-            document.getElementById('resKCapital').innerText = '$' + positionCapital.toLocaleString(undefined, {minimumFractionDigits: 2, maximumFractionDigits: 2});
-            document.getElementById('resKFull').innerText = (kellyFull * 100).toFixed(2) + '%';
-
-            if (riskChart) {
-                riskChart.data.datasets[0].data = [positionCapital, Math.max(0, account - positionCapital)];
-                riskChart.update();
-            }
-        }
-
-        function filterTable() {
-            const input = document.getElementById("tableSearch");
-            const filter = input.value.toUpperCase();
-            const table = document.getElementById("volTable");
-            const tr = table.getElementsByTagName("tr");
-
-            for (let i = 1; i < tr.length; i++) {
-                let textValue = tr[i].textContent || tr[i].innerText;
-                if (textValue.toUpperCase().indexOf(filter) > -1) {
-                    tr[i].style.display = "";
-                } else {
-                    tr[i].style.display = "none";
-                }
-            }
-        }
-
-        function sortTable(n) {
-            const table = document.getElementById("volTable");
-            let rows, switching, i, x, y, shouldSwitch, dir, switchcount = 0;
-            switching = true;
-            dir = "asc";
-
-            while (switching) {
-                switching = false;
-                rows = table.rows;
-
-                for (i = 1; i < (rows.length - 1); i++) {
-                    shouldSwitch = false;
-                    x = rows[i].getElementsByTagName("TD")[n];
-                    y = rows[i + 1].getElementsByTagName("TD")[n];
-
-                    let xVal = x.innerHTML.toLowerCase().replace(/[^0-9.-]+/g, "");
-                    let yVal = y.innerHTML.toLowerCase().replace(/[^0-9.-]+/g, "");
-
-                    let xNum = parseFloat(xVal);
-                    let yNum = parseFloat(yVal);
-
-                    if (!isNaN(xNum) && !isNaN(yNum)) {
-                        xVal = xNum;
-                        yVal = yNum;
-                    } else {
-                        xVal = x.innerHTML.toLowerCase();
-                        yVal = y.innerHTML.toLowerCase();
-                    }
-
-                    if (dir == "asc") {
-                        if (xVal > yVal) {
-                            shouldSwitch = true;
-                            break;
-                        }
-                    } else if (dir == "desc") {
-                        if (xVal < yVal) {
-                            shouldSwitch = true;
-                            break;
-                        }
-                    }
-                }
-                if (shouldSwitch) {
-                    rows[i].parentNode.insertBefore(rows[i + 1], rows[i]);
-                    switching = true;
-                    switchcount ++;
-                } else {
-                    if (switchcount == 0 && dir == "asc") {
-                        dir = "desc";
-                        switching = true;
-                    }
-                }
-            }
-        }
-
-        // Initialize
-        document.addEventListener('DOMContentLoaded', () => {
-            initChart();
-            calculateStandard();
-        });
+    document.addEventListener('DOMContentLoaded', initPositionCalculator);
+    document.addEventListener('astro:page-load', initPositionCalculator);
   </script>
+  <style>
+    .hero { text-align: center; padding: 3rem 0 2rem; }
+    .hero h1 { font-size: 2.5rem; font-weight: 800; margin-bottom: 0.5rem; }
+    .subtitle { color: var(--text-secondary); font-size: 1.1rem; }
+
+    .calculator-container {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 2rem;
+      margin: 2rem 0;
+    }
+
+    .calc-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .input-group label {
+      display: block;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+      color: var(--text-primary);
+    }
+
+    .input-group input[type="number"] {
+      background: var(--bg-color);
+      color: var(--text-primary);
+      border: 1px solid var(--border-color);
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      width: 100%;
+      font-size: 1rem;
+    }
+
+    .input-group input:focus {
+      outline: none;
+      border-color: var(--accent-color);
+      box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-color) 20%, transparent);
+    }
+
+    .results-grid {
+      border-top: 1px solid var(--border-color);
+      padding-top: 2rem;
+    }
+
+    .main-result {
+      background: color-mix(in srgb, var(--accent-color) 10%, transparent);
+      border: 1px solid var(--accent-color);
+      border-radius: 12px;
+      padding: 2rem;
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+
+    .main-result h3 {
+      margin: 0 0 0.5rem 0;
+      color: var(--text-primary);
+      font-size: 1.2rem;
+    }
+
+    .result-value {
+      font-size: 3rem;
+      font-weight: 800;
+      color: var(--accent-color);
+      line-height: 1.2;
+    }
+
+    .secondary-results {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+    }
+
+    .result-box {
+      background: var(--bg-color);
+      border: 1px solid var(--border-color);
+      padding: 1.25rem;
+      border-radius: 8px;
+      text-align: center;
+    }
+
+    .result-box h4 {
+      margin: 0 0 0.5rem 0;
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      font-weight: 600;
+    }
+
+    .sub-value {
+      font-size: 1.4rem;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .error-state {
+      margin-top: 1.5rem;
+      padding: 1rem;
+      background: color-mix(in srgb, var(--error-color, #ef4444) 10%, transparent);
+      border: 1px solid var(--error-color, #ef4444);
+      color: var(--error-color, #ef4444);
+      border-radius: 8px;
+      font-weight: 500;
+      text-align: center;
+    }
+
+    .explainer {
+      margin-top: 3rem;
+    }
+
+    .explainer h2, .explainer h3, .explainer h4 {
+      margin-top: 2rem;
+      margin-bottom: 1rem;
+      color: var(--text-primary);
+    }
+
+    .explainer p {
+      margin-bottom: 1rem;
+      line-height: 1.6;
+      color: var(--text-primary);
+    }
+
+    .explainer ul, .explainer ol {
+      margin-bottom: 1.5rem;
+      padding-left: 1.5rem;
+      line-height: 1.6;
+      color: var(--text-primary);
+    }
+
+    .explainer li {
+      margin-bottom: 0.5rem;
+    }
+
+    .explainer code {
+      background: var(--card-bg);
+      padding: 0.2rem 0.4rem;
+      border-radius: 4px;
+      font-family: monospace;
+      border: 1px solid var(--border-color);
+    }
+
+    .faq-section {
+      margin-top: 3rem;
+    }
+
+    .faq-section h2 {
+      margin-bottom: 1.5rem;
+    }
+
+    .faq-section details {
+      margin: 1rem 0;
+      padding: 1rem;
+      background: var(--card-bg);
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+    }
+
+    .faq-section summary {
+      font-weight: 600;
+      cursor: pointer;
+      color: var(--text-primary);
+      font-size: 1.1rem;
+    }
+
+    .faq-section details p {
+      margin-top: 1rem;
+      margin-bottom: 0;
+      line-height: 1.6;
+      color: var(--text-secondary);
+    }
+
+    @media (max-width: 768px) {
+      .calc-grid {
+        grid-template-columns: 1fr;
+      }
+      .secondary-results {
+        grid-template-columns: 1fr 1fr;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .secondary-results {
+        grid-template-columns: 1fr;
+      }
+      .result-value {
+        font-size: 2.2rem;
+      }
+    }
+  </style>
 </SiteLayout>
