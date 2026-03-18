@@ -1,22 +1,27 @@
 ---
 import SiteLayout from '../../../../layouts/SiteLayout.astro';
-import fs from 'node:fs';
-import path from 'node:path';
-
-const contentPath = path.join(process.cwd(), 'src/data/pseo/category-indexes/28grams_lists.html');
-const htmlContent = fs.readFileSync(contentPath, 'utf-8');
-
-const cssPath = path.join(process.cwd(), 'src/data/pseo/category-indexes/28grams_lists.css');
-let cssContent = '';
-try { cssContent = fs.readFileSync(cssPath, 'utf-8'); } catch {}
+import { sites } from '../../../../config/sites';
+const SITE_ID = '28grams';
+const siteConfig = sites[SITE_ID];
+const allPages = import.meta.glob('../*.astro', { eager: true });
+interface PageEntry { slug: string; title: string; description: string; category: string; }
+const items: PageEntry[] = Object.entries(allPages)
+  .filter(([path]) => !path.includes('index'))
+  .map(([path, mod]: [string, any]) => ({ slug: path.replace('../', '').replace('.astro', ''), title: mod.meta?.title || path.replace('../', '').replace('.astro', '').replace(/-/g, ' '), description: mod.meta?.description || '', category: mod.meta?.category || 'tool' }))
+  .filter(p => p.category === 'list')
+  .sort((a, b) => a.title.localeCompare(b.title));
+function getEmoji(slug: string): string {
+  if (slug.includes('best') || slug.includes('top')) return '🏆';
+  if (slug.includes('cookbook')) return '📚';
+  if (slug.includes('cast-iron') || slug.includes('pan') || slug.includes('knife')) return '🍳';
+  return '📋';
+}
+function truncate(text: string, max: number): string { if (!text || text.length <= max) return text || ''; return text.slice(0, max).replace(/\s+\S*$/, '') + '…'; }
+const schema = JSON.stringify({ "@context": "https://schema.org", "@type": "CollectionPage", "name": "Food Lists & Rankings", "url": `https://${siteConfig.domain}/lists/`, "isPartOf": { "@type": "WebSite", "name": siteConfig.name, "url": `https://${siteConfig.domain}/` } });
 ---
-
-<SiteLayout
-  site="28grams"
-  title="Curated Lists — Kitchen Tools & Equipment | 28grams.vip"
-  description="Curated lists of the best kitchen tools, equipment, cookbooks, and resources."
-  canonical="https://{}/lists/"
->
-  <Fragment set:html={htmlContent} />
-  {cssContent && <style is:inline set:html={cssContent} />}
+<SiteLayout site={SITE_ID} title={`Food Lists & Rankings — ${siteConfig.name}`} description={`${items.length} curated food lists. Best cookbooks, kitchen gear rankings, and ingredient guides.`} canonical={`https://${siteConfig.domain}/lists/`} schema={schema}>
+  <div class="hero"><div class="hero-content"><span class="hero-tag">📋 LISTS</span><h1>Food Lists & Rankings</h1><p>{items.length} food lists.</p><div class="search-box"><svg class="search-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" /></svg><input type="text" id="searchInput" placeholder={`Search ${items.length} lists…`} autocomplete="off" /></div></div></div>
+  <div class="page-container"><div class="results-count" id="resultsCount">{items.length} lists</div><div class="grid" id="itemsGrid">{items.map(page => (<a class="card" href={`/${page.slug}`} data-title={page.title.toLowerCase()} data-desc={page.description.toLowerCase()}><span class="card-emoji">{getEmoji(page.slug)}</span><h2 class="card-name">{page.title}</h2><p class="card-desc">{truncate(page.description, 130)}</p></a>))}</div><div class="no-results" id="noResults">No lists found.</div></div>
+  <script is:inline>document.addEventListener('DOMContentLoaded',()=>{const i=document.getElementById('searchInput'),c=document.getElementById('itemsGrid').querySelectorAll('.card'),n=document.getElementById('resultsCount'),nr=document.getElementById('noResults');i.addEventListener('input',()=>{const q=i.value.toLowerCase().trim();let v=0;c.forEach(x=>{const m=!q||x.dataset.title.includes(q)||x.dataset.desc.includes(q);x.style.display=m?'':'none';if(m)v++});n.textContent=v+' lists';nr.style.display=v===0?'block':'none'})});</script>
+  <style is:inline>.hero{text-align:center;padding:4rem 1.5rem 2.5rem}.hero-tag{display:inline-block;background:color-mix(in srgb,var(--accent-color) 10%,transparent);color:var(--accent-color);font-size:.7rem;font-weight:800;padding:6px 16px;border-radius:20px;letter-spacing:1px;margin-bottom:1rem}.hero h1{font-size:2.2rem;font-weight:800;margin-bottom:.5rem}.hero p{color:var(--text-secondary);font-size:1.05rem;margin-bottom:1.5rem}.search-box{max-width:420px;margin:0 auto;position:relative}.search-icon{position:absolute;left:14px;top:50%;transform:translateY(-50%);width:18px;height:18px;color:var(--text-secondary)}.search-box input{width:100%;padding:12px 16px 12px 42px;border:1px solid var(--border-color);border-radius:10px;font-size:.95rem;background:var(--card-bg);color:var(--text-primary);outline:none;box-sizing:border-box}.search-box input:focus{border-color:var(--accent-color)}.page-container{max-width:1100px;margin:0 auto 3rem;padding:0 1.5rem}.results-count{font-size:.85rem;color:var(--text-secondary);margin-bottom:1rem}.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1rem}.card{display:block;background:var(--card-bg);border:1px solid var(--border-color);border-radius:12px;padding:1.25rem;text-decoration:none;color:inherit;transition:border-color .2s,transform .2s}.card:hover{border-color:var(--accent-color);transform:translateY(-2px)}.card-emoji{font-size:1.5rem;display:block;margin-bottom:.5rem}.card-name{font-size:1rem;font-weight:700;margin:0 0 .35rem;line-height:1.3}.card-desc{font-size:.85rem;color:var(--text-secondary);line-height:1.4;margin:0}.no-results{display:none;text-align:center;color:var(--text-secondary);padding:3rem 0}@media(max-width:640px){.hero h1{font-size:1.6rem}.grid{grid-template-columns:1fr}}</style>
 </SiteLayout>
