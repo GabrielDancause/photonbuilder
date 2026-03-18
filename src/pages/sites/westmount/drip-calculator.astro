@@ -2,13 +2,13 @@
 import SiteLayout from "../../../layouts/SiteLayout.astro";
 
 export const meta = {
-  title: "DRIP Calculator (Dividend Reinvestment Plan)",
-  description: "Discover the hidden power of compounding. See exactly how reinvesting your dividends supercharges long-term returns with our interactive DRIP calculator.",
+  title: "DRIP Calculator: Model Your Dividend Reinvestment",
+  description: "What if you reinvested every dividend back into the market? Discover the hidden power of compounding and forecast your exact portfolio growth over decades.",
   category: "tool",
   published: "2026-03-15",
 };
 
-const schema = {
+const schema = JSON.stringify({
   "@context": "https://schema.org",
   "@graph": [
     {
@@ -76,448 +76,231 @@ const schema = {
       "dateModified": "2026-03-15"
     }
   ]
-};
+});
 ---
 
 <SiteLayout site="westmount" title={meta.title} description={meta.description} canonical="https://westmountfundamentals.com/drip-calculator" schema={schema}>
-  <div class="page-content">
+  <div class="page-content container">
     <div class="hero">
       <h1>DRIP Calculator</h1>
-      <p class="subtitle">Calculate the snowball effect of compounding by reinvesting dividends.</p>
+      <p class="subtitle">See exactly how automatic dividend reinvestment can accelerate your wealth creation.</p>
     </div>
 
     <div class="calculator-container">
-      <div class="input-grid">
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-bottom: 2rem;">
         <div class="input-group">
-          <label for="initialInvestment">Initial Investment ($)</label>
-          <input type="number" id="initialInvestment" min="0" step="100" value="10000" required />
+          <label for="initialInvest">Initial Investment ($)</label>
+          <input type="number" id="initialInvest" value="10000" min="0">
         </div>
-
         <div class="input-group">
-          <label for="sharePrice">Current Share Price ($)</label>
-          <input type="number" id="sharePrice" min="1" step="0.01" value="100" required />
+          <label for="sharePrice">Initial Share Price ($)</label>
+          <input type="number" id="sharePrice" value="50" min="1">
         </div>
-
         <div class="input-group">
-          <label for="dividendYield">Annual Dividend Yield (%)</label>
-          <input type="number" id="dividendYield" min="0" step="0.1" value="4.0" required />
+          <label for="divYield">Annual Dividend Yield (%)</label>
+          <input type="number" id="divYield" value="4" min="0" step="0.1">
         </div>
-
         <div class="input-group">
-          <label for="annualAppreciation">Expected Annual Share Price Growth (%)</label>
-          <input type="number" id="annualAppreciation" min="-20" step="0.5" value="5.0" required />
+          <label for="annualAppreciation">Annual Share Price Growth (%)</label>
+          <input type="number" id="annualAppreciation" value="5" min="0" step="0.1">
         </div>
-
         <div class="input-group">
-          <label for="annualContribution">Annual Contribution ($)</label>
-          <input type="number" id="annualContribution" min="0" step="100" value="1200" required />
+          <label for="annualContrib">Annual Additional Contribution ($)</label>
+          <input type="number" id="annualContrib" value="1200" min="0">
         </div>
-
         <div class="input-group">
           <label for="years">Years to Grow</label>
-          <input type="number" id="years" min="1" max="50" step="1" value="20" required />
+          <input type="number" id="years" value="20" min="1" max="100">
         </div>
       </div>
 
-      <div id="error-message" class="error-state" style="display: none;">
-        Please enter valid numerical inputs. Years must be between 1 and 50.
-      </div>
+      <div id="calc-error" style="color: red; margin-bottom: 1rem; display: none;">Please enter valid non-negative numbers.</div>
 
-      <div class="results-grid">
-        <div class="result-card highlight">
-          <div class="result-label">Total Final Value</div>
-          <div class="result-value" id="resTotalValue">$0.00</div>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem;">
+        <div class="result-card">
+          <div style="font-weight: 600; color: var(--text-secondary);">Final Portfolio Value</div>
+          <div id="finalValue" class="result-value" style="font-size: 2rem;">$0.00</div>
         </div>
         <div class="result-card">
-          <div class="result-label">Total Shares Owned</div>
-          <div class="result-value" id="resTotalShares">0.000</div>
+          <div style="font-weight: 600; color: var(--text-secondary);">Total Shares Owned</div>
+          <div id="totalShares" class="result-value" style="font-size: 2rem;">0</div>
         </div>
         <div class="result-card">
-          <div class="result-label">Total Contributions</div>
-          <div class="result-value neutral" id="resTotalContributions">$0.00</div>
+          <div style="font-weight: 600; color: var(--text-secondary);">Total Contributions</div>
+          <div id="totalContribDisplay" class="result-value" style="font-size: 2rem;">$0.00</div>
         </div>
         <div class="result-card">
-          <div class="result-label">Total Dividends Earned</div>
-          <div class="result-value positive" id="resTotalDividends">$0.00</div>
-        </div>
-      </div>
-
-      <div class="chart-container" style="margin-top: 2rem;">
-        <h3>Growth Comparison</h3>
-        <p class="chart-sub">Final value <strong>with</strong> vs <strong>without</strong> DRIP</p>
-        <div class="visual-bars">
-          <div class="bar-group">
-            <div class="bar-label">Without DRIP (Cash Dividends)</div>
-            <div class="bar-track">
-              <div class="bar-fill no-drip" id="barNoDrip"></div>
-              <div class="bar-text" id="textNoDrip">$0.00</div>
-            </div>
-          </div>
-          <div class="bar-group">
-            <div class="bar-label">With DRIP (Reinvested)</div>
-            <div class="bar-track">
-              <div class="bar-fill with-drip" id="barWithDrip"></div>
-              <div class="bar-text" id="textWithDrip">$0.00</div>
-            </div>
-          </div>
+          <div style="font-weight: 600; color: var(--text-secondary);">Total Dividends Reinvested</div>
+          <div id="totalDivs" class="result-value" style="font-size: 2rem;">$0.00</div>
         </div>
       </div>
     </div>
 
     <div class="explainer">
-      <h2>Understanding Dividend Reinvestment Plans (DRIPs)</h2>
-      <p>Building long-term wealth in the stock market relies heavily on one specific mathematical force: compounding. While share price appreciation is a critical component of capital gains, a significant portion of historical market returns stems from the steady accumulation and reinvestment of corporate dividends. The <strong>DRIP Calculator</strong> above simulates this exact process, modeling how an initial investment combined with regular contributions and automated dividend reinvestment can accelerate the growth of your portfolio over time.</p>
+      <h2>How the DRIP Strategy Supercharges Returns</h2>
+      <p>Building wealth through dividend investing is not just about collecting passive income—it is fundamentally about harnessing the mathematical phenomenon of compounding. A Dividend Reinvestment Plan (DRIP) is a powerful, automated strategy that uses your cash dividend payouts to immediately purchase additional shares (or fractional shares) of the underlying stock, exchange-traded fund (ETF), or mutual fund. By consistently putting your dividends back to work, you trigger a snowball effect: more shares lead to larger dividend payments, which in turn buy even more shares.</p>
 
-      <p>A Dividend Reinvestment Plan (DRIP) is an arrangement, either set up directly through a corporation or facilitated automatically by a modern brokerage platform, where the cash dividends paid out by a company or fund are immediately and automatically used to purchase additional shares of that same asset. Rather than letting cash sit idle in your account, DRIPs put your money back to work instantly.</p>
+      <p>For many investors, the real magic of the stock market reveals itself not in the daily fluctuations of share prices, but in the slow, inevitable accumulation of assets over decades. When you look at the historical returns of major indices like the S&P 500, a massive percentage of the total return is attributed not just to price appreciation, but specifically to the reinvestment of dividends over time. Our interactive DRIP calculator helps you visualize this exact process, modeling how a hypothetical investment can grow into a substantial portfolio.</p>
 
-      <h3>The Mechanics of Compounding</h3>
-      <p>Albert Einstein famously called compound interest the "eighth wonder of the world," stating that "he who understands it, earns it; he who doesn't, pays it." When you participate in a DRIP, you are effectively compounding your share count, not just your dollar value.</p>
-      <p>Consider a simplified scenario: You own 1,000 shares of a stock priced at $100 per share (a $100,000 investment) that pays a 4% annual dividend yield. In the first year, you receive $4,000 in dividends. If you take that cash out to spend, you will still own exactly 1,000 shares going into year two.</p>
-      <p>However, if you utilize a DRIP and reinvest that $4,000 back into the stock at $100 per share, you acquire an additional 40 shares. You now own 1,040 shares. In year two, your 4% dividend is calculated on the new base of 1,040 shares, yielding $4,160. This buys even more shares, increasing your payout for year three. This "snowball effect" starts slowly but accelerates exponentially in the later years of your investing timeline.</p>
-
-      <h3>Key Variables in the DRIP Calculator</h3>
-      <p>Our calculator uses an iterative annual formula to model the growth of a DRIP position. Let's break down the core inputs and how they impact the trajectory of your investment:</p>
+      <h3>The Core Mechanics of Dividend Reinvestment</h3>
+      <p>To understand the output of the DRIP Calculator, it is essential to understand the underlying variables that drive the mathematical model. Each input plays a specific role in determining your final portfolio value and the total amount of passive income generated.</p>
       <ul>
-        <li><strong>Initial Investment:</strong> The starting principal amount you allocate to the stock or ETF. This establishes your base share count on day one.</li>
-        <li><strong>Current Share Price:</strong> The initial price per share, used to calculate how many shares your initial investment and subsequent dividends can purchase. Most brokerages support fractional share investing for DRIPs, ensuring every penny is reinvested.</li>
-        <li><strong>Annual Dividend Yield:</strong> The percentage of the company's share price paid out as dividends annually. For instance, a $100 stock paying $4 a year in dividends has a 4% yield. The calculator assumes this yield remains constant relative to the share price.</li>
-        <li><strong>Expected Annual Share Price Growth:</strong> The projected capital appreciation of the stock. As the share price increases, the underlying value of your portfolio grows, but it also means that your reinvested dividends will buy fewer fractional shares over time.</li>
-        <li><strong>Annual Contribution:</strong> The amount of new external capital you add to the position each year. Regular, disciplined contributions (often referred to as dollar-cost averaging) significantly boost the compounding effect.</li>
-        <li><strong>Years to Grow:</strong> Your investment time horizon. Because compounding is exponential, the true power of a DRIP is realized over long periods—typically decades.</li>
+        <li><strong>Initial Investment & Initial Share Price:</strong> These two inputs establish your foundation. By dividing your initial investment by the share price, the calculator determines exactly how many shares you own on day one. This base share count is what your first year's dividend yield will be calculated against.</li>
+        <li><strong>Annual Dividend Yield:</strong> This percentage represents the company's or fund's annual payout relative to its current share price. A 4% yield on a $50 stock means a $2 annual payout per share. In our model, we assume this yield percentage remains constant over time. Therefore, as the share price grows, the absolute dollar amount of the dividend paid out per share also increases proportionally.</li>
+        <li><strong>Annual Share Price Growth (Capital Appreciation):</strong> This represents the expected rate at which the underlying asset's value will increase each year. Share price growth is a double-edged sword in a DRIP strategy. While a rapidly rising share price drastically increases your overall portfolio value, it also means that your reinvested dividends will purchase fewer fractional shares in subsequent years because the asset is becoming more expensive.</li>
+        <li><strong>Annual Additional Contribution:</strong> Consistent, periodic investing—often referred to as dollar-cost averaging—is one of the most effective ways to build wealth. By adding fresh capital to your portfolio each year alongside your reinvested dividends, you significantly accelerate the compounding process. This new capital buys more shares, which immediately start generating their own dividends.</li>
+        <li><strong>Years to Grow:</strong> Time is the most critical factor in any compound interest equation. The true explosive growth of a DRIP strategy usually occurs in the later decades, as the snowball of accumulated shares becomes large enough to generate massive dividend payouts.</li>
       </ul>
 
-      <h3>Calculation Methodology and Formulas</h3>
-      <p>To provide accurate results, the DRIP Calculator iterates year-by-year, updating both the share price and the total share count based on your inputs. The calculation follows these primary steps for each year in the period:</p>
+      <h3>The Step-by-Step Calculation Methodology</h3>
+      <p>The DRIP Calculator does not use a simple, static formula. Because both the share count and the share price change every single year, the calculator must perform an iterative calculation. It steps through your investment timeline year by year, applying the following process:</p>
 
       <ol>
-        <li><strong>Record Starting Values:</strong> The year begins with the current accumulated share count and the current share price.</li>
-        <li><strong>Calculate Annual Dividends:</strong> The dividend payout for the year is calculated by multiplying the starting share count by the share price, and then multiplying by the dividend yield percentage.
-          <br><em>Dividend Payment = Total Shares &times; Share Price &times; (Dividend Yield / 100)</em></li>
-        <li><strong>Reinvest Dividends:</strong> The calculated dividend payment, plus any new Annual Contributions, are combined and divided by the current share price to determine the number of new shares acquired.
-          <br><em>New Shares = (Dividend Payment + Annual Contribution) / Share Price</em></li>
-        <li><strong>Update Totals:</strong> The new shares are added to the running total. The share price is then adjusted upward based on the expected annual appreciation percentage.
-          <br><em>New Share Price = Old Share Price &times; (1 + (Annual Appreciation / 100))</em></li>
+        <li><strong>Calculate Dividends Received:</strong> At the start of the year, the calculator takes your current accumulated share count and multiplies it by the current share price. This gives the total asset value. It then multiplies that value by the dividend yield to find your total cash payout for the year. <em>(Formula: Dividends = Total Shares &times; Share Price &times; Dividend Yield)</em></li>
+        <li><strong>Calculate Total Capital to Invest:</strong> The calculator combines your newly earned dividends with your planned Annual Additional Contribution. This represents the total cash ready to be deployed into the market.</li>
+        <li><strong>Calculate New Shares Acquired:</strong> The total capital to invest is divided by the current share price to determine how many new shares (including fractional shares) are purchased. <em>(Formula: New Shares = Total Capital / Current Share Price)</em></li>
+        <li><strong>Update Accumulating Totals:</strong> The newly purchased shares are added to your running share total. The calculator also logs the total dividends earned and total principal contributed for the final readout.</li>
+        <li><strong>Appreciate the Share Price:</strong> Finally, before moving to the next year, the share price is increased by the expected Annual Share Price Growth rate. <em>(Formula: New Price = Old Price &times; (1 + Growth Rate))</em>. The cycle then repeats for the next year using these new, larger baseline numbers.</li>
       </ol>
-      <p>This cycle repeats for the entire "Years to Grow" duration. By keeping a running tally, the calculator accurately determines the final portfolio value by multiplying the final total share count by the final appreciated share price.</p>
 
-      <h3>The Impact of Price Appreciation vs. Stagnation</h3>
-      <p>An interesting mathematical quirk of DRIP investing is the relationship between share price growth and dividend accumulation. High capital appreciation is fantastic for your overall portfolio value, but a rapidly rising share price actually reduces the number of shares your dividends can purchase.</p>
-      <p>Conversely, during sideways or bear markets where the share price remains flat or declines, your reinvested dividends buy more shares per dollar. This allows you to accumulate a massive position at a discount, leading to an explosive surge in wealth when the market eventually recovers. This dynamic makes a DRIP an excellent psychological tool, as it transforms market downturns from painful losses into attractive buying opportunities.</p>
+      <h3>Why Reinvesting is Superior to Hoarding Cash</h3>
+      <p>Consider a theoretical scenario where two investors each buy 1,000 shares of a $50 stock that pays a 4% yield and grows at 5% per year. Investor A chooses to take their dividends as cash, spending the money or letting it sit in a 0% interest checking account. Investor B utilizes a DRIP to automatically reinvest everything.</p>
 
-      <h3>Tax Considerations for DRIP Investors</h3>
-      <p>While the DRIP Calculator demonstrates the gross compounding power of dividend reinvestment, it does not explicitly subtract potential tax liabilities. It is crucial to understand that the Internal Revenue Service (IRS) taxes dividends in the year they are received, regardless of whether you cash them out or automatically reinvest them through a DRIP.</p>
-      <p>If you hold these dividend-paying assets in a standard taxable brokerage account, you must pay taxes on the dividend distributions annually. To fully maximize the tax-free compounding effect modeled by this calculator, investors frequently place their DRIP-enabled assets inside tax-advantaged retirement accounts, such as a <a href="/guide-roth-vs-traditional-ira">Roth IRA or Traditional IRA</a>.</p>
+      <p>Over 20 years, Investor A's share count remains completely stagnant at 1,000 shares. Their portfolio value grows solely based on the 5% annual capital appreciation of the stock. While they do receive a steady stream of cash income, the base asset generating that income never expands.</p>
 
-      <p>Understanding the balance between growth, risk, and compounding is essential. While dividends provide a buffer against volatility, traders looking to define specific risk limits may also benefit from our <a href="/options-calculator">Options Profit Calculator</a> to structure their positions appropriately.</p>
+      <p>Investor B, however, experiences a completely different trajectory. By year 20, they own significantly more than 1,000 shares. Because their share count has been compounding, their final portfolio value is drastically higher, and the actual cash amount of the dividend they receive in year 20 is exponentially larger than Investor A's payout. By utilizing a DRIP, your base share count is constantly expanding, creating exponential growth in both the portfolio's total value and its future income-generating potential.</p>
+
+      <h3>The Psychological Benefit of DRIPs During Bear Markets</h3>
+      <p>Beyond the pure mathematics, Dividend Reinvestment Plans offer a massive psychological advantage to long-term investors, particularly during market downturns. When the stock market crashes or enters a prolonged bear market, seeing your portfolio balance drop can be terrifying. It often causes investors to panic sell at the absolute worst time.</p>
+
+      <p>However, if you are utilizing a DRIP, a falling share price is actually mathematically beneficial to your long-term accumulation strategy. Because the share price is lower, your exact same cash dividend payout will now purchase a significantly larger number of fractional shares. You are essentially accumulating assets at a steep discount. When the market eventually recovers, you will own a much larger piece of the company than you would have if the price had never dropped. Understanding this dynamic helps shift an investor's mindset, turning market crashes into buying opportunities rather than panic-inducing events.</p>
+
+      <h3>Tax Considerations and Account Types</h3>
+      <p>While the DRIP Calculator clearly demonstrates the immense compounding power of dividend reinvestment, it is crucial to recognize that it calculates gross returns and does not automatically subtract tax liabilities. In a standard, taxable brokerage account, the Internal Revenue Service (IRS) and most global tax authorities require you to pay taxes on the dividends you receive in the year they are distributed.</p>
+
+      <p>This tax applies regardless of whether you cash the dividends out or have them automatically reinvested via a DRIP. This creates a "tax drag" that reduces the amount of capital actually going back into the market, slightly slowing the compounding effect.</p>
+
+      <p>To fully maximize the mathematical power shown in this calculator, many investors choose to place their dividend-heavy assets inside tax-advantaged accounts, such as a Roth IRA or a Traditional IRA. In these accounts, dividends can be reinvested completely tax-free, allowing for pure, unhindered compounding over decades.</p>
+
+      <p>To see how this strategy fits into a broader investing context, or to model returns for assets that do not pay a dividend, you might also want to explore our <a href="/stock-calculator">Stock Growth Calculator</a> to compare different types of market returns.</p>
     </div>
 
     <section class="faq-section">
       <h2>Frequently Asked Questions</h2>
       <details>
         <summary>What is a DRIP (Dividend Reinvestment Plan)?</summary>
-        <p>A DRIP, or Dividend Reinvestment Plan, is a program that automatically reinvests the cash dividends you receive from a company or fund into purchasing more shares of that same underlying asset, often utilizing fractional shares so that every cent is put to work.</p>
+        <p>A DRIP, or Dividend Reinvestment Plan, is a program that automatically reinvests the cash dividends you receive from a company or fund into purchasing more shares of that same underlying asset, often utilizing fractional shares.</p>
       </details>
       <details>
         <summary>How does dividend reinvestment create compound growth?</summary>
-        <p>Dividend reinvestment creates compound growth by increasing your total share count. When your dividends are used to buy more shares, your next dividend payment is calculated on a larger base of shares, creating a snowball effect over time.</p>
+        <p>Dividend reinvestment creates compound growth by increasing your total share count. When dividends buy more shares, your next dividend payment is calculated on a larger base of shares, creating a snowball effect over time.</p>
       </details>
       <details>
         <summary>Do I have to pay taxes on reinvested dividends?</summary>
-        <p>Yes, in a standard taxable brokerage account, you are required to pay taxes on dividends in the year they are distributed, regardless of whether you take them in cash or automatically reinvest them. Placing dividend assets in tax-advantaged accounts like IRAs can defer or eliminate this tax burden.</p>
+        <p>Yes, in a standard taxable brokerage account, you are required to pay taxes on dividends in the year they are distributed, regardless of whether you take them in cash or automatically reinvest them.</p>
       </details>
       <details>
         <summary>Can I use a DRIP for ETFs and index funds?</summary>
-        <p>Yes, most modern brokerage platforms allow you to set up automatic dividend reinvestment for both individual stocks and Exchange Traded Funds (ETFs). You are not restricted to just individual companies.</p>
+        <p>Yes, most modern brokerage platforms allow you to set up automatic dividend reinvestment for both individual stocks and Exchange Traded Funds (ETFs).</p>
       </details>
       <details>
         <summary>Should I manually reinvest dividends instead of using a DRIP?</summary>
-        <p>While a DRIP is fully automated and ensures you never leave cash sitting idle, manual reinvestment allows you to direct your cash flow to rebalance your portfolio or buy the most undervalued assets at that specific time. The best choice depends on your desire for automation versus control.</p>
+        <p>While a DRIP is automated and ensures you never leave cash sitting idle, manual reinvestment allows you to direct your cash flow to rebalance your portfolio or buy the most undervalued assets at that specific time.</p>
       </details>
     </section>
-  </div>
-
   <script is:inline>
-    function calculateDrip() {
-      const initialInvest = parseFloat(document.getElementById('initialInvestment').value);
-      const initialPrice = parseFloat(document.getElementById('sharePrice').value);
-      const divYield = parseFloat(document.getElementById('dividendYield').value) / 100;
-      const apprec = parseFloat(document.getElementById('annualAppreciation').value) / 100;
-      const annualContrib = parseFloat(document.getElementById('annualContribution').value);
-      const years = parseInt(document.getElementById('years').value, 10);
+    document.addEventListener("DOMContentLoaded", () => {
+      const initialInvestInput = document.getElementById("initialInvest");
+      const sharePriceInput = document.getElementById("sharePrice");
+      const divYieldInput = document.getElementById("divYield");
+      const annualAppreciationInput = document.getElementById("annualAppreciation");
+      const annualContribInput = document.getElementById("annualContrib");
+      const yearsInput = document.getElementById("years");
 
-      const errorMsg = document.getElementById('error-message');
+      const errorMsg = document.getElementById("calc-error");
 
-      if (isNaN(initialInvest) || isNaN(initialPrice) || isNaN(divYield) ||
-          isNaN(apprec) || isNaN(annualContrib) || isNaN(years) ||
-          initialInvest < 0 || initialPrice <= 0 || divYield < 0 ||
-          annualContrib < 0 || years < 1 || years > 50) {
+      const finalValueDisplay = document.getElementById("finalValue");
+      const totalSharesDisplay = document.getElementById("totalShares");
+      const totalContribDisplay = document.getElementById("totalContribDisplay");
+      const totalDivsDisplay = document.getElementById("totalDivs");
 
-        errorMsg.style.display = 'block';
-        return;
+      const formatter = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' });
+      const numberFormatter = new Intl.NumberFormat('en-US', { maximumFractionDigits: 4 });
+
+      function calculateDrip() {
+        const initialInvest = parseFloat(initialInvestInput.value);
+        const sharePrice = parseFloat(sharePriceInput.value);
+        const divYield = parseFloat(divYieldInput.value) / 100;
+        const annualAppreciation = parseFloat(annualAppreciationInput.value) / 100;
+        const annualContrib = parseFloat(annualContribInput.value);
+        const years = parseInt(yearsInput.value, 10);
+
+        if (isNaN(initialInvest) || isNaN(sharePrice) || isNaN(divYield) || isNaN(annualAppreciation) || isNaN(annualContrib) || isNaN(years) ||
+            initialInvest < 0 || sharePrice <= 0 || divYield < 0 || annualContrib < 0 || years <= 0) {
+          errorMsg.style.display = "block";
+          return;
+        }
+        errorMsg.style.display = "none";
+
+        let currentShares = initialInvest / sharePrice;
+        let currentPrice = sharePrice;
+        let totalDividends = 0;
+        let totalContributions = initialInvest;
+
+        for (let i = 0; i < years; i++) {
+          const dividendsEarned = currentShares * currentPrice * divYield;
+          totalDividends += dividendsEarned;
+
+          totalContributions += annualContrib;
+
+          const cashToInvest = dividendsEarned + annualContrib;
+          const newShares = cashToInvest / currentPrice;
+
+          currentShares += newShares;
+          currentPrice = currentPrice * (1 + annualAppreciation);
+        }
+
+        const finalPortfolioValue = currentShares * currentPrice;
+
+        finalValueDisplay.textContent = formatter.format(finalPortfolioValue);
+        totalSharesDisplay.textContent = numberFormatter.format(currentShares);
+        totalContribDisplay.textContent = formatter.format(totalContributions);
+        totalDivsDisplay.textContent = formatter.format(totalDividends);
       }
 
-      errorMsg.style.display = 'none';
+      const inputs = [initialInvestInput, sharePriceInput, divYieldInput, annualAppreciationInput, annualContribInput, yearsInput];
+      inputs.forEach(input => input.addEventListener("input", calculateDrip));
 
-      let sharesWithDrip = initialInvest / initialPrice;
-      let sharesNoDrip = initialInvest / initialPrice;
-
-      let price = initialPrice;
-      let totalDividendsDrip = 0;
-      let totalDividendsCash = 0;
-      let totalContributions = initialInvest;
-
-      for (let i = 1; i <= years; i++) {
-        // Calculate dividends for the year based on starting share count
-        let dividendDrip = sharesWithDrip * price * divYield;
-        let dividendCash = sharesNoDrip * price * divYield;
-
-        totalDividendsDrip += dividendDrip;
-        totalDividendsCash += dividendCash;
-
-        totalContributions += annualContrib;
-
-        // Reinvest (Drip scenario)
-        let sharesBoughtDrip = (dividendDrip + annualContrib) / price;
-        sharesWithDrip += sharesBoughtDrip;
-
-        // No Drip scenario (only reinvest contribution)
-        let sharesBoughtNoDrip = annualContrib / price;
-        sharesNoDrip += sharesBoughtNoDrip;
-
-        // Appreciate stock price at year end
-        price = price * (1 + apprec);
-      }
-
-      const finalValueDrip = sharesWithDrip * price;
-      const finalValueNoDrip = (sharesNoDrip * price) + totalDividendsCash; // Portfolio + Hoarded Cash
-
-      const formatCurrency = (val) => {
-        return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(val);
-      };
-
-      document.getElementById('resTotalValue').innerText = formatCurrency(finalValueDrip);
-      document.getElementById('resTotalShares').innerText = sharesWithDrip.toLocaleString('en-US', { maximumFractionDigits: 3 });
-      document.getElementById('resTotalContributions').innerText = formatCurrency(totalContributions);
-      document.getElementById('resTotalDividends').innerText = formatCurrency(totalDividendsDrip);
-
-      // Update visual bars
-      const maxBarValue = Math.max(finalValueDrip, finalValueNoDrip, 1);
-      const dripWidth = Math.max((finalValueDrip / maxBarValue) * 100, 5);
-      const noDripWidth = Math.max((finalValueNoDrip / maxBarValue) * 100, 5);
-
-      document.getElementById('barWithDrip').style.width = `${dripWidth}%`;
-      document.getElementById('textWithDrip').innerText = formatCurrency(finalValueDrip);
-
-      document.getElementById('barNoDrip').style.width = `${noDripWidth}%`;
-      document.getElementById('textNoDrip').innerText = formatCurrency(finalValueNoDrip);
-    }
-
-    // Attach listeners
-    const inputs = ['initialInvestment', 'sharePrice', 'dividendYield', 'annualAppreciation', 'annualContribution', 'years'];
-    inputs.forEach(id => {
-      document.getElementById(id).addEventListener('input', calculateDrip);
+      calculateDrip();
     });
-
-    // Initial calculation
-    calculateDrip();
   </script>
 
   <style is:inline>
     .page-content { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem; }
     .hero { text-align: center; padding: 3rem 0 2rem; }
-    .hero h1 { font-size: 2.2rem; font-weight: 800; margin-bottom: 0.5rem; color: var(--accent-color); }
+    .hero h1 { font-size: 2.2rem; font-weight: 800; margin-bottom: 0.5rem; }
     .subtitle { color: var(--text-secondary); font-size: 1.1rem; }
-
-    .calculator-container {
-      background: var(--card-bg);
-      border: 1px solid var(--border-color);
-      border-radius: 12px;
-      padding: 2rem;
-      margin: 2rem 0;
-    }
-
-    .input-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: 1.5rem;
-      margin-bottom: 2rem;
-    }
-
-    .input-group {
-      display: flex;
-      flex-direction: column;
-    }
+    .calculator-container { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 2rem; margin: 2rem 0; }
+    input, select { background: var(--bg-color); color: var(--text-primary); border: 1px solid var(--border-color); padding: 0.75rem 1rem; border-radius: 8px; width: 100%; font-size: 1rem; }
+    input:focus, select:focus { outline: none; border-color: var(--accent-color); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-color) 20%, transparent); }
+    button { background: var(--accent-color); color: white; border: none; padding: 0.75rem 2rem; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 1rem; }
+    button:hover { opacity: 0.9; }
+    .result-card { background: color-mix(in srgb, var(--accent-color) 10%, transparent); border: 1px solid var(--accent-color); border-radius: 12px; padding: 1.5rem; margin: 1.5rem 0; text-align: center; }
+    .result-value { font-size: 2.5rem; font-weight: 800; color: var(--accent-color); }
+    .faq-section details { margin: 1rem 0; padding: 1rem; background: var(--card-bg); border-radius: 8px; border: 1px solid var(--border-color); }
+    .faq-section summary { font-weight: 600; cursor: pointer; }
 
     .input-group label {
-      font-weight: 600;
+      display: block;
       margin-bottom: 0.5rem;
-      color: var(--text-primary);
-    }
-
-    input {
-      background: var(--bg-color);
-      color: var(--text-primary);
-      border: 1px solid var(--border-color);
-      padding: 0.75rem 1rem;
-      border-radius: 8px;
-      width: 100%;
-      font-size: 1rem;
-      font-family: inherit;
-    }
-
-    input:focus {
-      outline: none;
-      border-color: var(--accent-color);
-      box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-color) 20%, transparent);
-    }
-
-    .error-state {
-      background: rgba(239, 68, 68, 0.1);
-      border: 1px solid #ef4444;
-      color: #ef4444;
-      padding: 1rem;
-      border-radius: 8px;
-      margin-bottom: 1.5rem;
-      text-align: center;
-      font-weight: 500;
-    }
-
-    .results-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-      gap: 1rem;
-      border-top: 1px solid var(--border-color);
-      padding-top: 2rem;
-    }
-
-    .result-card {
-      background: var(--bg-color);
-      border: 1px solid var(--border-color);
-      border-radius: 12px;
-      padding: 1.5rem;
-      text-align: center;
-    }
-
-    .result-card.highlight {
-      background: color-mix(in srgb, var(--accent-color) 5%, transparent);
-      border-color: var(--accent-color);
-      grid-column: 1 / -1;
-    }
-
-    .result-label {
-      color: var(--text-secondary);
-      font-size: 0.9rem;
-      font-weight: 600;
-      text-transform: uppercase;
-      letter-spacing: 0.05em;
-      margin-bottom: 0.5rem;
-    }
-
-    .result-value {
-      font-size: 2rem;
-      font-weight: 800;
-      color: var(--text-primary);
-    }
-
-    .result-value.positive { color: #22c55e; }
-    .result-value.neutral { color: var(--text-secondary); }
-
-    /* Bar Chart Visuals */
-    .chart-container {
-      background: var(--bg-color);
-      border: 1px solid var(--border-color);
-      border-radius: 12px;
-      padding: 1.5rem;
-    }
-
-    .chart-container h3 {
-      margin-top: 0;
-      margin-bottom: 0.25rem;
-    }
-
-    .chart-sub {
-      color: var(--text-secondary);
-      font-size: 0.9rem;
-      margin-bottom: 1.5rem;
-    }
-
-    .visual-bars {
-      display: flex;
-      flex-direction: column;
-      gap: 1rem;
-    }
-
-    .bar-group {
-      display: flex;
-      flex-direction: column;
-      gap: 0.5rem;
-    }
-
-    .bar-label {
-      font-size: 0.9rem;
       font-weight: 600;
       color: var(--text-primary);
     }
-
-    .bar-track {
-      background: var(--card-bg);
-      border: 1px solid var(--border-color);
-      height: 40px;
-      border-radius: 6px;
-      overflow: hidden;
-      display: flex;
-      align-items: center;
-      position: relative;
-    }
-
-    .bar-fill {
-      height: 100%;
-      min-width: 5px;
-      transition: width 0.3s ease-in-out;
-    }
-
-    .bar-fill.with-drip {
-      background: var(--accent-color);
-    }
-
-    .bar-fill.no-drip {
-      background: #94a3b8;
-    }
-
-    .bar-text {
-      position: absolute;
-      left: 10px;
-      color: #fff;
-      font-weight: 700;
-      font-family: var(--font-mono);
-      text-shadow: 0 1px 2px rgba(0,0,0,0.5);
-    }
-
     .explainer { margin-top: 3rem; }
-    .explainer h2 { margin-top: 2.5rem; color: var(--accent-color); }
-    .explainer h3 { margin-top: 2rem; }
+    .explainer h2 { margin-top: 2.5rem; color: var(--accent-color); margin-bottom: 1rem; }
+    .explainer h3 { margin-top: 2rem; margin-bottom: 1rem; }
     .explainer p { margin-bottom: 1.2rem; line-height: 1.7; }
     .explainer ul, .explainer ol { margin-bottom: 1.5rem; padding-left: 1.5rem; }
     .explainer li { margin-bottom: 0.5rem; }
-
-    .faq-section { margin-top: 3rem; }
-    .faq-section details {
-      margin: 1rem 0;
-      padding: 1.25rem;
-      background: var(--card-bg);
-      border-radius: 8px;
-      border: 1px solid var(--border-color);
-    }
-    .faq-section summary {
-      font-weight: 600;
-      font-size: 1.1rem;
-      cursor: pointer;
-      color: var(--text-primary);
-    }
-    .faq-section details p {
-      margin-top: 1rem;
-      margin-bottom: 0;
-      color: var(--text-secondary);
-    }
   </style>
 </SiteLayout>
