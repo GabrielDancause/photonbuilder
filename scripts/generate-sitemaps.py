@@ -25,7 +25,7 @@ SITE_DOMAINS = {
     "ijustwantto": "ijustwantto.live",
     "leeroyjenkins": "leeroyjenkins.quest",
     "migratingmammals": "migratingmammals.com",
-    "nookienook": "nookienook.com",
+    "nookienook": "thenookienook.com",
     "siliconbased": "siliconbased.dev",
     "westmount": "westmountfundamentals.com",
     "bodycount": "photonbuilder.com",
