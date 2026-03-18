@@ -91,7 +91,7 @@ def generate_sitemap(site_id):
     output_path = output_dir / "sitemap.xml"
     output_path.write_text("\n".join(xml_lines))
 
-    return len(urls)
+    return len(page_data)
 
 
 def generate_robots_txt(site_id):
