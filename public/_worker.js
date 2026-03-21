@@ -37,6 +37,30 @@ const SITE_MAP = {
   'montrealjobs.photonbuilder.com': 'montrealjobs',
 };
 
+// SEO redirects per site (from → to)
+const REDIRECTS = {
+  'westmount': {
+    '/most-shorted-stocks-march-2026/': '/most-shorted-stocks/',
+    '/most-shorted-stocks-march-2026': '/most-shorted-stocks/',
+    '/short-squeeze-candidates-march-2026/': '/short-squeeze-candidates/',
+    '/short-squeeze-candidates-march-2026': '/short-squeeze-candidates/',
+    '/ceo-compensation.html': '/ceo-compensation/',
+    '/fire-retirement-calculator.html': '/fire-retirement-calculator/',
+    '/dividend-aristocrats-analysis-2026.html': '/dividend-aristocrats-analysis-2026/',
+    '/guide-reading-financial-statements.html': '/guide-reading-financial-statements/',
+    '/margin-calculator.html': '/margin-calculator/',
+  },
+  'siliconbased': {
+    '/js-framework-sizes.html': '/js-framework-sizes/',
+    '/crontab-guru.html': '/crontab-guru/',
+    '/gitignore-generator.html': '/gitignore-generator/',
+    '/cron-expression-generator.html': '/cron-expression-generator/',
+    '/list-icon-sets.html': '/list-icon-sets/',
+    '/favicon-generator.html': '/favicon-generator/',
+    '/sitemap-generator.html': '/sitemap-generator/',
+  },
+};
+
 // ⚡ Bolt: Extract static array to module scope to avoid reallocation on every request
 const HTML_SUFFIXES = ['.html', '/index.html'];
 
@@ -111,6 +135,12 @@ export default {
     }
 
     const pathname = url.pathname;
+
+    // Check for SEO redirects
+    const siteRedirects = REDIRECTS[site];
+    if (siteRedirects && siteRedirects[pathname]) {
+      return Response.redirect(new URL(siteRedirects[pathname], url.origin).toString(), 301);
+    }
     const base = `/sites/${site}`;
     const hasExtension = pathname.includes('.');
 
