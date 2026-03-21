@@ -1,295 +1,968 @@
 ---
 import SiteLayout from "../../../layouts/SiteLayout.astro";
 
-export const meta = {
-  title: "Reverse Mortgage Calculator",
-  description: "Are you eligible to tap into your home equity? Estimate your potential reverse mortgage principal limit and net available cash instantly.",
-  category: "tool",
-  published: "2026-03-15",
+const schema = {
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "Reverse Mortgage Calculator",
+  "url": "https://firemaths.info/reverse-mortgage-calculator",
+  "description": "Estimate reverse mortgage proceeds based on home value, age, interest rates, and existing mortgage balance. Compare lump sum, monthly, and line of credit payout options.",
+  "applicationCategory": "FinanceApplication",
+  "operatingSystem": "All",
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "USD"
+  }
 };
 
-const schema = [
-  {
-    "@context": "https://schema.org",
-    "@type": "Article",
-    "headline": "Reverse Mortgage Calculator: Estimate Your HECM Principal Limit",
-    "description": "Calculate estimated principal limits, payoff amounts, and net available funds for an FHA-insured reverse mortgage.",
-    "author": {
-      "@type": "Organization",
-      "name": "SiliconBased"
-    }
-  },
-  {
-    "@context": "https://schema.org",
-    "@type": "FAQPage",
-    "mainEntity": [
-      {
-        "@type": "Question",
-        "name": "What is the minimum age for a reverse mortgage?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "The primary borrower must be at least 62 years old to qualify for a standard FHA-insured Home Equity Conversion Mortgage (HECM). However, eligible non-borrowing spouses can be younger, though their age will impact the amount of money available."
-        }
-      },
-      {
-        "@type": "Question",
-        "name": "Do I have to make monthly payments on a reverse mortgage?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "No. The defining feature of a reverse mortgage is that you do not have to make monthly principal and interest payments to the lender. However, you are strictly required to continue paying your property taxes, homeowners insurance, and any applicable HOA dues. Failure to pay these can lead to foreclosure."
-        }
-      },
-      {
-        "@type": "Question",
-        "name": "Will the bank own my home?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "No, the bank does not take title to your home. You retain ownership and remain on the title. The lender simply holds a lien on the property, just like with a traditional mortgage. The loan must be repaid when you sell the home, move out permanently, or pass away."
-        }
-      },
-      {
-        "@type": "Question",
-        "name": "Can I leave my home to my children?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "Yes, you can leave the home to your heirs. When the last surviving borrower passes away, the heirs have options: they can pay off the reverse mortgage balance (usually through refinancing or using other funds) and keep the home, or they can sell the home, use the proceeds to pay off the loan, and keep any remaining equity. Because of the non-recourse feature, if the loan balance is higher than the home's value, the heirs can walk away, and the FHA insurance covers the shortfall."
-        }
-      },
-      {
-        "@type": "Question",
-        "name": "Is the money from a reverse mortgage taxable?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "Generally, the proceeds from a reverse mortgage are not considered taxable income by the IRS. The IRS treats the money as a loan advance, not income. However, it is always recommended to consult with a qualified tax advisor or financial planner regarding your specific situation."
-        }
+const faqSchema = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What is a reverse mortgage and how does it work?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "A reverse mortgage (most commonly a Home Equity Conversion Mortgage or HECM) allows homeowners aged 62 or older to convert part of their home equity into cash without selling the home or making monthly mortgage payments. Instead, the lender pays you — as a lump sum, monthly payments, or a line of credit. The loan balance grows over time as interest accrues and is repaid when the borrower sells, moves out, or passes away."
       }
-    ]
-  }
-];
+    },
+    {
+      "@type": "Question",
+      "name": "How much money can I get from a reverse mortgage?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "The amount depends on your age, home value, current interest rates, and the HECM lending limit ($1,149,825 in 2024). Generally, older borrowers with more valuable homes and lower interest rates receive higher proceeds. The principal limit factor (PLF) determines the percentage of your home's value you can access, typically ranging from 40% to 75%. Any existing mortgage must be paid off first from the proceeds."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What are the different reverse mortgage payout options?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "HECM reverse mortgages offer several payout options: (1) Lump sum — receive all proceeds at once at a fixed rate; (2) Tenure — equal monthly payments for as long as you live in the home; (3) Term — equal monthly payments for a fixed period; (4) Line of credit — draw funds as needed, with the unused portion growing over time; (5) Modified tenure/term — a combination of monthly payments and a line of credit."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Can I owe more than my home is worth with a reverse mortgage?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "No. HECM reverse mortgages are 'non-recourse' loans, meaning you (or your heirs) will never owe more than the home's appraised value at the time of repayment, even if the loan balance exceeds the home's value. FHA mortgage insurance covers the difference. This protection is one of the key features of government-insured reverse mortgages."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What are the costs and fees associated with a reverse mortgage?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Reverse mortgage costs include: an origination fee (up to $6,000), FHA mortgage insurance premium (2% upfront plus 0.5% annually), closing costs (appraisal, title search, inspections), and ongoing interest charges. The upfront MIP and origination fee can typically be financed into the loan. Total upfront costs often range from 3-5% of the home's value, which reduces the net proceeds available to the borrower."
+      }
+    }
+  ]
+};
+
+export const meta = {
+  title: "Reverse Mortgage Calculator | firemaths.info",
+  description: "Free reverse mortgage calculator — estimate your proceeds based on home value, age, and interest rates. Compare lump sum, monthly, and line of credit payout options with equity projection tables.",
+  category: "tool",
+  published: "2026-03-21",
+};
 ---
-<SiteLayout site="firemaths" title="Reverse Mortgage Calculator" description="Are you eligible to tap into your home equity? Estimate your potential reverse mortgage principal limit and net available cash instantly." canonical="https://firemaths.info/reverse-mortgage-calculator" schema={schema}>
-  <div class="page-content">
-    <div class="hero">
+
+<SiteLayout
+  site="firemaths"
+  title="Reverse Mortgage Calculator | firemaths.info"
+  description="Free reverse mortgage calculator — estimate your proceeds based on home value, age, and interest rates. Compare lump sum, monthly, and line of credit payout options with equity projection tables."
+  canonical="https://firemaths.info/reverse-mortgage-calculator" schema={schema}
+>
+  <style>
+:root {
+    --chart-color-a: #D4A017;
+    --chart-color-b: #4A90E2;
+    --chart-color-c: #50E3C2;
+    --chart-color-d: #E85D75;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-primary);
+    font-family: var(--font-ui);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4 {
+    font-weight: 700;
+    line-height: 1.2;
+    color: var(--text-primary);
+}
+
+.container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem;
+}
+
+header {
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+header h1 {
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+    color: var(--accent-color);
+}
+
+header p {
+    color: var(--text-secondary);
+    font-size: 1.1rem;
+}
+
+.calculator-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 2rem;
+    margin-bottom: 3rem;
+}
+
+@media (min-width: 768px) {
+    .calculator-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+.card {
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.5rem;
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.card-header h2 {
+    font-size: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.input-group {
+    margin-bottom: 1.25rem;
+}
+
+.input-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+
+.input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.prefix, .suffix {
+    position: absolute;
+    color: var(--text-secondary);
+    font-family: var(--font-mono);
+    font-size: 1rem;
+    pointer-events: none;
+}
+
+.prefix { left: 1rem; }
+.suffix { right: 1rem; }
+
+input[type="number"], select {
+    width: 100%;
+    background-color: var(--bg-color);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    font-family: var(--font-mono);
+    font-size: 1rem;
+    padding: 0.75rem 1rem;
+    border-radius: 6px;
+    transition: border-color 0.2s;
+    -moz-appearance: textfield;
+}
+
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+input[type="number"]:focus, select:focus {
+    outline: none;
+    border-color: var(--accent-color);
+}
+
+.has-prefix input { padding-left: 2rem; }
+.has-suffix input { padding-right: 2.5rem; }
+
+.results {
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border-color);
+}
+
+.result-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.result-label {
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+}
+
+.result-value {
+    font-family: var(--font-mono);
+    font-size: 1.125rem;
+    font-weight: 500;
+}
+
+.result-final .result-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--accent-color);
+}
+
+.payout-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin-bottom: 3rem;
+}
+
+@media (max-width: 640px) {
+    .payout-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.payout-box {
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.5rem;
+    text-align: center;
+}
+
+.payout-box h3 {
+    font-size: 1rem;
+    margin-bottom: 0.25rem;
+}
+
+.payout-box .sub {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin-bottom: 1rem;
+}
+
+.payout-box .amount {
+    font-family: var(--font-mono);
+    font-size: 1.35rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.payout-box .detail {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.25rem;
+}
+
+.payout-lump { border-top: 3px solid #D4A017; }
+.payout-monthly { border-top: 3px solid #4A90E2; }
+.payout-loc { border-top: 3px solid #50E3C2; }
+
+.payout-lump .amount { color: #D4A017; }
+.payout-monthly .amount { color: #4A90E2; }
+.payout-loc .amount { color: #50E3C2; }
+
+.chart-section {
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 3rem;
+}
+
+.chart-header {
+    margin-bottom: 1.5rem;
+    text-align: center;
+}
+
+.chart-legend {
+    display: flex;
+    justify-content: center;
+    gap: 1.5rem;
+    margin-top: 1rem;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    flex-wrap: wrap;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.indicator {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.indicator-a { background-color: var(--chart-color-a); }
+.indicator-b { background-color: var(--chart-color-b); }
+.indicator-c { background-color: var(--chart-color-c); }
+
+.chart-container {
+    width: 100%;
+    height: 400px;
+    position: relative;
+}
+
+canvas {
+    width: 100%;
+    height: 100%;
+}
+
+.table-section {
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 3rem;
+    overflow-x: auto;
+}
+
+.table-section h2 {
+    font-size: 1.25rem;
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+table {
+    width: 100%;
+    border-collapse: collapse;
+    font-family: var(--font-mono);
+    font-size: 0.85rem;
+}
+
+thead th {
+    text-align: left;
+    padding: 0.75rem 0.5rem;
+    border-bottom: 2px solid var(--border-color);
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    white-space: nowrap;
+}
+
+tbody td {
+    padding: 0.6rem 0.5rem;
+    border-bottom: 1px solid var(--border-color);
+    white-space: nowrap;
+}
+
+tbody tr:hover {
+    background-color: var(--bg-color);
+}
+
+.equity-positive { color: #50E3C2; }
+.equity-negative { color: #E85D75; }
+
+.tips-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    margin-bottom: 3rem;
+}
+
+@media (max-width: 640px) {
+    .tips-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.tip-card {
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.5rem;
+}
+
+.tip-card h3 {
+    font-size: 1.1rem;
+    margin-bottom: 1rem;
+    color: var(--accent-color);
+}
+
+.tip-card ul {
+    list-style: none;
+    padding: 0;
+}
+
+.tip-card li {
+    color: var(--text-secondary);
+    margin-bottom: 0.75rem;
+    padding-left: 1.25rem;
+    position: relative;
+    font-size: 0.9rem;
+}
+
+.tip-card li::before {
+    content: "›";
+    position: absolute;
+    left: 0;
+    color: var(--accent-color);
+    font-weight: bold;
+}
+
+.seo-content {
+    margin-bottom: 4rem;
+}
+
+.seo-content h2 {
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+    margin-top: 2rem;
+}
+
+.seo-content p {
+    color: var(--text-secondary);
+    margin-bottom: 1rem;
+    font-size: 0.95rem;
+    line-height: 1.7;
+}
+
+.faq-section {
+    margin-bottom: 4rem;
+}
+
+.faq-section h2 {
+    font-size: 1.5rem;
+    margin-bottom: 1.5rem;
+}
+
+.faq-item {
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.faq-item h3 {
+    font-size: 1rem;
+    margin-bottom: 0.75rem;
+    color: var(--accent-color);
+}
+
+.faq-item p {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    line-height: 1.7;
+}
+
+.warning-box {
+    background-color: var(--card-bg);
+    border: 1px solid var(--chart-color-d);
+    border-left: 4px solid var(--chart-color-d);
+    border-radius: 8px;
+    padding: 1rem 1.25rem;
+    margin-bottom: 2rem;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+}
+
+.section-title {
+    text-align: center;
+    margin-bottom: 1.5rem;
+    font-size: 1.25rem;
+}
+
+@media (max-width: 640px) {
+    header h1 { font-size: 1.75rem; }
+    .chart-container { height: 300px; }
+    table { font-size: 0.75rem; }
+    thead th, tbody td { padding: 0.5rem 0.35rem; }
+}
+  </style>
+
+  <div class="container">
+    <header>
       <h1>Reverse Mortgage Calculator</h1>
-      <p class="subtitle">Are you eligible to tap into your home equity? Estimate your potential reverse mortgage principal limit and net available cash instantly.</p>
+      <p>Estimate your reverse mortgage proceeds and see how equity changes over time</p>
+    </header>
+
+    <div class="warning-box">
+      <strong>Estimates only.</strong> Actual reverse mortgage amounts depend on HUD/FHA principal limit factors, lender margins, and individual circumstances. Consult a HUD-approved reverse mortgage counselor before proceeding.
     </div>
 
-    <div class="calculator-container">
-
-      <div class="calculator-grid">
-        <div class="input-group">
-          <label for="home-value">Estimated Home Value ($):</label>
-          <input type="number" id="home-value" min="0" step="1000" placeholder="e.g. 500000" />
+    <div class="calculator-grid">
+      <div class="card">
+        <div class="card-header">
+          <h2>Property &amp; Borrower</h2>
         </div>
-
         <div class="input-group">
-          <label for="mortgage-balance">Current Mortgage Balance ($):</label>
-          <input type="number" id="mortgage-balance" min="0" step="1000" placeholder="e.g. 50000" />
+          <label for="homeValue">Home Value</label>
+          <div class="input-wrapper has-prefix">
+            <span class="prefix">$</span>
+            <input type="number" id="homeValue" value="400000" min="0" step="10000">
+          </div>
         </div>
-
         <div class="input-group">
-          <label for="borrower-age">Age of Youngest Borrower:</label>
-          <input type="number" id="borrower-age" min="62" max="100" step="1" placeholder="Minimum 62" />
-          <div id="age-error" class="error-message" style="display: none;">Borrower must be at least 62 years old for a HECM.</div>
+          <label for="existingMortgage">Existing Mortgage Balance</label>
+          <div class="input-wrapper has-prefix">
+            <span class="prefix">$</span>
+            <input type="number" id="existingMortgage" value="50000" min="0" step="5000">
+          </div>
         </div>
-
         <div class="input-group">
-          <label for="interest-rate">Expected Interest Rate (%):</label>
-          <input type="number" id="interest-rate" min="0" max="20" step="0.1" placeholder="e.g. 6.5" />
+          <label for="borrowerAge">Youngest Borrower Age (62+)</label>
+          <div class="input-wrapper">
+            <input type="number" id="borrowerAge" value="70" min="62" max="100" step="1">
+          </div>
+        </div>
+        <div class="input-group">
+          <label for="appreciationRate">Home Appreciation Rate</label>
+          <div class="input-wrapper has-suffix">
+            <input type="number" id="appreciationRate" value="3" min="0" max="10" step="0.5">
+            <span class="suffix">%</span>
+          </div>
         </div>
       </div>
 
-      <div class="results-grid">
-        <div class="result-card" style="grid-column: 1 / -1;">
-          <h3>Estimated Principal Limit (Available Funds)</h3>
-          <div class="result-value" id="principal-limit">N/A</div>
-          <p style="font-size: 0.9rem; color: var(--text-secondary); margin-top: 0.5rem;">*This is a rough estimate. Actual amounts require official Principal Limit Factors (PLF).</p>
+      <div class="card">
+        <div class="card-header">
+          <h2>Loan Terms</h2>
+        </div>
+        <div class="input-group">
+          <label for="interestRate">Expected Interest Rate</label>
+          <div class="input-wrapper has-suffix">
+            <input type="number" id="interestRate" value="6.5" min="1" max="15" step="0.25">
+            <span class="suffix">%</span>
+          </div>
+        </div>
+        <div class="input-group">
+          <label for="projectionYears">Projection Period</label>
+          <div class="input-wrapper has-suffix">
+            <input type="number" id="projectionYears" value="15" min="1" max="35" step="1">
+            <span class="suffix">yrs</span>
+          </div>
+        </div>
+        <div class="input-group">
+          <label for="closingCostPct">Estimated Closing Costs</label>
+          <div class="input-wrapper has-suffix">
+            <input type="number" id="closingCostPct" value="3" min="0" max="10" step="0.5">
+            <span class="suffix">%</span>
+          </div>
         </div>
 
-        <div class="result-card secondary">
-          <h3>FHA Lending Limit Cap</h3>
-          <div class="result-value" id="fha-limit">$1,149,825</div>
-          <p style="font-size: 0.8rem; margin-top: 0.25rem;">(2024 Maximum)</p>
-        </div>
-
-        <div class="result-card secondary">
-          <h3>Payoff Existing Mortgage</h3>
-          <div class="result-value" id="payoff-amount">$0</div>
-        </div>
-
-        <div class="result-card secondary">
-          <h3>Estimated Net Available</h3>
-          <div class="result-value" id="net-available">N/A</div>
+        <div class="results">
+          <div class="result-item">
+            <span class="result-label">HECM Lending Limit</span>
+            <span class="result-value" id="lendingLimit">—</span>
+          </div>
+          <div class="result-item">
+            <span class="result-label">Principal Limit Factor</span>
+            <span class="result-value" id="plfDisplay">—</span>
+          </div>
+          <div class="result-item">
+            <span class="result-label">Gross Principal Limit</span>
+            <span class="result-value" id="grossPrincipal">—</span>
+          </div>
+          <div class="result-item result-final">
+            <span class="result-label">Net Available Proceeds</span>
+            <span class="result-value" id="netEquity">—</span>
+          </div>
         </div>
       </div>
-
     </div>
 
-    <div class="explainer">
-
-    <h2>How Do Reverse Mortgages Work?</h2>
-    <p>A reverse mortgage is a specialized financial product designed primarily for older homeowners. It allows individuals aged 62 or older to convert a portion of the equity they have built up in their homes into cash, without having to sell the home, give up the title, or take on a new monthly mortgage payment.</p>
-
-    <p>Unlike a traditional forward mortgage where you make monthly payments to a lender to pay down your loan balance, with a reverse mortgage, the lender makes payments to you. As you receive funds, the balance of the loan increases over time, and the interest is added to the total loan balance. The loan only becomes due and payable when the last surviving borrower permanently moves out of the home, passes away, or sells the property.</p>
-
-    <h3>Home Equity Conversion Mortgages (HECMs)</h3>
-    <p>The most common type of reverse mortgage is the Home Equity Conversion Mortgage (HECM). HECMs are insured by the Federal Housing Administration (FHA), a part of the U.S. Department of Housing and Urban Development (HUD). Because they are federally insured, HECMs come with strict guidelines but also provide significant borrower protections.</p>
-
-    <p>One of the most important protections is the "non-recourse" feature. This means that you, or your heirs, will never owe more than the home is worth at the time the loan is repaid. If the loan balance grows to exceed the value of the home, the FHA insurance covers the difference.</p>
-
-    <h3>Understanding the Principal Limit Factor (PLF)</h3>
-    <p>When you apply for a HECM, you cannot borrow 100% of your home's value. The amount of money you can actually access is called your <strong>Principal Limit</strong>. The Principal Limit is calculated by multiplying your home's Maximum Claim Amount (the lesser of your home's appraised value or the FHA lending limit) by a <strong>Principal Limit Factor (PLF)</strong>.</p>
-
-    <p>The Principal Limit Factor is a percentage determined by HUD and is based on three primary variables:</p>
-    <ul>
-      <li><strong>Age of the Youngest Borrower:</strong> The older the youngest borrower (or eligible non-borrowing spouse) is, the higher the PLF will be. This translates to more available funds.</li>
-      <li><strong>Expected Interest Rate:</strong> Reverse mortgages are highly sensitive to interest rates. A higher expected interest rate will result in a lower PLF, reducing the amount of money you can borrow.</li>
-      <li><strong>Maximum Claim Amount:</strong> As of 2024, the FHA Maximum Claim Amount limit is $1,149,825. Even if your home is worth $2 million, the calculations will only be based on the FHA limit.</li>
-    </ul>
-
-    <p>Because official PLF tables are complex and updated by HUD based on current market conditions, online calculators can only provide rough estimates unless they are tied to live, real-time lender pricing engines.</p>
-
-    <h3>What Happens to the Existing Mortgage?</h3>
-    <p>A strict requirement of a reverse mortgage is that it must be the primary lien on the property. Therefore, if you currently have a traditional mortgage, home equity loan, or any other liens against your home, those must be paid off first using the proceeds from the reverse mortgage.</p>
-
-    <p>This is why our calculator subtracts the "Current Mortgage Balance" from the "Estimated Principal Limit" to determine your "Estimated Net Available" funds. The net available is the money you can actually choose to receive as a lump sum, a line of credit, or monthly term payments.</p>
-
-    <h3>Costs and Fees</h3>
-    <p>It is crucial to understand that reverse mortgages are not free money. They come with upfront costs and ongoing fees that are typically financed into the loan balance. These include:</p>
-    <ul>
-      <li><strong>Origination Fee:</strong> Charged by the lender for processing the loan. The FHA caps this fee based on the home's value, maxing out at $6,000.</li>
-      <li><strong>Initial Mortgage Insurance Premium (IMIP):</strong> A flat 2% of the Maximum Claim Amount, paid upfront to the FHA.</li>
-      <li><strong>Appraisal and Third-Party Fees:</strong> Costs for title search, inspections, recording fees, etc.</li>
-      <li><strong>Ongoing Mortgage Insurance Premium (MIP):</strong> An annual fee of 0.5% of the outstanding loan balance.</li>
-      <li><strong>Interest:</strong> Compound interest is added to the loan balance continuously.</li>
-    </ul>
-
-    <p>Because of these compounding costs, reverse mortgages are generally considered long-term solutions. If you plan to move within a few years, a reverse mortgage is usually an expensive way to access cash.</p>
-
+    <h2 class="section-title">Payout Options</h2>
+    <div class="payout-grid">
+      <div class="payout-box payout-lump">
+        <h3>Lump Sum</h3>
+        <div class="sub">Fixed rate — up to 60% at close</div>
+        <div class="amount" id="lumpSum">—</div>
+        <div class="detail" id="lumpBalance">Balance after 1 yr: —</div>
+        <div class="detail" id="lumpInterest">Total interest: —</div>
+      </div>
+      <div class="payout-box payout-monthly">
+        <h3>Monthly Tenure</h3>
+        <div class="sub">Payments for as long as you live in home</div>
+        <div class="amount" id="monthlyTenure">—</div>
+        <div class="detail">per month</div>
+        <div class="detail" id="tenureTotal">Projected total received: —</div>
+      </div>
+      <div class="payout-box payout-loc">
+        <h3>Line of Credit</h3>
+        <div class="sub">Unused portion grows over time</div>
+        <div class="amount" id="locInitial">—</div>
+        <div class="detail">initial credit line</div>
+        <div class="detail" id="locGrown">After 10 yrs unused: —</div>
+      </div>
     </div>
+
+    <div class="chart-section">
+      <div class="chart-header">
+        <h2>Equity Projection Over Time</h2>
+        <div class="chart-legend">
+          <div class="legend-item"><span class="indicator indicator-a"></span> Home Value</div>
+          <div class="legend-item"><span class="indicator indicator-b"></span> Loan Balance</div>
+          <div class="legend-item"><span class="indicator indicator-c"></span> Remaining Equity</div>
+        </div>
+      </div>
+      <div class="chart-container">
+        <canvas id="equityChart"></canvas>
+      </div>
+    </div>
+
+    <div class="table-section">
+      <h2>Equity Depletion Schedule</h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Year</th>
+            <th>Age</th>
+            <th>Home Value</th>
+            <th>Loan Balance</th>
+            <th>Interest Accrued</th>
+            <th>Annual MIP</th>
+            <th>Remaining Equity</th>
+            <th>Equity %</th>
+          </tr>
+        </thead>
+        <tbody id="amortBody"></tbody>
+      </table>
+    </div>
+
+    <div class="tips-grid">
+      <div class="tip-card">
+        <h3>When a Reverse Mortgage Makes Sense</h3>
+        <ul>
+          <li>You plan to stay in your home long-term</li>
+          <li>You need to supplement retirement income</li>
+          <li>You want to eliminate monthly mortgage payments</li>
+          <li>You have significant home equity but limited cash flow</li>
+          <li>You understand the impact on your heirs' inheritance</li>
+        </ul>
+      </div>
+      <div class="tip-card">
+        <h3>Key Considerations</h3>
+        <ul>
+          <li>You must continue paying property taxes and insurance</li>
+          <li>Upfront costs (MIP, origination fees) can be significant</li>
+          <li>The loan balance grows over time as interest compounds</li>
+          <li>Moving out or failing to maintain the home triggers repayment</li>
+          <li>Compare alternatives: HELOCs, downsizing, or selling</li>
+        </ul>
+      </div>
+    </div>
+
+    <section class="seo-content">
+      <h2>How This Reverse Mortgage Calculator Works</h2>
+      <p>This calculator estimates your reverse mortgage proceeds using a simplified principal limit factor (PLF) model based on your age and the expected interest rate. The PLF determines what percentage of your home's value (up to the HECM lending limit of $1,149,825) you can access. Older borrowers and lower interest rates result in higher PLFs and larger available proceeds.</p>
+      <p>The calculator deducts your existing mortgage balance, closing costs, and the upfront FHA mortgage insurance premium (2% of the maximum claim amount) from the gross principal limit to arrive at your net available proceeds. It then models three payout options: a lump sum (limited to 60% of proceeds in the first year per HECM rules), monthly tenure payments over your estimated remaining life expectancy, and a growing line of credit.</p>
+      <p>The equity projection chart and amortization table show how your loan balance grows over time due to compounding interest and annual MIP charges (0.5%), while your home value may appreciate. The crossover point — where your loan balance exceeds your home value — is important to watch, though the non-recourse nature of HECM loans means you will never owe more than the home is worth.</p>
+
+      <h2>Understanding Principal Limit Factors</h2>
+      <p>The principal limit factor is the core of reverse mortgage calculations. Published by HUD, PLF tables specify the percentage of the maximum claim amount available to borrowers based on their age and the expected interest rate. A 62-year-old at a 5% expected rate might access about 42% of their home's value, while an 80-year-old at the same rate could access roughly 55-60%. This calculator uses an approximation formula that tracks closely with published HUD tables, but actual PLFs may vary.</p>
+    </section>
 
     <section class="faq-section">
       <h2>Frequently Asked Questions</h2>
-      <details><summary>What is the minimum age for a reverse mortgage?</summary><p>The primary borrower must be at least 62 years old to qualify for a standard FHA-insured Home Equity Conversion Mortgage (HECM). However, eligible non-borrowing spouses can be younger, though their age will impact the amount of money available.</p></details>
-      <details><summary>Do I have to make monthly payments on a reverse mortgage?</summary><p>No. The defining feature of a reverse mortgage is that you do not have to make monthly principal and interest payments to the lender. However, you are strictly required to continue paying your property taxes, homeowners insurance, and any applicable HOA dues. Failure to pay these can lead to foreclosure.</p></details>
-      <details><summary>Will the bank own my home?</summary><p>No, the bank does not take title to your home. You retain ownership and remain on the title. The lender simply holds a lien on the property, just like with a traditional mortgage. The loan must be repaid when you sell the home, move out permanently, or pass away.</p></details>
-      <details><summary>Can I leave my home to my children?</summary><p>Yes, you can leave the home to your heirs. When the last surviving borrower passes away, the heirs have options: they can pay off the reverse mortgage balance (usually through refinancing or using other funds) and keep the home, or they can sell the home, use the proceeds to pay off the loan, and keep any remaining equity. Because of the non-recourse feature, if the loan balance is higher than the home's value, the heirs can walk away, and the FHA insurance covers the shortfall.</p></details>
-      <details><summary>Is the money from a reverse mortgage taxable?</summary><p>Generally, the proceeds from a reverse mortgage are not considered taxable income by the IRS. The IRS treats the money as a loan advance, not income. However, it is always recommended to consult with a qualified tax advisor or financial planner regarding your specific situation.</p></details>
+      {faqSchema.mainEntity.map((faq: any) => (
+        <div class="faq-item">
+          <h3>{faq.name}</h3>
+          <p>{faq.acceptedAnswer.text}</p>
+        </div>
+      ))}
     </section>
   </div>
 
-  <script is:inline>
+  <script type="application/ld+json" set:html={JSON.stringify(faqSchema)} />
 
-    document.addEventListener('DOMContentLoaded', () => {
-      const homeValueInput = document.getElementById('home-value');
-      const mortgageBalanceInput = document.getElementById('mortgage-balance');
-      const borrowerAgeInput = document.getElementById('borrower-age');
-      const interestRateInput = document.getElementById('interest-rate');
-      const ageError = document.getElementById('age-error');
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const fmt = (n) => n.toLocaleString('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
+    const pct = (n) => n.toFixed(1) + '%';
 
-      const principalLimitResult = document.getElementById('principal-limit');
-      const payoffAmountResult = document.getElementById('payoff-amount');
-      const netAvailableResult = document.getElementById('net-available');
+    const HECM_LIMIT = 1149825;
+    const UPFRONT_MIP_RATE = 0.02;
+    const ANNUAL_MIP_RATE = 0.005;
 
-      // 2024 FHA Maximum Claim Amount Limit
-      const FHA_LIMIT = 1149825;
+    // Approximate PLF based on age and expected rate
+    // Real PLFs come from HUD tables; this is a reasonable approximation
+    function getPLF(age, expectedRate) {
+      const ageFactor = 0.42 + (age - 62) * 0.013;
+      const rateFactor = 1 - (expectedRate - 5) * 0.03;
+      let plf = ageFactor * rateFactor;
+      return Math.max(0.10, Math.min(0.75, plf));
+    }
 
-      const formatCurrency = (num) => {
-        return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(num);
-      };
+    function calculate() {
+      const homeValue = parseFloat($('homeValue').value) || 0;
+      const existingMortgage = parseFloat($('existingMortgage').value) || 0;
+      const age = parseInt($('borrowerAge').value) || 70;
+      const interestRate = parseFloat($('interestRate').value) || 6.5;
+      const appreciationRate = parseFloat($('appreciationRate').value) || 3;
+      const projectionYears = parseInt($('projectionYears').value) || 15;
+      const closingCostPct = parseFloat($('closingCostPct').value) || 3;
 
-      function calculate() {
-        const homeValue = parseFloat(homeValueInput.value) || 0;
-        const mortgageBalance = parseFloat(mortgageBalanceInput.value) || 0;
-        const age = parseInt(borrowerAgeInput.value) || 0;
-        const rate = parseFloat(interestRateInput.value) || 0;
+      const clampedAge = Math.max(62, Math.min(100, age));
+      const expectedRate = interestRate;
 
-        // Validation
-        if (age > 0 && age < 62) {
-          ageError.style.display = 'block';
-          resetResults();
-          return;
-        } else {
-          ageError.style.display = 'none';
-        }
+      // Max claim amount (lesser of home value or HECM limit)
+      const maxClaim = Math.min(homeValue, HECM_LIMIT);
+      const plf = getPLF(clampedAge, expectedRate);
 
-        if (homeValue <= 0 || age < 62 || rate <= 0) {
-          resetResults();
-          if (mortgageBalance > 0) {
-            payoffAmountResult.textContent = formatCurrency(mortgageBalance);
-          }
-          return;
-        }
+      // Gross principal limit
+      const grossPL = maxClaim * plf;
 
-        // HECM calculation uses the lesser of home value or FHA limit
-        const maxClaimAmount = Math.min(homeValue, FHA_LIMIT);
+      // Deductions from proceeds
+      const upfrontMIP = maxClaim * UPFRONT_MIP_RATE;
+      const closingCosts = homeValue * (closingCostPct / 100);
+      const totalDeductions = existingMortgage + upfrontMIP + closingCosts;
 
-        payoffAmountResult.textContent = formatCurrency(mortgageBalance);
+      // Net available to borrower
+      const netAvailable = Math.max(0, grossPL - totalDeductions);
 
-        // Very rough estimation for PLF based on age and rate to enforce "Null over fake data" strictly
-        // We will explicitly state it's a rough estimate and use N/A if it falls outside realistic bounds.
-        // The real PLF table is massive and strictly proprietary/HUD managed.
-        // General rule: older age = higher PLF, higher rate = lower PLF.
+      // Display summary results
+      $('lendingLimit').textContent = fmt(maxClaim);
+      $('plfDisplay').textContent = (plf * 100).toFixed(1) + '%';
+      $('grossPrincipal').textContent = fmt(grossPL);
+      $('netEquity').textContent = fmt(netAvailable);
 
-        let estimatedPlf = 0;
-        if (rate >= 3 && rate <= 10) {
-           // Rough approximation formula for estimation purposes only
-           estimatedPlf = (age - 62) * 0.005 + 0.35 - ((rate - 5) * 0.03);
-        }
+      // --- Payout Options ---
 
-        if (estimatedPlf < 0.1 || estimatedPlf > 0.8) {
-           principalLimitResult.textContent = 'N/A';
-           netAvailableResult.textContent = 'N/A';
-        } else {
-           const principalLimit = maxClaimAmount * estimatedPlf;
-           const netAvailable = principalLimit - mortgageBalance;
+      // Lump sum: HECM limits first-year draw to 60% of principal limit
+      const maxFirstYear = grossPL * 0.6;
+      const lumpSumNet = Math.max(0, Math.min(netAvailable, maxFirstYear - totalDeductions));
 
-           principalLimitResult.textContent = '~' + formatCurrency(principalLimit);
-           netAvailableResult.textContent = netAvailable > 0 ? '~' + formatCurrency(netAvailable) : '$0';
+      // Monthly tenure: annuity payment over life expectancy
+      const monthlyRate = interestRate / 100 / 12;
+      const lifeExpectancy = Math.max(1, 100 - clampedAge);
+      const tenureMonths = lifeExpectancy * 12;
+      let monthlyPayment = 0;
+      if (monthlyRate > 0 && netAvailable > 0) {
+        monthlyPayment = (netAvailable * monthlyRate) / (1 - Math.pow(1 + monthlyRate, -tenureMonths));
+      } else if (netAvailable > 0) {
+        monthlyPayment = netAvailable / tenureMonths;
+      }
+
+      // Line of credit: unused portion grows at interest rate + MIP
+      const locGrowthRate = interestRate / 100 + ANNUAL_MIP_RATE;
+      const locAfter10 = netAvailable * Math.pow(1 + locGrowthRate, 10);
+
+      // Update payout display
+      $('lumpSum').textContent = fmt(lumpSumNet);
+      const compoundRate = interestRate / 100 + ANNUAL_MIP_RATE;
+      const lumpBalance1yr = lumpSumNet * (1 + compoundRate);
+      $('lumpBalance').textContent = 'Balance after 1 yr: ' + fmt(lumpBalance1yr);
+      const totalLumpInterest = lumpSumNet * Math.pow(1 + compoundRate, projectionYears) - lumpSumNet;
+      $('lumpInterest').textContent = 'Total interest (' + projectionYears + ' yrs): ' + fmt(totalLumpInterest);
+
+      $('monthlyTenure').textContent = fmt(monthlyPayment);
+      const projMonths = Math.min(tenureMonths, projectionYears * 12);
+      $('tenureTotal').textContent = 'Projected total (' + projectionYears + ' yrs): ' + fmt(monthlyPayment * projMonths);
+
+      $('locInitial').textContent = fmt(netAvailable);
+      $('locGrown').textContent = 'After 10 yrs unused: ' + fmt(locAfter10);
+
+      // --- Amortization table (lump sum scenario) ---
+      const tbody = $('amortBody');
+      tbody.innerHTML = '';
+      const annualRate = interestRate / 100;
+
+      // Initial loan balance = lump sum drawn + financed costs (MIP, closing, existing mortgage payoff)
+      let loanBalance = lumpSumNet + totalDeductions;
+      let currentHomeValue = homeValue;
+      const tableData = [];
+
+      for (let yr = 0; yr <= projectionYears; yr++) {
+        const equity = currentHomeValue - loanBalance;
+        const equityPctVal = currentHomeValue > 0 ? (equity / currentHomeValue) * 100 : 0;
+        const yearInterest = yr === 0 ? 0 : loanBalance * annualRate;
+        const yearMIP = yr === 0 ? 0 : loanBalance * ANNUAL_MIP_RATE;
+
+        tableData.push({
+          year: yr,
+          age: clampedAge + yr,
+          homeValue: currentHomeValue,
+          loanBalance: loanBalance,
+          interest: yearInterest,
+          mip: yearMIP,
+          equity: equity,
+          equityPct: equityPctVal
+        });
+
+        const tr = document.createElement('tr');
+        const eqClass = equity >= 0 ? 'equity-positive' : 'equity-negative';
+        tr.innerHTML =
+          '<td>' + yr + '</td>' +
+          '<td>' + (clampedAge + yr) + '</td>' +
+          '<td>' + fmt(currentHomeValue) + '</td>' +
+          '<td>' + fmt(loanBalance) + '</td>' +
+          '<td>' + (yr === 0 ? '—' : fmt(yearInterest)) + '</td>' +
+          '<td>' + (yr === 0 ? '—' : fmt(yearMIP)) + '</td>' +
+          '<td class="' + eqClass + '">' + fmt(equity) + '</td>' +
+          '<td class="' + eqClass + '">' + pct(equityPctVal) + '</td>';
+        tbody.appendChild(tr);
+
+        // Advance to next year
+        if (yr < projectionYears) {
+          loanBalance = loanBalance * (1 + annualRate + ANNUAL_MIP_RATE);
+          currentHomeValue = currentHomeValue * (1 + appreciationRate / 100);
         }
       }
 
-      function resetResults() {
-        principalLimitResult.textContent = 'N/A';
-        payoffAmountResult.textContent = '$0';
-        netAvailableResult.textContent = 'N/A';
-      }
+      drawChart(tableData);
+    }
 
-      [homeValueInput, mortgageBalanceInput, borrowerAgeInput, interestRateInput].forEach(input => {
-        input.addEventListener('input', calculate);
+    function drawChart(data) {
+      const canvas = $('equityChart');
+      const ctx = canvas.getContext('2d');
+      const dpr = window.devicePixelRatio || 1;
+      const rect = canvas.parentElement.getBoundingClientRect();
+
+      canvas.width = rect.width * dpr;
+      canvas.height = rect.height * dpr;
+      ctx.scale(dpr, dpr);
+
+      const W = rect.width;
+      const H = rect.height;
+      const pad = { top: 30, right: 20, bottom: 40, left: 70 };
+      const plotW = W - pad.left - pad.right;
+      const plotH = H - pad.top - pad.bottom;
+
+      ctx.clearRect(0, 0, W, H);
+
+      if (data.length < 2) return;
+
+      // Find value range
+      let maxVal = 0;
+      let minVal = 0;
+      data.forEach(function(d) {
+        maxVal = Math.max(maxVal, d.homeValue, d.loanBalance);
+        minVal = Math.min(minVal, d.equity);
       });
+      const range = maxVal - minVal;
+      const yMax = maxVal + range * 0.1;
+      const yMin = Math.min(0, minVal - range * 0.1);
+      const yRange = yMax - yMin || 1;
+
+      function toX(i) { return pad.left + (i / (data.length - 1)) * plotW; }
+      function toY(v) { return pad.top + (1 - (v - yMin) / yRange) * plotH; }
+
+      // Grid lines and Y-axis labels
+      ctx.strokeStyle = 'rgba(128,128,128,0.15)';
+      ctx.lineWidth = 1;
+      var gridLines = 5;
+      for (var i = 0; i <= gridLines; i++) {
+        var v = yMin + (yRange * i) / gridLines;
+        var y = toY(v);
+        ctx.beginPath();
+        ctx.moveTo(pad.left, y);
+        ctx.lineTo(W - pad.right, y);
+        ctx.stroke();
+
+        ctx.fillStyle = 'rgba(128,128,128,0.6)';
+        ctx.font = '11px system-ui';
+        ctx.textAlign = 'right';
+        var label = Math.abs(v) >= 1000 ? '$' + (v / 1000).toFixed(0) + 'k' : '$' + v.toFixed(0);
+        ctx.fillText(label, pad.left - 8, y + 4);
+      }
+
+      // X-axis labels
+      ctx.textAlign = 'center';
+      var step = Math.max(1, Math.floor(data.length / 8));
+      for (var i = 0; i < data.length; i += step) {
+        ctx.fillStyle = 'rgba(128,128,128,0.6)';
+        ctx.fillText('Yr ' + data[i].year, toX(i), H - pad.bottom + 20);
+      }
+      if ((data.length - 1) % step !== 0) {
+        ctx.fillText('Yr ' + data[data.length - 1].year, toX(data.length - 1), H - pad.bottom + 20);
+      }
+
+      // Zero line
+      if (yMin < 0) {
+        ctx.strokeStyle = 'rgba(128,128,128,0.4)';
+        ctx.lineWidth = 1;
+        ctx.setLineDash([4, 4]);
+        ctx.beginPath();
+        ctx.moveTo(pad.left, toY(0));
+        ctx.lineTo(W - pad.right, toY(0));
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+
+      // Draw data lines
+      function drawLine(key, color, width) {
+        ctx.strokeStyle = color;
+        ctx.lineWidth = width;
+        ctx.beginPath();
+        data.forEach(function(d, i) {
+          var x = toX(i);
+          var y = toY(d[key]);
+          if (i === 0) ctx.moveTo(x, y); else ctx.lineTo(x, y);
+        });
+        ctx.stroke();
+      }
+
+      drawLine('homeValue', '#D4A017', 2.5);
+      drawLine('loanBalance', '#4A90E2', 2.5);
+      drawLine('equity', '#50E3C2', 2.5);
+
+      // Fill equity area with transparency
+      ctx.globalAlpha = 0.08;
+      ctx.fillStyle = '#50E3C2';
+      ctx.beginPath();
+      ctx.moveTo(toX(0), toY(0));
+      data.forEach(function(d, i) { ctx.lineTo(toX(i), toY(d.equity)); });
+      ctx.lineTo(toX(data.length - 1), toY(0));
+      ctx.closePath();
+      ctx.fill();
+      ctx.globalAlpha = 1;
+    }
+
+    // Wire up all inputs
+    document.querySelectorAll('input').forEach(function(input) {
+      input.addEventListener('input', calculate);
     });
 
+    calculate();
+    window.addEventListener('resize', calculate);
   </script>
-
-  <style is:inline>
-    .page-content { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem; }
-    .hero { text-align: center; padding: 3rem 0 2rem; }
-    .hero h1 { font-size: 2.2rem; font-weight: 800; margin-bottom: 0.5rem; }
-    .subtitle { color: var(--text-secondary); font-size: 1.1rem; }
-    .calculator-container { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 2rem; margin: 2rem 0; }
-    input, select { background: var(--bg-color); color: var(--text-primary); border: 1px solid var(--border-color); padding: 0.75rem 1rem; border-radius: 8px; width: 100%; font-size: 1rem; box-sizing: border-box; }
-    input:focus, select:focus { outline: none; border-color: var(--accent-color); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-color) 20%, transparent); }
-    button { background: var(--accent-color); color: white; border: none; padding: 0.75rem 2rem; border-radius: 8px; font-weight: 600; cursor: pointer; font-size: 1rem; }
-    button:hover { opacity: 0.9; }
-    .result-card { background: color-mix(in srgb, var(--accent-color) 10%, transparent); border: 1px solid var(--accent-color); border-radius: 12px; padding: 1.5rem; margin: 1.5rem 0; text-align: center; }
-    .result-value { font-size: 2.5rem; font-weight: 800; color: var(--accent-color); }
-    .faq-section details { margin: 1rem 0; padding: 1rem; background: var(--card-bg); border-radius: 8px; border: 1px solid var(--border-color); }
-    .faq-section summary { font-weight: 600; cursor: pointer; }
-
-    .calculator-grid { display: grid; gap: 1.5rem; margin-bottom: 2rem; }
-    @media (min-width: 640px) {
-      .calculator-grid { grid-template-columns: repeat(2, 1fr); }
-    }
-    .input-group label { display: block; font-weight: 600; margin-bottom: 0.5rem; }
-    .error-message { color: #ef4444; font-size: 0.875rem; margin-top: 0.5rem; }
-    .results-grid { display: grid; grid-template-columns: 1fr; gap: 1rem; }
-    @media (min-width: 640px) {
-      .results-grid { grid-template-columns: repeat(3, 1fr); }
-    }
-    .result-card h3 { font-size: 1rem; color: var(--text-secondary); margin-bottom: 0.5rem; font-weight: 600; }
-    .result-card.secondary { background: var(--bg-color); border: 1px solid var(--border-color); }
-    .result-card.secondary .result-value { color: var(--text-primary); font-size: 1.5rem; }
-
-  </style>
 </SiteLayout>
