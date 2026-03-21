@@ -15,8 +15,8 @@ const faqs = [
     a: "These are three different properties of a JavaScript KeyboardEvent. 'key' returns the character value of the key (e.g., 'a', 'Enter', 'Shift'). 'keyCode' is a legacy numeric code (e.g., 65 for 'A') — it's deprecated but still widely used. 'code' represents the physical key on the keyboard regardless of layout (e.g., 'KeyA' is always the same physical key, even on a French AZERTY keyboard where it types 'q'). For keyboard testing, 'code' is the most reliable identifier because it maps to the physical key position."
   },
   {
-    q: "Why does my keyboard not register certain key combinations?",
-    a: "This is almost always caused by keyboard ghosting or the keyboard's rollover limit. Budget membrane keyboards typically support 2-key rollover (2KRO), meaning only 2 non-modifier keys can be pressed simultaneously. Modifier keys (Shift, Ctrl, Alt) are usually on separate circuits and don't count toward this limit. If you need to press many keys at once (common in gaming), look for keyboards advertising N-key rollover (NKRO) or at minimum 6-key rollover (6KRO). Mechanical keyboards generally have better rollover than membrane keyboards."
+    q: "What is N-key rollover (NKRO)?",
+    a: "N-key rollover means your keyboard can detect any number of simultaneous key presses without missing any. The 'N' stands for any number. Most mechanical gaming keyboards support full NKRO over USB. Cheaper membrane keyboards typically support only 2-key rollover (2KRO) or 6-key rollover (6KRO). USB keyboards connected through hubs or older systems may be limited to 6KRO due to USB HID protocol limitations. This tool's anti-ghosting test lets you verify your keyboard's actual rollover capability."
   },
   {
     q: "Can this tool detect hardware problems with my keyboard?",
@@ -37,7 +37,7 @@ const schema = [
     "@context": "https://schema.org",
     "@type": "WebApplication",
     "name": "Keyboard Tester — Free Online Key Test Tool",
-    "description": "Free online keyboard tester. Press any key to test if it registers. Visual keyboard layout, anti-ghosting test, key info display. Works with any keyboard.",
+    "description": "Free online keyboard tester. Press any key to test if it registers. Visual keyboard layout, anti-ghosting test, key rollover check, and keypress history log.",
     "applicationCategory": "Utility",
     "operatingSystem": "Any",
     "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
@@ -56,7 +56,7 @@ const schema = [
 
 export const meta = {
   title: "Keyboard Tester — Free Online Key Test & Anti-Ghosting Check",
-  description: "Test every key on your keyboard online. Visual keyboard layout highlights pressed keys in real time. Check for ghosting, view keyCodes, and verify all keys work. Free, no download.",
+  description: "Test every key on your keyboard online. Visual keyboard layout highlights pressed keys in real time. Check anti-ghosting, N-key rollover, keycodes, and key history. Free, no download.",
   category: "tool",
   published: "2026-03-21",
 };
@@ -65,14 +65,14 @@ export const meta = {
 <SiteLayout
   site="leeroyjenkins"
   title="Keyboard Tester — Free Online Key Test & Anti-Ghosting Check"
-  description="Test every key on your keyboard online. Visual keyboard layout highlights pressed keys in real time. Check for ghosting, view keyCodes, and verify all keys work. Free, no download."
+  description="Test every key on your keyboard online. Visual keyboard layout highlights pressed keys in real time. Check anti-ghosting, N-key rollover, keycodes, and key history. Free, no download."
   canonical="https://leeroyjenkins.quest/keyboard-tester"
   schema={schema}
 >
   <div class="page-content">
     <div class="hero">
       <h1>Keyboard Tester</h1>
-      <p>Press any key to test it. Every key lights up on the visual keyboard below. Test anti-ghosting by pressing multiple keys at once.</p>
+      <p>Press any key to test it. Every key lights up on the visual keyboard, shows keycodes, and gets logged. Test anti-ghosting and N-key rollover by pressing multiple keys at once.</p>
     </div>
 
     <section class="content-section">
@@ -103,12 +103,21 @@ export const meta = {
       <div class="stats-bar">
         <div class="stat">
           <span class="stat-label">Keys Pressed</span>
-          <span class="stat-value" id="stat-count">0</span>
+          <span class="stat-value" id="stat-pressed">0</span>
         </div>
         <div class="stat">
-          <span class="stat-label">Currently Held</span>
+          <span class="stat-label">Remaining</span>
+          <span class="stat-value" id="stat-remaining">—</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">Max Rollover</span>
+          <span class="stat-value" id="stat-rollover">0</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">Held Now</span>
           <span class="stat-value" id="stat-held">0</span>
         </div>
+        <button class="btn btn-sm" id="sound-toggle">Sound: ON</button>
         <button class="btn btn-sm" id="reset-btn">Reset</button>
       </div>
 
@@ -117,22 +126,48 @@ export const meta = {
         <div class="keyboard" id="keyboard"></div>
       </div>
 
-      <!-- Pressed Keys List -->
-      <div class="pressed-list-section">
-        <h2>Pressed Keys</h2>
-        <div class="pressed-list" id="pressed-list">
-          <span class="pressed-placeholder">No keys pressed yet</span>
+      <!-- Anti-Ghosting Test -->
+      <div class="ghosting-panel" id="ghosting-panel">
+        <h3>Anti-Ghosting / Rollover Test</h3>
+        <p>Hold down as many keys as you can simultaneously. The counter shows how many your keyboard registers at once.</p>
+        <div class="ghosting-display">
+          <span class="ghosting-count" id="ghosting-count">0</span>
+          <span class="ghosting-sublabel">keys detected simultaneously</span>
         </div>
+        <div class="ghosting-max">Session max: <strong id="ghosting-max">0</strong> keys</div>
+        <div class="held-keys" id="held-keys">No keys held</div>
+      </div>
+
+      <!-- Key History Log -->
+      <h2>Key History</h2>
+      <p>Last 20 keypresses with timestamps and event details.</p>
+      <div class="table-wrapper">
+        <table id="history-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Key</th>
+              <th>Code</th>
+              <th>keyCode</th>
+              <th>Location</th>
+              <th>Time</th>
+            </tr>
+          </thead>
+          <tbody id="history-body">
+            <tr><td colspan="6" style="text-align:center;color:var(--text-secondary);padding:1rem;">No keypresses yet — start typing!</td></tr>
+          </tbody>
+        </table>
       </div>
 
       <!-- How to use -->
       <h2>How to Use This Keyboard Tester</h2>
       <ol>
         <li><strong>Click anywhere on this page</strong> to make sure it has focus, then start pressing keys.</li>
-        <li><strong>Each key you press</strong> will light up on the virtual keyboard above and appear in the pressed keys list.</li>
+        <li><strong>Each key you press</strong> will light up on the virtual keyboard above and appear in the key history log.</li>
         <li><strong>Check the key info panel</strong> to see the key name, code, keyCode, and location for each keypress.</li>
-        <li><strong>Test anti-ghosting</strong> by holding down multiple keys simultaneously — all pressed keys should light up.</li>
-        <li><strong>Click Reset</strong> to clear all highlights and start a fresh test.</li>
+        <li><strong>Track your progress</strong> — the "Remaining" counter shows how many standard keys you haven't pressed yet. Try to get it to zero.</li>
+        <li><strong>Test anti-ghosting</strong> by holding down multiple keys simultaneously — the rollover panel shows how many register at once.</li>
+        <li><strong>Toggle sound</strong> to hear a click on each keypress, or mute it if you prefer silence.</li>
       </ol>
 
       <h2>What This Tool Tests</h2>
@@ -151,6 +186,26 @@ export const meta = {
             <tr><td><strong>Key Identification</strong></td><td>Shows key, code, keyCode, and location values</td><td>Essential for developers building keyboard shortcuts or game controls</td></tr>
             <tr><td><strong>Modifier Keys</strong></td><td>Tests Shift, Ctrl, Alt, Meta on both sides</td><td>Verifies left and right modifier keys register independently</td></tr>
             <tr><td><strong>Numpad</strong></td><td>Tests numeric keypad separately from number row</td><td>Ensures numpad keys send distinct codes from main number keys</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Rollover Guide -->
+      <h2>Key Rollover &amp; Anti-Ghosting Guide</h2>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Rollover Type</th>
+              <th>Simultaneous Keys</th>
+              <th>Typical Keyboards</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>2KRO</strong></td><td>2 keys</td><td>Basic membrane keyboards, older laptop keyboards</td></tr>
+            <tr><td><strong>6KRO</strong></td><td>6 keys</td><td>Most USB keyboards (USB HID standard limit without workarounds)</td></tr>
+            <tr><td><strong>14KRO</strong></td><td>14 keys</td><td>Gaming membrane keyboards with anti-ghosting zones</td></tr>
+            <tr><td><strong>NKRO</strong></td><td>All keys</td><td>Mechanical gaming keyboards (Cherry MX, Gateron, etc.)</td></tr>
           </tbody>
         </table>
       </div>
@@ -184,13 +239,13 @@ export const meta = {
 
       <h2>Related Tools</h2>
       <div class="related-grid">
-        <a href="/reaction-time-test" class="related-link">
-          <strong>Reaction Time Test</strong>
-          <span>Measure your reaction speed in milliseconds — test your reflexes</span>
-        </a>
         <a href="/typing-speed-test" class="related-link">
           <strong>Typing Speed Test</strong>
-          <span>Check your words per minute and accuracy with a timed typing test</span>
+          <span>Measure your words per minute and accuracy with a timed typing test</span>
+        </a>
+        <a href="/reaction-time-test" class="related-link">
+          <strong>Reaction Time Test</strong>
+          <span>Test your reaction speed in milliseconds — click when the screen turns green</span>
         </a>
       </div>
     </section>
@@ -200,7 +255,6 @@ export const meta = {
   (function() {
     /* ── Keyboard Layout Definition (Full-size ANSI) ── */
     var ROWS = [
-      /* Row 0: Function row */
       [
         { code: 'Escape', label: 'Esc', w: 1 },
         { spacer: 1 },
@@ -221,9 +275,8 @@ export const meta = {
         { spacer: 0.25 },
         { code: 'PrintScreen', label: 'PrtSc', w: 1 },
         { code: 'ScrollLock', label: 'ScrLk', w: 1 },
-        { code: 'Pause', label: 'Pause', w: 1 },
+        { code: 'Pause', label: 'Pause', w: 1 }
       ],
-      /* Row 1: Number row */
       [
         { code: 'Backquote', label: '`', w: 1 },
         { code: 'Digit1', label: '1', w: 1 },
@@ -247,9 +300,8 @@ export const meta = {
         { code: 'NumLock', label: 'Num', w: 1 },
         { code: 'NumpadDivide', label: '/', w: 1 },
         { code: 'NumpadMultiply', label: '*', w: 1 },
-        { code: 'NumpadSubtract', label: '-', w: 1 },
+        { code: 'NumpadSubtract', label: '-', w: 1 }
       ],
-      /* Row 2: QWERTY row */
       [
         { code: 'Tab', label: 'Tab', w: 1.5 },
         { code: 'KeyQ', label: 'Q', w: 1 },
@@ -273,9 +325,8 @@ export const meta = {
         { code: 'Numpad7', label: '7', w: 1 },
         { code: 'Numpad8', label: '8', w: 1 },
         { code: 'Numpad9', label: '9', w: 1 },
-        { code: 'NumpadAdd', label: '+', w: 1, h: 2 },
+        { code: 'NumpadAdd', label: '+', w: 1, h: 2 }
       ],
-      /* Row 3: Home row */
       [
         { code: 'CapsLock', label: 'Caps', w: 1.75 },
         { code: 'KeyA', label: 'A', w: 1 },
@@ -293,9 +344,8 @@ export const meta = {
         { spacer: 3.5 },
         { code: 'Numpad4', label: '4', w: 1 },
         { code: 'Numpad5', label: '5', w: 1 },
-        { code: 'Numpad6', label: '6', w: 1 },
+        { code: 'Numpad6', label: '6', w: 1 }
       ],
-      /* Row 4: Shift row */
       [
         { code: 'ShiftLeft', label: 'Shift', w: 2.25 },
         { code: 'KeyZ', label: 'Z', w: 1 },
@@ -310,36 +360,36 @@ export const meta = {
         { code: 'Slash', label: '/', w: 1 },
         { code: 'ShiftRight', label: 'Shift', w: 2.75 },
         { spacer: 1.25 },
-        { code: 'ArrowUp', label: '↑', w: 1 },
+        { code: 'ArrowUp', label: '\u2191', w: 1 },
         { spacer: 1.25 },
         { code: 'Numpad1', label: '1', w: 1 },
         { code: 'Numpad2', label: '2', w: 1 },
         { code: 'Numpad3', label: '3', w: 1 },
-        { code: 'NumpadEnter', label: 'Ent', w: 1, h: 2 },
+        { code: 'NumpadEnter', label: 'Ent', w: 1, h: 2 }
       ],
-      /* Row 5: Bottom row */
       [
         { code: 'ControlLeft', label: 'Ctrl', w: 1.25 },
-        { code: 'MetaLeft', label: 'Meta', w: 1.25 },
+        { code: 'MetaLeft', label: 'Win', w: 1.25 },
         { code: 'AltLeft', label: 'Alt', w: 1.25 },
         { code: 'Space', label: 'Space', w: 6.25 },
         { code: 'AltRight', label: 'Alt', w: 1.25 },
-        { code: 'MetaRight', label: 'Meta', w: 1.25 },
+        { code: 'MetaRight', label: 'Win', w: 1.25 },
         { code: 'ContextMenu', label: 'Menu', w: 1.25 },
         { code: 'ControlRight', label: 'Ctrl', w: 1.25 },
         { spacer: 0.25 },
-        { code: 'ArrowLeft', label: '←', w: 1 },
-        { code: 'ArrowDown', label: '↓', w: 1 },
-        { code: 'ArrowRight', label: '→', w: 1 },
+        { code: 'ArrowLeft', label: '\u2190', w: 1 },
+        { code: 'ArrowDown', label: '\u2193', w: 1 },
+        { code: 'ArrowRight', label: '\u2192', w: 1 },
         { spacer: 0.25 },
         { code: 'Numpad0', label: '0', w: 2 },
-        { code: 'NumpadDecimal', label: '.', w: 1 },
+        { code: 'NumpadDecimal', label: '.', w: 1 }
       ]
     ];
 
     /* ── Build Keyboard DOM ── */
     var keyboardEl = document.getElementById('keyboard');
     var keyElements = {};
+    var totalKeys = 0;
 
     ROWS.forEach(function(row) {
       var rowEl = document.createElement('div');
@@ -355,22 +405,45 @@ export const meta = {
         var keyEl = document.createElement('div');
         keyEl.className = 'kb-key';
         keyEl.style.width = (k.w * 3) + 'rem';
-        if (k.h === 2) {
-          keyEl.classList.add('kb-key-tall');
-        }
+        if (k.h === 2) keyEl.classList.add('kb-key-tall');
         keyEl.textContent = k.label;
         keyEl.setAttribute('data-code', k.code);
         rowEl.appendChild(keyEl);
         keyElements[k.code] = keyEl;
+        totalKeys++;
       });
       keyboardEl.appendChild(rowEl);
     });
 
     /* ── State ── */
-    var pressedKeys = new Set();
-    var allPressedKeys = [];
-    var allPressedSet = new Set();
-    var heldKeys = new Set();
+    var pressedEver = {};
+    var heldKeys = {};
+    var maxRollover = 0;
+    var history = [];
+    var historyCount = 0;
+    var soundEnabled = true;
+
+    /* ── Audio ── */
+    var audioCtx = null;
+    function getAudioCtx() {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      return audioCtx;
+    }
+    function playClick() {
+      if (!soundEnabled) return;
+      try {
+        var ctx = getAudioCtx();
+        var osc = ctx.createOscillator();
+        var gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.frequency.setValueAtTime(800 + Math.random() * 400, ctx.currentTime);
+        gain.gain.setValueAtTime(0.08, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.05);
+        osc.start(ctx.currentTime);
+        osc.stop(ctx.currentTime + 0.05);
+      } catch(e) {}
+    }
 
     /* ── DOM refs ── */
     var infoPlaceholder = document.getElementById('key-info-placeholder');
@@ -379,33 +452,25 @@ export const meta = {
     var infoCode = document.getElementById('info-code');
     var infoKeycode = document.getElementById('info-keycode');
     var infoLocation = document.getElementById('info-location');
-    var statCount = document.getElementById('stat-count');
+    var statPressed = document.getElementById('stat-pressed');
+    var statRemaining = document.getElementById('stat-remaining');
+    var statRollover = document.getElementById('stat-rollover');
     var statHeld = document.getElementById('stat-held');
-    var pressedList = document.getElementById('pressed-list');
+    var ghostingCount = document.getElementById('ghosting-count');
+    var ghostingMax = document.getElementById('ghosting-max');
+    var heldKeysDisplay = document.getElementById('held-keys');
+    var historyBody = document.getElementById('history-body');
+    var soundToggle = document.getElementById('sound-toggle');
     var resetBtn = document.getElementById('reset-btn');
 
-    var locationNames = { 0: 'Standard', 1: 'Left', 2: 'Right', 3: 'Numpad' };
+    var LOCATIONS = { 0: 'Standard', 1: 'Left', 2: 'Right', 3: 'Numpad' };
+    statRemaining.textContent = totalKeys;
 
     /* ── Key Events ── */
     document.addEventListener('keydown', function(e) {
       e.preventDefault();
       e.stopPropagation();
-
       var code = e.code;
-      heldKeys.add(code);
-
-      /* Highlight key on visual keyboard */
-      if (keyElements[code]) {
-        keyElements[code].classList.add('kb-key-active');
-        keyElements[code].classList.add('kb-key-pressed');
-      }
-
-      /* Track unique presses */
-      if (!allPressedSet.has(code)) {
-        allPressedSet.add(code);
-        allPressedKeys.push({ code: code, label: e.key });
-        updatePressedList();
-      }
 
       /* Update info panel */
       infoPlaceholder.style.display = 'none';
@@ -413,59 +478,141 @@ export const meta = {
       infoKey.textContent = e.key;
       infoCode.textContent = code;
       infoKeycode.textContent = e.keyCode;
-      infoLocation.textContent = (locationNames[e.location] || e.location) + ' (' + e.location + ')';
+      infoLocation.textContent = (LOCATIONS[e.location] || e.location) + ' (' + e.location + ')';
 
-      /* Update stats */
-      statCount.textContent = allPressedSet.size;
-      statHeld.textContent = heldKeys.size;
+      /* Track pressed ever */
+      if (!pressedEver[code]) {
+        pressedEver[code] = true;
+        var count = Object.keys(pressedEver).length;
+        statPressed.textContent = count;
+        var rem = totalKeys - count;
+        statRemaining.textContent = rem < 0 ? 0 : rem;
+      }
+
+      /* Highlight key */
+      var el = keyElements[code];
+      if (el) {
+        el.classList.add('kb-key-active');
+        el.classList.add('kb-key-pressed');
+      }
+
+      /* Track held keys */
+      heldKeys[code] = true;
+      var heldCount = Object.keys(heldKeys).length;
+      statHeld.textContent = heldCount;
+      ghostingCount.textContent = heldCount;
+
+      if (heldCount > maxRollover) {
+        maxRollover = heldCount;
+        statRollover.textContent = maxRollover;
+        ghostingMax.textContent = maxRollover;
+      }
+
+      updateHeldDisplay();
+      playClick();
+      addHistory(e);
     });
 
     document.addEventListener('keyup', function(e) {
       e.preventDefault();
       var code = e.code;
-      heldKeys.delete(code);
-      if (keyElements[code]) {
-        keyElements[code].classList.remove('kb-key-active');
-      }
-      statHeld.textContent = heldKeys.size;
+      var el = keyElements[code];
+      if (el) el.classList.remove('kb-key-active');
+
+      delete heldKeys[code];
+      var heldCount = Object.keys(heldKeys).length;
+      statHeld.textContent = heldCount;
+      ghostingCount.textContent = heldCount;
+      updateHeldDisplay();
     });
 
-    /* Clear active state when window loses focus */
+    /* Clear active state on blur */
     window.addEventListener('blur', function() {
-      heldKeys.clear();
+      heldKeys = {};
       Object.keys(keyElements).forEach(function(code) {
         keyElements[code].classList.remove('kb-key-active');
       });
       statHeld.textContent = '0';
+      ghostingCount.textContent = '0';
+      updateHeldDisplay();
     });
 
-    /* ── Pressed List ── */
-    function updatePressedList() {
-      pressedList.innerHTML = allPressedKeys.map(function(k) {
-        var display = k.label.length === 1 ? k.label.toUpperCase() : k.label;
-        return '<span class="pressed-tag" title="' + k.code + '">' + escapeHtml(display) + '</span>';
+    function updateHeldDisplay() {
+      var keys = Object.keys(heldKeys);
+      if (keys.length === 0) {
+        heldKeysDisplay.textContent = 'No keys held';
+        return;
+      }
+      heldKeysDisplay.innerHTML = keys.map(function(k) {
+        return '<span class="held-tag">' + escapeHtml(k) + '</span>';
+      }).join(' ');
+    }
+
+    /* ── History Log ── */
+    function addHistory(e) {
+      historyCount++;
+      var now = new Date();
+      var time = now.toLocaleTimeString() + '.' + String(now.getMilliseconds()).padStart(3, '0');
+      history.unshift({
+        n: historyCount,
+        key: e.key,
+        code: e.code,
+        keyCode: e.keyCode,
+        location: LOCATIONS[e.location] || String(e.location),
+        time: time
+      });
+      if (history.length > 20) history.length = 20;
+      renderHistory();
+    }
+
+    function renderHistory() {
+      if (history.length === 0) {
+        historyBody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-secondary);padding:1rem;">No keypresses yet — start typing!</td></tr>';
+        return;
+      }
+      historyBody.innerHTML = history.map(function(h) {
+        var displayKey = h.key === ' ' ? 'Space' : h.key;
+        return '<tr><td>' + h.n + '</td><td><strong>' + escapeHtml(displayKey) + '</strong></td><td>' + escapeHtml(h.code) + '</td><td>' + h.keyCode + '</td><td>' + escapeHtml(h.location) + '</td><td>' + h.time + '</td></tr>';
       }).join('');
     }
 
     function escapeHtml(str) {
-      var div = document.createElement('div');
-      div.textContent = str;
-      return div.innerHTML;
+      var d = document.createElement('div');
+      d.textContent = str;
+      return d.innerHTML;
     }
+
+    /* ── Sound Toggle ── */
+    soundToggle.addEventListener('click', function(e) {
+      e.stopPropagation();
+      soundEnabled = !soundEnabled;
+      soundToggle.textContent = 'Sound: ' + (soundEnabled ? 'ON' : 'OFF');
+    });
 
     /* ── Reset ── */
     resetBtn.addEventListener('click', function() {
-      allPressedKeys = [];
-      allPressedSet.clear();
-      heldKeys.clear();
+      pressedEver = {};
+      heldKeys = {};
+      maxRollover = 0;
+      history = [];
+      historyCount = 0;
+
+      statPressed.textContent = '0';
+      statRemaining.textContent = totalKeys;
+      statRollover.textContent = '0';
+      statHeld.textContent = '0';
+      ghostingCount.textContent = '0';
+      ghostingMax.textContent = '0';
+      heldKeysDisplay.textContent = 'No keys held';
+
+      infoPlaceholder.style.display = '';
+      infoGrid.style.display = 'none';
+
       Object.keys(keyElements).forEach(function(code) {
         keyElements[code].classList.remove('kb-key-active', 'kb-key-pressed');
       });
-      infoPlaceholder.style.display = '';
-      infoGrid.style.display = 'none';
-      statCount.textContent = '0';
-      statHeld.textContent = '0';
-      pressedList.innerHTML = '<span class="pressed-placeholder">No keys pressed yet</span>';
+
+      renderHistory();
     });
   })();
   </script>
@@ -474,7 +621,7 @@ export const meta = {
     .page-content { max-width: 1100px; margin: 0 auto; padding: 2rem 1.5rem; }
     .hero { text-align: center; padding: 3rem 0 2rem; }
     .hero h1 { font-size: 2.2rem; font-weight: 800; margin-bottom: 0.5rem; color: var(--text-primary); }
-    .hero p { color: var(--text-secondary); font-size: 1.1rem; max-width: 650px; margin: 0 auto; line-height: 1.5; }
+    .hero p { color: var(--text-secondary); font-size: 1.1rem; max-width: 700px; margin: 0 auto; line-height: 1.5; }
 
     .content-section { margin-bottom: 3rem; }
     .content-section h2 { font-size: 1.8rem; color: var(--text-primary); margin-bottom: 1rem; margin-top: 2.5rem; }
@@ -495,11 +642,12 @@ export const meta = {
     .key-info-value { font-size: 1.1rem; font-weight: 700; color: var(--accent-color); word-break: break-all; text-align: center; font-family: monospace; }
 
     /* Stats Bar */
-    .stats-bar { display: flex; align-items: center; gap: 1.5rem; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 10px; padding: 0.8rem 1.2rem; margin-bottom: 1rem; }
+    .stats-bar { display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 10px; padding: 0.8rem 1.2rem; margin-bottom: 1rem; }
     .stat { display: flex; flex-direction: column; }
-    .stat-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-secondary); font-weight: 600; }
-    .stat-value { font-size: 1.4rem; font-weight: 800; color: var(--text-primary); }
+    .stat-label { font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-secondary); font-weight: 600; }
+    .stat-value { font-size: 1.3rem; font-weight: 800; color: var(--text-primary); }
     .stats-bar .btn { margin-left: auto; }
+    .stats-bar .btn + .btn { margin-left: 0; }
 
     /* Keyboard Wrapper */
     .keyboard-wrapper { overflow-x: auto; padding-bottom: 0.5rem; margin-bottom: 1.5rem; }
@@ -526,9 +674,7 @@ export const meta = {
       padding: 0 0.3rem;
       box-sizing: border-box;
     }
-    .kb-key-tall {
-      height: calc(2.8rem * 2 + 0.25rem);
-    }
+    .kb-key-tall { height: calc(2.8rem * 2 + 0.25rem); }
     .kb-key-active {
       background: var(--accent-color) !important;
       border-color: var(--accent-color) !important;
@@ -546,11 +692,16 @@ export const meta = {
       color: #fff !important;
     }
 
-    /* Pressed Keys List */
-    .pressed-list-section { margin-bottom: 1.5rem; }
-    .pressed-list { display: flex; flex-wrap: wrap; gap: 0.4rem; min-height: 2.5rem; padding: 1rem; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 10px; }
-    .pressed-tag { display: inline-flex; align-items: center; padding: 0.3rem 0.65rem; background: color-mix(in srgb, var(--accent-color) 15%, transparent); border: 1px solid var(--accent-color); border-radius: 6px; font-size: 0.8rem; font-weight: 700; color: var(--accent-color); font-family: monospace; }
-    .pressed-placeholder { color: var(--text-secondary); font-size: 0.9rem; }
+    /* Anti-Ghosting Panel */
+    .ghosting-panel { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem; text-align: center; margin-bottom: 1.5rem; }
+    .ghosting-panel h3 { margin-top: 0; color: var(--text-primary); }
+    .ghosting-panel p { color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1rem; }
+    .ghosting-display { margin: 1rem 0; }
+    .ghosting-count { font-size: 3.5rem; font-weight: 900; color: var(--accent-color); line-height: 1; }
+    .ghosting-sublabel { display: block; font-size: 0.85rem; color: var(--text-secondary); margin-top: 0.3rem; }
+    .ghosting-max { font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 1rem; }
+    .held-keys { display: flex; flex-wrap: wrap; gap: 0.4rem; justify-content: center; min-height: 28px; color: var(--text-secondary); font-size: 0.85rem; align-items: center; }
+    .held-tag { background: var(--accent-color); color: #fff; padding: 0.2rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: 700; font-family: monospace; }
 
     /* Buttons */
     .btn { padding: 0.45rem 0.9rem; border-radius: 8px; border: 1px solid var(--border-color); background: transparent; color: var(--text-secondary); font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: all 0.15s; white-space: nowrap; }
@@ -580,10 +731,11 @@ export const meta = {
     @media (max-width: 600px) {
       .hero h1 { font-size: 1.6rem; }
       .key-info-grid { grid-template-columns: repeat(2, 1fr); }
-      .stats-bar { gap: 1rem; }
+      .stats-bar { gap: 0.6rem; }
       .keyboard { padding: 0.5rem; }
       .kb-key { height: 2.4rem; font-size: 0.6rem; }
       .kb-key-tall { height: calc(2.4rem * 2 + 0.25rem); }
+      .ghosting-count { font-size: 2.5rem; }
     }
   </style>
 </SiteLayout>

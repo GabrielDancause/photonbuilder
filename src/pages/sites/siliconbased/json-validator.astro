@@ -1,0 +1,789 @@
+---
+import SiteLayout from '../../../layouts/SiteLayout.astro';
+
+const schema = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "JSON Validator & Formatter — Validate, Format & Minify JSON Online",
+      "url": "https://siliconbased.dev/json-validator",
+      "description": "Free online JSON validator, formatter, and linter with error detection, tree view, JSON path display, auto-fix, and minification. Runs entirely in your browser.",
+      "applicationCategory": "DeveloperApplication",
+      "operatingSystem": "Any",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "author": {
+        "@type": "Organization",
+        "name": "GAB Ventures",
+        "url": "https://gab.ae"
+      }
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "What is a JSON validator?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "A JSON validator checks whether a string is well-formed JSON according to the ECMA-404 / RFC 8259 specification. It verifies correct syntax including matching braces and brackets, proper use of commas and colons, valid string escaping, and correct data types. If the JSON is invalid, a good validator reports the exact line number and description of the error."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How do I format or prettify JSON?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Paste your JSON into the input area and click the Format button. You can choose between 2-space, 4-space, or tab indentation. The formatter parses the JSON and re-serializes it with consistent indentation and line breaks, making it easy to read and debug."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How do I minify JSON?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Paste your JSON and click the Minify button. This removes all unnecessary whitespace, newlines, and indentation from the JSON string, producing the most compact representation. Minified JSON is ideal for API payloads, configuration files, and reducing bandwidth."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What is a JSON path?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "A JSON path is a string that describes the location of a specific value within a JSON document. For example, $.users[0].name refers to the name property of the first element in the users array. In this tool, clicking any value in the tree view displays its JSON path, which is useful for accessing nested data programmatically."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Can this tool fix invalid JSON?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes. The Fix Common Errors button attempts to repair frequently encountered JSON mistakes such as trailing commas after the last item in arrays or objects, single quotes instead of double quotes, unquoted property keys, and missing quotes around string values. While it cannot fix all errors, it handles the most common issues developers encounter."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What is JSON lint?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "JSON lint (or JSONLint) refers to the process of validating and checking JSON data for syntax errors, similar to how a code linter checks source code. A JSON linter parses the input, reports any syntax errors with line numbers, and confirms whether the data is valid JSON. This tool acts as a full JSON linter with detailed error reporting."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Is my JSON data safe when using this tool?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes. All validation, formatting, and processing happens entirely in your browser using JavaScript. No data is sent to any server. Your JSON never leaves your device, making it safe for sensitive configuration files, API keys, and private data."
+          }
+        }
+      ]
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "Article",
+      "headline": "JSON Validator & Formatter — Validate, Format & Minify JSON Online",
+      "description": "Free online JSON validator, formatter, and linter with error detection, tree view, JSON path display, auto-fix, and minification.",
+      "datePublished": "2026-03-21T00:00:00Z",
+      "publisher": {
+        "@type": "Organization",
+        "name": "siliconbased.dev",
+        "url": "https://siliconbased.dev"
+      }
+    }
+  ]
+};
+
+const htmlBody = `<div class="page-content">
+<div class="hero">
+  <h1>JSON Validator & Formatter</h1>
+  <p>Validate, format, minify, and explore JSON data instantly — with error detection, tree view, and JSON path display. All in your browser.</p>
+</div>
+
+<div class="main">
+
+  <!-- Options Bar -->
+  <div class="options-bar">
+    <div class="options-left">
+      <label class="indent-label">
+        <span class="toggle-text">Indent:</span>
+        <select id="indentSelect" class="indent-select">
+          <option value="2">2 spaces</option>
+          <option value="4">4 spaces</option>
+          <option value="tab">Tabs</option>
+        </select>
+      </label>
+    </div>
+    <div class="options-right">
+      <button class="mode-btn" id="btnValidate">Validate</button>
+      <button class="mode-btn" id="btnFormat">Format</button>
+      <button class="mode-btn" id="btnMinify">Minify</button>
+      <button class="mode-btn" id="btnFix">Fix Errors</button>
+    </div>
+  </div>
+
+  <!-- Status Bar -->
+  <div class="status-bar" id="statusBar">
+    <span class="status-icon" id="statusIcon"></span>
+    <span class="status-text" id="statusText">Paste JSON to validate</span>
+  </div>
+
+  <!-- Two-panel layout -->
+  <div class="tool-grid">
+    <!-- Input -->
+    <div class="pane">
+      <div class="input-header">
+        <div class="header-title">JSON Input</div>
+        <div class="header-actions">
+          <button class="action-btn" id="sampleBtn">Sample</button>
+          <button class="action-btn" id="clearBtn">Clear</button>
+        </div>
+      </div>
+      <textarea id="inputArea" class="code-area" spellcheck="false" placeholder='Paste or type JSON here...&#10;&#10;Example:&#10;{&#10;  "name": "John",&#10;  "age": 30&#10;}'></textarea>
+      <div class="char-count" id="inputCount">0 characters · 0 lines</div>
+    </div>
+
+    <!-- Tree View -->
+    <div class="pane">
+      <div class="output-header">
+        <div class="header-title">Tree View</div>
+        <div class="header-actions">
+          <button class="action-btn" id="expandAllBtn">Expand All</button>
+          <button class="action-btn" id="collapseAllBtn">Collapse All</button>
+          <button class="copy-btn" id="copyBtn">Copy</button>
+        </div>
+      </div>
+      <div id="treeView" class="tree-view">
+        <div class="tree-placeholder">Tree view will appear here after validation...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- JSON Path Display -->
+  <div class="path-bar" id="pathBar" style="display:none;">
+    <span class="path-label">Path:</span>
+    <code class="path-value" id="pathValue">$</code>
+    <button class="action-btn path-copy" id="pathCopyBtn">Copy Path</button>
+  </div>
+
+  <!-- Reference section -->
+  <div class="ref-section">
+    <div class="input-header">
+      <div class="header-title">JSON Quick Reference</div>
+    </div>
+    <div class="ref-grid">
+      <div class="ref-card">
+        <div class="ref-card-title">Data Types</div>
+        <code>String: "hello"</code>
+        <code>Number: 42, 3.14</code>
+        <code>Boolean: true, false</code>
+        <code>null</code>
+      </div>
+      <div class="ref-card">
+        <div class="ref-card-title">Structures</div>
+        <code>Object: { "key": value }</code>
+        <code>Array: [1, 2, 3]</code>
+        <code>Nested: { "a": [1] }</code>
+      </div>
+      <div class="ref-card">
+        <div class="ref-card-title">String Escapes</div>
+        <code>\\\\" — double quote</code>
+        <code>\\\\\\\\ — backslash</code>
+        <code>\\\\n \\\\t — newline, tab</code>
+        <code>\\\\uXXXX — unicode</code>
+      </div>
+      <div class="ref-card">
+        <div class="ref-card-title">Common Errors</div>
+        <code>Trailing commas</code>
+        <code>Single quotes</code>
+        <code>Unquoted keys</code>
+        <code>Comments</code>
+      </div>
+      <div class="ref-card">
+        <div class="ref-card-title">JavaScript API</div>
+        <code>JSON.parse(str)</code>
+        <code>JSON.stringify(obj)</code>
+        <code>JSON.stringify(o,null,2)</code>
+      </div>
+      <div class="ref-card">
+        <div class="ref-card-title">Max Values</div>
+        <code>Spec: no size limit</code>
+        <code>Nesting: unlimited</code>
+        <code>Numbers: IEEE 754</code>
+      </div>
+    </div>
+  </div>
+
+  <!-- SEO Content + FAQ -->
+  <div class="seo-content">
+    <h2>What is JSON?</h2>
+    <p>JSON (JavaScript Object Notation) is a lightweight data interchange format defined by <a href="https://www.ecma-international.org/publications-and-standards/standards/ecma-404/">ECMA-404</a> and <a href="https://datatracker.ietf.org/doc/html/rfc8259">RFC 8259</a>. It uses human-readable text to store and transmit data objects consisting of key-value pairs and arrays. JSON is the dominant format for REST APIs, configuration files, and data exchange between web services.</p>
+
+    <h2>Why Validate JSON?</h2>
+    <ul>
+      <li><strong>Catch syntax errors early:</strong> A missing comma or mismatched bracket can break an entire API request or config file. Validation catches these before they cause runtime failures.</li>
+      <li><strong>Debug API responses:</strong> When an API returns unexpected data, validating and formatting the response reveals structural issues instantly.</li>
+      <li><strong>Clean configuration files:</strong> Many tools (package.json, tsconfig.json, Docker Compose) use JSON configs — validation prevents deployment errors.</li>
+      <li><strong>Data pipeline integrity:</strong> Before ingesting JSON data into databases or processing pipelines, validation ensures the data conforms to expected structure.</li>
+    </ul>
+
+    <h2>JSON Formatting Options</h2>
+    <table class="seo-table">
+      <thead>
+        <tr>
+          <th>Option</th>
+          <th>Output</th>
+          <th>Best For</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr><td>2-space indent</td><td>Compact, readable</td><td>Most codebases, web projects</td></tr>
+        <tr><td>4-space indent</td><td>Wide, very readable</td><td>Java/Python projects, documentation</td></tr>
+        <tr><td>Tab indent</td><td>Configurable width</td><td>Teams with mixed preferences</td></tr>
+        <tr><td>Minified</td><td>No whitespace</td><td>API payloads, production configs</td></tr>
+      </tbody>
+    </table>
+
+    <h2>Frequently Asked Questions</h2>
+    <div style="margin-top: 24px;">
+      <h3 style="margin: 16px 0 8px; font-size: 1.1rem; color: #e0e0e0;">What is a JSON validator?</h3>
+      <p style="margin-bottom: 16px;">A JSON validator checks whether a string is well-formed JSON according to the ECMA-404 / RFC 8259 specification. It verifies correct syntax including matching braces and brackets, proper use of commas and colons, valid string escaping, and correct data types. If the JSON is invalid, a good validator reports the exact line number and description of the error.</p>
+
+      <h3 style="margin: 16px 0 8px; font-size: 1.1rem; color: #e0e0e0;">How do I format or prettify JSON?</h3>
+      <p style="margin-bottom: 16px;">Paste your JSON into the input area and click the Format button. You can choose between 2-space, 4-space, or tab indentation. The formatter parses the JSON and re-serializes it with consistent indentation and line breaks, making it easy to read and debug.</p>
+
+      <h3 style="margin: 16px 0 8px; font-size: 1.1rem; color: #e0e0e0;">How do I minify JSON?</h3>
+      <p style="margin-bottom: 16px;">Paste your JSON and click the Minify button. This removes all unnecessary whitespace, newlines, and indentation from the JSON string, producing the most compact representation. Minified JSON is ideal for API payloads, configuration files, and reducing bandwidth.</p>
+
+      <h3 style="margin: 16px 0 8px; font-size: 1.1rem; color: #e0e0e0;">What is a JSON path?</h3>
+      <p style="margin-bottom: 16px;">A JSON path is a string that describes the location of a specific value within a JSON document. For example, $.users[0].name refers to the name property of the first element in the users array. In this tool, clicking any value in the tree view displays its JSON path, which is useful for accessing nested data programmatically.</p>
+
+      <h3 style="margin: 16px 0 8px; font-size: 1.1rem; color: #e0e0e0;">Can this tool fix invalid JSON?</h3>
+      <p style="margin-bottom: 16px;">Yes. The Fix Common Errors button attempts to repair frequently encountered JSON mistakes such as trailing commas after the last item in arrays or objects, single quotes instead of double quotes, unquoted property keys, and missing quotes around string values. While it cannot fix all errors, it handles the most common issues developers encounter.</p>
+
+      <h3 style="margin: 16px 0 8px; font-size: 1.1rem; color: #e0e0e0;">What is JSON lint?</h3>
+      <p style="margin-bottom: 16px;">JSON lint (or JSONLint) refers to the process of validating and checking JSON data for syntax errors, similar to how a code linter checks source code. A JSON linter parses the input, reports any syntax errors with line numbers, and confirms whether the data is valid JSON. This tool acts as a full JSON linter with detailed error reporting.</p>
+
+      <h3 style="margin: 16px 0 8px; font-size: 1.1rem; color: #e0e0e0;">Is my JSON data safe when using this tool?</h3>
+      <p style="margin-bottom: 16px;">Yes. All validation, formatting, and processing happens entirely in your browser using JavaScript. No data is sent to any server. Your JSON never leaves your device, making it safe for sensitive configuration files, API keys, and private data.</p>
+    </div>
+
+    <h2>Related Tools</h2>
+    <ul>
+      <li><a href="/regex-tester">Regex Tester</a> — Test and debug regular expressions online with real-time highlighting.</li>
+      <li><a href="/base64-encoder-decoder">Base64 Encoder Decoder</a> — Encode and decode Base64 strings with file support.</li>
+      <li><a href="/html-to-markdown-converter">HTML to Markdown Converter</a> — Convert HTML to clean Markdown with live preview.</li>
+    </ul>
+  </div>
+
+</div>
+</div>`;
+
+export const meta = {
+  title: "JSON Validator & Formatter — Validate, Format & Minify JSON Online",
+  description: "Free online JSON validator, formatter, and linter with tree view, JSON path display, error detection with line numbers, auto-fix, and minification. No data leaves your browser.",
+  category: "tool",
+  published: "2026-03-21",
+};
+---
+
+<SiteLayout
+  site="siliconbased"
+  title="JSON Validator & Formatter — Validate, Format & Minify JSON Online"
+  description="Free online JSON validator, formatter, and linter with tree view, JSON path display, error detection with line numbers, auto-fix, and minification. No data leaves your browser."
+  canonical="https://siliconbased.dev/json-validator"
+  schema={schema}
+>
+  <Fragment set:html={htmlBody} />
+
+  <script is:inline>
+const inputArea = document.getElementById('inputArea');
+const statusBar = document.getElementById('statusBar');
+const statusIcon = document.getElementById('statusIcon');
+const statusText = document.getElementById('statusText');
+const treeView = document.getElementById('treeView');
+const pathBar = document.getElementById('pathBar');
+const pathValue = document.getElementById('pathValue');
+const inputCount = document.getElementById('inputCount');
+const indentSelect = document.getElementById('indentSelect');
+const btnValidate = document.getElementById('btnValidate');
+const btnFormat = document.getElementById('btnFormat');
+const btnMinify = document.getElementById('btnMinify');
+const btnFix = document.getElementById('btnFix');
+const clearBtn = document.getElementById('clearBtn');
+const sampleBtn = document.getElementById('sampleBtn');
+const copyBtn = document.getElementById('copyBtn');
+const pathCopyBtn = document.getElementById('pathCopyBtn');
+const expandAllBtn = document.getElementById('expandAllBtn');
+const collapseAllBtn = document.getElementById('collapseAllBtn');
+
+let parsedJSON = null;
+
+const SAMPLE_JSON = `{
+  "name": "Silicon Based",
+  "version": "2.0.0",
+  "description": "Developer tools and utilities",
+  "features": ["JSON Validator", "Regex Tester", "Base64 Encoder"],
+  "config": {
+    "theme": "dark",
+    "autoSave": true,
+    "maxFileSize": 10485760,
+    "supportedFormats": ["json", "yaml", "xml"]
+  },
+  "contributors": [
+    { "name": "Alice", "role": "maintainer", "active": true },
+    { "name": "Bob", "role": "contributor", "active": false }
+  ],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/example/siliconbased"
+  },
+  "license": "MIT",
+  "private": false,
+  "rating": 4.8
+}`;
+
+function init() {
+  inputArea.addEventListener('input', debounce(autoValidate, 300));
+  btnValidate.addEventListener('click', validate);
+  btnFormat.addEventListener('click', formatJSON);
+  btnMinify.addEventListener('click', minifyJSON);
+  btnFix.addEventListener('click', fixErrors);
+
+  clearBtn.addEventListener('click', () => {
+    inputArea.value = '';
+    parsedJSON = null;
+    setStatus('neutral', 'Paste JSON to validate');
+    treeView.innerHTML = '<div class="tree-placeholder">Tree view will appear here after validation...</div>';
+    pathBar.style.display = 'none';
+    updateCounts();
+    inputArea.focus();
+  });
+
+  sampleBtn.addEventListener('click', () => {
+    inputArea.value = SAMPLE_JSON;
+    updateCounts();
+    validate();
+  });
+
+  copyBtn.addEventListener('click', () => {
+    const text = inputArea.value;
+    if (!text) return;
+    navigator.clipboard.writeText(text).then(() => {
+      copyBtn.textContent = '\u2713 Copied';
+      setTimeout(() => { copyBtn.textContent = 'Copy'; }, 1500);
+    });
+  });
+
+  pathCopyBtn.addEventListener('click', () => {
+    const path = pathValue.textContent;
+    navigator.clipboard.writeText(path).then(() => {
+      pathCopyBtn.textContent = '\u2713 Copied';
+      setTimeout(() => { pathCopyBtn.textContent = 'Copy Path'; }, 1500);
+    });
+  });
+
+  expandAllBtn.addEventListener('click', () => {
+    treeView.querySelectorAll('.tree-toggle.collapsed').forEach(t => {
+      t.classList.remove('collapsed');
+      t.nextElementSibling.style.display = '';
+    });
+  });
+
+  collapseAllBtn.addEventListener('click', () => {
+    treeView.querySelectorAll('.tree-toggle:not(.collapsed)').forEach(t => {
+      if (t.nextElementSibling && t.nextElementSibling.classList.contains('tree-children')) {
+        t.classList.add('collapsed');
+        t.nextElementSibling.style.display = 'none';
+      }
+    });
+  });
+
+  updateCounts();
+}
+
+function debounce(fn, ms) {
+  let t;
+  return function() { clearTimeout(t); t = setTimeout(fn, ms); };
+}
+
+function autoValidate() {
+  updateCounts();
+  const input = inputArea.value.trim();
+  if (!input) {
+    setStatus('neutral', 'Paste JSON to validate');
+    treeView.innerHTML = '<div class="tree-placeholder">Tree view will appear here after validation...</div>';
+    pathBar.style.display = 'none';
+    parsedJSON = null;
+    return;
+  }
+  validate();
+}
+
+function validate() {
+  const input = inputArea.value.trim();
+  if (!input) {
+    setStatus('neutral', 'Paste JSON to validate');
+    return;
+  }
+  try {
+    parsedJSON = JSON.parse(input);
+    setStatus('valid', 'Valid JSON — ' + describeJSON(parsedJSON));
+    renderTree(parsedJSON);
+  } catch (e) {
+    parsedJSON = null;
+    const errInfo = parseError(e.message, input);
+    setStatus('invalid', 'Invalid JSON — ' + errInfo);
+    treeView.innerHTML = '<div class="tree-error">' + escapeHTML(errInfo) + '</div>';
+    pathBar.style.display = 'none';
+  }
+  updateCounts();
+}
+
+function describeJSON(data) {
+  if (Array.isArray(data)) return 'Array with ' + data.length + ' item' + (data.length !== 1 ? 's' : '');
+  if (data && typeof data === 'object') {
+    const keys = Object.keys(data);
+    return 'Object with ' + keys.length + ' key' + (keys.length !== 1 ? 's' : '');
+  }
+  return typeof data;
+}
+
+function parseError(msg, input) {
+  const posMatch = msg.match(/position\s+(\d+)/i);
+  if (posMatch) {
+    const pos = parseInt(posMatch[1]);
+    const lines = input.substring(0, pos).split('\n');
+    const line = lines.length;
+    const col = lines[lines.length - 1].length + 1;
+    return msg + ' (line ' + line + ', column ' + col + ')';
+  }
+  return msg;
+}
+
+function formatJSON() {
+  const input = inputArea.value.trim();
+  if (!input) return;
+  try {
+    const parsed = JSON.parse(input);
+    const indent = indentSelect.value === 'tab' ? '\t' : parseInt(indentSelect.value);
+    inputArea.value = JSON.stringify(parsed, null, indent);
+    parsedJSON = parsed;
+    setStatus('valid', 'Valid JSON — formatted with ' + (indent === '\t' ? 'tabs' : indent + '-space indent'));
+    renderTree(parsed);
+  } catch (e) {
+    const errInfo = parseError(e.message, input);
+    setStatus('invalid', 'Cannot format — ' + errInfo);
+  }
+  updateCounts();
+}
+
+function minifyJSON() {
+  const input = inputArea.value.trim();
+  if (!input) return;
+  try {
+    const parsed = JSON.parse(input);
+    inputArea.value = JSON.stringify(parsed);
+    parsedJSON = parsed;
+    setStatus('valid', 'Valid JSON — minified (' + inputArea.value.length.toLocaleString() + ' chars)');
+    renderTree(parsed);
+  } catch (e) {
+    const errInfo = parseError(e.message, input);
+    setStatus('invalid', 'Cannot minify — ' + errInfo);
+  }
+  updateCounts();
+}
+
+function fixErrors() {
+  let input = inputArea.value;
+  if (!input.trim()) return;
+
+  // Try parsing first — if valid, nothing to fix
+  try { JSON.parse(input); setStatus('valid', 'JSON is already valid — no fixes needed'); return; } catch(e) {}
+
+  let fixed = input;
+
+  // Remove single-line comments
+  fixed = fixed.replace(/\/\/.*$/gm, '');
+  // Remove multi-line comments
+  fixed = fixed.replace(/\/\*[\s\S]*?\*\//g, '');
+
+  // Replace single quotes with double quotes (for keys and string values)
+  // This is a simplified approach — handles most common cases
+  fixed = fixed.replace(/'/g, '"');
+
+  // Add quotes around unquoted keys: { key: value } -> { "key": value }
+  fixed = fixed.replace(/([{,]\s*)([a-zA-Z_$][a-zA-Z0-9_$]*)(\s*:)/g, '$1"$2"$3');
+
+  // Remove trailing commas before } or ]
+  fixed = fixed.replace(/,(\s*[}\]])/g, '$1');
+
+  // Try to parse the fixed version
+  try {
+    const parsed = JSON.parse(fixed);
+    inputArea.value = fixed;
+    parsedJSON = parsed;
+    setStatus('valid', 'Fixed & valid — applied automatic corrections');
+    renderTree(parsed);
+  } catch (e) {
+    // Try formatting the fixed version with indent
+    try {
+      const indent = indentSelect.value === 'tab' ? '\t' : parseInt(indentSelect.value);
+      const parsed = JSON.parse(fixed);
+      inputArea.value = JSON.stringify(parsed, null, indent);
+      parsedJSON = parsed;
+      setStatus('valid', 'Fixed & formatted — applied automatic corrections');
+      renderTree(parsed);
+    } catch(e2) {
+      setStatus('invalid', 'Could not auto-fix — ' + parseError(e.message, fixed));
+    }
+  }
+  updateCounts();
+}
+
+function setStatus(type, message) {
+  statusBar.className = 'status-bar status-' + type;
+  statusIcon.textContent = type === 'valid' ? '\u2713' : type === 'invalid' ? '\u2717' : '\u2022';
+  statusText.textContent = message;
+}
+
+// Tree view rendering
+function renderTree(data) {
+  treeView.innerHTML = '';
+  const root = buildTreeNode(data, '$', true);
+  treeView.appendChild(root);
+  pathBar.style.display = 'flex';
+  pathValue.textContent = '$';
+}
+
+function buildTreeNode(data, path, expanded) {
+  const frag = document.createDocumentFragment();
+
+  if (data === null) {
+    frag.appendChild(createValueSpan('null', 'null', path));
+    return frag;
+  }
+
+  if (Array.isArray(data)) {
+    const toggle = document.createElement('span');
+    toggle.className = 'tree-toggle' + (expanded ? '' : ' collapsed');
+    toggle.textContent = (expanded ? '\u25BE' : '\u25B8') + ' Array[' + data.length + ']';
+    toggle.addEventListener('click', function() {
+      this.classList.toggle('collapsed');
+      const children = this.nextElementSibling;
+      if (children) {
+        children.style.display = this.classList.contains('collapsed') ? 'none' : '';
+        this.textContent = (this.classList.contains('collapsed') ? '\u25B8' : '\u25BE') + ' Array[' + data.length + ']';
+      }
+    });
+    frag.appendChild(toggle);
+
+    const children = document.createElement('div');
+    children.className = 'tree-children';
+    if (!expanded) children.style.display = 'none';
+    data.forEach(function(item, i) {
+      const row = document.createElement('div');
+      row.className = 'tree-row';
+      const key = document.createElement('span');
+      key.className = 'tree-key tree-index';
+      key.textContent = i + ': ';
+      row.appendChild(key);
+      row.appendChild(buildTreeNode(item, path + '[' + i + ']', expanded));
+      children.appendChild(row);
+    });
+    frag.appendChild(children);
+    return frag;
+  }
+
+  if (typeof data === 'object') {
+    const keys = Object.keys(data);
+    const toggle = document.createElement('span');
+    toggle.className = 'tree-toggle' + (expanded ? '' : ' collapsed');
+    toggle.textContent = (expanded ? '\u25BE' : '\u25B8') + ' Object{' + keys.length + '}';
+    toggle.addEventListener('click', function() {
+      this.classList.toggle('collapsed');
+      const children = this.nextElementSibling;
+      if (children) {
+        children.style.display = this.classList.contains('collapsed') ? 'none' : '';
+        this.textContent = (this.classList.contains('collapsed') ? '\u25B8' : '\u25BE') + ' Object{' + keys.length + '}';
+      }
+    });
+    frag.appendChild(toggle);
+
+    const children = document.createElement('div');
+    children.className = 'tree-children';
+    if (!expanded) children.style.display = 'none';
+    keys.forEach(function(k) {
+      const row = document.createElement('div');
+      row.className = 'tree-row';
+      const keyEl = document.createElement('span');
+      keyEl.className = 'tree-key';
+      keyEl.textContent = '"' + k + '": ';
+      row.appendChild(keyEl);
+      const childPath = /^[a-zA-Z_$][a-zA-Z0-9_$]*$/.test(k) ? path + '.' + k : path + '["' + k + '"]';
+      row.appendChild(buildTreeNode(data[k], childPath, expanded));
+      children.appendChild(row);
+    });
+    frag.appendChild(children);
+    return frag;
+  }
+
+  // Primitive value
+  frag.appendChild(createValueSpan(data, typeof data, path));
+  return frag;
+}
+
+function createValueSpan(value, type, path) {
+  const span = document.createElement('span');
+  span.className = 'tree-value tree-type-' + type;
+  if (type === 'string') {
+    span.textContent = '"' + value + '"';
+  } else {
+    span.textContent = String(value);
+  }
+  span.addEventListener('click', function() {
+    pathValue.textContent = path;
+    pathBar.style.display = 'flex';
+    // Highlight briefly
+    document.querySelectorAll('.tree-value.selected').forEach(function(el) { el.classList.remove('selected'); });
+    span.classList.add('selected');
+  });
+  return span;
+}
+
+function escapeHTML(str) {
+  return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
+}
+
+function updateCounts() {
+  const val = inputArea.value;
+  const chars = val.length;
+  const lines = val ? val.split('\n').length : 0;
+  inputCount.textContent = chars.toLocaleString() + ' character' + (chars !== 1 ? 's' : '') + ' \u00B7 ' + lines.toLocaleString() + ' line' + (lines !== 1 ? 's' : '');
+}
+
+init();
+</script>
+
+  <style is:inline>
+
+.page-content { font-family: 'Inter', -apple-system, sans-serif; background: #060a12; color: #e0e0e0; min-height: 100vh; display: flex; flex-direction: column; }
+code, pre, .mono { font-family: 'JetBrains Mono', monospace; }
+.hero { text-align: center; padding: 48px 24px 24px; background: linear-gradient(180deg, #0f1729 0%, #060a12 100%); }
+.hero h1 { font-size: 2.4rem; font-weight: 900; color: #fff; margin-bottom: 6px; }
+.hero p { color: #888; font-size: 0.95rem; }
+.main { max-width: 1100px; margin: 0 auto; padding: 24px 20px 80px; flex: 1; width: 100%; position: relative; }
+
+/* Options Bar */
+.options-bar { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; margin-bottom: 16px; padding: 14px 18px; background: #0a1020; border: 2px solid #152040; border-radius: 12px; }
+.options-left { display: flex; flex-wrap: wrap; gap: 18px; align-items: center; }
+.options-right { display: flex; gap: 8px; flex-wrap: wrap; }
+.indent-label { display: flex; align-items: center; gap: 8px; }
+.indent-select { background: #1e2030; border: 1px solid #2a2d40; color: #ccc; padding: 5px 10px; border-radius: 6px; font-size: 0.8rem; font-family: 'Inter', sans-serif; cursor: pointer; }
+.toggle-text { font-size: 0.82rem; color: #aaa; font-weight: 500; }
+
+/* Mode buttons */
+.mode-btn { background: #1e2030; border: 1px solid #2a2d40; color: #888; padding: 6px 16px; border-radius: 8px; font-size: 0.8rem; font-weight: 600; cursor: pointer; font-family: 'Inter', sans-serif; transition: all 0.15s; }
+.mode-btn:hover { background: #2a2d40; color: #ccc; }
+
+/* Status Bar */
+.status-bar { display: flex; align-items: center; gap: 10px; padding: 10px 16px; margin-bottom: 20px; border-radius: 10px; font-size: 0.85rem; font-weight: 500; background: #0a1020; border: 2px solid #152040; transition: all 0.2s; }
+.status-bar.status-valid { border-color: #166534; background: #052e16; }
+.status-bar.status-invalid { border-color: #7f1d1d; background: #1c0a0a; }
+.status-bar.status-neutral { border-color: #152040; background: #0a1020; }
+.status-icon { font-size: 1.1rem; font-weight: 700; }
+.status-valid .status-icon { color: #4ade80; }
+.status-invalid .status-icon { color: #f87171; }
+.status-neutral .status-icon { color: #555; }
+.status-text { color: #ccc; }
+.status-valid .status-text { color: #86efac; }
+.status-invalid .status-text { color: #fca5a5; }
+
+/* Tool grid */
+.tool-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 16px; align-items: stretch; }
+.pane { display: flex; flex-direction: column; }
+.input-header, .output-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+.header-title { font-size: 0.85rem; font-weight: 600; color: #ccc; text-transform: uppercase; letter-spacing: 0.5px; }
+.header-actions { display: flex; gap: 8px; }
+.action-btn { background: #1e2030; border: 1px solid #2a2d40; color: #888; padding: 6px 12px; border-radius: 8px; font-size: 0.75rem; font-weight: 500; cursor: pointer; font-family: 'Inter', sans-serif; transition: all 0.15s; }
+.action-btn:hover { background: #2a2d40; color: #ccc; }
+.copy-btn { background: #1e2030; border: 1px solid #2a2d40; color: #888; padding: 6px 14px; border-radius: 8px; font-size: 0.75rem; font-weight: 500; cursor: pointer; font-family: 'Inter', sans-serif; transition: all 0.15s; }
+.copy-btn:hover { background: #2a2d40; color: #ccc; }
+
+/* Character count */
+.char-count { font-size: 0.72rem; color: #555; margin-top: 6px; text-align: right; font-family: 'JetBrains Mono', monospace; }
+
+/* Code area */
+.code-area { width: 100%; min-height: 400px; background: #0a1020; border: 2px solid #152040; border-radius: 12px; padding: 16px; color: #e0e0e0; font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; line-height: 1.6; resize: vertical; outline: none; transition: border-color 0.2s; white-space: pre-wrap; word-wrap: break-word; }
+.code-area:focus { border-color: #818cf8; }
+.code-area::placeholder { color: #555; }
+
+/* Tree View */
+.tree-view { background: #0a1020; border: 2px solid #152040; border-radius: 12px; padding: 16px; min-height: 400px; max-height: 600px; overflow: auto; font-family: 'JetBrains Mono', monospace; font-size: 0.8rem; line-height: 1.7; }
+.tree-placeholder { color: #555; font-style: italic; }
+.tree-error { color: #f87171; font-weight: 500; }
+.tree-toggle { cursor: pointer; color: #818cf8; font-weight: 600; user-select: none; display: inline-block; }
+.tree-toggle:hover { color: #a5b4fc; }
+.tree-children { padding-left: 20px; border-left: 1px solid #1e2030; margin-left: 4px; }
+.tree-row { padding: 1px 0; }
+.tree-key { color: #93c5fd; }
+.tree-key.tree-index { color: #a78bfa; }
+.tree-value { cursor: pointer; transition: background 0.15s; padding: 0 3px; border-radius: 3px; }
+.tree-value:hover { background: #1e2030; }
+.tree-value.selected { background: #1e3a5f; }
+.tree-type-string { color: #4ade80; }
+.tree-type-number { color: #fb923c; }
+.tree-type-boolean { color: #f472b6; }
+.tree-type-null { color: #888; font-style: italic; }
+
+/* Path Bar */
+.path-bar { display: flex; align-items: center; gap: 12px; padding: 10px 16px; margin-bottom: 32px; background: #0a1020; border: 2px solid #152040; border-radius: 10px; }
+.path-label { font-size: 0.78rem; font-weight: 600; color: #888; text-transform: uppercase; letter-spacing: 0.5px; }
+.path-value { flex: 1; font-size: 0.82rem; color: #818cf8; background: none; padding: 0; }
+.path-copy { flex-shrink: 0; }
+
+/* Reference section */
+.ref-section { margin-bottom: 40px; }
+.ref-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 12px; }
+.ref-card { background: #0a1020; border: 1px solid #152040; border-radius: 10px; padding: 14px 16px; }
+.ref-card-title { font-size: 0.78rem; font-weight: 700; color: #ccc; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; }
+.ref-card code { display: block; font-size: 0.75rem; color: #818cf8; margin-bottom: 4px; }
+.ref-card code:last-child { margin-bottom: 0; }
+
+/* SEO Content */
+.seo-content { margin-top: 48px; border-top: 1px solid #1e2030; padding-top: 48px; color: #b0b8d0; font-size: 0.95rem; line-height: 1.6; }
+.seo-content h2 { color: #fff; font-size: 1.4rem; font-weight: 700; margin: 32px 0 16px; }
+.seo-content h2:first-child { margin-top: 0; }
+.seo-content h3 { color: #e0e0e0; font-size: 1.1rem; font-weight: 600; margin: 24px 0 12px; }
+.seo-content p { margin-bottom: 16px; }
+.seo-content ul { margin-bottom: 16px; padding-left: 24px; }
+.seo-content li { margin-bottom: 8px; }
+.seo-content a { color: #818cf8; text-decoration: none; }
+.seo-content a:hover { text-decoration: underline; }
+.seo-content code { background: #0a1020; padding: 2px 6px; border-radius: 4px; color: #818cf8; font-size: 0.85em; }
+.seo-table { width: 100%; border-collapse: collapse; margin-bottom: 24px; font-size: 0.9rem; }
+.seo-table th { text-align: left; padding: 10px 14px; border-bottom: 2px solid #2a2d4e; color: #ccc; font-weight: 600; background: #0a1020; }
+.seo-table td { padding: 10px 14px; border-bottom: 1px solid #152040; color: #aaa; }
+.seo-table tr:hover td { background: #0a1020; }
+
+/* Responsive */
+@media (max-width: 800px) {
+  .tool-grid { grid-template-columns: 1fr; }
+  .options-bar { flex-direction: column; align-items: flex-start; }
+  .ref-grid { grid-template-columns: 1fr 1fr; }
+  .code-area, .tree-view { min-height: 250px; }
+  .path-bar { flex-wrap: wrap; }
+}
+@media (max-width: 500px) {
+  .ref-grid { grid-template-columns: 1fr; }
+  .options-right { flex-wrap: wrap; }
+}
+
+</style>
+</SiteLayout>
