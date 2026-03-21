@@ -1,0 +1,599 @@
+---
+import SiteLayout from "../../../layouts/SiteLayout.astro";
+
+const faqs = [
+  {
+    q: "What is an ATS and why does it matter for my resume?",
+    a: "An Applicant Tracking System (ATS) is software used by over 90% of large companies and 75% of mid-size employers to filter resumes before a human ever sees them. The ATS scans your resume for relevant keywords, proper formatting, and standard section headers. If your resume isn't ATS-compatible, it may be automatically rejected regardless of your qualifications."
+  },
+  {
+    q: "What formatting mistakes cause ATS systems to reject resumes?",
+    a: "The most common formatting mistakes include using tables or multi-column layouts, embedding text in images or graphics, using headers and footers for important information, choosing non-standard fonts, and saving in incompatible file formats. Stick to a single-column layout, standard fonts like Arial or Calibri, and submit as a .docx or plain text file unless PDF is specifically requested."
+  },
+  {
+    q: "How many keywords from the job description should my resume include?",
+    a: "Aim to naturally incorporate at least 60-70% of the key skills, tools, and qualifications mentioned in the job description. Focus on hard skills, technical tools, certifications, and industry-specific terms. Avoid keyword stuffing — each keyword should appear in context within your experience descriptions, skills section, or summary."
+  },
+  {
+    q: "What are the best resume section headers for ATS compatibility?",
+    a: "Use standard, recognizable section headers that ATS systems are programmed to identify: Work Experience (or Professional Experience), Education, Skills, Summary (or Professional Summary), and Certifications. Avoid creative headers like 'My Journey' or 'What I Bring to the Table' as most ATS systems won't recognize them."
+  },
+  {
+    q: "Should I tailor my resume for every job application?",
+    a: "Yes, tailoring your resume for each application significantly improves your ATS score. Customize your skills section and experience bullet points to mirror the language in the job description. Use the same terminology the employer uses — if they say 'project management' don't write 'managing projects.' This keyword alignment is the single most effective way to improve your ATS pass rate."
+  }
+];
+
+const schema = [
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "Resume ATS Score Checker",
+    "description": "Check your resume's ATS compatibility score. Analyze keyword matching, formatting issues, and common ATS pitfalls. Get a 0-100 score with specific recommendations to improve your resume.",
+    "url": "https://getthebag.photonbuilder.com/ats-score-checker",
+    "applicationCategory": "BusinessApplication",
+    "operatingSystem": "Any",
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": faqs.map(f => ({
+      "@type": "Question",
+      "name": f.q,
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": f.a
+      }
+    }))
+  }
+];
+
+export const meta = {
+  title: "Resume ATS Score Checker — Free ATS Compatibility Analyzer",
+  description: "Paste your resume and job description to get an instant ATS compatibility score. Analyze keyword matching, formatting issues, and common pitfalls with specific recommendations to improve your score.",
+  category: "tool",
+  published: "2026-03-21"
+};
+---
+
+<SiteLayout
+  site="getthebag"
+  title={meta.title}
+  description={meta.description}
+  canonical="https://getthebag.photonbuilder.com/ats-score-checker"
+  schema={schema}
+>
+  <div class="page-content">
+    <div class="hero">
+      <h1>Resume ATS Score Checker</h1>
+      <p>Paste your resume text and job description to get an instant ATS compatibility score with a detailed breakdown by keyword matching, formatting, and common pitfalls.</p>
+    </div>
+
+    <section class="content-section">
+      <div class="input-panel">
+        <div class="input-group">
+          <label for="resume-input">Your Resume Text</label>
+          <textarea id="resume-input" placeholder="Paste your full resume text here..." rows="10"></textarea>
+        </div>
+        <div class="input-group">
+          <label for="jd-input">Job Description</label>
+          <textarea id="jd-input" placeholder="Paste the job description here..." rows="10"></textarea>
+        </div>
+        <button id="analyze-btn" class="btn btn-primary">Analyze ATS Compatibility</button>
+      </div>
+
+      <!-- Results -->
+      <div id="results" style="display:none;">
+        <div class="score-overview">
+          <div class="score-circle-wrap">
+            <svg viewBox="0 0 120 120" class="score-circle">
+              <circle cx="60" cy="60" r="52" fill="none" stroke="var(--border-color)" stroke-width="8"/>
+              <circle id="score-ring" cx="60" cy="60" r="52" fill="none" stroke="#3b82f6" stroke-width="8" stroke-linecap="round" stroke-dasharray="326.73" stroke-dashoffset="326.73" transform="rotate(-90 60 60)"/>
+            </svg>
+            <div class="score-value">
+              <span id="score-number">0</span>
+              <span class="score-label">/ 100</span>
+            </div>
+          </div>
+          <div class="score-summary">
+            <h2 id="score-title">ATS Score</h2>
+            <p id="score-desc"></p>
+            <div class="category-bars" id="category-bars"></div>
+          </div>
+        </div>
+
+        <!-- Keyword Density Chart -->
+        <div class="card" id="keyword-chart-section">
+          <h3>Keyword Density Comparison</h3>
+          <p class="card-subtitle">How your resume matches keywords from the job description</p>
+          <div id="keyword-chart" class="keyword-chart"></div>
+        </div>
+
+        <!-- Missing Keywords -->
+        <div class="card" id="missing-keywords-section">
+          <h3>Missing Keywords</h3>
+          <p class="card-subtitle">Keywords found in the job description but not in your resume</p>
+          <div id="missing-keywords" class="tag-list"></div>
+        </div>
+
+        <!-- Formatting Issues -->
+        <div class="card" id="formatting-section">
+          <h3>Formatting Analysis</h3>
+          <div id="formatting-results" class="checklist"></div>
+        </div>
+
+        <!-- ATS Pitfalls -->
+        <div class="card" id="pitfalls-section">
+          <h3>ATS Pitfall Detection</h3>
+          <div id="pitfall-results" class="checklist"></div>
+        </div>
+
+        <!-- Recommendations -->
+        <div class="card" id="recommendations-section">
+          <h3>Recommendations</h3>
+          <div id="recommendations" class="recommendations-list"></div>
+        </div>
+      </div>
+
+      <h2>Frequently Asked Questions</h2>
+      <div class="faq-container">
+        {faqs.map(faq => (
+          <div class="faq-item">
+            <h3>{faq.q}</h3>
+            <p>{faq.a}</p>
+          </div>
+        ))}
+      </div>
+    </section>
+  </div>
+
+  <script is:inline>
+    document.addEventListener('DOMContentLoaded', function() {
+      var resumeInput = document.getElementById('resume-input');
+      var jdInput = document.getElementById('jd-input');
+      var analyzeBtn = document.getElementById('analyze-btn');
+      var results = document.getElementById('results');
+
+      var stopWords = new Set(['a','an','the','and','or','but','in','on','at','to','for','of','with','by','from','is','are','was','were','be','been','being','have','has','had','do','does','did','will','would','shall','should','may','might','must','can','could','about','above','after','again','all','also','am','any','as','because','before','between','both','during','each','few','further','get','got','he','her','here','him','his','how','i','if','into','it','its','just','me','more','most','my','no','nor','not','now','only','other','our','out','over','own','s','same','she','so','some','such','t','than','that','their','them','then','there','these','they','this','those','through','too','under','until','up','us','very','we','what','when','where','which','while','who','whom','why','you','your']);
+
+      function extractKeywords(text) {
+        var words = text.toLowerCase().replace(/[^a-z0-9\s\-\/\+\#\.]/g, ' ').split(/\s+/).filter(function(w) { return w.length > 2 && !stopWords.has(w); });
+        var freq = {};
+        words.forEach(function(w) { freq[w] = (freq[w] || 0) + 1; });
+        return freq;
+      }
+
+      function extractPhrases(text) {
+        var lower = text.toLowerCase();
+        var phrases = [];
+        // Extract 2-3 word phrases
+        var words = lower.replace(/[^a-z0-9\s\-]/g, ' ').split(/\s+/).filter(function(w) { return w.length > 0; });
+        for (var i = 0; i < words.length - 1; i++) {
+          if (!stopWords.has(words[i]) || !stopWords.has(words[i+1])) {
+            phrases.push(words[i] + ' ' + words[i+1]);
+          }
+          if (i < words.length - 2) {
+            phrases.push(words[i] + ' ' + words[i+1] + ' ' + words[i+2]);
+          }
+        }
+        return phrases;
+      }
+
+      function getTopKeywords(freq, n) {
+        return Object.entries(freq).sort(function(a, b) { return b[1] - a[1]; }).slice(0, n);
+      }
+
+      function checkFormatting(resumeText) {
+        var checks = [];
+        var lines = resumeText.split('\n');
+        var nonEmptyLines = lines.filter(function(l) { return l.trim().length > 0; });
+
+        // Check for standard section headers
+        var standardHeaders = ['experience', 'education', 'skills', 'summary', 'objective', 'certifications', 'projects', 'work experience', 'professional experience', 'professional summary', 'technical skills'];
+        var lower = resumeText.toLowerCase();
+        var foundHeaders = standardHeaders.filter(function(h) { return lower.indexOf(h) !== -1; });
+        checks.push({
+          label: 'Standard section headers',
+          pass: foundHeaders.length >= 3,
+          detail: foundHeaders.length >= 3 ? 'Found: ' + foundHeaders.slice(0, 5).join(', ') : 'Only found ' + foundHeaders.length + ' standard headers. Use: Experience, Education, Skills, Summary'
+        });
+
+        // Check for bullet points
+        var bulletLines = nonEmptyLines.filter(function(l) { return /^\s*[\u2022\u2023\u25E6\u2043\u2219\-\*\u2013\u2014•]/.test(l); });
+        var hasBullets = bulletLines.length >= 3;
+        checks.push({
+          label: 'Uses bullet points',
+          pass: hasBullets,
+          detail: hasBullets ? 'Found ' + bulletLines.length + ' bullet points' : 'Few or no bullet points detected. Use - or • to list accomplishments'
+        });
+
+        // Check resume length
+        var wordCount = resumeText.split(/\s+/).filter(function(w) { return w.length > 0; }).length;
+        var goodLength = wordCount >= 200 && wordCount <= 1200;
+        checks.push({
+          label: 'Appropriate length (' + wordCount + ' words)',
+          pass: goodLength,
+          detail: goodLength ? 'Good resume length' : wordCount < 200 ? 'Resume seems too short. Aim for 400-800 words' : 'Resume may be too long. Try to keep it under 1000 words for most roles'
+        });
+
+        // Check for contact info patterns
+        var hasEmail = /[a-zA-Z0-9._%+\-]+@[a-zA-Z0-9.\-]+\.[a-zA-Z]{2,}/.test(resumeText);
+        var hasPhone = /[\(]?\d{3}[\)\-\.\s]?\s?\d{3}[\-\.\s]?\d{4}/.test(resumeText);
+        checks.push({
+          label: 'Contact information present',
+          pass: hasEmail || hasPhone,
+          detail: hasEmail && hasPhone ? 'Email and phone detected' : hasEmail ? 'Email found but no phone number detected' : hasPhone ? 'Phone found but no email detected' : 'No email or phone number detected in resume'
+        });
+
+        // Check for quantified achievements
+        var numberLines = nonEmptyLines.filter(function(l) { return /\d+[%\$kKmMbB]|\$\d|increased|decreased|reduced|improved|grew|saved|generated|managed|led\s+\d/.test(l); });
+        var hasMetrics = numberLines.length >= 2;
+        checks.push({
+          label: 'Quantified achievements',
+          pass: hasMetrics,
+          detail: hasMetrics ? 'Found ' + numberLines.length + ' lines with metrics/numbers' : 'Add more quantified achievements (percentages, dollar amounts, team sizes)'
+        });
+
+        // Check for consistent date formatting
+        var datePatterns = resumeText.match(/(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)[a-z]*[\s,]+\d{4}|\d{1,2}\/\d{4}|\d{4}\s*[\-–—]\s*(?:\d{4}|present|current)/gi) || [];
+        checks.push({
+          label: 'Date formatting',
+          pass: datePatterns.length >= 2,
+          detail: datePatterns.length >= 2 ? 'Found ' + datePatterns.length + ' date entries' : 'Few dates detected. Include clear date ranges for each position'
+        });
+
+        return checks;
+      }
+
+      function checkPitfalls(resumeText) {
+        var checks = [];
+        var lower = resumeText.toLowerCase();
+
+        // Tables/columns detection
+        var hasTabChars = (resumeText.match(/\t/g) || []).length > 5;
+        var hasMultipleSpaceGaps = (resumeText.match(/\S {4,}\S/g) || []).length > 3;
+        checks.push({
+          label: 'No tables or column layouts detected',
+          pass: !hasTabChars && !hasMultipleSpaceGaps,
+          detail: hasTabChars || hasMultipleSpaceGaps ? 'Possible table or multi-column layout detected. ATS may scramble column order' : 'No problematic layouts detected'
+        });
+
+        // Image references
+        var hasImageRefs = /\.(png|jpg|jpeg|gif|svg|bmp|ico)\b|!\[|<img|image:|photo/i.test(resumeText);
+        checks.push({
+          label: 'No image references',
+          pass: !hasImageRefs,
+          detail: hasImageRefs ? 'Image references found. ATS cannot read images — use text only' : 'No image references detected'
+        });
+
+        // Header/footer content indicators
+        var lines = resumeText.split('\n').filter(function(l) { return l.trim().length > 0; });
+        var hasHeaderFooter = lines.length > 0 && (/^page\s*\d|^\d+\s*of\s*\d|confidential|©/i.test(lines[lines.length - 1]) || /^page\s*\d|^\d+\s*of\s*\d/i.test(lines[0]));
+        checks.push({
+          label: 'No header/footer content',
+          pass: !hasHeaderFooter,
+          detail: hasHeaderFooter ? 'Possible header/footer content detected. ATS may misread information placed in headers/footers' : 'No header/footer issues detected'
+        });
+
+        // Special characters
+        var specialChars = resumeText.match(/[^\x00-\x7F]/g) || [];
+        var uniqueSpecial = new Set(specialChars);
+        var tooManySpecial = uniqueSpecial.size > 5;
+        checks.push({
+          label: 'Minimal special characters',
+          pass: !tooManySpecial,
+          detail: tooManySpecial ? 'Found ' + uniqueSpecial.size + ' unique special characters. Some ATS may not render them correctly' : 'Character set looks clean'
+        });
+
+        // Abbreviations without full forms
+        var acronyms = resumeText.match(/\b[A-Z]{2,5}\b/g) || [];
+        var uniqueAcronyms = new Set(acronyms);
+        var manyAcronyms = uniqueAcronyms.size > 10;
+        checks.push({
+          label: 'Acronym usage',
+          pass: !manyAcronyms,
+          detail: manyAcronyms ? 'Found ' + uniqueAcronyms.size + ' acronyms. Spell out important ones at first use (e.g., "Search Engine Optimization (SEO)")' : 'Acronym count looks reasonable'
+        });
+
+        // Creative/non-standard section names
+        var creativeHeaders = ['my journey', 'what i bring', 'about me', 'my story', 'passions', 'toolkit', 'superpowers', 'what makes me unique', 'value proposition'];
+        var foundCreative = creativeHeaders.filter(function(h) { return lower.indexOf(h) !== -1; });
+        checks.push({
+          label: 'No non-standard section names',
+          pass: foundCreative.length === 0,
+          detail: foundCreative.length > 0 ? 'Found creative headers: ' + foundCreative.join(', ') + '. Replace with standard names' : 'Section names look ATS-friendly'
+        });
+
+        return checks;
+      }
+
+      function analyzeResume() {
+        var resume = resumeInput.value.trim();
+        var jd = jdInput.value.trim();
+
+        if (!resume || !jd) {
+          alert('Please paste both your resume text and the job description.');
+          return;
+        }
+
+        // Keyword analysis
+        var resumeKeywords = extractKeywords(resume);
+        var jdKeywords = extractKeywords(jd);
+        var jdPhrases = extractPhrases(jd);
+        var resumeLower = resume.toLowerCase();
+
+        var topJdKeywords = getTopKeywords(jdKeywords, 30);
+        var matchedKeywords = [];
+        var missingKeywords = [];
+
+        topJdKeywords.forEach(function(entry) {
+          var kw = entry[0];
+          if (resumeKeywords[kw]) {
+            matchedKeywords.push({ keyword: kw, jdCount: entry[1], resumeCount: resumeKeywords[kw] });
+          } else {
+            missingKeywords.push({ keyword: kw, count: entry[1] });
+          }
+        });
+
+        // Also check common multi-word phrases from JD
+        var phraseCounts = {};
+        jdPhrases.forEach(function(p) { phraseCounts[p] = (phraseCounts[p] || 0) + 1; });
+        var topPhrases = Object.entries(phraseCounts).sort(function(a, b) { return b[1] - a[1]; }).slice(0, 15);
+        var matchedPhraseCount = 0;
+        topPhrases.forEach(function(entry) {
+          if (resumeLower.indexOf(entry[0]) !== -1) matchedPhraseCount++;
+        });
+
+        // Keyword score (40 points)
+        var keywordMatchRate = topJdKeywords.length > 0 ? matchedKeywords.length / topJdKeywords.length : 0;
+        var phraseMatchRate = topPhrases.length > 0 ? matchedPhraseCount / topPhrases.length : 0;
+        var keywordScore = Math.round((keywordMatchRate * 0.7 + phraseMatchRate * 0.3) * 40);
+
+        // Formatting score (30 points)
+        var formatChecks = checkFormatting(resume);
+        var formatPassed = formatChecks.filter(function(c) { return c.pass; }).length;
+        var formatScore = Math.round((formatPassed / formatChecks.length) * 30);
+
+        // Pitfall score (30 points)
+        var pitfallChecks = checkPitfalls(resume);
+        var pitfallPassed = pitfallChecks.filter(function(c) { return c.pass; }).length;
+        var pitfallScore = Math.round((pitfallPassed / pitfallChecks.length) * 30);
+
+        var totalScore = keywordScore + formatScore + pitfallScore;
+
+        // Render results
+        renderResults(totalScore, keywordScore, formatScore, pitfallScore, matchedKeywords, missingKeywords, formatChecks, pitfallChecks, topJdKeywords);
+      }
+
+      function renderResults(total, kwScore, fmtScore, pitScore, matched, missing, fmtChecks, pitChecks, topJd) {
+        results.style.display = '';
+
+        // Score circle animation
+        var ring = document.getElementById('score-ring');
+        var circumference = 326.73;
+        var offset = circumference - (total / 100) * circumference;
+        var scoreColor = total >= 75 ? '#22c55e' : total >= 50 ? '#f59e0b' : '#ef4444';
+        ring.style.stroke = scoreColor;
+        ring.style.transition = 'stroke-dashoffset 1s ease-out';
+
+        setTimeout(function() { ring.style.strokeDashoffset = offset; }, 50);
+
+        // Animate number
+        var scoreNum = document.getElementById('score-number');
+        var current = 0;
+        var step = Math.max(1, Math.floor(total / 30));
+        var interval = setInterval(function() {
+          current += step;
+          if (current >= total) { current = total; clearInterval(interval); }
+          scoreNum.textContent = current;
+        }, 30);
+
+        // Score text
+        var title = document.getElementById('score-title');
+        var desc = document.getElementById('score-desc');
+        if (total >= 80) {
+          title.textContent = 'Excellent ATS Score';
+          desc.textContent = 'Your resume is well-optimized for ATS systems. Focus on the remaining recommendations for a perfect score.';
+        } else if (total >= 60) {
+          title.textContent = 'Good ATS Score';
+          desc.textContent = 'Your resume has solid ATS compatibility but there are areas to improve. Address the missing keywords and formatting issues below.';
+        } else if (total >= 40) {
+          title.textContent = 'Needs Improvement';
+          desc.textContent = 'Your resume may get filtered out by some ATS systems. Review the recommendations below to significantly improve your score.';
+        } else {
+          title.textContent = 'Low ATS Score';
+          desc.textContent = 'Your resume is likely to be rejected by most ATS systems. Major changes are needed in keyword matching and formatting.';
+        }
+
+        // Category bars
+        var bars = document.getElementById('category-bars');
+        bars.innerHTML = renderBar('Keywords', kwScore, 40) + renderBar('Formatting', fmtScore, 30) + renderBar('ATS Pitfalls', pitScore, 30);
+
+        // Keyword density chart
+        var chart = document.getElementById('keyword-chart');
+        var chartItems = topJd.slice(0, 15);
+        var resumeKw = extractKeywords(resumeInput.value);
+        var maxCount = 1;
+        chartItems.forEach(function(e) {
+          var v = Math.max(e[1], resumeKw[e[0]] || 0);
+          if (v > maxCount) maxCount = v;
+        });
+
+        chart.innerHTML = '<div class="chart-legend"><span class="legend-item"><span class="legend-dot" style="background:#3b82f6"></span> Job Description</span><span class="legend-item"><span class="legend-dot" style="background:#a855f7"></span> Your Resume</span></div>' +
+          chartItems.map(function(e) {
+            var kw = e[0];
+            var jdC = e[1];
+            var rC = resumeKw[kw] || 0;
+            var jdW = Math.max(4, (jdC / maxCount) * 100);
+            var rW = Math.max(rC > 0 ? 4 : 0, (rC / maxCount) * 100);
+            var isMatch = rC > 0;
+            return '<div class="chart-row' + (isMatch ? '' : ' chart-row-miss') + '">' +
+              '<span class="chart-label">' + kw + '</span>' +
+              '<div class="chart-bars">' +
+                '<div class="chart-bar chart-bar-jd" style="width:' + jdW + '%"><span>' + jdC + '</span></div>' +
+                '<div class="chart-bar chart-bar-resume" style="width:' + rW + '%"><span>' + rC + '</span></div>' +
+              '</div>' +
+            '</div>';
+          }).join('');
+
+        // Missing keywords
+        var mkDiv = document.getElementById('missing-keywords');
+        if (missing.length === 0) {
+          mkDiv.innerHTML = '<span class="pass-msg">All top keywords found in your resume!</span>';
+        } else {
+          mkDiv.innerHTML = missing.map(function(m) {
+            return '<span class="miss-tag">' + m.keyword + ' <small>(' + m.count + 'x in JD)</small></span>';
+          }).join('');
+        }
+
+        // Formatting results
+        var fmtDiv = document.getElementById('formatting-results');
+        fmtDiv.innerHTML = fmtChecks.map(function(c) {
+          return '<div class="check-item ' + (c.pass ? 'check-pass' : 'check-fail') + '">' +
+            '<span class="check-icon">' + (c.pass ? '&#10003;' : '&#10007;') + '</span>' +
+            '<div><strong>' + c.label + '</strong><p>' + c.detail + '</p></div>' +
+          '</div>';
+        }).join('');
+
+        // Pitfall results
+        var pitDiv = document.getElementById('pitfall-results');
+        pitDiv.innerHTML = pitChecks.map(function(c) {
+          return '<div class="check-item ' + (c.pass ? 'check-pass' : 'check-fail') + '">' +
+            '<span class="check-icon">' + (c.pass ? '&#10003;' : '&#10007;') + '</span>' +
+            '<div><strong>' + c.label + '</strong><p>' + c.detail + '</p></div>' +
+          '</div>';
+        }).join('');
+
+        // Recommendations
+        var recs = [];
+        if (missing.length > 0) {
+          recs.push({ priority: 'high', title: 'Add missing keywords', detail: 'Incorporate these keywords naturally into your resume: ' + missing.slice(0, 8).map(function(m) { return m.keyword; }).join(', ') + '. Place them in your skills section or within experience bullet points.' });
+        }
+        fmtChecks.forEach(function(c) {
+          if (!c.pass) recs.push({ priority: 'medium', title: 'Fix: ' + c.label, detail: c.detail });
+        });
+        pitChecks.forEach(function(c) {
+          if (!c.pass) recs.push({ priority: 'high', title: 'Fix: ' + c.label, detail: c.detail });
+        });
+        if (missing.length === 0 && recs.length === 0) {
+          recs.push({ priority: 'low', title: 'Great job!', detail: 'Your resume is well-optimized. Consider having a human reviewer check for tone and storytelling quality.' });
+        }
+
+        var recsDiv = document.getElementById('recommendations');
+        recsDiv.innerHTML = recs.map(function(r) {
+          var pColor = r.priority === 'high' ? '#ef4444' : r.priority === 'medium' ? '#f59e0b' : '#22c55e';
+          return '<div class="rec-item">' +
+            '<span class="rec-priority" style="background:' + pColor + '">' + r.priority.toUpperCase() + '</span>' +
+            '<div><strong>' + r.title + '</strong><p>' + r.detail + '</p></div>' +
+          '</div>';
+        }).join('');
+
+        results.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+
+      function renderBar(label, score, max) {
+        var pct = Math.round((score / max) * 100);
+        var color = pct >= 75 ? '#22c55e' : pct >= 50 ? '#f59e0b' : '#ef4444';
+        return '<div class="cat-bar">' +
+          '<div class="cat-bar-header"><span>' + label + '</span><span>' + score + ' / ' + max + '</span></div>' +
+          '<div class="cat-bar-track"><div class="cat-bar-fill" style="width:' + pct + '%;background:' + color + '"></div></div>' +
+        '</div>';
+      }
+
+      analyzeBtn.addEventListener('click', analyzeResume);
+    });
+  </script>
+
+  <style is:inline>
+    .page-content { max-width: 1000px; margin: 0 auto; padding: 2rem 1.5rem; }
+    .hero { text-align: center; padding: 3rem 0 2rem; }
+    .hero h1 { font-size: 2.2rem; font-weight: 800; margin-bottom: 0.5rem; color: var(--text-primary); }
+    .hero p { color: var(--text-secondary); font-size: 1.1rem; max-width: 700px; margin: 0 auto; line-height: 1.5; }
+
+    .content-section { margin-bottom: 3rem; }
+    .content-section h2 { font-size: 1.8rem; color: var(--text-primary); margin-bottom: 1.2rem; margin-top: 2.5rem; }
+
+    /* Input Panel */
+    .input-panel { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem; margin-bottom: 2rem; display: flex; flex-direction: column; gap: 1rem; }
+    .input-group { display: flex; flex-direction: column; gap: 0.4rem; }
+    .input-group label { font-size: 0.85rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; }
+    .input-group textarea { padding: 0.8rem; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary); font-size: 0.95rem; font-family: inherit; resize: vertical; line-height: 1.5; }
+    .input-group textarea:focus { outline: none; border-color: var(--accent-color, #3b82f6); }
+    .btn { padding: 0.7rem 1.4rem; border-radius: 8px; border: none; font-size: 1rem; font-weight: 600; cursor: pointer; transition: opacity 0.2s, transform 0.1s; }
+    .btn:active { transform: scale(0.97); }
+    .btn-primary { background: var(--accent-color, #3b82f6); color: #fff; }
+    .btn-primary:hover { opacity: 0.9; }
+
+    /* Score Overview */
+    .score-overview { display: flex; align-items: center; gap: 2rem; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 2rem; margin-bottom: 1.5rem; flex-wrap: wrap; }
+    .score-circle-wrap { position: relative; width: 140px; height: 140px; flex-shrink: 0; }
+    .score-circle { width: 100%; height: 100%; }
+    .score-value { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; }
+    .score-value span:first-child { font-size: 2.4rem; font-weight: 800; color: var(--text-primary); }
+    .score-label { display: block; font-size: 0.85rem; color: var(--text-secondary); }
+    .score-summary { flex: 1; min-width: 200px; }
+    .score-summary h2 { margin: 0 0 0.3rem 0; font-size: 1.5rem; color: var(--text-primary); }
+    .score-summary p { margin: 0 0 1rem 0; color: var(--text-secondary); line-height: 1.4; }
+
+    /* Category Bars */
+    .category-bars { display: flex; flex-direction: column; gap: 0.6rem; }
+    .cat-bar-header { display: flex; justify-content: space-between; font-size: 0.85rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 0.2rem; }
+    .cat-bar-track { height: 8px; background: var(--border-color); border-radius: 4px; overflow: hidden; }
+    .cat-bar-fill { height: 100%; border-radius: 4px; transition: width 0.8s ease-out; }
+
+    /* Cards */
+    .card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem; margin-bottom: 1.5rem; }
+    .card h3 { margin: 0 0 0.3rem 0; font-size: 1.2rem; color: var(--text-primary); }
+    .card-subtitle { margin: 0 0 1rem 0; color: var(--text-secondary); font-size: 0.9rem; }
+
+    /* Keyword Chart */
+    .chart-legend { display: flex; gap: 1.5rem; margin-bottom: 1rem; font-size: 0.85rem; color: var(--text-secondary); }
+    .legend-item { display: flex; align-items: center; gap: 0.4rem; }
+    .legend-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+    .keyword-chart { display: flex; flex-direction: column; gap: 0.5rem; }
+    .chart-row { display: flex; align-items: center; gap: 0.8rem; }
+    .chart-row-miss .chart-label { color: #ef4444; }
+    .chart-label { width: 120px; font-size: 0.85rem; font-weight: 600; color: var(--text-primary); text-align: right; flex-shrink: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .chart-bars { flex: 1; display: flex; flex-direction: column; gap: 2px; }
+    .chart-bar { height: 14px; border-radius: 3px; display: flex; align-items: center; justify-content: flex-end; padding-right: 6px; min-width: 0; transition: width 0.5s ease-out; }
+    .chart-bar span { font-size: 0.7rem; font-weight: 700; color: #fff; }
+    .chart-bar-jd { background: #3b82f6; }
+    .chart-bar-resume { background: #a855f7; }
+
+    /* Missing Keywords */
+    .tag-list { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+    .miss-tag { padding: 0.35rem 0.7rem; border-radius: 20px; font-size: 0.85rem; font-weight: 600; background: rgba(239, 68, 68, 0.12); color: #ef4444; }
+    .miss-tag small { font-weight: 400; opacity: 0.8; }
+    .pass-msg { color: #22c55e; font-weight: 600; }
+
+    /* Checklist */
+    .checklist { display: flex; flex-direction: column; gap: 0.75rem; }
+    .check-item { display: flex; gap: 0.75rem; align-items: flex-start; }
+    .check-icon { width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.85rem; font-weight: 700; flex-shrink: 0; margin-top: 2px; }
+    .check-pass .check-icon { background: rgba(34, 197, 94, 0.15); color: #22c55e; }
+    .check-fail .check-icon { background: rgba(239, 68, 68, 0.15); color: #ef4444; }
+    .check-item strong { display: block; font-size: 0.95rem; color: var(--text-primary); }
+    .check-item p { margin: 0.2rem 0 0 0; font-size: 0.85rem; color: var(--text-secondary); line-height: 1.4; }
+
+    /* Recommendations */
+    .recommendations-list { display: flex; flex-direction: column; gap: 0.75rem; }
+    .rec-item { display: flex; gap: 0.75rem; align-items: flex-start; }
+    .rec-priority { padding: 0.15rem 0.5rem; border-radius: 4px; font-size: 0.7rem; font-weight: 700; color: #fff; flex-shrink: 0; margin-top: 3px; }
+    .rec-item strong { display: block; font-size: 0.95rem; color: var(--text-primary); }
+    .rec-item p { margin: 0.2rem 0 0 0; font-size: 0.85rem; color: var(--text-secondary); line-height: 1.4; }
+
+    /* FAQ */
+    .faq-container { display: flex; flex-direction: column; gap: 1rem; margin-bottom: 2rem; }
+    .faq-item { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem; }
+    .faq-item h3 { margin: 0 0 0.5rem 0; font-size: 1.1rem; color: var(--text-primary); }
+    .faq-item p { margin: 0; color: var(--text-secondary); line-height: 1.5; }
+
+    @media (max-width: 768px) {
+      .hero h1 { font-size: 1.8rem; }
+      .score-overview { flex-direction: column; text-align: center; }
+      .score-summary { text-align: left; }
+      .chart-label { width: 80px; font-size: 0.75rem; }
+    }
+  </style>
+</SiteLayout>
