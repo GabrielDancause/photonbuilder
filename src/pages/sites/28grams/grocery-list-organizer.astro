@@ -1,0 +1,874 @@
+---
+import SiteLayout from '../../../layouts/SiteLayout.astro';
+
+const schema = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebApplication",
+      "name": "Grocery List Organizer — Smart Shopping List by Aisle",
+      "description": "Free grocery list organizer that auto-categorizes items by store aisle. Add items manually or paste recipe ingredients. Combine duplicates, sort by aisle, check off as you shop. Save multiple lists in your browser.",
+      "url": "https://28grams.vip/grocery-list-organizer",
+      "applicationCategory": "UtilitiesApplication",
+      "operatingSystem": "Any",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "author": {
+        "@type": "Organization",
+        "name": "28grams"
+      }
+    },
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "How does the grocery list organizer categorize items?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "The organizer uses a built-in database of common grocery items mapped to store aisles. When you add an item, it automatically assigns it to the correct category — produce, dairy, meat, bakery, frozen, canned goods, snacks, beverages, or household. You can also manually change the category if needed."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Can I import ingredients from a recipe?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes. Paste your recipe ingredient list into the bulk import box and the organizer will parse each line as a separate item, automatically detecting quantities and categorizing each ingredient by aisle. This makes it easy to build a shopping list from any recipe."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Does the grocery list save my data?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "All your grocery lists are saved in your browser's localStorage, so they persist between sessions without needing an account. Your data stays on your device and is never sent to a server. You can create and save multiple named lists."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How does duplicate item combining work?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "When you add an item that already exists in your list, the organizer detects the duplicate and combines quantities. For example, if you have '2 cups milk' and add '1 cup milk', it will merge them into '3 cups milk' in the dairy aisle. This prevents redundant entries and ensures accurate shopping."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What is the best way to organize a grocery list by aisle?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Sorting your grocery list by store aisle is the most efficient way to shop. Group items into produce, dairy, meat, bakery, frozen, canned goods, snacks, beverages, and household. This minimizes backtracking in the store. Our organizer does this automatically so you can walk through the store in one pass."
+          }
+        }
+      ]
+    }
+  ]
+};
+
+export const meta = {
+  title: "Grocery List Organizer | Sort by Aisle, Auto-Categorize Items",
+  description: "Free smart grocery list organizer. Auto-categorize items by store aisle, paste recipe ingredients, combine duplicates, check off as you shop. Save multiple lists in your browser.",
+  category: "tool",
+  published: "2024-06-10",
+};
+---
+
+<SiteLayout
+  site="28grams"
+  title="Grocery List Organizer | Sort by Aisle, Auto-Categorize Items"
+  description="Free smart grocery list organizer. Auto-categorize items by store aisle, paste recipe ingredients, combine duplicates, check off as you shop. Save multiple lists in your browser."
+  canonical="https://28grams.vip/grocery-list-organizer"
+  schema={schema}
+>
+  <style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Inter', sans-serif; background: #0a060a; color: #e0d0d8; min-height: 100vh; }
+code, .mono { font-family: 'JetBrains Mono', monospace; }
+.hero { text-align: center; padding: 48px 24px 24px; background: linear-gradient(180deg, #1a0a14 0%, #0a060a 100%); }
+.hero h1 { font-size: 2.4rem; font-weight: 900; color: #fff; margin-bottom: 6px; }
+.hero h1 span { background: linear-gradient(135deg, #C2185B, #ff6b9d); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+.hero p { color: #666; font-size: 0.95rem; max-width: 560px; margin: 0 auto; }
+.main { max-width: 900px; margin: 0 auto; padding: 32px 20px 40px; }
+
+/* List Manager */
+.list-manager {
+  background: #120c10;
+  border: 2px solid #2a1820;
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 20px;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+}
+.list-manager label { font-size: 0.85rem; font-weight: 700; color: #fff; }
+.list-select {
+  background: #1a1015;
+  border: 1px solid #2a1820;
+  border-radius: 8px;
+  padding: 8px 12px;
+  color: #fff;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.85rem;
+  min-width: 180px;
+  outline: none;
+  cursor: pointer;
+  flex: 1;
+}
+.list-select:focus { border-color: #C2185B; }
+
+/* Buttons */
+.btn {
+  background: #1a1015;
+  border: 1px solid #2a1820;
+  color: #c8b8c0;
+  padding: 8px 14px;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+.btn:hover { border-color: #C2185B; color: #fff; }
+.btn-primary { background: #C2185B; border-color: #C2185B; color: #fff; }
+.btn-primary:hover { background: #d81b60; }
+.btn-danger { border-color: #7f1d1d; color: #ef4444; }
+.btn-danger:hover { background: #7f1d1d; color: #fff; }
+
+/* Add Items */
+.add-section {
+  background: #120c10;
+  border: 2px solid #2a1820;
+  border-radius: 16px;
+  padding: 20px;
+  margin-bottom: 20px;
+}
+.add-section h3 { font-size: 1rem; font-weight: 700; color: #fff; margin-bottom: 12px; }
+.add-row {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+.add-input {
+  flex: 1;
+  background: #1a1015;
+  border: 1px solid #2a1820;
+  border-radius: 8px;
+  padding: 10px 14px;
+  color: #fff;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.9rem;
+  outline: none;
+}
+.add-input:focus { border-color: #C2185B; }
+.category-select {
+  background: #1a1015;
+  border: 1px solid #2a1820;
+  border-radius: 8px;
+  padding: 10px 12px;
+  color: #fff;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.85rem;
+  outline: none;
+  cursor: pointer;
+  min-width: 140px;
+}
+.category-select:focus { border-color: #C2185B; }
+
+/* Bulk Import */
+.bulk-toggle {
+  font-size: 0.82rem;
+  color: #C2185B;
+  cursor: pointer;
+  background: none;
+  border: none;
+  font-family: 'Inter', sans-serif;
+  font-weight: 600;
+  padding: 0;
+}
+.bulk-toggle:hover { text-decoration: underline; }
+.bulk-area {
+  display: none;
+  margin-top: 12px;
+}
+.bulk-area.show { display: block; }
+.bulk-textarea {
+  width: 100%;
+  background: #1a1015;
+  border: 1px solid #2a1820;
+  border-radius: 8px;
+  padding: 12px;
+  color: #fff;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.85rem;
+  outline: none;
+  min-height: 120px;
+  resize: vertical;
+}
+.bulk-textarea:focus { border-color: #C2185B; }
+.bulk-textarea::placeholder { color: #555; }
+
+/* Controls */
+.controls-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 20px;
+  align-items: center;
+}
+.controls-row .spacer { flex: 1; }
+.item-count { font-size: 0.82rem; color: #888; }
+
+/* Aisle Sections */
+.aisle-section {
+  background: #120c10;
+  border: 2px solid #2a1820;
+  border-radius: 16px;
+  overflow: hidden;
+  margin-bottom: 16px;
+}
+.aisle-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 20px;
+  background: #150d12;
+  border-bottom: 1px solid #2a1820;
+  cursor: pointer;
+  user-select: none;
+}
+.aisle-header:hover { background: #1a1015; }
+.aisle-title { font-size: 0.95rem; font-weight: 700; color: #fff; }
+.aisle-count { font-size: 0.75rem; color: #888; background: #1a1015; padding: 2px 8px; border-radius: 10px; }
+.aisle-items { padding: 0; }
+.aisle-section.collapsed .aisle-items { display: none; }
+
+/* Items */
+.grocery-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 20px;
+  border-bottom: 1px solid #1a1015;
+  transition: background 0.15s;
+}
+.grocery-item:last-child { border-bottom: none; }
+.grocery-item:hover { background: #1a1015; }
+.grocery-item.checked { opacity: 0.5; }
+.grocery-item.checked .item-name { text-decoration: line-through; }
+.item-check {
+  width: 20px;
+  height: 20px;
+  border: 2px solid #2a1820;
+  border-radius: 6px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  background: #1a1015;
+  transition: all 0.15s;
+  color: transparent;
+  font-size: 0.75rem;
+}
+.item-check:hover { border-color: #C2185B; }
+.item-check.checked { background: #C2185B; border-color: #C2185B; color: #fff; }
+.item-name { flex: 1; font-size: 0.9rem; color: #c8b8c0; }
+.item-qty { font-size: 0.82rem; color: #f97316; font-weight: 600; font-family: 'JetBrains Mono', monospace; min-width: 60px; text-align: right; }
+.item-delete {
+  background: none;
+  border: none;
+  color: #555;
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 4px;
+  transition: color 0.15s;
+}
+.item-delete:hover { color: #ef4444; }
+
+/* Empty State */
+.empty-state {
+  text-align: center;
+  padding: 48px 20px;
+  color: #555;
+}
+.empty-state .empty-icon { font-size: 2.5rem; margin-bottom: 12px; }
+.empty-state p { font-size: 0.9rem; }
+
+/* SEO content */
+.content { max-width: 800px; margin: 0 auto; padding: 0 20px; }
+.content h2 { font-size: 1.4rem; font-weight: 800; color: #fff; margin: 40px 0 14px; }
+.content h2:first-child { margin-top: 0; }
+.content h3 { font-size: 1.1rem; font-weight: 700; color: #ddd; margin: 24px 0 10px; }
+.content p { font-size: 0.9rem; color: #777; line-height: 1.8; margin-bottom: 14px; }
+.content ul, .content ol { padding-left: 20px; margin-bottom: 14px; }
+.content li { font-size: 0.88rem; color: #777; line-height: 1.8; margin-bottom: 4px; }
+.content strong { color: #ccc; }
+
+/* FAQ */
+.faq-list { margin-bottom: 40px; }
+.faq-item { border-bottom: 1px solid #1a1015; padding: 16px 0; }
+.faq-item:last-child { border-bottom: none; }
+.faq-q { font-size: 0.95rem; font-weight: 700; color: #ddd; margin-bottom: 8px; }
+.faq-a { font-size: 0.88rem; color: #777; line-height: 1.8; }
+
+/* Related */
+.related-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+  margin-top: 12px;
+}
+.related-link {
+  display: block;
+  background: #120c10;
+  border: 1px solid #2a1820;
+  border-radius: 12px;
+  padding: 16px;
+  text-decoration: none;
+  transition: all 0.2s;
+}
+.related-link:hover { border-color: #C2185B; transform: translateY(-2px); }
+.related-link h4 { font-size: 0.85rem; color: #fff; font-weight: 700; margin-bottom: 4px; }
+.related-link p { font-size: 0.75rem; color: #666; }
+
+@media (max-width: 600px) {
+  .hero h1 { font-size: 1.8rem; }
+  .add-row { flex-direction: column; }
+  .category-select { min-width: 100%; }
+  .list-manager { flex-direction: column; align-items: stretch; }
+  .list-select { min-width: 100%; }
+  .controls-row { justify-content: center; }
+  .item-qty { min-width: 40px; }
+}
+  </style>
+
+<div class="hero">
+  <h1>Grocery List <span>Organizer</span></h1>
+  <p>Smart shopping list that auto-sorts by store aisle. Add items, paste recipe ingredients, check off as you shop. All data saved locally in your browser.</p>
+</div>
+
+<div class="main">
+
+  <!-- List Manager -->
+  <div class="list-manager">
+    <label>List:</label>
+    <select class="list-select" id="listSelect"></select>
+    <button class="btn" id="newListBtn">+ New List</button>
+    <button class="btn" id="renameListBtn">Rename</button>
+    <button class="btn btn-danger" id="deleteListBtn">Delete</button>
+  </div>
+
+  <!-- Add Items -->
+  <div class="add-section">
+    <h3>Add Items</h3>
+    <div class="add-row">
+      <input type="text" class="add-input" id="itemInput" placeholder="e.g., 2 lbs chicken breast, 1 dozen eggs, bananas...">
+      <select class="category-select" id="categorySelect">
+        <option value="auto">Auto-detect aisle</option>
+        <option value="produce">Produce</option>
+        <option value="dairy">Dairy</option>
+        <option value="meat">Meat & Seafood</option>
+        <option value="bakery">Bakery</option>
+        <option value="frozen">Frozen</option>
+        <option value="canned">Canned Goods</option>
+        <option value="snacks">Snacks</option>
+        <option value="beverages">Beverages</option>
+        <option value="household">Household</option>
+      </select>
+      <button class="btn btn-primary" id="addItemBtn">Add</button>
+    </div>
+    <button class="bulk-toggle" id="bulkToggle">Paste recipe ingredients (bulk import)</button>
+    <div class="bulk-area" id="bulkArea">
+      <textarea class="bulk-textarea" id="bulkTextarea" placeholder="Paste ingredients, one per line:&#10;2 cups all-purpose flour&#10;1 cup whole milk&#10;3 large eggs&#10;1/2 cup butter, softened&#10;1 tsp vanilla extract"></textarea>
+      <div style="margin-top:8px; display:flex; gap:8px;">
+        <button class="btn btn-primary" id="bulkImportBtn">Import All</button>
+        <button class="btn" id="bulkClearBtn">Clear</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Controls -->
+  <div class="controls-row">
+    <span class="item-count" id="itemCount">0 items</span>
+    <div class="spacer"></div>
+    <button class="btn" id="uncheckAllBtn">Uncheck All</button>
+    <button class="btn" id="removeCheckedBtn">Remove Checked</button>
+    <button class="btn btn-danger" id="clearAllBtn">Clear List</button>
+  </div>
+
+  <!-- Grocery List by Aisle -->
+  <div id="groceryList"></div>
+
+</div>
+
+<div class="content">
+  <h2>How to Use the Grocery List Organizer</h2>
+  <p>This <strong>grocery list organizer</strong> helps you plan your shopping trips efficiently by automatically sorting items into store aisle categories. Add items one at a time or paste an entire recipe ingredient list to build your shopping list in seconds.</p>
+  <h3>Adding Items</h3>
+  <p>Type an item into the input box with an optional quantity (e.g., "2 lbs chicken breast" or "bananas"). The organizer automatically detects the aisle category. You can also manually select a category from the dropdown if the auto-detection doesn't match your store's layout.</p>
+  <h3>Bulk Import from Recipes</h3>
+  <p>Click "Paste recipe ingredients" to open the bulk import area. Paste your recipe's ingredient list — one ingredient per line — and click "Import All." Each ingredient is parsed and categorized automatically, making it easy to go from recipe to shopping list in one step.</p>
+  <h3>Shopping with Your List</h3>
+  <p>Items are grouped by aisle so you can work through the store section by section without backtracking. Tap the checkbox next to each item as you add it to your cart. Checked items dim and move visually to show your progress. When you're done, use "Remove Checked" to clean up.</p>
+
+  <h2>Smart Features</h2>
+  <h3>Duplicate Combining</h3>
+  <p>If you add "2 cups milk" and later add "1 cup milk," the organizer combines them into "3 cups milk" — no duplicate entries cluttering your list. This works across recipe imports too, so combining multiple recipes into one shopping list is seamless.</p>
+  <h3>Multiple Saved Lists</h3>
+  <p>Create separate lists for different purposes — a weekly grocery run, a party prep list, a pantry restock. All lists are saved in your browser's localStorage and persist between sessions. No account needed.</p>
+
+  <h2>Store Aisle Categories</h2>
+  <p>Items are sorted into nine standard grocery store sections:</p>
+  <ul>
+    <li><strong>Produce</strong> — Fresh fruits, vegetables, herbs, salad greens</li>
+    <li><strong>Dairy</strong> — Milk, cheese, yogurt, butter, eggs, cream</li>
+    <li><strong>Meat & Seafood</strong> — Chicken, beef, pork, fish, shrimp, deli meats</li>
+    <li><strong>Bakery</strong> — Bread, rolls, tortillas, bagels, pastries</li>
+    <li><strong>Frozen</strong> — Frozen vegetables, pizza, ice cream, frozen meals</li>
+    <li><strong>Canned Goods</strong> — Canned beans, tomatoes, soups, pasta, rice, sauces, spices</li>
+    <li><strong>Snacks</strong> — Chips, crackers, nuts, cookies, candy, granola bars</li>
+    <li><strong>Beverages</strong> — Water, juice, soda, coffee, tea, wine, beer</li>
+    <li><strong>Household</strong> — Paper towels, cleaning supplies, trash bags, foil, plastic wrap</li>
+  </ul>
+
+  <h2>Frequently Asked Questions</h2>
+  <div class="faq-list">
+    <div class="faq-item">
+      <div class="faq-q">How does the grocery list organizer categorize items?</div>
+      <div class="faq-a">The organizer uses a built-in database of common grocery items mapped to store aisles. When you add an item, it automatically assigns it to the correct category — produce, dairy, meat, bakery, frozen, canned goods, snacks, beverages, or household. You can also manually change the category if needed.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q">Can I import ingredients from a recipe?</div>
+      <div class="faq-a">Yes. Paste your recipe ingredient list into the bulk import box and the organizer will parse each line as a separate item, automatically detecting quantities and categorizing each ingredient by aisle. This makes it easy to build a shopping list from any recipe.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q">Does the grocery list save my data?</div>
+      <div class="faq-a">All your grocery lists are saved in your browser's localStorage, so they persist between sessions without needing an account. Your data stays on your device and is never sent to a server. You can create and save multiple named lists.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q">How does duplicate item combining work?</div>
+      <div class="faq-a">When you add an item that already exists in your list, the organizer detects the duplicate and combines quantities. For example, if you have "2 cups milk" and add "1 cup milk", it will merge them into "3 cups milk" in the dairy aisle. This prevents redundant entries and ensures accurate shopping.</div>
+    </div>
+    <div class="faq-item">
+      <div class="faq-q">What is the best way to organize a grocery list by aisle?</div>
+      <div class="faq-a">Sorting your grocery list by store aisle is the most efficient way to shop. Group items into produce, dairy, meat, bakery, frozen, canned goods, snacks, beverages, and household. This minimizes backtracking in the store. Our organizer does this automatically so you can walk through the store in one pass.</div>
+    </div>
+  </div>
+
+  <h2>Related Kitchen Tools</h2>
+  <div class="related-grid">
+    <a href="/recipe-calorie-calculator" class="related-link">
+      <h4>Recipe Calorie Calculator</h4>
+      <p>Calculate nutrition facts for any recipe</p>
+    </a>
+    <a href="/unit-converter-cooking" class="related-link">
+      <h4>Cooking Unit Converter</h4>
+      <p>Convert cups, grams, ounces, and more</p>
+    </a>
+    <a href="/meal-delivery-services" class="related-link">
+      <h4>Meal Delivery Services</h4>
+      <p>Compare top meal kit and delivery options</p>
+    </a>
+  </div>
+</div>
+
+<script is:inline>
+  // ── Aisle categories and keyword mapping ──
+  const AISLES = {
+    produce: { label: 'Produce', icon: '🥬', order: 1 },
+    dairy: { label: 'Dairy', icon: '🥛', order: 2 },
+    meat: { label: 'Meat & Seafood', icon: '🥩', order: 3 },
+    bakery: { label: 'Bakery', icon: '🍞', order: 4 },
+    frozen: { label: 'Frozen', icon: '🧊', order: 5 },
+    canned: { label: 'Canned Goods & Pantry', icon: '🥫', order: 6 },
+    snacks: { label: 'Snacks', icon: '🍿', order: 7 },
+    beverages: { label: 'Beverages', icon: '🥤', order: 8 },
+    household: { label: 'Household', icon: '🧹', order: 9 }
+  };
+
+  const AISLE_KEYWORDS = {
+    produce: ['apple','apples','avocado','banana','bananas','basil','bell pepper','berries','berry','blueberry','blueberries','broccoli','cabbage','carrot','carrots','celery','cherry','cherries','cilantro','corn','cucumber','dill','eggplant','fruit','garlic','ginger','grape','grapes','green bean','green beans','green onion','herbs','jalapeno','kale','leek','lemon','lemons','lettuce','lime','limes','mango','melon','mint','mushroom','mushrooms','nectarine','okra','onion','onions','orange','oranges','parsley','peach','peaches','pear','pears','peas','pepper','peppers','pineapple','plum','potato','potatoes','radish','raspberry','raspberries','romaine','rosemary','salad','scallion','shallot','spinach','sprouts','squash','strawberry','strawberries','sweet potato','thyme','tomato','tomatoes','watermelon','zucchini','arugula','asparagus','beet','beets','bok choy','chive','chives','collard','endive','fennel','fig','figs','guava','jicama','kiwi','kohlrabi','lemongrass','papaya','parsnip','plantain','pomegranate','rhubarb','rutabaga','sage','snap peas','turnip','yam'],
+    dairy: ['butter','cheese','cheddar','colby','cottage cheese','cream','cream cheese','egg','eggs','feta','gouda','greek yogurt','half and half','heavy cream','milk','mozzarella','parmesan','provolone','ricotta','sour cream','swiss','whipped cream','whipping cream','yogurt','brie','camembert','goat cheese','gruyere','jack cheese','mascarpone','monterey jack','muenster','neufchatel','queso','romano','string cheese','velveeta'],
+    meat: ['bacon','beef','brisket','chicken','chicken breast','chicken thigh','chorizo','clam','clams','cod','crab','deli','fish','ground beef','ground turkey','ham','hot dog','hot dogs','jerky','lamb','lobster','mahi','meat','meatball','mussel','oyster','pepperoni','pork','prawn','rib','ribs','roast','salmon','salami','sardine','sausage','scallop','shrimp','sirloin','steak','tenderloin','tilapia','trout','tuna','turkey','veal','venison'],
+    bakery: ['bagel','bagels','baguette','bread','brioche','bun','buns','ciabatta','cornbread','crescent','croissant','dinner roll','english muffin','flatbread','focaccia','hamburger bun','kaiser','loaf','muffin','naan','pita','pretzel','roll','rolls','rye','sourdough','tortilla','tortillas','wrap','wraps'],
+    frozen: ['frozen','ice cream','gelato','popsicle','sorbet','frozen pizza','frozen vegetables','frozen fruit','frozen dinner','frozen meal','frozen fries','frozen waffles','frozen burrito','frozen pie','tv dinner','lean cuisine','hot pocket','tater tot','fish stick','ice pop','sherbet','frozen corn','frozen peas','frozen berries','edamame'],
+    canned: ['baking powder','baking soda','bouillon','broth','brown rice','brown sugar','can of','canned','canola oil','cardamom','chickpea','chickpeas','chili powder','cinnamon','cloves','cocoa','coconut milk','cooking spray','cornmeal','cornstarch','couscous','cumin','curry','dry beans','elbow','extract','farro','flour','garlic powder','gelatin','grain','granulated','honey','jam','jelly','ketchup','lentil','lentils','linguine','maple syrup','marinara','mayonnaise','molasses','mustard','noodle','noodles','nutmeg','oat','oatmeal','oats','olive oil','onion powder','oregano','orzo','paprika','pasta','peanut butter','penne','powdered sugar','quinoa','ramen','ranch','red pepper flakes','rice','rigatoni','salsa','salt','sauce','sesame oil','soy sauce','spaghetti','spice','sriracha','stock','sugar','syrup','taco seasoning','tahini','thyme','tomato paste','tomato sauce','turmeric','vanilla','vegetable oil','vinegar','white rice','worcestershire','yeast'],
+    snacks: ['candy','cereal','chip','chips','cookie','cookies','cracker','crackers','dried fruit','fruit snack','goldfish','granola','granola bar','gummy','jerky','nut','nuts','popcorn','pretzels','protein bar','raisin','raisins','rice cake','snack','trail mix','almond','almonds','cashew','cashews','mixed nuts','peanut','peanuts','pecan','pecans','pistachio','pistachios','sunflower seeds','walnut','walnuts'],
+    beverages: ['ale','beer','chai','club soda','coconut water','coffee','coke','diet coke','energy drink','gatorade','ginger ale','iced tea','juice','kombucha','lager','lemonade','mineral water','orange juice','pepsi','seltzer','smoothie','soda','sparkling water','sprite','tea','tonic','water','wine','la croix','cold brew','espresso','creamer'],
+    household: ['air freshener','aluminum foil','bag','bags','battery','bleach','broom','cleaner','cling wrap','clorox','detergent','dish soap','disinfectant','dryer sheet','fabric softener','foil','garbage bag','glass cleaner','hand soap','laundry','light bulb','lysol','napkin','napkins','paper plate','paper towel','paper towels','parchment','parchment paper','plastic bag','plastic wrap','sandwich bag','scrub','soap','sponge','straw','straws','tissue','tissues','toilet paper','toothpaste','toothbrush','trash bag','trash bags','wax paper','wipe','wipes','ziploc']
+  };
+
+  const UNITS = ['oz','ounce','ounces','lb','lbs','pound','pounds','cup','cups','tsp','tbsp','tablespoon','tablespoons','teaspoon','teaspoons','quart','quarts','gallon','gallons','pint','pints','ml','liter','liters','g','gram','grams','kg','can','cans','bag','bags','box','boxes','bunch','bunches','head','heads','clove','cloves','slice','slices','piece','pieces','dozen','stick','sticks','package','packages','pkg','jar','jars','bottle','bottles','container','large','medium','small','whole'];
+
+  const STORAGE_KEY = '28g_grocery_lists';
+
+  // ── State ──
+  let lists = {};
+  let currentListId = null;
+
+  // ── DOM ──
+  const listSelect = document.getElementById('listSelect');
+  const newListBtn = document.getElementById('newListBtn');
+  const renameListBtn = document.getElementById('renameListBtn');
+  const deleteListBtn = document.getElementById('deleteListBtn');
+  const itemInput = document.getElementById('itemInput');
+  const categorySelect = document.getElementById('categorySelect');
+  const addItemBtn = document.getElementById('addItemBtn');
+  const bulkToggle = document.getElementById('bulkToggle');
+  const bulkArea = document.getElementById('bulkArea');
+  const bulkTextarea = document.getElementById('bulkTextarea');
+  const bulkImportBtn = document.getElementById('bulkImportBtn');
+  const bulkClearBtn = document.getElementById('bulkClearBtn');
+  const uncheckAllBtn = document.getElementById('uncheckAllBtn');
+  const removeCheckedBtn = document.getElementById('removeCheckedBtn');
+  const clearAllBtn = document.getElementById('clearAllBtn');
+  const groceryListEl = document.getElementById('groceryList');
+  const itemCountEl = document.getElementById('itemCount');
+
+  // ── LocalStorage ──
+  function loadData() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (raw) {
+        const data = JSON.parse(raw);
+        lists = data.lists || {};
+        currentListId = data.currentListId || null;
+      }
+    } catch (e) { /* ignore */ }
+    if (Object.keys(lists).length === 0) {
+      const id = genId();
+      lists[id] = { name: 'My Grocery List', items: [] };
+      currentListId = id;
+    }
+    if (!currentListId || !lists[currentListId]) {
+      currentListId = Object.keys(lists)[0];
+    }
+  }
+
+  function saveData() {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({ lists, currentListId }));
+  }
+
+  function genId() {
+    return Date.now().toString(36) + Math.random().toString(36).slice(2, 7);
+  }
+
+  // ── Categorization ──
+  function detectAisle(text) {
+    const lower = text.toLowerCase();
+    let bestMatch = 'canned';
+    let bestLen = 0;
+    for (const [aisle, keywords] of Object.entries(AISLE_KEYWORDS)) {
+      for (const kw of keywords) {
+        if (lower.includes(kw) && kw.length > bestLen) {
+          bestMatch = aisle;
+          bestLen = kw.length;
+        }
+      }
+    }
+    return bestMatch;
+  }
+
+  // ── Parsing ──
+  function parseItem(text) {
+    text = text.trim();
+    if (!text) return null;
+    let qty = '';
+    let name = text;
+
+    // Try to extract leading quantity: "2 cups milk", "1/2 lb chicken", "3 large eggs"
+    const qtyMatch = text.match(/^([\d]+[\d\/\.\s]*(?:\s*(?:and\s+)?[\d\/\.]+)?)\s*(.*)/i);
+    if (qtyMatch) {
+      const numPart = qtyMatch[1].trim();
+      let rest = qtyMatch[2];
+      // Check if next word is a unit
+      const unitMatch = rest.match(new RegExp('^(' + UNITS.join('|') + ')\\b\\s*(.*)', 'i'));
+      if (unitMatch) {
+        qty = numPart + ' ' + unitMatch[1];
+        name = unitMatch[2] || rest;
+      } else {
+        qty = numPart;
+        name = rest || text;
+      }
+    }
+
+    // Clean up name
+    name = name.replace(/^(of\s+)/i, '').replace(/,\s*$/, '').trim();
+    if (!name) { name = text; qty = ''; }
+
+    return { qty, name };
+  }
+
+  function normalizeItemName(name) {
+    return name.toLowerCase().replace(/[^a-z0-9 ]/g, '').replace(/\s+/g, ' ').trim();
+  }
+
+  // ── Quantity combining ──
+  function addQuantities(q1, q2) {
+    if (!q1) return q2;
+    if (!q2) return q1;
+
+    // Try to extract numeric + unit from both
+    const parse = (q) => {
+      const m = q.match(/^([\d\/\.\s]+)\s*(.*)/);
+      if (m) {
+        let num = m[1].trim();
+        // Handle fractions
+        if (num.includes('/')) {
+          const parts = num.split('/');
+          num = parseFloat(parts[0]) / parseFloat(parts[1]);
+        } else {
+          num = parseFloat(num);
+        }
+        return { num: isNaN(num) ? null : num, unit: m[2].trim().toLowerCase() };
+      }
+      return { num: null, unit: q.trim().toLowerCase() };
+    };
+
+    const p1 = parse(q1);
+    const p2 = parse(q2);
+
+    if (p1.num !== null && p2.num !== null && p1.unit === p2.unit) {
+      const total = p1.num + p2.num;
+      const display = Number.isInteger(total) ? total.toString() : total.toFixed(1).replace(/\.0$/, '');
+      return display + (p1.unit ? ' ' + p1.unit : '');
+    }
+
+    return q1 + ' + ' + q2;
+  }
+
+  // ── Core: add item ──
+  function addItem(rawText, forcedCategory) {
+    const parsed = parseItem(rawText);
+    if (!parsed) return;
+
+    const list = lists[currentListId];
+    const normalized = normalizeItemName(parsed.name);
+    const aisle = forcedCategory && forcedCategory !== 'auto' ? forcedCategory : detectAisle(rawText);
+
+    // Check for duplicate
+    const existing = list.items.find(item => normalizeItemName(item.name) === normalized && item.aisle === aisle);
+    if (existing) {
+      existing.qty = addQuantities(existing.qty, parsed.qty);
+    } else {
+      list.items.push({
+        id: genId(),
+        name: parsed.name,
+        qty: parsed.qty,
+        aisle,
+        checked: false
+      });
+    }
+
+    saveData();
+    render();
+  }
+
+  // ── Rendering ──
+  function render() {
+    renderListSelect();
+    renderGroceryList();
+    updateItemCount();
+  }
+
+  function renderListSelect() {
+    listSelect.innerHTML = '';
+    for (const [id, list] of Object.entries(lists)) {
+      const opt = document.createElement('option');
+      opt.value = id;
+      opt.textContent = list.name;
+      if (id === currentListId) opt.selected = true;
+      listSelect.appendChild(opt);
+    }
+  }
+
+  function renderGroceryList() {
+    const list = lists[currentListId];
+    if (!list || list.items.length === 0) {
+      groceryListEl.innerHTML = '<div class="empty-state"><div class="empty-icon">🛒</div><p>Your grocery list is empty. Add items above to get started.</p></div>';
+      return;
+    }
+
+    // Group by aisle
+    const groups = {};
+    for (const item of list.items) {
+      if (!groups[item.aisle]) groups[item.aisle] = [];
+      groups[item.aisle].push(item);
+    }
+
+    // Sort aisles by order
+    const sortedAisles = Object.keys(groups).sort((a, b) => {
+      return (AISLES[a] ? AISLES[a].order : 99) - (AISLES[b] ? AISLES[b].order : 99);
+    });
+
+    let html = '';
+    for (const aisle of sortedAisles) {
+      const info = AISLES[aisle] || { label: aisle, icon: '📦', order: 99 };
+      const items = groups[aisle];
+      const checkedCount = items.filter(i => i.checked).length;
+      html += '<div class="aisle-section">';
+      html += '<div class="aisle-header" data-aisle="' + aisle + '">';
+      html += '<span class="aisle-title">' + info.icon + ' ' + info.label + '</span>';
+      html += '<span class="aisle-count">' + checkedCount + '/' + items.length + '</span>';
+      html += '</div>';
+      html += '<div class="aisle-items">';
+      for (const item of items) {
+        html += '<div class="grocery-item' + (item.checked ? ' checked' : '') + '" data-id="' + item.id + '">';
+        html += '<div class="item-check' + (item.checked ? ' checked' : '') + '" data-id="' + item.id + '">&#10003;</div>';
+        html += '<span class="item-name">' + escHtml(item.name) + '</span>';
+        if (item.qty) html += '<span class="item-qty">' + escHtml(item.qty) + '</span>';
+        html += '<button class="item-delete" data-id="' + item.id + '" title="Remove">&times;</button>';
+        html += '</div>';
+      }
+      html += '</div></div>';
+    }
+    groceryListEl.innerHTML = html;
+
+    // Attach events
+    groceryListEl.querySelectorAll('.item-check').forEach(el => {
+      el.addEventListener('click', () => toggleCheck(el.getAttribute('data-id')));
+    });
+    groceryListEl.querySelectorAll('.item-delete').forEach(el => {
+      el.addEventListener('click', () => deleteItem(el.getAttribute('data-id')));
+    });
+    groceryListEl.querySelectorAll('.aisle-header').forEach(el => {
+      el.addEventListener('click', () => {
+        el.parentElement.classList.toggle('collapsed');
+      });
+    });
+  }
+
+  function updateItemCount() {
+    const list = lists[currentListId];
+    if (!list) return;
+    const total = list.items.length;
+    const checked = list.items.filter(i => i.checked).length;
+    itemCountEl.textContent = total + ' item' + (total !== 1 ? 's' : '') + (checked > 0 ? ' (' + checked + ' checked)' : '');
+  }
+
+  function escHtml(str) {
+    const div = document.createElement('div');
+    div.textContent = str;
+    return div.innerHTML;
+  }
+
+  // ── Actions ──
+  function toggleCheck(id) {
+    const list = lists[currentListId];
+    const item = list.items.find(i => i.id === id);
+    if (item) { item.checked = !item.checked; saveData(); render(); }
+  }
+
+  function deleteItem(id) {
+    const list = lists[currentListId];
+    list.items = list.items.filter(i => i.id !== id);
+    saveData();
+    render();
+  }
+
+  // ── Event Listeners ──
+  addItemBtn.addEventListener('click', () => {
+    const text = itemInput.value.trim();
+    if (!text) return;
+    addItem(text, categorySelect.value);
+    itemInput.value = '';
+    categorySelect.value = 'auto';
+  });
+
+  itemInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') {
+      addItemBtn.click();
+    }
+  });
+
+  bulkToggle.addEventListener('click', () => {
+    bulkArea.classList.toggle('show');
+  });
+
+  bulkImportBtn.addEventListener('click', () => {
+    const lines = bulkTextarea.value.split('\n').map(l => l.trim()).filter(Boolean);
+    for (const line of lines) {
+      // Remove leading bullets, dashes, numbers
+      const cleaned = line.replace(/^[\-\*\u2022\d\.]+\s*/, '');
+      if (cleaned) addItem(cleaned, 'auto');
+    }
+    bulkTextarea.value = '';
+    bulkArea.classList.remove('show');
+  });
+
+  bulkClearBtn.addEventListener('click', () => {
+    bulkTextarea.value = '';
+  });
+
+  uncheckAllBtn.addEventListener('click', () => {
+    const list = lists[currentListId];
+    list.items.forEach(i => i.checked = false);
+    saveData();
+    render();
+  });
+
+  removeCheckedBtn.addEventListener('click', () => {
+    const list = lists[currentListId];
+    list.items = list.items.filter(i => !i.checked);
+    saveData();
+    render();
+  });
+
+  clearAllBtn.addEventListener('click', () => {
+    if (!confirm('Clear all items from this list?')) return;
+    lists[currentListId].items = [];
+    saveData();
+    render();
+  });
+
+  listSelect.addEventListener('change', () => {
+    currentListId = listSelect.value;
+    saveData();
+    render();
+  });
+
+  newListBtn.addEventListener('click', () => {
+    const name = prompt('New list name:', 'Shopping List');
+    if (!name) return;
+    const id = genId();
+    lists[id] = { name, items: [] };
+    currentListId = id;
+    saveData();
+    render();
+  });
+
+  renameListBtn.addEventListener('click', () => {
+    const current = lists[currentListId];
+    const name = prompt('Rename list:', current.name);
+    if (!name) return;
+    current.name = name;
+    saveData();
+    render();
+  });
+
+  deleteListBtn.addEventListener('click', () => {
+    if (Object.keys(lists).length <= 1) {
+      alert('You must have at least one list.');
+      return;
+    }
+    if (!confirm('Delete "' + lists[currentListId].name + '"?')) return;
+    delete lists[currentListId];
+    currentListId = Object.keys(lists)[0];
+    saveData();
+    render();
+  });
+
+  // ── Init ──
+  loadData();
+  render();
+</script>
+
+</SiteLayout>
