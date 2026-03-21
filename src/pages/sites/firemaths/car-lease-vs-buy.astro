@@ -1,0 +1,1404 @@
+---
+import SiteLayout from "../../../layouts/SiteLayout.astro";
+
+const schema = {
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "Lease vs Buy Car Calculator",
+  "url": "https://firemaths.info/car-lease-vs-buy",
+  "description": "Compare the total cost of leasing versus buying a car over 3, 5, or 7 years. See breakeven analysis, equity position, cost per mile, and a clear verdict with savings amount.",
+  "applicationCategory": "FinanceApplication",
+  "operatingSystem": "All",
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "USD"
+  }
+};
+
+const faqSchema = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "Is it cheaper to lease or buy a car?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "It depends on how long you plan to keep the vehicle. Leasing typically costs less per month but you never build equity. Buying costs more upfront and in monthly payments, but once the loan is paid off you own an asset. Over 5-7 years, buying is almost always cheaper because you avoid perpetual lease payments. However, if you prefer driving a new car every 2-3 years, leasing may suit your lifestyle despite the higher long-term cost."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What is a residual value in a car lease?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "The residual value is the estimated worth of the vehicle at the end of the lease term. It is set by the leasing company at the start of the lease and determines how much depreciation you pay for. A higher residual value means lower monthly payments because you're financing a smaller portion of the car's depreciation. Residual values are typically expressed as a percentage of MSRP — for example, a 55% residual on a $40,000 car means the car is expected to be worth $22,000 at lease end."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What happens when a car lease ends?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "At the end of a car lease, you typically have three options: return the vehicle and walk away, purchase the vehicle at the predetermined residual value, or trade it in and start a new lease. If you return the car, you may owe fees for excess mileage (usually $0.15-$0.25 per mile over the limit) and any wear and tear beyond normal use. If the car is worth more than the residual value, buying it can be a good deal."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How does mileage affect lease vs buy decisions?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Leases come with annual mileage limits, typically 10,000-15,000 miles per year. Exceeding the limit incurs per-mile charges of $0.15-$0.25. If you drive more than 15,000 miles annually, buying is usually the better financial choice because you avoid mileage penalties. High-mileage drivers who lease often pay significantly more than expected due to excess mileage fees at lease end."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Should I put a down payment on a lease?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Financial experts generally advise against large down payments on leases. Unlike buying, where a down payment builds equity, a lease down payment simply prepays depreciation. If the car is totaled or stolen early in the lease, you may lose that down payment entirely since gap insurance only covers the remaining lease balance, not your upfront cash. A small down payment or first month's payment is usually sufficient."
+      }
+    }
+  ]
+};
+
+export const meta = {
+  title: "Lease vs Buy Car Calculator | firemaths.info",
+  description: "Compare the total cost of leasing versus buying a car over 3, 5, or 7 years. Breakeven analysis, equity tracking, cost per mile, and clear verdict with savings amount.",
+  category: "tool",
+  published: "2026-03-21",
+};
+---
+
+<SiteLayout
+  site="firemaths"
+  title="Lease vs Buy Car Calculator | firemaths.info"
+  description="Compare the total cost of leasing versus buying a car over 3, 5, or 7 years. Breakeven analysis, equity tracking, cost per mile, and clear verdict with savings amount."
+  canonical="https://firemaths.info/car-lease-vs-buy" schema={schema}
+>
+  <style>
+:root {
+    --color-lease: #E25C5C;
+    --color-buy: #4A90E2;
+    --color-savings: #50E3C2;
+    --color-equity: #9B59B6;
+    --color-depreciation: #D4A017;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-primary);
+    font-family: var(--font-ui);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4 {
+    font-weight: 700;
+    line-height: 1.2;
+    color: var(--text-primary);
+}
+
+.container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem;
+}
+
+header {
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+header h1 {
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+    color: var(--accent-color);
+}
+
+header p {
+    color: var(--text-secondary);
+    font-size: 1.1rem;
+}
+
+.calculator-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 2rem;
+    margin-bottom: 3rem;
+}
+
+@media (min-width: 768px) {
+    .calculator-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+.scenario-card {
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.5rem;
+}
+
+.scenario-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.scenario-header h2 {
+    font-size: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.input-group {
+    margin-bottom: 1.25rem;
+}
+
+.input-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+
+.input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.prefix, .suffix {
+    position: absolute;
+    color: var(--text-secondary);
+    font-family: var(--font-mono);
+    font-size: 1rem;
+    pointer-events: none;
+}
+
+.prefix { left: 1rem; }
+.suffix { right: 1rem; }
+
+input[type="number"], select {
+    width: 100%;
+    background-color: var(--bg-color);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    font-family: var(--font-mono);
+    font-size: 1rem;
+    padding: 0.75rem 1rem;
+    border-radius: 6px;
+    transition: border-color 0.2s;
+    -moz-appearance: textfield;
+}
+
+select {
+    font-family: var(--font-ui);
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23888888' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 1rem center;
+    background-size: 1em;
+    padding-right: 2.5rem;
+}
+
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+input[type="number"]:focus, select:focus {
+    outline: none;
+    border-color: var(--accent-color);
+}
+
+.has-prefix input { padding-left: 2rem; }
+.has-suffix input { padding-right: 2.5rem; }
+
+.verdict-card {
+    background-color: var(--card-bg);
+    border: 2px solid var(--accent-color);
+    border-radius: 12px;
+    padding: 2rem;
+    text-align: center;
+    margin-bottom: 2rem;
+}
+
+.verdict-title {
+    font-size: 1rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.5rem;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.verdict-winner {
+    font-size: 2rem;
+    font-weight: 700;
+    color: var(--accent-color);
+    margin-bottom: 0.25rem;
+}
+
+.verdict-savings {
+    font-size: 1.25rem;
+    font-family: var(--font-mono);
+    color: var(--color-savings);
+    margin-bottom: 1rem;
+}
+
+.verdict-detail {
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.cost-comparison {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+@media (max-width: 600px) {
+    .cost-comparison {
+        grid-template-columns: 1fr;
+    }
+}
+
+.cost-card {
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.5rem;
+}
+
+.cost-card-header {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.cost-card-header h3 {
+    font-size: 1.125rem;
+}
+
+.cost-card-header .dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.cost-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+    font-size: 0.875rem;
+}
+
+.cost-item-label {
+    color: var(--text-secondary);
+}
+
+.cost-item-value {
+    font-family: var(--font-mono);
+    font-weight: 500;
+}
+
+.cost-total {
+    margin-top: 0.75rem;
+    padding-top: 0.75rem;
+    border-top: 1px dashed var(--border-color);
+    font-size: 1rem;
+}
+
+.cost-total .cost-item-value {
+    font-size: 1.25rem;
+    font-weight: 700;
+}
+
+.section-card {
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.section-card h2 {
+    font-size: 1.25rem;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.chart-container {
+    position: relative;
+    width: 100%;
+    height: 300px;
+    margin-bottom: 1rem;
+}
+
+.chart-container canvas {
+    width: 100%;
+    height: 100%;
+}
+
+.chart-legend {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    font-size: 0.875rem;
+}
+
+.chart-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.chart-legend-color {
+    width: 14px;
+    height: 3px;
+    border-radius: 2px;
+}
+
+.comparison-table-wrap {
+    overflow-x: auto;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+}
+
+.comparison-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.875rem;
+}
+
+.comparison-table th {
+    background: var(--bg-color);
+    color: var(--text-secondary);
+    font-weight: 600;
+    text-align: right;
+    padding: 0.75rem 1rem;
+    border-bottom: 2px solid var(--border-color);
+    font-size: 0.8125rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.comparison-table th:first-child {
+    text-align: left;
+}
+
+.comparison-table td {
+    padding: 0.75rem 1rem;
+    text-align: right;
+    border-bottom: 1px solid var(--border-color);
+    font-family: var(--font-mono);
+    color: var(--text-secondary);
+}
+
+.comparison-table td:first-child {
+    text-align: left;
+    font-family: var(--font-ui);
+    font-weight: 500;
+    color: var(--text-primary);
+}
+
+.comparison-table tbody tr:hover {
+    background: rgba(212, 160, 23, 0.05);
+}
+
+.comparison-table .highlight-row {
+    background: rgba(212, 160, 23, 0.08);
+}
+
+.comparison-table .highlight-row td {
+    color: var(--text-primary);
+}
+
+.winner-cell {
+    color: var(--color-savings) !important;
+    font-weight: 600;
+}
+
+.toggle-group {
+    display: flex;
+    gap: 0;
+    margin-bottom: 1.5rem;
+}
+
+.toggle-btn {
+    flex: 1;
+    padding: 0.6rem 1rem;
+    background: var(--bg-color);
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-family: var(--font-ui);
+    font-size: 0.875rem;
+    transition: all 0.2s;
+}
+
+.toggle-btn:first-child { border-radius: 6px 0 0 6px; }
+.toggle-btn:last-child { border-radius: 0 6px 6px 0; }
+
+.toggle-btn.active {
+    background: var(--accent-color);
+    color: #0c0a00;
+    border-color: var(--accent-color);
+    font-weight: 600;
+}
+
+.seo-content {
+    margin-bottom: 4rem;
+}
+
+.seo-content h2 {
+    font-size: 1.75rem;
+    margin-top: 2.5rem;
+    margin-bottom: 1rem;
+    color: var(--accent-color);
+}
+
+.seo-content p {
+    margin-bottom: 1rem;
+    color: var(--text-secondary);
+}
+
+.seo-content ul {
+    margin-bottom: 1.5rem;
+    padding-left: 1.5rem;
+    color: var(--text-secondary);
+}
+
+.seo-content li {
+    margin-bottom: 0.5rem;
+}
+
+.faq-section {
+    margin-bottom: 4rem;
+}
+
+.faq-section h2 {
+    font-size: 1.75rem;
+    margin-bottom: 1.5rem;
+    color: var(--accent-color);
+}
+
+.faq-item {
+    border-bottom: 1px solid var(--border-color);
+    padding: 1.25rem 0;
+}
+
+.faq-question {
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+    font-size: 1rem;
+}
+
+.faq-answer {
+    color: var(--text-secondary);
+    font-size: 0.9375rem;
+    line-height: 1.7;
+}
+
+.related-links {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+    margin-top: 2rem;
+    margin-bottom: 4rem;
+}
+
+.related-link {
+    display: block;
+    padding: 1.25rem;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    color: var(--text-primary);
+    text-decoration: none;
+    font-weight: 600;
+    transition: border-color 0.2s;
+}
+
+.related-link:hover {
+    border-color: var(--accent-color);
+}
+
+.related-link span {
+    display: block;
+    font-size: 0.8125rem;
+    font-weight: 400;
+    color: var(--text-secondary);
+    margin-top: 0.25rem;
+}
+
+footer {
+    text-align: center;
+    padding: 2rem 0;
+    border-top: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+}
+
+footer a {
+    color: var(--accent-color);
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+footer a:hover {
+    color: var(--text-primary);
+    text-decoration: underline;
+}
+  </style>
+
+<div class="container">
+    <h1>Lease vs Buy Car Calculator</h1>
+    <p style="text-align:center; color:var(--text-secondary); font-size:1.1rem; margin-bottom:3rem;">Compare the total cost of leasing versus buying a car and find out which option saves you more money.</p>
+
+    <main>
+        <!-- Shared Inputs -->
+        <div class="scenario-card" style="margin-bottom: 2rem;">
+            <div class="scenario-header">
+                <h2>Vehicle Details</h2>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                <div class="input-group">
+                    <label for="vehicle-price">Vehicle Price (MSRP)</label>
+                    <div class="input-wrapper has-prefix">
+                        <span class="prefix">$</span>
+                        <input type="number" id="vehicle-price" value="40000" min="0" step="500">
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label for="down-payment">Down Payment</label>
+                    <div class="input-wrapper has-prefix">
+                        <span class="prefix">$</span>
+                        <input type="number" id="down-payment" value="5000" min="0" step="500">
+                    </div>
+                </div>
+            </div>
+
+            <div style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 1rem;">
+                <div class="input-group">
+                    <label for="sales-tax">Sales Tax Rate</label>
+                    <div class="input-wrapper has-suffix">
+                        <span class="suffix">%</span>
+                        <input type="number" id="sales-tax" value="6" min="0" max="15" step="0.25">
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label for="expected-miles">Expected Miles/Year</label>
+                    <div class="input-wrapper">
+                        <input type="number" id="expected-miles" value="12000" min="0" step="1000">
+                    </div>
+                </div>
+                <div class="input-group">
+                    <label for="depreciation-rate">Annual Depreciation</label>
+                    <div class="input-wrapper has-suffix">
+                        <span class="suffix">%</span>
+                        <input type="number" id="depreciation-rate" value="15" min="0" max="50" step="1">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lease + Buy side by side -->
+        <div class="calculator-grid">
+            <!-- Lease Inputs -->
+            <div class="scenario-card">
+                <div class="scenario-header">
+                    <h2><span class="dot" style="display:inline-block;width:12px;height:12px;border-radius:50%;background:var(--color-lease);"></span> Lease Terms</h2>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="input-group">
+                        <label for="lease-monthly">Monthly Payment</label>
+                        <div class="input-wrapper has-prefix">
+                            <span class="prefix">$</span>
+                            <input type="number" id="lease-monthly" value="450" min="0" step="25">
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label for="lease-term">Lease Term</label>
+                        <div class="input-wrapper">
+                            <select id="lease-term">
+                                <option value="24">24 months</option>
+                                <option value="36" selected>36 months</option>
+                                <option value="39">39 months</option>
+                                <option value="48">48 months</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="input-group">
+                        <label for="lease-residual">Residual Value</label>
+                        <div class="input-wrapper has-suffix">
+                            <span class="suffix">%</span>
+                            <input type="number" id="lease-residual" value="55" min="0" max="90" step="1">
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label for="lease-miles-limit">Mileage Limit/Year</label>
+                        <div class="input-wrapper">
+                            <input type="number" id="lease-miles-limit" value="12000" min="0" step="1000">
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="input-group">
+                        <label for="lease-excess-mile">Excess Mile Fee</label>
+                        <div class="input-wrapper has-prefix">
+                            <span class="prefix">$</span>
+                            <input type="number" id="lease-excess-mile" value="0.20" min="0" max="1" step="0.05">
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label for="lease-insurance-diff">Insurance Premium (mo)</label>
+                        <div class="input-wrapper has-prefix">
+                            <span class="prefix">$</span>
+                            <input type="number" id="lease-insurance-diff" value="180" min="0" step="10">
+                        </div>
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label for="lease-maintenance">Maintenance/Month</label>
+                    <div class="input-wrapper has-prefix">
+                        <span class="prefix">$</span>
+                        <input type="number" id="lease-maintenance" value="25" min="0" step="5">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Buy Inputs -->
+            <div class="scenario-card">
+                <div class="scenario-header">
+                    <h2><span class="dot" style="display:inline-block;width:12px;height:12px;border-radius:50%;background:var(--color-buy);"></span> Buy / Finance Terms</h2>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="input-group">
+                        <label for="buy-rate">Interest Rate (APR)</label>
+                        <div class="input-wrapper has-suffix">
+                            <span class="suffix">%</span>
+                            <input type="number" id="buy-rate" value="6.5" min="0" max="30" step="0.1">
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label for="buy-term">Loan Term</label>
+                        <div class="input-wrapper">
+                            <select id="buy-term">
+                                <option value="36">36 months</option>
+                                <option value="48">48 months</option>
+                                <option value="60" selected>60 months</option>
+                                <option value="72">72 months</option>
+                                <option value="84">84 months</option>
+                            </select>
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="input-group">
+                        <label for="buy-insurance">Insurance Premium (mo)</label>
+                        <div class="input-wrapper has-prefix">
+                            <span class="prefix">$</span>
+                            <input type="number" id="buy-insurance" value="150" min="0" step="10">
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label for="buy-maintenance">Maintenance/Month</label>
+                        <div class="input-wrapper has-prefix">
+                            <span class="prefix">$</span>
+                            <input type="number" id="buy-maintenance" value="50" min="0" step="5">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Verdict -->
+        <div class="verdict-card" id="verdict-card">
+            <div class="verdict-title">The Verdict</div>
+            <div class="verdict-winner" id="verdict-winner">Calculating...</div>
+            <div class="verdict-savings" id="verdict-savings"></div>
+            <div class="verdict-detail" id="verdict-detail"></div>
+        </div>
+
+        <!-- Cost Summary Cards -->
+        <div class="cost-comparison">
+            <div class="cost-card">
+                <div class="cost-card-header">
+                    <span class="dot" style="background:var(--color-lease);"></span>
+                    <h3>Lease Cost</h3>
+                </div>
+                <div class="cost-item">
+                    <span class="cost-item-label">Down Payment</span>
+                    <span class="cost-item-value" id="lease-cost-down">$0</span>
+                </div>
+                <div class="cost-item">
+                    <span class="cost-item-label">Monthly Payments</span>
+                    <span class="cost-item-value" id="lease-cost-payments">$0</span>
+                </div>
+                <div class="cost-item">
+                    <span class="cost-item-label">Insurance</span>
+                    <span class="cost-item-value" id="lease-cost-insurance">$0</span>
+                </div>
+                <div class="cost-item">
+                    <span class="cost-item-label">Maintenance</span>
+                    <span class="cost-item-value" id="lease-cost-maintenance">$0</span>
+                </div>
+                <div class="cost-item">
+                    <span class="cost-item-label">Excess Mileage Fees</span>
+                    <span class="cost-item-value" id="lease-cost-mileage">$0</span>
+                </div>
+                <div class="cost-item">
+                    <span class="cost-item-label">Equity at End</span>
+                    <span class="cost-item-value" id="lease-cost-equity" style="color:var(--color-equity);">$0</span>
+                </div>
+                <div class="cost-item cost-total">
+                    <span class="cost-item-label"><strong>Net Cost</strong></span>
+                    <span class="cost-item-value" id="lease-cost-total" style="color:var(--color-lease);">$0</span>
+                </div>
+            </div>
+
+            <div class="cost-card">
+                <div class="cost-card-header">
+                    <span class="dot" style="background:var(--color-buy);"></span>
+                    <h3>Buy Cost</h3>
+                </div>
+                <div class="cost-item">
+                    <span class="cost-item-label">Down Payment</span>
+                    <span class="cost-item-value" id="buy-cost-down">$0</span>
+                </div>
+                <div class="cost-item">
+                    <span class="cost-item-label">Loan Payments</span>
+                    <span class="cost-item-value" id="buy-cost-payments">$0</span>
+                </div>
+                <div class="cost-item">
+                    <span class="cost-item-label">Sales Tax</span>
+                    <span class="cost-item-value" id="buy-cost-tax">$0</span>
+                </div>
+                <div class="cost-item">
+                    <span class="cost-item-label">Interest Paid</span>
+                    <span class="cost-item-value" id="buy-cost-interest">$0</span>
+                </div>
+                <div class="cost-item">
+                    <span class="cost-item-label">Insurance</span>
+                    <span class="cost-item-value" id="buy-cost-insurance">$0</span>
+                </div>
+                <div class="cost-item">
+                    <span class="cost-item-label">Maintenance</span>
+                    <span class="cost-item-value" id="buy-cost-maintenance">$0</span>
+                </div>
+                <div class="cost-item">
+                    <span class="cost-item-label">Vehicle Value at End</span>
+                    <span class="cost-item-value" id="buy-cost-value" style="color:var(--color-equity);">$0</span>
+                </div>
+                <div class="cost-item cost-total">
+                    <span class="cost-item-label"><strong>Net Cost</strong></span>
+                    <span class="cost-item-value" id="buy-cost-total" style="color:var(--color-buy);">$0</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Visual Comparison Chart -->
+        <div class="section-card">
+            <h2>Cost Over Time</h2>
+            <div class="chart-container">
+                <canvas id="costChart"></canvas>
+            </div>
+            <div class="chart-legend">
+                <div class="chart-legend-item">
+                    <span class="chart-legend-color" style="background:var(--color-lease);"></span>
+                    <span style="color:var(--text-secondary);">Lease</span>
+                </div>
+                <div class="chart-legend-item">
+                    <span class="chart-legend-color" style="background:var(--color-buy);"></span>
+                    <span style="color:var(--text-secondary);">Buy (net of equity)</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Year-by-Year Comparison Table -->
+        <div class="section-card">
+            <h2>Year-by-Year Breakdown</h2>
+            <div class="comparison-table-wrap">
+                <table class="comparison-table" id="yearly-table">
+                    <thead>
+                        <tr>
+                            <th>Year</th>
+                            <th>Lease Total</th>
+                            <th>Buy Total</th>
+                            <th>Buy Equity</th>
+                            <th>Buy Net Cost</th>
+                            <th>Difference</th>
+                            <th>Winner</th>
+                        </tr>
+                    </thead>
+                    <tbody id="yearly-tbody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- Equity Position -->
+        <div class="section-card">
+            <h2>Equity Position Over Time</h2>
+            <div class="chart-container">
+                <canvas id="equityChart"></canvas>
+            </div>
+            <div class="chart-legend">
+                <div class="chart-legend-item">
+                    <span class="chart-legend-color" style="background:var(--color-equity);"></span>
+                    <span style="color:var(--text-secondary);">Buy Equity</span>
+                </div>
+                <div class="chart-legend-item">
+                    <span class="chart-legend-color" style="background:var(--color-depreciation);"></span>
+                    <span style="color:var(--text-secondary);">Vehicle Value</span>
+                </div>
+                <div class="chart-legend-item">
+                    <span class="chart-legend-color" style="background:var(--color-lease); opacity:0.5;"></span>
+                    <span style="color:var(--text-secondary);">Loan Balance</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Cost Per Mile -->
+        <div class="section-card">
+            <h2>Cost Per Mile Comparison</h2>
+            <div class="toggle-group">
+                <button class="toggle-btn active" id="btn-cpm-3" onclick="setCpmView(3)">3 Years</button>
+                <button class="toggle-btn" id="btn-cpm-5" onclick="setCpmView(5)">5 Years</button>
+                <button class="toggle-btn" id="btn-cpm-7" onclick="setCpmView(7)">7 Years</button>
+            </div>
+            <div class="comparison-table-wrap">
+                <table class="comparison-table" id="cpm-table">
+                    <thead>
+                        <tr>
+                            <th></th>
+                            <th>Lease</th>
+                            <th>Buy</th>
+                        </tr>
+                    </thead>
+                    <tbody id="cpm-tbody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- SEO Content -->
+        <div class="seo-content">
+            <h2>How to Use This Lease vs Buy Calculator</h2>
+            <p>This calculator compares the true cost of leasing versus buying a car by accounting for all the expenses that most people overlook. Enter your vehicle price, financing terms for both options, insurance costs, maintenance estimates, and expected driving habits to get a comprehensive side-by-side comparison.</p>
+            <p>The calculator shows you total costs at 3, 5, and 7-year horizons, tracks equity positions over time, calculates the cost per mile for each option, and delivers a clear verdict telling you which option saves more money for your situation.</p>
+
+            <h2>Key Factors in the Lease vs Buy Decision</h2>
+            <p>The right choice between leasing and buying depends on several personal factors:</p>
+            <ul>
+                <li><strong>How Long You Keep Cars:</strong> If you trade in every 2-3 years, leasing may cost less since you avoid the steepest depreciation. If you keep cars 5+ years, buying almost always wins because you eliminate monthly payments once the loan is paid off.</li>
+                <li><strong>Annual Mileage:</strong> High-mileage drivers (15,000+ miles/year) should usually buy. Lease mileage penalties of $0.15-$0.25 per excess mile add up quickly and can erase any monthly payment savings.</li>
+                <li><strong>Cash Flow vs Total Cost:</strong> Leasing offers lower monthly payments but higher total lifetime costs. Buying requires larger payments but builds equity. Consider which matters more for your financial situation.</li>
+                <li><strong>Maintenance and Warranty:</strong> Leased vehicles are typically under manufacturer warranty for the entire lease term, keeping maintenance costs low. Owned vehicles may need expensive repairs after the warranty expires.</li>
+                <li><strong>Tax Implications:</strong> In some states and for business use, lease payments may be partially tax-deductible. Consult a tax professional for your specific situation.</li>
+            </ul>
+
+            <h2>Understanding the True Cost of Leasing</h2>
+            <p>A lease payment covers the vehicle's depreciation during the lease term plus interest (called the money factor) and fees. At lease end, you return the car with no equity. If you want to keep driving, you must start a new lease — essentially making car payments forever. Over a 7-year period, a person who leases continuously will typically spend 30-50% more than someone who buys and keeps the same vehicle.</p>
+            <p>However, leasing does have legitimate advantages: lower monthly payments, always driving a new car with the latest safety features, no resale hassle, and warranty coverage throughout the term. For some drivers, these benefits justify the higher long-term cost.</p>
+
+            <h2>The Hidden Costs of Buying</h2>
+            <p>Buying a car involves more than just loan payments. Sales tax on the full purchase price, higher insurance during the loan period, and increasing maintenance costs as the vehicle ages all factor into the true cost. Depreciation is the biggest expense — a new car typically loses 20% of its value in the first year and about 15% annually after that.</p>
+            <p>The buying advantage emerges after the loan is paid off. Once you own the car free and clear, your only costs are insurance, maintenance, and fuel. This is where buyers recoup their investment and start saving compared to lessees who continue making monthly payments.</p>
+        </div>
+
+        <!-- FAQ -->
+        <div class="faq-section">
+            <h2>Frequently Asked Questions</h2>
+            {faqSchema.mainEntity.map((item) => (
+                <div class="faq-item">
+                    <div class="faq-question">{item.name}</div>
+                    <div class="faq-answer">{item.acceptedAnswer.text}</div>
+                </div>
+            ))}
+        </div>
+
+        <!-- Related -->
+        <h2 style="font-size: 1.25rem; margin-bottom: 0.5rem;">Related Calculators</h2>
+        <div class="related-links">
+            <a href="/auto-loan-calculator" class="related-link">
+                Auto Loan Calculator
+                <span>Calculate your monthly car payment with amortization schedule and term comparison</span>
+            </a>
+            <a href="/debt-snowball-calculator" class="related-link">
+                Debt Snowball Calculator
+                <span>Create a payoff plan for all your debts using the snowball or avalanche method</span>
+            </a>
+        </div>
+    </main>
+</div>
+
+  <script is:inline type="application/ld+json" set:html={JSON.stringify(faqSchema)} />
+
+  <script is:inline>
+const fmt = (v) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(v);
+const fmt2 = (v) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(v);
+
+let cpmYears = 3;
+
+function getInputs() {
+    const vehiclePrice = parseFloat(document.getElementById('vehicle-price').value) || 0;
+    const downPayment = parseFloat(document.getElementById('down-payment').value) || 0;
+    const salesTaxRate = parseFloat(document.getElementById('sales-tax').value) || 0;
+    const expectedMiles = parseFloat(document.getElementById('expected-miles').value) || 0;
+    const depreciationRate = parseFloat(document.getElementById('depreciation-rate').value) || 0;
+
+    const leaseMonthly = parseFloat(document.getElementById('lease-monthly').value) || 0;
+    const leaseTerm = parseInt(document.getElementById('lease-term').value) || 36;
+    const leaseResidual = parseFloat(document.getElementById('lease-residual').value) || 0;
+    const leaseMilesLimit = parseFloat(document.getElementById('lease-miles-limit').value) || 0;
+    const leaseExcessMileFee = parseFloat(document.getElementById('lease-excess-mile').value) || 0;
+    const leaseInsurance = parseFloat(document.getElementById('lease-insurance-diff').value) || 0;
+    const leaseMaintenance = parseFloat(document.getElementById('lease-maintenance').value) || 0;
+
+    const buyRate = parseFloat(document.getElementById('buy-rate').value) || 0;
+    const buyTerm = parseInt(document.getElementById('buy-term').value) || 60;
+    const buyInsurance = parseFloat(document.getElementById('buy-insurance').value) || 0;
+    const buyMaintenance = parseFloat(document.getElementById('buy-maintenance').value) || 0;
+
+    return {
+        vehiclePrice, downPayment, salesTaxRate, expectedMiles, depreciationRate,
+        leaseMonthly, leaseTerm, leaseResidual, leaseMilesLimit, leaseExcessMileFee, leaseInsurance, leaseMaintenance,
+        buyRate, buyTerm, buyInsurance, buyMaintenance
+    };
+}
+
+function calcPayment(principal, annualRate, termMonths) {
+    if (principal <= 0) return 0;
+    if (annualRate <= 0) return principal / termMonths;
+    const r = annualRate / 100 / 12;
+    const n = termMonths;
+    return principal * (r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1);
+}
+
+function getLoanBalance(principal, annualRate, termMonths, monthsPaid) {
+    if (principal <= 0) return 0;
+    if (monthsPaid >= termMonths) return 0;
+    if (annualRate <= 0) return principal * (1 - monthsPaid / termMonths);
+    const r = annualRate / 100 / 12;
+    const balance = principal * (Math.pow(1 + r, monthsPaid) - Math.pow(1 + r, termMonths)) / (1 - Math.pow(1 + r, termMonths));
+    return Math.max(0, -balance);
+}
+
+function getCarValue(price, depRate, years) {
+    // First year ~20% depreciation, then depRate% per year
+    if (years <= 0) return price;
+    let value = price * 0.80; // year 1
+    for (let y = 1; y < years; y++) {
+        value *= (1 - depRate / 100);
+    }
+    return Math.max(0, value);
+}
+
+function calcLeaseForYears(inp, years) {
+    const totalMonths = years * 12;
+    const leaseTermMonths = inp.leaseTerm;
+    const numLeases = Math.ceil(totalMonths / leaseTermMonths);
+    const actualMonths = Math.min(totalMonths, numLeases * leaseTermMonths);
+
+    let totalPayments = 0;
+    let totalDown = 0;
+    let totalInsurance = 0;
+    let totalMaintenance = 0;
+    let totalMileageFees = 0;
+
+    for (let lease = 0; lease < numLeases; lease++) {
+        const startMonth = lease * leaseTermMonths;
+        const endMonth = Math.min(startMonth + leaseTermMonths, totalMonths);
+        const months = endMonth - startMonth;
+
+        totalDown += (lease === 0) ? inp.downPayment : 0;
+        totalPayments += inp.leaseMonthly * months;
+        totalInsurance += inp.leaseInsurance * months;
+        totalMaintenance += inp.leaseMaintenance * months;
+
+        // Excess mileage for this lease period
+        const leaseYears = months / 12;
+        const totalMilesDriven = inp.expectedMiles * leaseYears;
+        const mileageAllowance = inp.leaseMilesLimit * leaseYears;
+        const excessMiles = Math.max(0, totalMilesDriven - mileageAllowance);
+        totalMileageFees += excessMiles * inp.leaseExcessMileFee;
+    }
+
+    return {
+        downPayment: totalDown,
+        payments: totalPayments,
+        insurance: totalInsurance,
+        maintenance: totalMaintenance,
+        mileageFees: totalMileageFees,
+        equity: 0, // no equity with lease
+        total: totalDown + totalPayments + totalInsurance + totalMaintenance + totalMileageFees
+    };
+}
+
+function calcBuyForYears(inp, years) {
+    const totalMonths = years * 12;
+    const salesTax = inp.vehiclePrice * inp.salesTaxRate / 100;
+    const loanAmount = Math.max(0, inp.vehiclePrice + salesTax - inp.downPayment);
+    const monthlyPayment = calcPayment(loanAmount, inp.buyRate, inp.buyTerm);
+    const loanMonths = Math.min(totalMonths, inp.buyTerm);
+
+    const totalLoanPayments = monthlyPayment * loanMonths;
+    const totalInterest = totalLoanPayments - (loanAmount - getLoanBalance(loanAmount, inp.buyRate, inp.buyTerm, loanMonths));
+    const totalInsurance = inp.buyInsurance * totalMonths;
+    const totalMaintenance = inp.buyMaintenance * totalMonths;
+    const carValue = getCarValue(inp.vehiclePrice, inp.depreciationRate, years);
+
+    const totalSpent = inp.downPayment + totalLoanPayments + totalInsurance + totalMaintenance;
+    const netCost = totalSpent - carValue;
+
+    return {
+        downPayment: inp.downPayment,
+        payments: totalLoanPayments,
+        salesTax: salesTax,
+        interest: totalInterest,
+        insurance: totalInsurance,
+        maintenance: totalMaintenance,
+        carValue: carValue,
+        loanAmount: loanAmount,
+        total: totalSpent,
+        netCost: netCost
+    };
+}
+
+function calculate() {
+    const inp = getInputs();
+
+    // Use the selected CPM view years for verdict (default 5)
+    const verdictYears = 5;
+    const lease5 = calcLeaseForYears(inp, verdictYears);
+    const buy5 = calcBuyForYears(inp, verdictYears);
+
+    // Verdict
+    const leaseCost5 = lease5.total;
+    const buyCost5 = buy5.netCost;
+    const diff = Math.abs(leaseCost5 - buyCost5);
+    const winner = buyCost5 < leaseCost5 ? 'Buying' : 'Leasing';
+    const loser = buyCost5 < leaseCost5 ? 'leasing' : 'buying';
+
+    document.getElementById('verdict-winner').innerText = winner + ' Wins Over 5 Years';
+    document.getElementById('verdict-savings').innerText = 'You save ' + fmt(diff);
+    document.getElementById('verdict-detail').innerText = winner + ' saves you ' + fmt(diff) + ' compared to ' + loser + ' over 5 years. ' +
+        (winner === 'Buying' ? 'After paying off your loan, you own an asset worth ' + fmt(buy5.carValue) + ' while lease payments continue indefinitely.' :
+        'Lower monthly costs and no depreciation risk make leasing the better financial choice for your situation.');
+
+    // Cost summary cards (use 5-year view)
+    document.getElementById('lease-cost-down').innerText = fmt(lease5.downPayment);
+    document.getElementById('lease-cost-payments').innerText = fmt(lease5.payments);
+    document.getElementById('lease-cost-insurance').innerText = fmt(lease5.insurance);
+    document.getElementById('lease-cost-maintenance').innerText = fmt(lease5.maintenance);
+    document.getElementById('lease-cost-mileage').innerText = fmt(lease5.mileageFees);
+    document.getElementById('lease-cost-equity').innerText = '$0';
+    document.getElementById('lease-cost-total').innerText = fmt(lease5.total);
+
+    document.getElementById('buy-cost-down').innerText = fmt(buy5.downPayment);
+    document.getElementById('buy-cost-payments').innerText = fmt(buy5.payments);
+    document.getElementById('buy-cost-tax').innerText = fmt(buy5.salesTax);
+    document.getElementById('buy-cost-interest').innerText = fmt(buy5.interest);
+    document.getElementById('buy-cost-insurance').innerText = fmt(buy5.insurance);
+    document.getElementById('buy-cost-maintenance').innerText = fmt(buy5.maintenance);
+    document.getElementById('buy-cost-value').innerText = '-' + fmt(buy5.carValue);
+    document.getElementById('buy-cost-total').innerText = fmt(buy5.netCost);
+
+    // Year-by-year table
+    renderYearlyTable(inp);
+
+    // Charts
+    drawCostChart(inp);
+    drawEquityChart(inp);
+
+    // Cost per mile
+    renderCPM(inp);
+}
+
+function renderYearlyTable(inp) {
+    const tbody = document.getElementById('yearly-tbody');
+    let html = '';
+
+    for (let y = 1; y <= 7; y++) {
+        const lease = calcLeaseForYears(inp, y);
+        const buy = calcBuyForYears(inp, y);
+        const diff = lease.total - buy.netCost;
+        const w = diff > 0 ? 'Buy' : diff < 0 ? 'Lease' : 'Tie';
+        const cls = (y === 3 || y === 5 || y === 7) ? ' class="highlight-row"' : '';
+
+        html += `<tr${cls}>`;
+        html += `<td>Year ${y}</td>`;
+        html += `<td>${fmt(lease.total)}</td>`;
+        html += `<td>${fmt(buy.total)}</td>`;
+        html += `<td style="color:var(--color-equity);">${fmt(buy.carValue)}</td>`;
+        html += `<td>${fmt(buy.netCost)}</td>`;
+        html += `<td style="color:${diff > 0 ? 'var(--color-savings)' : 'var(--color-lease)'};">${diff > 0 ? '+' : ''}${fmt(diff)}</td>`;
+        html += `<td class="winner-cell">${w}</td>`;
+        html += '</tr>';
+    }
+    tbody.innerHTML = html;
+}
+
+function drawCostChart(inp) {
+    const canvas = document.getElementById('costChart');
+    const ctx = canvas.getContext('2d');
+    const dpr = window.devicePixelRatio || 1;
+    const container = canvas.parentElement;
+    const width = container.getBoundingClientRect().width;
+    const height = 300;
+
+    canvas.width = width * dpr;
+    canvas.height = height * dpr;
+    canvas.style.width = width + 'px';
+    canvas.style.height = height + 'px';
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.scale(dpr, dpr);
+    ctx.clearRect(0, 0, width, height);
+
+    const years = [0, 1, 2, 3, 4, 5, 6, 7];
+    const leaseData = years.map(y => y === 0 ? 0 : calcLeaseForYears(inp, y).total);
+    const buyData = years.map(y => y === 0 ? 0 : calcBuyForYears(inp, y).netCost);
+
+    const allValues = [...leaseData, ...buyData];
+    const maxVal = Math.max(...allValues) * 1.1;
+    const minVal = Math.min(0, ...allValues);
+
+    const padL = 70, padR = 20, padT = 20, padB = 40;
+    const chartW = width - padL - padR;
+    const chartH = height - padT - padB;
+
+    const toX = (i) => padL + (i / 7) * chartW;
+    const toY = (v) => padT + chartH - ((v - minVal) / (maxVal - minVal)) * chartH;
+
+    // Grid lines
+    ctx.strokeStyle = 'rgba(128,128,128,0.15)';
+    ctx.lineWidth = 1;
+    const gridSteps = 5;
+    for (let i = 0; i <= gridSteps; i++) {
+        const val = minVal + (maxVal - minVal) * i / gridSteps;
+        const y = toY(val);
+        ctx.beginPath();
+        ctx.moveTo(padL, y);
+        ctx.lineTo(width - padR, y);
+        ctx.stroke();
+
+        ctx.fillStyle = '#888';
+        ctx.font = '11px Inter, sans-serif';
+        ctx.textAlign = 'right';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('$' + Math.round(val / 1000) + 'k', padL - 8, y);
+    }
+
+    // X axis labels
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    for (const y of years) {
+        ctx.fillStyle = '#888';
+        ctx.font = '11px Inter, sans-serif';
+        ctx.fillText('Yr ' + y, toX(y), height - padB + 10);
+    }
+
+    // Draw lines
+    function drawLine(data, color) {
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 2.5;
+        ctx.lineJoin = 'round';
+        ctx.beginPath();
+        for (let i = 0; i < data.length; i++) {
+            const x = toX(i);
+            const y = toY(data[i]);
+            if (i === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+
+        // Dots
+        for (let i = 0; i < data.length; i++) {
+            ctx.beginPath();
+            ctx.arc(toX(i), toY(data[i]), 3.5, 0, Math.PI * 2);
+            ctx.fillStyle = color;
+            ctx.fill();
+        }
+    }
+
+    drawLine(leaseData, '#E25C5C');
+    drawLine(buyData, '#4A90E2');
+}
+
+function drawEquityChart(inp) {
+    const canvas = document.getElementById('equityChart');
+    const ctx = canvas.getContext('2d');
+    const dpr = window.devicePixelRatio || 1;
+    const container = canvas.parentElement;
+    const width = container.getBoundingClientRect().width;
+    const height = 300;
+
+    canvas.width = width * dpr;
+    canvas.height = height * dpr;
+    canvas.style.width = width + 'px';
+    canvas.style.height = height + 'px';
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.scale(dpr, dpr);
+    ctx.clearRect(0, 0, width, height);
+
+    const salesTax = inp.vehiclePrice * inp.salesTaxRate / 100;
+    const loanAmount = Math.max(0, inp.vehiclePrice + salesTax - inp.downPayment);
+
+    const years = [0, 1, 2, 3, 4, 5, 6, 7];
+    const carValues = years.map(y => getCarValue(inp.vehiclePrice, inp.depreciationRate, y));
+    const loanBalances = years.map(y => getLoanBalance(loanAmount, inp.buyRate, inp.buyTerm, y * 12));
+    const equityData = years.map((y, i) => carValues[i] - loanBalances[i]);
+
+    const allValues = [...carValues, ...loanBalances, ...equityData];
+    const maxVal = Math.max(...allValues) * 1.1;
+    const minVal = Math.min(0, ...allValues) * 1.1;
+
+    const padL = 70, padR = 20, padT = 20, padB = 40;
+    const chartW = width - padL - padR;
+    const chartH = height - padT - padB;
+
+    const toX = (i) => padL + (i / 7) * chartW;
+    const toY = (v) => padT + chartH - ((v - minVal) / (maxVal - minVal)) * chartH;
+
+    // Grid
+    ctx.strokeStyle = 'rgba(128,128,128,0.15)';
+    ctx.lineWidth = 1;
+    const gridSteps = 5;
+    for (let i = 0; i <= gridSteps; i++) {
+        const val = minVal + (maxVal - minVal) * i / gridSteps;
+        const y = toY(val);
+        ctx.beginPath();
+        ctx.moveTo(padL, y);
+        ctx.lineTo(width - padR, y);
+        ctx.stroke();
+
+        ctx.fillStyle = '#888';
+        ctx.font = '11px Inter, sans-serif';
+        ctx.textAlign = 'right';
+        ctx.textBaseline = 'middle';
+        ctx.fillText('$' + Math.round(val / 1000) + 'k', padL - 8, y);
+    }
+
+    // X axis
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    for (const y of years) {
+        ctx.fillStyle = '#888';
+        ctx.font = '11px Inter, sans-serif';
+        ctx.fillText('Yr ' + y, toX(y), height - padB + 10);
+    }
+
+    function drawLine(data, color, dashed) {
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 2;
+        ctx.lineJoin = 'round';
+        if (dashed) ctx.setLineDash([6, 4]);
+        else ctx.setLineDash([]);
+        ctx.beginPath();
+        for (let i = 0; i < data.length; i++) {
+            const x = toX(i);
+            const y = toY(data[i]);
+            if (i === 0) ctx.moveTo(x, y);
+            else ctx.lineTo(x, y);
+        }
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        for (let i = 0; i < data.length; i++) {
+            ctx.beginPath();
+            ctx.arc(toX(i), toY(data[i]), 3, 0, Math.PI * 2);
+            ctx.fillStyle = color;
+            ctx.fill();
+        }
+    }
+
+    drawLine(carValues, '#D4A017', false);
+    drawLine(loanBalances, 'rgba(226,92,92,0.5)', true);
+    drawLine(equityData, '#9B59B6', false);
+}
+
+function renderCPM(inp) {
+    const y = cpmYears;
+    const lease = calcLeaseForYears(inp, y);
+    const buy = calcBuyForYears(inp, y);
+    const totalMiles = inp.expectedMiles * y;
+
+    const leaseCPM = totalMiles > 0 ? lease.total / totalMiles : 0;
+    const buyCPM = totalMiles > 0 ? buy.netCost / totalMiles : 0;
+
+    const rows = [
+        { label: 'Total Cost', l: fmt(lease.total), b: fmt(buy.netCost) },
+        { label: 'Total Miles', l: totalMiles.toLocaleString(), b: totalMiles.toLocaleString() },
+        { label: 'Cost Per Mile', l: '$' + leaseCPM.toFixed(2), b: '$' + buyCPM.toFixed(2) },
+        { label: 'Monthly Cost', l: fmt(lease.total / (y * 12)), b: fmt(buy.netCost / (y * 12)) },
+    ];
+
+    const tbody = document.getElementById('cpm-tbody');
+    let html = '';
+    for (const row of rows) {
+        html += `<tr><td>${row.label}</td>`;
+        const lWin = parseFloat(row.l.replace(/[^0-9.-]/g, '')) <= parseFloat(row.b.replace(/[^0-9.-]/g, ''));
+        html += `<td${lWin ? ' class="winner-cell"' : ''}>${row.l}</td>`;
+        html += `<td${!lWin ? ' class="winner-cell"' : ''}>${row.b}</td>`;
+        html += '</tr>';
+    }
+    tbody.innerHTML = html;
+}
+
+window.setCpmView = (y) => {
+    cpmYears = y;
+    [3, 5, 7].forEach(v => {
+        document.getElementById('btn-cpm-' + v).classList.toggle('active', v === y);
+    });
+    renderCPM(getInputs());
+};
+
+// Attach listeners
+const allInputs = [
+    'vehicle-price', 'down-payment', 'sales-tax', 'expected-miles', 'depreciation-rate',
+    'lease-monthly', 'lease-term', 'lease-residual', 'lease-miles-limit', 'lease-excess-mile', 'lease-insurance-diff', 'lease-maintenance',
+    'buy-rate', 'buy-term', 'buy-insurance', 'buy-maintenance'
+];
+allInputs.forEach(id => {
+    document.getElementById(id).addEventListener('input', calculate);
+});
+
+window.addEventListener('resize', calculate);
+
+setTimeout(calculate, 0);
+  </script>
+</SiteLayout>

@@ -1,0 +1,701 @@
+---
+import SiteLayout from "../../../layouts/SiteLayout.astro";
+
+const schema = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebApplication",
+      "name": "Electricity Usage Monitor",
+      "url": "https://ijustwantto.live/electricity-usage-monitor",
+      "description": "Track home electricity usage and costs. Add appliances with preset wattages, set daily hours and quantity, then view kWh consumption, cost breakdowns, and CO2 emissions by day, month, and year.",
+      "applicationCategory": "UtilitiesApplication",
+      "operatingSystem": "Any",
+      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+    },
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "How do I track my home electricity usage?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Add each appliance in your home to this monitor by selecting from 50+ presets or entering a custom wattage. Set the daily hours of use and quantity, and the tool calculates your total kWh consumption and cost per day, month, and year. Save your configuration to revisit anytime."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How is CO2 emissions from electricity calculated?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "CO2 emissions are estimated using the US national average of 0.42 kg CO2 per kWh (EPA eGRID). Multiply your total kWh consumption by this factor to get your carbon footprint. Actual emissions vary by region depending on the mix of coal, natural gas, nuclear, and renewables."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What appliances use the most electricity in a home?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "HVAC systems (central AC at 3,500W, electric furnaces at 10,000W), electric water heaters (4,500W), clothes dryers (5,000W), and EV chargers (7,200W) are typically the biggest electricity consumers. Refrigerators, while low-wattage, run 24/7 and add up significantly."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How can I reduce my electricity consumption?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Focus on your top energy hogs first. Upgrade to Energy Star appliances, use a smart thermostat, switch to LED lighting, wash clothes in cold water, air-dry when possible, and unplug phantom loads. Even small changes like reducing AC runtime by 1 hour daily can save $50+/year."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Does this electricity monitor save my data?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes, your appliance list and electricity rate are automatically saved to your browser's localStorage. When you return to the page, your full configuration is restored. No account or sign-up required — all data stays on your device."
+          }
+        }
+      ]
+    }
+  ]
+};
+
+export const meta = {
+  title: "Electricity Usage Monitor — Track kWh, Cost & CO2 Emissions",
+  description: "Track home electricity usage by appliance. Add 50+ preset appliances, set hours and quantity, then view kWh consumption, costs, CO2 emissions, and tips to reduce your energy bill.",
+  category: "tool",
+  published: "2026-03-21",
+};
+---
+
+<SiteLayout
+  site="ijustwantto"
+  title="Electricity Usage Monitor — Track kWh, Cost & CO2 Emissions | ijustwantto.live"
+  description="Track home electricity usage by appliance. Add 50+ preset appliances, set hours and quantity, then view kWh consumption, costs, CO2 emissions, and tips to reduce your energy bill."
+  canonical="https://ijustwantto.live/electricity-usage-monitor"
+  schema={schema}
+>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: var(--font-ui); background-color: var(--bg-color); color: var(--text-primary); line-height: 1.6; -webkit-font-smoothing: antialiased; }
+    .container { max-width: 800px; margin: 0 auto; padding: 2rem 1rem; }
+    h1 { font-size: 2rem; font-weight: 800; margin-bottom: 0.5rem; color: #ffffff; text-align: center; }
+    p.subtitle { color: var(--text-secondary); font-size: 1rem; text-align: center; margin-bottom: 2rem; }
+    .card { background-color: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem; margin-bottom: 2rem; }
+    .card h2 { font-size: 1.15rem; font-weight: 700; color: #ffffff; margin-bottom: 1rem; }
+    .form-group { margin-bottom: 1rem; }
+    label { display: block; font-size: 0.875rem; font-weight: 600; margin-bottom: 0.5rem; color: var(--text-primary); }
+    .form-row { display: flex; gap: 1rem; flex-wrap: wrap; }
+    .form-col { flex: 1; min-width: 120px; }
+    input[type="number"], select {
+      width: 100%; background-color: var(--bg-color); border: 1px solid var(--border-color); color: var(--text-primary);
+      padding: 0.75rem; border-radius: 6px; font-family: var(--font-ui); font-size: 1rem; transition: border-color 0.2s; appearance: none;
+    }
+    select {
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23888888' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
+      background-repeat: no-repeat; background-position: right 1rem center;
+    }
+    input[type="number"]:focus, select:focus { outline: none; border-color: var(--accent-color); }
+    button.calc-btn {
+      width: 100%; background-color: var(--accent-color); color: #000000; border: none; padding: 1rem; border-radius: 6px;
+      font-size: 1rem; font-weight: 600; cursor: pointer; transition: background-color 0.2s; margin-top: 1rem; font-family: var(--font-ui);
+    }
+    button.calc-btn:hover { background-color: var(--accent-hover); }
+
+    /* Category tabs */
+    .cat-tabs { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 0.75rem; }
+    .cat-tab {
+      background-color: var(--bg-color); border: 1px solid var(--border-color); border-radius: 20px; padding: 0.3rem 0.75rem;
+      font-size: 0.75rem; color: var(--text-secondary); cursor: pointer; transition: all 0.2s; font-family: var(--font-ui);
+    }
+    .cat-tab:hover, .cat-tab.active { border-color: var(--accent-color); color: var(--accent-color); }
+
+    /* Appliance grid */
+    .appliance-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 0.5rem; margin-bottom: 1rem; max-height: 260px; overflow-y: auto; }
+    .appliance-grid::-webkit-scrollbar { width: 6px; }
+    .appliance-grid::-webkit-scrollbar-track { background: transparent; }
+    .appliance-grid::-webkit-scrollbar-thumb { background: var(--border-color); border-radius: 3px; }
+    .appliance-btn {
+      background-color: var(--bg-color); border: 1px solid var(--border-color); border-radius: 6px; padding: 0.5rem 0.75rem;
+      font-size: 0.8rem; color: var(--text-primary); cursor: pointer; text-align: left; transition: border-color 0.2s, background-color 0.2s;
+      font-family: var(--font-ui); display: flex; justify-content: space-between; align-items: center; gap: 0.5rem;
+    }
+    .appliance-btn:hover { border-color: var(--accent-color); background-color: rgba(255,255,255,0.03); }
+    .appliance-btn .watt { color: var(--accent-color); font-family: var(--font-mono); font-size: 0.7rem; white-space: nowrap; }
+
+    /* Appliance list */
+    .app-list-item {
+      display: flex; justify-content: space-between; align-items: center; padding: 0.75rem; background-color: var(--bg-color);
+      border: 1px solid var(--border-color); border-radius: 6px; margin-bottom: 0.5rem; font-size: 0.85rem;
+    }
+    .app-list-item .info { flex: 1; }
+    .app-list-item .name { font-weight: 600; color: var(--text-primary); }
+    .app-list-item .detail { font-size: 0.75rem; color: var(--text-secondary); }
+    .app-list-item .cost { font-family: var(--font-mono); color: var(--accent-color); font-weight: 600; margin: 0 1rem; white-space: nowrap; }
+    .remove-btn {
+      background: none; border: none; color: var(--text-secondary); cursor: pointer; font-size: 1.1rem; padding: 0.25rem 0.5rem;
+      transition: color 0.2s; font-family: var(--font-ui);
+    }
+    .remove-btn:hover { color: #ff6b6b; }
+
+    /* Summary cards */
+    .summary-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem; margin-bottom: 1.5rem; }
+    .summary-card {
+      background-color: var(--bg-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 1.25rem;
+      text-align: center; display: flex; flex-direction: column; align-items: center;
+    }
+    .summary-card h3 { font-size: 0.8rem; margin-bottom: 0.25rem; color: var(--text-secondary); font-weight: 500; }
+    .summary-card .value { font-family: var(--font-mono); font-size: 1.35rem; color: var(--accent-color); font-weight: 600; }
+    .summary-card .desc { font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.15rem; }
+    .summary-card.co2 .value { color: #4ade80; }
+
+    /* Bar chart */
+    .chart-section { margin-top: 1.5rem; }
+    .chart-section h3 { font-size: 1rem; font-weight: 700; color: #ffffff; margin-bottom: 1rem; }
+    .chart-bar-row { display: flex; align-items: center; margin-bottom: 0.6rem; gap: 0.75rem; }
+    .chart-bar-label { width: 130px; font-size: 0.75rem; color: var(--text-secondary); text-align: right; flex-shrink: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .chart-bar-track { flex: 1; background-color: var(--bg-color); border: 1px solid var(--border-color); border-radius: 4px; height: 22px; position: relative; overflow: hidden; }
+    .chart-bar-fill { height: 100%; background-color: var(--accent-color); border-radius: 4px; transition: width 0.5s ease; min-width: 2px; }
+    .chart-bar-value { width: 80px; font-size: 0.75rem; font-family: var(--font-mono); color: var(--text-primary); flex-shrink: 0; }
+
+    /* Total bar */
+    .total-bar {
+      display: flex; justify-content: space-between; align-items: center; padding: 1rem; background-color: var(--card-bg);
+      border: 2px solid var(--accent-color); border-radius: 8px; margin-top: 0.75rem;
+    }
+    .total-bar .label { font-weight: 700; color: #ffffff; }
+    .total-bar .total-val { font-family: var(--font-mono); font-size: 1.25rem; font-weight: 700; color: var(--accent-color); }
+    .sub-total-bar {
+      display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 1rem;
+      border: 1px solid var(--border-color); border-radius: 8px; margin-top: 0.5rem;
+    }
+    .sub-total-bar .label { font-weight: 600; color: var(--text-secondary); font-size: 0.875rem; }
+    .sub-total-bar .total-val { font-family: var(--font-mono); font-weight: 600; color: var(--text-primary); }
+
+    /* Tips */
+    .tips-section { margin-top: 1.5rem; }
+    .tip-item { padding: 0.75rem 0; border-bottom: 1px solid var(--border-color); }
+    .tip-item:last-child { border-bottom: none; }
+    .tip-item strong { color: var(--text-primary); }
+    .tip-item p { color: var(--text-secondary); font-size: 0.875rem; margin-top: 0.25rem; }
+    .tip-tag { display: inline-block; font-size: 0.65rem; background-color: rgba(255,255,255,0.06); border: 1px solid var(--border-color); border-radius: 4px; padding: 0.1rem 0.4rem; margin-left: 0.5rem; color: var(--accent-color); font-family: var(--font-mono); vertical-align: middle; }
+
+    /* Actions */
+    .actions { display: flex; gap: 0.75rem; margin-top: 1rem; flex-wrap: wrap; }
+    .action-btn {
+      flex: 1; min-width: 140px; background-color: transparent; border: 1px solid var(--border-color); color: var(--text-primary); padding: 0.75rem;
+      border-radius: 6px; font-size: 0.875rem; font-weight: 600; cursor: pointer; transition: all 0.2s; font-family: var(--font-ui); text-align: center;
+    }
+    .action-btn:hover { border-color: var(--accent-color); color: var(--accent-color); }
+    .action-btn.primary { background-color: var(--accent-color); color: #000000; border-color: var(--accent-color); }
+    .action-btn.primary:hover { background-color: var(--accent-hover); }
+    .action-btn.danger:hover { border-color: #ff6b6b; color: #ff6b6b; }
+
+    .empty-state { text-align: center; padding: 2rem; color: var(--text-secondary); font-size: 0.875rem; }
+
+    .seo-content { margin-top: 3rem; }
+    .seo-content h2 { font-size: 1.5rem; font-weight: 700; margin-bottom: 1rem; color: #ffffff; }
+    .seo-content h3 { font-size: 1.1rem; font-weight: 600; margin: 1.5rem 0 0.5rem; color: #ffffff; }
+    .seo-content p { margin-bottom: 1rem; color: var(--text-secondary); }
+    .seo-content ul { margin-bottom: 1rem; padding-left: 1.5rem; color: var(--text-secondary); }
+    .seo-content li { margin-bottom: 0.5rem; }
+
+    .formula-box {
+      background-color: var(--bg-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 1rem; margin: 1rem 0;
+      font-family: var(--font-mono); font-size: 0.9rem; color: var(--accent-color); text-align: center;
+    }
+
+    @media (min-width: 640px) {
+      .summary-grid { grid-template-columns: repeat(3, 1fr); }
+      .appliance-grid { grid-template-columns: repeat(3, 1fr); }
+    }
+  </style>
+
+  <div class="container">
+    <h1>Electricity Usage Monitor</h1>
+    <p class="subtitle">Track your home electricity usage, costs, and carbon footprint by appliance</p>
+
+    <main>
+      <!-- Add Appliance -->
+      <div class="card">
+        <h2>Add Appliance</h2>
+        <label style="margin-bottom:0.35rem;">Pick a preset or enter wattage manually</label>
+        <div class="cat-tabs" id="catTabs"></div>
+        <div class="appliance-grid" id="appGrid"></div>
+
+        <div class="form-row">
+          <div class="form-group form-col">
+            <label for="wattage">Wattage (W)</label>
+            <input type="number" id="wattage" required min="1" step="1" placeholder="e.g. 1500">
+          </div>
+          <div class="form-group form-col">
+            <label for="hours">Hours / Day</label>
+            <input type="number" id="hours" required min="0.1" max="24" step="0.1" placeholder="e.g. 8" value="8">
+          </div>
+          <div class="form-group form-col">
+            <label for="qty">Quantity</label>
+            <input type="number" id="qty" required min="1" step="1" placeholder="1" value="1">
+          </div>
+        </div>
+        <div class="form-group">
+          <label for="rate">Electricity Rate ($/kWh)</label>
+          <input type="number" id="rate" required min="0.01" step="0.01" placeholder="0.16" value="0.16">
+        </div>
+        <button type="button" class="calc-btn" id="addBtn">+ Add Appliance to Monitor</button>
+      </div>
+
+      <!-- Dashboard -->
+      <div class="card" id="dashCard" style="display:none;">
+        <h2>Usage Dashboard</h2>
+
+        <div class="summary-grid" id="summaryGrid">
+          <div class="summary-card">
+            <h3>Daily</h3>
+            <div class="value" id="sDaily">0 kWh</div>
+            <div class="desc" id="sDailyCost">$0.00</div>
+          </div>
+          <div class="summary-card">
+            <h3>Monthly</h3>
+            <div class="value" id="sMonthly">0 kWh</div>
+            <div class="desc" id="sMonthlyCost">$0.00</div>
+          </div>
+          <div class="summary-card">
+            <h3>Yearly</h3>
+            <div class="value" id="sYearly">0 kWh</div>
+            <div class="desc" id="sYearlyCost">$0.00</div>
+          </div>
+          <div class="summary-card co2">
+            <h3>CO2 / Year</h3>
+            <div class="value" id="sCo2">0 kg</div>
+            <div class="desc">EPA avg: 0.42 kg/kWh</div>
+          </div>
+          <div class="summary-card co2">
+            <h3>Equivalent Trees</h3>
+            <div class="value" id="sTrees">0</div>
+            <div class="desc">trees needed to offset</div>
+          </div>
+          <div class="summary-card">
+            <h3>Appliances</h3>
+            <div class="value" id="sCount">0</div>
+            <div class="desc">tracked</div>
+          </div>
+        </div>
+
+        <!-- Appliance list -->
+        <div id="appList"></div>
+
+        <div class="total-bar" id="totalBar" style="display:none;">
+          <span class="label">Monthly Total</span>
+          <span class="total-val" id="tMonthly">$0.00</span>
+        </div>
+        <div class="sub-total-bar" id="subDaily" style="display:none;">
+          <span class="label">Daily</span>
+          <span class="total-val" id="tDaily">$0.00</span>
+        </div>
+        <div class="sub-total-bar" id="subYearly" style="display:none;">
+          <span class="label">Yearly</span>
+          <span class="total-val" id="tYearly">$0.00</span>
+        </div>
+
+        <!-- Bar chart breakdown -->
+        <div class="chart-section" id="chartSection" style="display:none;">
+          <h3>Breakdown by Appliance (Monthly kWh)</h3>
+          <div id="chartBars"></div>
+        </div>
+
+        <!-- Dynamic tips -->
+        <div class="tips-section" id="tipsSection" style="display:none;">
+          <h3 style="font-size:1rem;font-weight:700;color:#ffffff;margin-bottom:1rem;">Tips to Reduce Your Top Energy Hogs</h3>
+          <div id="tipsList"></div>
+        </div>
+
+        <!-- Actions -->
+        <div class="actions">
+          <button type="button" class="action-btn danger" id="clearBtn">Clear All</button>
+        </div>
+      </div>
+
+      <!-- Empty state -->
+      <div class="card" id="emptyCard">
+        <div class="empty-state">
+          <p>No appliances added yet. Pick from the presets above or enter a custom wattage to start tracking your electricity usage.</p>
+        </div>
+      </div>
+
+      <!-- SEO / FAQ Content -->
+      <div class="seo-content">
+        <h2>How to Track Home Electricity Usage</h2>
+        <p>Understanding where your electricity goes is the first step to reducing your bill. This monitor lets you build a virtual model of your home's energy consumption by adding each appliance, its wattage, daily usage hours, and quantity.</p>
+        <div class="formula-box">Daily kWh = (Watts x Hours x Quantity) / 1,000</div>
+        <p>The tool then calculates costs based on your electricity rate and estimates CO2 emissions using the EPA's national average of <strong>0.42 kg CO2 per kWh</strong>. The bar chart breakdown shows exactly which appliances are your biggest energy consumers.</p>
+
+        <h2>Understanding Your Carbon Footprint</h2>
+        <p>Every kilowatt-hour of electricity generates an average of 0.42 kg of CO2 in the US (based on EPA eGRID data). The actual amount depends on your region's energy mix — areas relying on coal produce more CO2, while regions with hydroelectric, nuclear, or renewable energy produce less. A single mature tree absorbs roughly 22 kg of CO2 per year, so this monitor shows how many trees would be needed to offset your electricity usage.</p>
+
+        <h2>Average Household Electricity Consumption</h2>
+        <p>The average US household consumes about <strong>886 kWh per month</strong>, translating to roughly <strong>$142/month</strong> at the national average rate of $0.16/kWh. The biggest contributors are typically:</p>
+        <ul>
+          <li><strong>HVAC (46%)</strong> — Central AC, furnaces, heat pumps</li>
+          <li><strong>Water heating (14%)</strong> — Electric or tankless water heaters</li>
+          <li><strong>Appliances (13%)</strong> — Refrigerator, washer, dryer, dishwasher</li>
+          <li><strong>Lighting (9%)</strong> — Indoor and outdoor lights</li>
+          <li><strong>Electronics (7%)</strong> — TVs, computers, gaming systems</li>
+          <li><strong>Other (11%)</strong> — Cooking, fans, miscellaneous</li>
+        </ul>
+
+        <h2>Frequently Asked Questions</h2>
+
+        <h3>How do I track my home electricity usage?</h3>
+        <p>Add each appliance to this monitor by selecting from 50+ presets or entering a custom wattage. Set daily hours and quantity — the tool calculates your total kWh, cost, and CO2 emissions automatically. Your configuration saves to your browser so you can revisit anytime.</p>
+
+        <h3>How is CO2 emissions from electricity calculated?</h3>
+        <p>We use the US national average of 0.42 kg CO2 per kWh (EPA eGRID). Multiply your total kWh by this factor. For example, 886 kWh/month produces about 372 kg of CO2 monthly. Actual emissions vary by region depending on the local energy mix.</p>
+
+        <h3>What appliances use the most electricity?</h3>
+        <p>Central AC (3,500W), electric furnaces (10,000W), water heaters (4,500W), EV chargers (7,200W), and clothes dryers (5,000W) are the biggest consumers. Refrigerators (150W) add up because they run 24/7 — about 1,300 kWh per year.</p>
+
+        <h3>How can I reduce my electricity consumption?</h3>
+        <p>Target your top energy hogs first. Use this monitor's bar chart to identify them, then follow the personalized tips. Common strategies: upgrade to Energy Star, use smart thermostats, switch to LED lighting, and eliminate phantom loads.</p>
+
+        <h3>Does this electricity monitor save my data?</h3>
+        <p>Yes. Your appliance list and rate are saved to localStorage automatically. Return to this page and your full configuration is restored — no account needed, all data stays on your device.</p>
+
+        <h2>Related Tools</h2>
+        <ul>
+          <li><a href="/electricity-cost-calculator" style="color:var(--accent-color);">Electricity Cost Calculator</a> — Quick cost calculation for individual appliances</li>
+          <li><a href="/solar-panel-calculator" style="color:var(--accent-color);">Solar Panel Calculator</a> — Estimate savings from going solar</li>
+          <li><a href="/btu-calculator" style="color:var(--accent-color);">BTU Calculator</a> — Size your AC or heater correctly for any room</li>
+        </ul>
+      </div>
+    </main>
+  </div>
+
+  <script is:inline>
+    // 55 common appliances
+    var DB = [
+      { n:"LED Bulb",w:10,c:"lighting",h:8 },
+      { n:"CFL Bulb",w:14,c:"lighting",h:8 },
+      { n:"Incandescent Bulb",w:60,c:"lighting",h:5 },
+      { n:"Halogen Bulb",w:43,c:"lighting",h:5 },
+      { n:"Floor Lamp (LED)",w:18,c:"lighting",h:6 },
+      { n:"Outdoor Flood Light",w:150,c:"lighting",h:6 },
+      { n:"LED Strip Lights",w:24,c:"lighting",h:5 },
+      { n:"Smart Bulb",w:9,c:"lighting",h:6 },
+      { n:"Refrigerator",w:150,c:"kitchen",h:24 },
+      { n:"Chest Freezer",w:100,c:"kitchen",h:24 },
+      { n:"Upright Freezer",w:150,c:"kitchen",h:24 },
+      { n:"Microwave",w:1200,c:"kitchen",h:0.5 },
+      { n:"Electric Oven",w:2500,c:"kitchen",h:1 },
+      { n:"Electric Stove Burner",w:1500,c:"kitchen",h:1 },
+      { n:"Toaster Oven",w:1400,c:"kitchen",h:0.3 },
+      { n:"Toaster",w:900,c:"kitchen",h:0.1 },
+      { n:"Dishwasher",w:1800,c:"kitchen",h:1 },
+      { n:"Coffee Maker",w:900,c:"kitchen",h:0.25 },
+      { n:"Electric Kettle",w:1500,c:"kitchen",h:0.15 },
+      { n:"Blender",w:400,c:"kitchen",h:0.1 },
+      { n:"Instant Pot",w:1000,c:"kitchen",h:0.5 },
+      { n:"Air Fryer",w:1500,c:"kitchen",h:0.3 },
+      { n:"Central AC",w:3500,c:"hvac",h:8 },
+      { n:"Window AC",w:1400,c:"hvac",h:8 },
+      { n:"Portable AC",w:1200,c:"hvac",h:8 },
+      { n:"Space Heater",w:1500,c:"hvac",h:8 },
+      { n:"Ceiling Fan",w:75,c:"hvac",h:10 },
+      { n:"Box Fan",w:73,c:"hvac",h:8 },
+      { n:"Tower Fan",w:56,c:"hvac",h:8 },
+      { n:"Electric Furnace",w:10000,c:"hvac",h:6 },
+      { n:"Heat Pump",w:2400,c:"hvac",h:8 },
+      { n:"Dehumidifier",w:300,c:"hvac",h:10 },
+      { n:"Humidifier",w:35,c:"hvac",h:8 },
+      { n:"Air Purifier",w:60,c:"hvac",h:12 },
+      { n:"Washing Machine",w:500,c:"laundry",h:1 },
+      { n:"Clothes Dryer",w:5000,c:"laundry",h:1 },
+      { n:"Iron",w:1200,c:"laundry",h:0.5 },
+      { n:"Steamer",w:1500,c:"laundry",h:0.25 },
+      { n:"TV (55\" LED)",w:80,c:"electronics",h:5 },
+      { n:"TV (65\" OLED)",w:120,c:"electronics",h:5 },
+      { n:"Gaming PC",w:500,c:"electronics",h:4 },
+      { n:"Gaming Console",w:150,c:"electronics",h:3 },
+      { n:"Laptop",w:50,c:"electronics",h:8 },
+      { n:"Desktop PC",w:200,c:"electronics",h:8 },
+      { n:"Monitor (27\")",w:30,c:"electronics",h:8 },
+      { n:"Wi-Fi Router",w:12,c:"electronics",h:24 },
+      { n:"Phone Charger",w:5,c:"electronics",h:3 },
+      { n:"Tablet Charger",w:12,c:"electronics",h:2 },
+      { n:"Smart Speaker",w:3,c:"electronics",h:24 },
+      { n:"Electric Water Heater",w:4500,c:"utility",h:3 },
+      { n:"Tankless Water Heater",w:7000,c:"utility",h:1.5 },
+      { n:"Sump Pump",w:800,c:"utility",h:0.5 },
+      { n:"Vacuum Cleaner",w:1200,c:"utility",h:0.5 },
+      { n:"Hair Dryer",w:1800,c:"utility",h:0.25 },
+      { n:"EV Charger (Level 2)",w:7200,c:"utility",h:4 },
+      { n:"Pool Pump",w:1500,c:"utility",h:8 },
+      { n:"Garage Door Opener",w:350,c:"utility",h:0.1 },
+      { n:"Electric Lawn Mower",w:1400,c:"utility",h:0.5 }
+    ];
+
+    var CO2_PER_KWH = 0.42;
+    var CO2_PER_TREE = 22;
+    var CATS = {all:"All",lighting:"Lighting",kitchen:"Kitchen",hvac:"HVAC",laundry:"Laundry",electronics:"Electronics",utility:"Utility"};
+    var activeCat = "all";
+    var hList = [];
+    var STORAGE_KEY = "elec_usage_monitor";
+
+    // Tips database keyed by appliance name patterns
+    var TIPS = {
+      "Central AC": "Set your thermostat to 78\u00b0F when home and higher when away. Each degree above 72\u00b0F saves ~3% on cooling costs. Use ceiling fans to feel 4\u00b0F cooler.",
+      "Window AC": "Clean or replace the filter monthly during summer. A dirty filter makes the unit work 5\u201315% harder. Consider upgrading to an Energy Star model.",
+      "Portable AC": "Seal the window kit properly \u2014 air leaks can reduce efficiency by 20\u201330%. Use in the smallest room possible and close doors.",
+      "Electric Furnace": "Switch to a heat pump for 2\u20133x better efficiency. Seal ducts (leaky ducts waste 20\u201340% of heating energy) and insulate your attic.",
+      "Space Heater": "Heat only the room you\u2019re in and close doors. Use a timer to avoid running it while sleeping. A heated blanket uses only 200W for similar comfort.",
+      "Heat Pump": "Keep outdoor unit clear of debris. Set to \u201Cauto\u201D mode rather than \u201Cheat.\u201D Schedule annual maintenance to keep efficiency at peak levels.",
+      "Electric Water Heater": "Lower the thermostat to 120\u00b0F (most are set to 140\u00b0F). Insulate the tank and hot water pipes. Take shorter showers \u2014 each minute saved = ~1 gallon of hot water.",
+      "Tankless Water Heater": "Install low-flow showerheads (1.5 GPM) to reduce demand. Descale annually if you have hard water. Still more efficient than tank heaters overall.",
+      "Clothes Dryer": "Clean the lint trap before every load. Use moisture-sensing auto-dry instead of timed cycles. Air-dry when possible \u2014 saves ~$0.50 per load.",
+      "Washing Machine": "Wash in cold water \u2014 90% of energy goes to heating. Run full loads only. Front-loaders use 25% less energy than top-loaders.",
+      "Refrigerator": "Set to 37\u00b0F (fridge) and 0\u00b0F (freezer). Clean condenser coils yearly. Keep it full \u2014 thermal mass helps maintain temperature. Check door seals.",
+      "Chest Freezer": "Keep it at least 75% full. Defrost when ice builds up past 1/4 inch. Consider upgrading \u2014 new models use 40% less energy than 10-year-old units.",
+      "Dishwasher": "Skip the heated dry cycle \u2014 air-dry instead. Run only full loads. Use the eco/energy-saver cycle for everyday dishes.",
+      "Electric Oven": "Use a toaster oven or air fryer for small meals \u2014 they use 50\u201375% less energy. Avoid preheating longer than necessary. Don\u2019t open the door while cooking.",
+      "TV (55\" LED)": "Enable power-saving mode in your TV settings. Use a smart power strip to cut standby power (TVs draw 5\u201310W even when \u201Coff\u201D).",
+      "TV (65\" OLED)": "OLED TVs use more power at high brightness. Use the \u201Ccinema\u201D or \u201Ceco\u201D picture preset. Enable auto-brightness based on room lighting.",
+      "Gaming PC": "Enable power management in Windows/macOS. Undervolt your GPU for 10\u201320% power savings with minimal performance loss. Use sleep mode when AFK.",
+      "Desktop PC": "Use sleep mode instead of leaving it on. An idle desktop still draws 80\u2013100W. Enable power-saving settings in your OS.",
+      "Laptop": "Already efficient! Keep using your laptop instead of a desktop when possible. Unplug the charger when the battery is full.",
+      "EV Charger (Level 2)": "Charge during off-peak hours (usually 9 PM \u2013 6 AM) for lower rates. If your utility offers an EV rate plan, switch to it for 30\u201350% savings.",
+      "Pool Pump": "Run the pump 6\u20138 hours instead of 24. Use a variable-speed pump \u2014 they use up to 80% less energy than single-speed models. Run during off-peak hours.",
+      "Incandescent Bulb": "Switch to LED bulbs immediately \u2014 they use 75% less energy and last 25x longer. Replacing 20 bulbs saves ~$150/year.",
+      "CFL Bulb": "Consider upgrading to LEDs. While CFLs are better than incandescent, LEDs are 30% more efficient and don\u2019t contain mercury.",
+      "Outdoor Flood Light": "Switch to LED flood lights and add a motion sensor. Solar-powered options eliminate electricity cost entirely.",
+      "Dehumidifier": "Set humidity to 45\u201350% \u2014 lower settings waste energy. Place it centrally and keep doors/windows closed. Clean the filter monthly.",
+      "Air Purifier": "Use auto mode so it ramps down when air quality is good. Place it in the room you spend the most time in rather than running multiple units.",
+      "Iron": "Iron clothes in batches while the iron is hot. Use the steam setting efficiently \u2014 or switch to a garment steamer for lighter fabrics.",
+      "Coffee Maker": "Use a thermal carafe instead of a hot plate to keep coffee warm. Turn off the machine immediately after brewing.",
+      "Microwave": "Already very efficient! Use the microwave to reheat instead of the oven whenever possible \u2014 it uses 80% less energy for the same task."
+    };
+
+    // Build category tabs
+    var tabsEl = document.getElementById("catTabs");
+    Object.keys(CATS).forEach(function(key) {
+      var b = document.createElement("button");
+      b.type = "button";
+      b.className = "cat-tab" + (key === "all" ? " active" : "");
+      b.textContent = CATS[key];
+      b.addEventListener("click", function() {
+        activeCat = key;
+        tabsEl.querySelectorAll(".cat-tab").forEach(function(t){ t.classList.remove("active"); });
+        b.classList.add("active");
+        renderGrid();
+      });
+      tabsEl.appendChild(b);
+    });
+
+    function renderGrid() {
+      var g = document.getElementById("appGrid");
+      g.innerHTML = "";
+      var list = activeCat === "all" ? DB : DB.filter(function(a){ return a.c === activeCat; });
+      list.forEach(function(a) {
+        var b = document.createElement("button");
+        b.type = "button";
+        b.className = "appliance-btn";
+        b.innerHTML = '<span>' + a.n + '</span><span class="watt">' + a.w + 'W</span>';
+        b.addEventListener("click", function() {
+          document.getElementById("wattage").value = a.w;
+          document.getElementById("hours").value = a.h;
+          window._selectedName = a.n;
+        });
+        g.appendChild(b);
+      });
+    }
+    renderGrid();
+
+    function fmt(n) { return "$" + n.toFixed(2); }
+    function fk(n) { return n < 10 ? n.toFixed(2) : n < 100 ? n.toFixed(1) : Math.round(n); }
+
+    function saveData() {
+      var rate = parseFloat(document.getElementById("rate").value) || 0.16;
+      localStorage.setItem(STORAGE_KEY, JSON.stringify({ list: hList, rate: rate }));
+    }
+
+    function loadData() {
+      try {
+        var d = JSON.parse(localStorage.getItem(STORAGE_KEY));
+        if (d && d.list && d.list.length) {
+          hList = d.list;
+          if (d.rate) document.getElementById("rate").value = d.rate;
+          renderDashboard();
+        }
+      } catch(e) {}
+    }
+
+    // Add appliance
+    document.getElementById("addBtn").addEventListener("click", function() {
+      var w = parseFloat(document.getElementById("wattage").value);
+      var h = parseFloat(document.getElementById("hours").value);
+      var q = parseInt(document.getElementById("qty").value) || 1;
+      var r = parseFloat(document.getElementById("rate").value);
+      if (isNaN(w) || isNaN(h) || isNaN(r) || w <= 0) return;
+      var name = window._selectedName || (w + "W Appliance");
+      var match = DB.find(function(a){ return a.w === w; });
+      if (match && !window._selectedName) name = match.n;
+      window._selectedName = null;
+      var dk = (w * h * q) / 1000;
+      hList.push({ name: name, w: w, h: h, q: q, r: r, dk: dk });
+      saveData();
+      renderDashboard();
+      // Reset qty
+      document.getElementById("qty").value = 1;
+    });
+
+    // Clear all
+    document.getElementById("clearBtn").addEventListener("click", function() {
+      hList = [];
+      localStorage.removeItem(STORAGE_KEY);
+      renderDashboard();
+    });
+
+    function renderDashboard() {
+      var dashCard = document.getElementById("dashCard");
+      var emptyCard = document.getElementById("emptyCard");
+
+      if (!hList.length) {
+        dashCard.style.display = "none";
+        emptyCard.style.display = "block";
+        return;
+      }
+
+      dashCard.style.display = "block";
+      emptyCard.style.display = "none";
+
+      var r = hList.length ? hList[hList.length - 1].r : 0.16;
+      var totalDailyKwh = hList.reduce(function(s, x){ return s + x.dk; }, 0);
+      var totalMonthlyKwh = totalDailyKwh * 30;
+      var totalYearlyKwh = totalDailyKwh * 365;
+      var totalDailyCost = hList.reduce(function(s, x){ return s + (x.dk * x.r); }, 0);
+      var totalMonthlyCost = totalDailyCost * 30;
+      var totalYearlyCost = totalDailyCost * 365;
+      var co2Yearly = totalYearlyKwh * CO2_PER_KWH;
+      var trees = Math.ceil(co2Yearly / CO2_PER_TREE);
+
+      // Summary cards
+      document.getElementById("sDaily").textContent = fk(totalDailyKwh) + " kWh";
+      document.getElementById("sDailyCost").textContent = fmt(totalDailyCost);
+      document.getElementById("sMonthly").textContent = fk(totalMonthlyKwh) + " kWh";
+      document.getElementById("sMonthlyCost").textContent = fmt(totalMonthlyCost);
+      document.getElementById("sYearly").textContent = fk(totalYearlyKwh) + " kWh";
+      document.getElementById("sYearlyCost").textContent = fmt(totalYearlyCost);
+      document.getElementById("sCo2").textContent = fk(co2Yearly) + " kg";
+      document.getElementById("sTrees").textContent = trees;
+      document.getElementById("sCount").textContent = hList.length;
+
+      // Appliance list
+      var el = document.getElementById("appList");
+      el.innerHTML = "";
+      hList.forEach(function(item, i) {
+        var mc = item.dk * item.r * 30;
+        var qStr = item.q > 1 ? " x" + item.q : "";
+        var row = document.createElement("div");
+        row.className = "app-list-item";
+        row.innerHTML = '<div class="info"><span class="name">' + item.name + qStr + '</span><span class="detail"> \u00b7 ' + item.w + 'W \u00b7 ' + item.h + 'h/day</span></div>' +
+          '<span class="cost">' + fmt(mc) + '/mo</span>' +
+          '<button class="remove-btn" data-i="' + i + '">\u00d7</button>';
+        el.appendChild(row);
+      });
+      el.querySelectorAll(".remove-btn").forEach(function(b) {
+        b.addEventListener("click", function() {
+          hList.splice(parseInt(this.dataset.i), 1);
+          saveData();
+          renderDashboard();
+        });
+      });
+
+      // Totals
+      document.getElementById("totalBar").style.display = "flex";
+      document.getElementById("subDaily").style.display = "flex";
+      document.getElementById("subYearly").style.display = "flex";
+      document.getElementById("tMonthly").textContent = fmt(totalMonthlyCost);
+      document.getElementById("tDaily").textContent = fmt(totalDailyCost);
+      document.getElementById("tYearly").textContent = fmt(totalYearlyCost);
+
+      // Bar chart
+      renderChart();
+
+      // Tips
+      renderTips();
+    }
+
+    function renderChart() {
+      var section = document.getElementById("chartSection");
+      var container = document.getElementById("chartBars");
+      container.innerHTML = "";
+
+      if (hList.length < 1) { section.style.display = "none"; return; }
+      section.style.display = "block";
+
+      // Sort by monthly kWh descending
+      var sorted = hList.map(function(item, i) {
+        return { name: item.name + (item.q > 1 ? " x" + item.q : ""), mkwh: item.dk * 30, mc: item.dk * item.r * 30, idx: i };
+      }).sort(function(a, b) { return b.mkwh - a.mkwh; });
+
+      var maxKwh = sorted[0].mkwh;
+
+      sorted.forEach(function(item) {
+        var pct = maxKwh > 0 ? (item.mkwh / maxKwh) * 100 : 0;
+        var row = document.createElement("div");
+        row.className = "chart-bar-row";
+        row.innerHTML = '<div class="chart-bar-label">' + item.name + '</div>' +
+          '<div class="chart-bar-track"><div class="chart-bar-fill" style="width:' + pct + '%;"></div></div>' +
+          '<div class="chart-bar-value">' + fk(item.mkwh) + ' kWh</div>';
+        container.appendChild(row);
+      });
+    }
+
+    function renderTips() {
+      var section = document.getElementById("tipsSection");
+      var container = document.getElementById("tipsList");
+      container.innerHTML = "";
+
+      // Sort by daily kWh descending, pick top hogs that have tips
+      var sorted = hList.slice().sort(function(a, b) { return b.dk - a.dk; });
+      var shown = 0;
+
+      sorted.forEach(function(item) {
+        if (shown >= 5) return;
+        var tip = TIPS[item.name];
+        if (!tip) return;
+        var mc = item.dk * item.r * 30;
+        var div = document.createElement("div");
+        div.className = "tip-item";
+        div.innerHTML = '<strong>' + item.name + '<span class="tip-tag">' + fmt(mc) + '/mo</span></strong><p>' + tip + '</p>';
+        container.appendChild(div);
+        shown++;
+      });
+
+      section.style.display = shown > 0 ? "block" : "none";
+    }
+
+    // Load saved data on page load
+    loadData();
+  </script>
+
+  <!-- Pillar Guide Link -->
+  <div class="max-w-3xl mx-auto px-5 pt-8 pb-12">
+    <div class="border-t border-[var(--border-color)] pt-8">
+      <p class="text-xs font-bold text-[var(--accent-color)] tracking-wide uppercase mb-2">Related Tools</p>
+      <div class="grid gap-3">
+        <a href="/electricity-cost-calculator" class="block bg-[var(--card-bg)] border border-[var(--border-color)] rounded-xl p-5 hover:border-[var(--accent-color)] hover:-translate-y-0.5 transition-all">
+          <h3 class="text-base font-bold text-white">Electricity Cost Calculator</h3>
+          <p class="text-sm text-[var(--text-secondary)] mt-1">Quick cost calculation for any individual appliance &rarr;</p>
+        </a>
+        <a href="/solar-panel-calculator" class="block bg-[var(--card-bg)] border border-[var(--border-color)] rounded-xl p-5 hover:border-[var(--accent-color)] hover:-translate-y-0.5 transition-all">
+          <h3 class="text-base font-bold text-white">Solar Panel Calculator</h3>
+          <p class="text-sm text-[var(--text-secondary)] mt-1">Estimate how much you could save with solar &rarr;</p>
+        </a>
+        <a href="/btu-calculator" class="block bg-[var(--card-bg)] border border-[var(--border-color)] rounded-xl p-5 hover:border-[var(--accent-color)] hover:-translate-y-0.5 transition-all">
+          <h3 class="text-base font-bold text-white">BTU Calculator</h3>
+          <p class="text-sm text-[var(--text-secondary)] mt-1">Size your AC or heater for any room &rarr;</p>
+        </a>
+      </div>
+    </div>
+  </div>
+</SiteLayout>
