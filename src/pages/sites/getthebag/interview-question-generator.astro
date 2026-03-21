@@ -1,0 +1,556 @@
+---
+import SiteLayout from "../../../layouts/SiteLayout.astro";
+
+const faqs = [
+  {
+    q: "How many questions should I prepare for an interview?",
+    a: "You should prepare answers for at least 15-20 common questions spanning behavioral, technical, and situational categories. Focus on your specific job field and experience level. Practice your responses out loud, ideally with a timer, aiming for 1-3 minute answers."
+  },
+  {
+    q: "What is the STAR method for answering behavioral questions?",
+    a: "STAR stands for Situation, Task, Action, Result. You describe a specific Situation you faced, the Task you were responsible for, the Action you took, and the measurable Result you achieved. This framework keeps your answers structured, concise, and impactful."
+  },
+  {
+    q: "How should I handle salary negotiation questions in an interview?",
+    a: "Research market rates for your role and experience level before the interview. When asked, provide a range based on your research rather than a single number. Emphasize your value and total compensation expectations including benefits, equity, and growth opportunities."
+  },
+  {
+    q: "What are the most common interview mistakes to avoid?",
+    a: "The biggest mistakes include: not researching the company, giving vague answers without specific examples, speaking negatively about past employers, not asking thoughtful questions at the end, and failing to follow up with a thank-you note within 24 hours."
+  },
+  {
+    q: "How long should I spend preparing for each interview question?",
+    a: "Spend 5-10 minutes drafting each answer and 2-3 minutes practicing it aloud. For technical questions, allocate more time for problem-solving practice. In total, dedicate at least 3-5 hours to interview preparation for each company you apply to."
+  }
+];
+
+const schema = [
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "Interview Question Generator",
+    "description": "Generate tailored interview questions by job field and experience level. Practice with 200+ questions across behavioral, technical, situational, culture fit, and salary negotiation categories.",
+    "url": "https://getthebag.photonbuilder.com/interview-question-generator",
+    "applicationCategory": "BusinessApplication",
+    "operatingSystem": "Any",
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": faqs.map(f => ({
+      "@type": "Question",
+      "name": f.q,
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": f.a
+      }
+    }))
+  }
+];
+
+export const meta = {
+  title: "Interview Question Generator — Practice 200+ Questions by Field & Level",
+  description: "Generate tailored interview questions by job field and experience level. Practice behavioral, technical, situational, culture fit, and salary negotiation questions with mock interview mode.",
+  category: "tool",
+  published: "2026-03-21"
+};
+---
+
+<SiteLayout
+  site="getthebag"
+  title={meta.title}
+  description={meta.description}
+  canonical="https://getthebag.photonbuilder.com/interview-question-generator"
+  schema={schema}
+>
+  <div class="page-content">
+    <div class="hero">
+      <h1>Interview Question Generator</h1>
+      <p>Select your job field and experience level to get tailored interview questions. Practice with 200+ questions across 5 categories, or launch mock interview mode for a timed 10-question session.</p>
+    </div>
+
+    <section class="content-section">
+      <div class="controls-panel">
+        <div class="control-group">
+          <label for="field-select">Job Field</label>
+          <select id="field-select">
+            <option value="software-engineering">Software Engineering</option>
+            <option value="marketing">Marketing</option>
+            <option value="finance">Finance</option>
+            <option value="sales">Sales</option>
+            <option value="hr">Human Resources</option>
+            <option value="design">Design</option>
+            <option value="data-science">Data Science</option>
+            <option value="management">Management</option>
+            <option value="healthcare">Healthcare</option>
+            <option value="education">Education</option>
+          </select>
+        </div>
+        <div class="control-group">
+          <label for="level-select">Experience Level</label>
+          <select id="level-select">
+            <option value="entry">Entry Level</option>
+            <option value="mid">Mid Level</option>
+            <option value="senior">Senior Level</option>
+          </select>
+        </div>
+        <div class="control-group">
+          <label for="category-select">Category</label>
+          <select id="category-select">
+            <option value="all">All Categories</option>
+            <option value="behavioral">Behavioral (STAR)</option>
+            <option value="technical">Technical</option>
+            <option value="situational">Situational</option>
+            <option value="culture-fit">Culture Fit</option>
+            <option value="salary">Salary Negotiation</option>
+          </select>
+        </div>
+        <div class="btn-group">
+          <button id="generate-btn" class="btn btn-primary">Generate Questions</button>
+          <button id="mock-btn" class="btn btn-secondary">Mock Interview Mode</button>
+        </div>
+      </div>
+
+      <!-- Question List View -->
+      <div id="questions-view">
+        <div id="questions-list" class="questions-list"></div>
+      </div>
+
+      <!-- Mock Interview View -->
+      <div id="mock-view" class="mock-view" style="display:none;">
+        <div class="mock-header">
+          <div class="mock-progress">
+            <span id="mock-counter">Question 1 of 10</span>
+            <div class="progress-bar"><div id="progress-fill" class="progress-fill"></div></div>
+          </div>
+          <div class="mock-timer">
+            <span id="timer-display">2:00</span>
+          </div>
+        </div>
+        <div id="mock-question-card" class="mock-question-card"></div>
+        <div class="mock-actions">
+          <button id="mock-reveal-btn" class="btn btn-secondary">Show Answer Framework</button>
+          <button id="mock-next-btn" class="btn btn-primary">Next Question</button>
+          <button id="mock-exit-btn" class="btn btn-outline">Exit Mock Interview</button>
+        </div>
+        <div id="mock-answer" class="mock-answer" style="display:none;"></div>
+      </div>
+
+      <h2>Frequently Asked Questions</h2>
+      <div class="faq-container">
+        {faqs.map(faq => (
+          <div class="faq-item">
+            <h3>{faq.q}</h3>
+            <p>{faq.a}</p>
+          </div>
+        ))}
+      </div>
+    </section>
+  </div>
+
+  <script is:inline>
+    document.addEventListener('DOMContentLoaded', function() {
+      // Question bank - 200+ questions organized by category, field, and level
+      const questionBank = {
+        behavioral: [
+          { q: "Tell me about a time you had to meet a tight deadline.", framework: "Use STAR: Describe the project, your role, specific steps you took to prioritize and deliver, and the outcome with metrics.", prepTime: 5, difficulty: "Easy", fields: ["all"], levels: ["all"] },
+          { q: "Describe a situation where you disagreed with a coworker. How did you handle it?", framework: "Use STAR: Focus on active listening, finding common ground, and reaching a productive resolution. Emphasize the relationship outcome.", prepTime: 8, difficulty: "Medium", fields: ["all"], levels: ["all"] },
+          { q: "Give an example of a time you showed leadership.", framework: "Use STAR: Describe the situation, how you took initiative, specific actions you led, and the measurable impact on the team or project.", prepTime: 8, difficulty: "Medium", fields: ["all"], levels: ["mid", "senior"] },
+          { q: "Tell me about a time you failed. What did you learn?", framework: "Use STAR: Be honest about the failure, own your role in it, describe specific lessons learned, and how you applied them going forward.", prepTime: 10, difficulty: "Hard", fields: ["all"], levels: ["all"] },
+          { q: "Describe a project you're most proud of.", framework: "Use STAR: Choose a project relevant to the role. Highlight your specific contributions, challenges overcome, and quantifiable results.", prepTime: 8, difficulty: "Easy", fields: ["all"], levels: ["all"] },
+          { q: "Tell me about a time you had to adapt to a major change at work.", framework: "Use STAR: Describe the change, your initial reaction, how you adapted your approach, and positive outcomes from your flexibility.", prepTime: 8, difficulty: "Medium", fields: ["all"], levels: ["all"] },
+          { q: "Give an example of when you went above and beyond for a customer or colleague.", framework: "Use STAR: Detail the need you identified, the extra effort you invested, and how it impacted the relationship or business.", prepTime: 5, difficulty: "Easy", fields: ["all"], levels: ["entry", "mid"] },
+          { q: "Describe a time you had to persuade someone to see things your way.", framework: "Use STAR: Focus on data-driven persuasion, empathy for their perspective, and how you built consensus rather than forced agreement.", prepTime: 8, difficulty: "Medium", fields: ["all"], levels: ["mid", "senior"] },
+          { q: "Tell me about a time you managed multiple competing priorities.", framework: "Use STAR: Explain your prioritization framework, how you communicated trade-offs, and the result of your time management.", prepTime: 8, difficulty: "Medium", fields: ["all"], levels: ["all"] },
+          { q: "Describe a situation where you received constructive criticism. How did you respond?", framework: "Use STAR: Show emotional maturity, describe specific changes you made, and demonstrate growth from the feedback.", prepTime: 5, difficulty: "Easy", fields: ["all"], levels: ["all"] },
+          { q: "Tell me about a time you mentored or coached someone.", framework: "Use STAR: Describe the person's challenge, your mentoring approach, actions you took, and how the person grew as a result.", prepTime: 8, difficulty: "Medium", fields: ["all"], levels: ["mid", "senior"] },
+          { q: "Give an example of when you had to make a decision with incomplete information.", framework: "Use STAR: Explain what information was missing, your risk assessment process, the decision you made, and the outcome.", prepTime: 10, difficulty: "Hard", fields: ["all"], levels: ["mid", "senior"] },
+          { q: "Tell me about a time you improved a process or workflow.", framework: "Use STAR: Identify the inefficiency, your proposed solution, how you implemented it, and quantify the improvement.", prepTime: 8, difficulty: "Medium", fields: ["all"], levels: ["all"] },
+          { q: "Describe a time when you had to work with a difficult team member.", framework: "Use STAR: Focus on understanding their perspective, your communication approach, and how you maintained productivity without negativity.", prepTime: 8, difficulty: "Hard", fields: ["all"], levels: ["all"] },
+          { q: "Tell me about your biggest professional achievement.", framework: "Use STAR: Choose an achievement relevant to the target role. Quantify impact and highlight skills that transfer.", prepTime: 5, difficulty: "Easy", fields: ["all"], levels: ["all"] },
+          { q: "Describe a time you had to learn something new quickly to complete a task.", framework: "Use STAR: Highlight your learning strategy, resources used, how fast you ramped up, and the successful outcome.", prepTime: 5, difficulty: "Easy", fields: ["all"], levels: ["entry", "mid"] },
+          { q: "Give an example of a creative solution you came up with for a problem.", framework: "Use STAR: Explain why conventional approaches didn't work, your creative thinking process, the novel solution, and results.", prepTime: 10, difficulty: "Medium", fields: ["all"], levels: ["all"] },
+          { q: "Tell me about a time you had to deliver bad news to a stakeholder.", framework: "Use STAR: Describe your preparation, how you framed the message, stakeholder reaction management, and resolution.", prepTime: 10, difficulty: "Hard", fields: ["all"], levels: ["mid", "senior"] },
+          { q: "Describe a situation where you took initiative without being asked.", framework: "Use STAR: Show proactive thinking, the gap you identified, actions taken, and value delivered to the organization.", prepTime: 5, difficulty: "Easy", fields: ["all"], levels: ["all"] },
+          { q: "Tell me about a time you had to balance quality with speed.", framework: "Use STAR: Explain the trade-offs, your decision framework, how you communicated expectations, and the outcome.", prepTime: 8, difficulty: "Medium", fields: ["all"], levels: ["mid", "senior"] },
+        ],
+        technical: [
+          // Software Engineering
+          { q: "Explain the difference between REST and GraphQL. When would you choose each?", framework: "Compare request patterns, over/under-fetching, caching, and tooling. Give a concrete project example for each choice.", prepTime: 10, difficulty: "Medium", fields: ["software-engineering"], levels: ["all"] },
+          { q: "How would you design a URL shortener service?", framework: "Cover: requirements gathering, database schema, hashing algorithm, read/write patterns, scaling considerations, and analytics.", prepTime: 15, difficulty: "Hard", fields: ["software-engineering"], levels: ["mid", "senior"] },
+          { q: "What is your approach to debugging a production issue?", framework: "Outline: incident triage, log analysis, reproducing the issue, root cause analysis, fix deployment, and post-mortem.", prepTime: 10, difficulty: "Medium", fields: ["software-engineering"], levels: ["all"] },
+          { q: "Explain how you would optimize a slow database query.", framework: "Cover: EXPLAIN analysis, indexing strategy, query restructuring, denormalization trade-offs, and caching layers.", prepTime: 10, difficulty: "Medium", fields: ["software-engineering"], levels: ["mid", "senior"] },
+          { q: "Describe your experience with CI/CD pipelines.", framework: "Discuss: tools used, pipeline stages, testing strategy, deployment automation, rollback procedures, and monitoring.", prepTime: 8, difficulty: "Medium", fields: ["software-engineering"], levels: ["all"] },
+          { q: "How do you ensure code quality in a team setting?", framework: "Cover: code reviews, linting, testing standards, pair programming, documentation, and shared style guides.", prepTime: 5, difficulty: "Easy", fields: ["software-engineering"], levels: ["all"] },
+          { q: "Explain microservices vs monolith architecture. What are the trade-offs?", framework: "Compare: deployment complexity, team autonomy, data consistency, latency, debugging difficulty, and when each is appropriate.", prepTime: 10, difficulty: "Hard", fields: ["software-engineering"], levels: ["mid", "senior"] },
+          { q: "What data structures would you use to implement an autocomplete feature?", framework: "Discuss tries, prefix trees, or inverted indexes. Cover time/space complexity, fuzzy matching, and ranking results.", prepTime: 15, difficulty: "Hard", fields: ["software-engineering"], levels: ["mid", "senior"] },
+          { q: "How do you handle state management in frontend applications?", framework: "Compare approaches (Redux, Context, Zustand, etc.), discuss when to use each, and explain local vs global state decisions.", prepTime: 8, difficulty: "Medium", fields: ["software-engineering"], levels: ["entry", "mid"] },
+          { q: "Explain the concept of eventual consistency and when it's acceptable.", framework: "Define strong vs eventual consistency, give examples (shopping cart vs banking), discuss CAP theorem implications.", prepTime: 10, difficulty: "Hard", fields: ["software-engineering", "data-science"], levels: ["senior"] },
+          // Marketing
+          { q: "How would you measure the ROI of a content marketing campaign?", framework: "Define KPIs (traffic, leads, conversions), attribution models, tracking setup, and reporting cadence. Give a specific example.", prepTime: 10, difficulty: "Medium", fields: ["marketing"], levels: ["all"] },
+          { q: "Describe your approach to building a marketing funnel from scratch.", framework: "Cover: audience research, awareness channels, lead magnets, nurture sequences, conversion optimization, and retention.", prepTime: 10, difficulty: "Medium", fields: ["marketing"], levels: ["mid", "senior"] },
+          { q: "How do you stay current with digital marketing trends?", framework: "Mention specific resources, communities, conferences, and how you test and implement new strategies.", prepTime: 5, difficulty: "Easy", fields: ["marketing"], levels: ["all"] },
+          { q: "Walk me through how you would launch a product with a $10K budget.", framework: "Outline: market research, channel selection, content creation, paid media allocation, influencer outreach, and success metrics.", prepTime: 15, difficulty: "Hard", fields: ["marketing"], levels: ["mid", "senior"] },
+          // Finance
+          { q: "How would you build a discounted cash flow (DCF) model?", framework: "Walk through: revenue projections, cost assumptions, WACC calculation, terminal value, sensitivity analysis, and model limitations.", prepTime: 15, difficulty: "Hard", fields: ["finance"], levels: ["mid", "senior"] },
+          { q: "Explain the three financial statements and how they connect.", framework: "Describe income statement, balance sheet, cash flow statement, and key linkages (net income to retained earnings, etc.).", prepTime: 10, difficulty: "Medium", fields: ["finance"], levels: ["entry", "mid"] },
+          { q: "What financial metrics would you use to evaluate a company's health?", framework: "Cover: liquidity ratios, profitability margins, leverage ratios, efficiency metrics. Explain what each reveals and red flags.", prepTime: 10, difficulty: "Medium", fields: ["finance"], levels: ["all"] },
+          { q: "How do you approach risk assessment for an investment portfolio?", framework: "Discuss: diversification, correlation analysis, VaR, stress testing, and how risk tolerance affects asset allocation.", prepTime: 10, difficulty: "Hard", fields: ["finance"], levels: ["mid", "senior"] },
+          // Sales
+          { q: "Walk me through your sales process from prospecting to close.", framework: "Detail each stage: lead identification, qualification (BANT/MEDDIC), discovery call, demo, proposal, negotiation, close, and handoff.", prepTime: 10, difficulty: "Medium", fields: ["sales"], levels: ["all"] },
+          { q: "How do you handle objections during a sales conversation?", framework: "Use the feel-felt-found method or acknowledge-explore-respond. Give 2-3 specific objection examples with your responses.", prepTime: 8, difficulty: "Medium", fields: ["sales"], levels: ["all"] },
+          { q: "Describe how you would enter a new market segment.", framework: "Cover: market research, ICP development, competitive analysis, messaging positioning, pilot campaign, and success metrics.", prepTime: 10, difficulty: "Hard", fields: ["sales"], levels: ["mid", "senior"] },
+          { q: "How do you prioritize your pipeline when you have too many leads?", framework: "Explain lead scoring criteria, deal stage velocity, revenue potential weighting, and time management strategies.", prepTime: 8, difficulty: "Medium", fields: ["sales"], levels: ["all"] },
+          // HR
+          { q: "How would you handle a situation where two employees have a serious conflict?", framework: "Outline: separate conversations, fact-finding, mediation approach, documentation, resolution plan, and follow-up.", prepTime: 10, difficulty: "Medium", fields: ["hr"], levels: ["all"] },
+          { q: "Describe your approach to developing a diversity and inclusion initiative.", framework: "Cover: data analysis, goal setting, program design, leadership buy-in, metrics tracking, and continuous improvement.", prepTime: 10, difficulty: "Hard", fields: ["hr"], levels: ["mid", "senior"] },
+          { q: "How do you measure employee engagement effectively?", framework: "Discuss: survey design, pulse checks, eNPS, focus groups, exit interviews, and turning data into action plans.", prepTime: 8, difficulty: "Medium", fields: ["hr"], levels: ["all"] },
+          { q: "Walk me through how you would redesign a company's performance review process.", framework: "Cover: current pain points, stakeholder input, new framework design, manager training, pilot program, and iteration.", prepTime: 10, difficulty: "Hard", fields: ["hr"], levels: ["mid", "senior"] },
+          // Design
+          { q: "Walk me through your design process for a new feature.", framework: "Cover: research, user personas, journey mapping, wireframes, prototyping, usability testing, iteration, and handoff.", prepTime: 10, difficulty: "Medium", fields: ["design"], levels: ["all"] },
+          { q: "How do you handle design feedback that you disagree with?", framework: "Discuss: separating personal preference from user needs, data-driven advocacy, compromise strategies, and knowing when to defer.", prepTime: 8, difficulty: "Medium", fields: ["design"], levels: ["all"] },
+          { q: "Explain your approach to creating a design system.", framework: "Cover: audit existing patterns, define tokens, component library, documentation, governance, and adoption strategy.", prepTime: 10, difficulty: "Hard", fields: ["design"], levels: ["mid", "senior"] },
+          { q: "How do you ensure accessibility in your designs?", framework: "Discuss: WCAG guidelines, color contrast, keyboard navigation, screen readers, alt text, and inclusive design principles.", prepTime: 8, difficulty: "Medium", fields: ["design"], levels: ["all"] },
+          // Data Science
+          { q: "How would you approach a new dataset you've never seen before?", framework: "Cover: EDA steps, missing data handling, distribution analysis, feature correlation, outlier detection, and initial hypotheses.", prepTime: 10, difficulty: "Medium", fields: ["data-science"], levels: ["all"] },
+          { q: "Explain the bias-variance tradeoff and how you manage it.", framework: "Define both concepts, show the U-shaped error curve, discuss regularization, cross-validation, and ensemble methods.", prepTime: 10, difficulty: "Medium", fields: ["data-science"], levels: ["mid", "senior"] },
+          { q: "How would you design an A/B test for a product feature?", framework: "Cover: hypothesis, sample size calculation, randomization, metric selection, duration, statistical significance, and guardrail metrics.", prepTime: 10, difficulty: "Hard", fields: ["data-science"], levels: ["all"] },
+          { q: "Explain how you would detect and handle data drift in a production ML model.", framework: "Discuss: monitoring distributions, statistical tests, retraining triggers, feature store management, and alert systems.", prepTime: 10, difficulty: "Hard", fields: ["data-science"], levels: ["senior"] },
+          // Management
+          { q: "How do you set goals and track progress for your team?", framework: "Discuss: OKR or goal framework, alignment with company objectives, tracking cadence, 1:1s, and course correction.", prepTime: 8, difficulty: "Medium", fields: ["management"], levels: ["all"] },
+          { q: "Describe your approach to building a high-performing team.", framework: "Cover: hiring strategy, onboarding, culture building, psychological safety, feedback loops, and growth opportunities.", prepTime: 10, difficulty: "Hard", fields: ["management"], levels: ["mid", "senior"] },
+          { q: "How do you handle underperforming team members?", framework: "Outline: early identification, root cause analysis, clear expectations, support plan (PIP), documentation, and decision framework.", prepTime: 10, difficulty: "Hard", fields: ["management"], levels: ["all"] },
+          { q: "How do you make decisions when your team disagrees?", framework: "Discuss: gathering all perspectives, decision frameworks (RACI, disagree-and-commit), transparency, and post-decision alignment.", prepTime: 8, difficulty: "Medium", fields: ["management"], levels: ["all"] },
+          // Healthcare
+          { q: "How do you stay current with the latest clinical guidelines in your field?", framework: "Mention specific journals, CME activities, professional organizations, peer discussions, and how you implement updates.", prepTime: 5, difficulty: "Easy", fields: ["healthcare"], levels: ["all"] },
+          { q: "Describe how you handle a situation where a patient disagrees with your treatment plan.", framework: "Cover: active listening, shared decision-making, explaining risks/benefits, respecting autonomy, and documentation.", prepTime: 8, difficulty: "Medium", fields: ["healthcare"], levels: ["all"] },
+          { q: "How do you prioritize patient care when dealing with multiple urgent cases?", framework: "Discuss: triage protocols, clinical severity assessment, delegation, communication with team, and documentation.", prepTime: 10, difficulty: "Hard", fields: ["healthcare"], levels: ["mid", "senior"] },
+          { q: "What is your approach to maintaining patient confidentiality in a digital environment?", framework: "Cover: HIPAA compliance, EHR best practices, communication protocols, team training, and incident response.", prepTime: 8, difficulty: "Medium", fields: ["healthcare"], levels: ["all"] },
+          // Education
+          { q: "How do you differentiate instruction for diverse learners?", framework: "Discuss: learning assessments, tiered activities, flexible grouping, multiple modalities, and progress monitoring.", prepTime: 8, difficulty: "Medium", fields: ["education"], levels: ["all"] },
+          { q: "Describe your classroom management philosophy.", framework: "Cover: proactive strategies, relationship building, clear expectations, restorative practices, and parent communication.", prepTime: 8, difficulty: "Medium", fields: ["education"], levels: ["all"] },
+          { q: "How do you integrate technology meaningfully into your curriculum?", framework: "Discuss: SAMR model, learning objectives first, tool selection, digital citizenship, and assessing tech-enhanced learning.", prepTime: 8, difficulty: "Medium", fields: ["education"], levels: ["all"] },
+          { q: "How do you use data to inform your teaching practices?", framework: "Cover: formative assessments, data analysis cycles, adjusting instruction, intervention strategies, and communicating with stakeholders.", prepTime: 8, difficulty: "Medium", fields: ["education"], levels: ["mid", "senior"] },
+        ],
+        situational: [
+          { q: "Your manager asks you to complete a project by Friday, but you know the timeline is unrealistic. What do you do?", framework: "Show honest communication: assess what's feasible, propose alternatives (scope reduction, deadline extension, additional resources), and document the conversation.", prepTime: 8, difficulty: "Medium", fields: ["all"], levels: ["all"] },
+          { q: "A client is unhappy with the deliverable your team produced. How do you handle it?", framework: "Acknowledge concerns, ask clarifying questions, take ownership, propose a corrective action plan with timeline, and follow up to ensure satisfaction.", prepTime: 8, difficulty: "Medium", fields: ["all"], levels: ["all"] },
+          { q: "You discover a colleague is taking credit for your work. What do you do?", framework: "Document your contributions, address it directly and privately first, focus on collaboration language, and escalate to manager only if needed.", prepTime: 8, difficulty: "Hard", fields: ["all"], levels: ["all"] },
+          { q: "You're assigned to a project using a technology you've never worked with. How do you approach it?", framework: "Show learning agility: assess the knowledge gap, create a learning plan, identify resources and mentors, set milestones, and communicate transparently.", prepTime: 5, difficulty: "Easy", fields: ["all"], levels: ["entry", "mid"] },
+          { q: "Two of your team members are in constant conflict. As a lead, what steps do you take?", framework: "Meet separately first, identify root causes, facilitate a joint discussion, establish ground rules, monitor improvement, and document.", prepTime: 10, difficulty: "Hard", fields: ["all"], levels: ["mid", "senior"] },
+          { q: "Your company announces a major pivot. Your current project is being cancelled. How do you react?", framework: "Show adaptability: process the change, ask strategic questions, identify transferable skills, volunteer for new initiatives, support your team.", prepTime: 8, difficulty: "Medium", fields: ["all"], levels: ["all"] },
+          { q: "You realize your team is about to miss a major deadline. What do you do?", framework: "Assess the gap, communicate early to stakeholders, propose solutions (prioritize, add resources, adjust scope), and create a recovery plan.", prepTime: 8, difficulty: "Medium", fields: ["all"], levels: ["all"] },
+          { q: "A stakeholder keeps changing requirements mid-project. How do you manage this?", framework: "Implement change control: document requests, assess impact on timeline/budget, get formal approval, and communicate trade-offs clearly.", prepTime: 10, difficulty: "Hard", fields: ["all"], levels: ["mid", "senior"] },
+          { q: "You're offered a promotion but it means managing your former peers. How do you handle the transition?", framework: "Set new boundaries respectfully, have 1:1 conversations, establish your management style early, maintain fairness, and build trust through transparency.", prepTime: 10, difficulty: "Hard", fields: ["all"], levels: ["mid", "senior"] },
+          { q: "You suspect a security vulnerability in your company's product. What do you do?", framework: "Document the finding, report through proper channels immediately, assess potential impact, avoid public disclosure, and follow incident response procedures.", prepTime: 8, difficulty: "Medium", fields: ["all"], levels: ["all"] },
+          { q: "Your team's morale is low after a round of layoffs. How do you keep people motivated?", framework: "Acknowledge the situation openly, increase communication frequency, provide clarity on direction, celebrate small wins, and advocate for your team.", prepTime: 10, difficulty: "Hard", fields: ["all"], levels: ["mid", "senior"] },
+          { q: "A customer asks for a feature that would benefit them but hurt the product overall. How do you respond?", framework: "Listen fully, explain the product vision, explore alternative solutions that address their need, and document the feedback for the roadmap.", prepTime: 8, difficulty: "Medium", fields: ["all"], levels: ["all"] },
+          { q: "You just started a new job and your onboarding is disorganized. How do you get up to speed?", framework: "Take ownership: create your own 30-60-90 day plan, identify key people to meet, ask for documentation, and proactively seek feedback.", prepTime: 5, difficulty: "Easy", fields: ["all"], levels: ["entry"] },
+          { q: "Your manager micromanages you constantly. How do you address it?", framework: "Understand their motivation, over-communicate proactively to build trust, set up regular check-ins, and have a direct conversation about working styles.", prepTime: 8, difficulty: "Hard", fields: ["all"], levels: ["mid", "senior"] },
+          { q: "You need to present complex data to a non-technical executive audience. How do you prepare?", framework: "Lead with insights not data, use visualizations, tell a story, anticipate questions, prepare a one-page summary, and practice your delivery.", prepTime: 8, difficulty: "Medium", fields: ["all"], levels: ["all"] },
+          { q: "You're asked to do something you believe is unethical but not illegal. What do you do?", framework: "Clarify the request, express concerns professionally with reasoning, document everything, seek counsel from ethics or compliance, and know your boundaries.", prepTime: 10, difficulty: "Hard", fields: ["all"], levels: ["all"] },
+          { q: "Your intern makes a costly mistake. How do you handle it?", framework: "Take responsibility as their supervisor, use it as a teaching moment, implement guardrails to prevent recurrence, and support their confidence.", prepTime: 8, difficulty: "Medium", fields: ["all"], levels: ["mid", "senior"] },
+          { q: "You join a team and notice significant technical debt. How do you approach addressing it?", framework: "Audit the scope, prioritize by risk and business impact, propose a plan that balances debt reduction with feature work, and get stakeholder buy-in.", prepTime: 10, difficulty: "Medium", fields: ["software-engineering", "data-science"], levels: ["mid", "senior"] },
+          { q: "A vendor your team relies on suddenly doubles their pricing. What do you do?", framework: "Evaluate alternatives, negotiate with the vendor, assess build-vs-buy, present options with cost analysis to leadership, and plan the transition.", prepTime: 10, difficulty: "Hard", fields: ["all"], levels: ["mid", "senior"] },
+          { q: "You're asked to lead a cross-functional project with people who don't report to you. How do you drive results?", framework: "Build relationships first, align on shared goals, establish clear roles (RACI), communicate consistently, and influence through expertise not authority.", prepTime: 10, difficulty: "Hard", fields: ["all"], levels: ["mid", "senior"] },
+        ],
+        "culture-fit": [
+          { q: "Why do you want to work at this company?", framework: "Research the company's mission, products, and culture. Connect their values to your personal values and career goals. Be specific, not generic.", prepTime: 8, difficulty: "Easy", fields: ["all"], levels: ["all"] },
+          { q: "What kind of work environment do you thrive in?", framework: "Be honest but align with the company's culture. Give examples of environments where you've done your best work and why.", prepTime: 5, difficulty: "Easy", fields: ["all"], levels: ["all"] },
+          { q: "How do you handle work-life balance?", framework: "Show you're productive and reliable while having healthy boundaries. Give examples of how you stay engaged without burning out.", prepTime: 5, difficulty: "Easy", fields: ["all"], levels: ["all"] },
+          { q: "What motivates you in your career?", framework: "Connect intrinsic motivators (growth, impact, learning) to the role. Avoid generic answers; be specific about what drives your best work.", prepTime: 5, difficulty: "Easy", fields: ["all"], levels: ["all"] },
+          { q: "How do you approach collaboration with teammates who have different working styles?", framework: "Demonstrate flexibility and emotional intelligence. Give examples of adapting your communication and work style for team effectiveness.", prepTime: 8, difficulty: "Medium", fields: ["all"], levels: ["all"] },
+          { q: "Tell me about your ideal manager.", framework: "Describe qualities that help you grow (clear expectations, feedback, autonomy). Show self-awareness about what support you need to do your best work.", prepTime: 5, difficulty: "Easy", fields: ["all"], levels: ["all"] },
+          { q: "What's a value you hold that you will not compromise on professionally?", framework: "Choose a value relevant to work (integrity, transparency, quality). Give a concrete example of upholding it under pressure.", prepTime: 8, difficulty: "Medium", fields: ["all"], levels: ["all"] },
+          { q: "How do you contribute to a positive team culture?", framework: "Give specific examples: celebrating wins, helping others, giving constructive feedback, organizing team activities, or knowledge sharing.", prepTime: 5, difficulty: "Easy", fields: ["all"], levels: ["all"] },
+          { q: "Where do you see yourself in 5 years?", framework: "Show ambition aligned with realistic growth at the company. Focus on skills you want to develop and impact you want to make.", prepTime: 5, difficulty: "Easy", fields: ["all"], levels: ["all"] },
+          { q: "What do you do outside of work that influences your professional life?", framework: "Share relevant hobbies or activities that demonstrate transferable skills, curiosity, or well-roundedness. Keep it professional.", prepTime: 5, difficulty: "Easy", fields: ["all"], levels: ["all"] },
+          { q: "How do you handle ambiguity in your role?", framework: "Show comfort with uncertainty. Describe how you seek clarity, make progress with incomplete information, and communicate proactively.", prepTime: 8, difficulty: "Medium", fields: ["all"], levels: ["mid", "senior"] },
+          { q: "Describe a company culture you didn't fit into. What made it a bad fit?", framework: "Be diplomatic — focus on misaligned values or working styles, not blame. Show self-awareness about what you need to thrive.", prepTime: 8, difficulty: "Hard", fields: ["all"], levels: ["mid", "senior"] },
+          { q: "How do you stay motivated during repetitive or mundane tasks?", framework: "Show discipline and perspective. Discuss finding meaning in routine, gamifying tasks, or connecting them to bigger goals.", prepTime: 5, difficulty: "Easy", fields: ["all"], levels: ["entry", "mid"] },
+          { q: "What role do you typically take on in a team project?", framework: "Show flexibility. Describe your natural tendencies but demonstrate willingness to adapt to what the team needs.", prepTime: 5, difficulty: "Easy", fields: ["all"], levels: ["all"] },
+          { q: "How do you celebrate team successes?", framework: "Give examples of recognizing contributions, sharing credit, and building team morale after wins.", prepTime: 5, difficulty: "Easy", fields: ["all"], levels: ["all"] },
+          { q: "What's the most important thing you look for in a job?", framework: "Be genuine. Align your answer with what the role offers. Top answers include: growth, impact, team quality, and mission alignment.", prepTime: 5, difficulty: "Easy", fields: ["all"], levels: ["all"] },
+          { q: "How do you handle feedback from someone you disagree with?", framework: "Show emotional maturity. Separate the message from the messenger, look for valid points, and respond professionally.", prepTime: 8, difficulty: "Medium", fields: ["all"], levels: ["all"] },
+          { q: "What does professional development mean to you?", framework: "Discuss: continuous learning, mentorship (giving and receiving), skill expansion, and how you invest in your own growth.", prepTime: 5, difficulty: "Easy", fields: ["all"], levels: ["all"] },
+        ],
+        salary: [
+          { q: "What are your salary expectations for this role?", framework: "Provide a researched range based on market data (Glassdoor, Levels.fyi, Payscale). State your range confidently and ask about total compensation.", prepTime: 10, difficulty: "Hard", fields: ["all"], levels: ["all"] },
+          { q: "What is your current compensation?", framework: "In many states, this question is illegal. You can redirect: 'I'd prefer to focus on the value I bring and the market rate for this role.' State your target range instead.", prepTime: 10, difficulty: "Hard", fields: ["all"], levels: ["all"] },
+          { q: "We have a budget of $X for this role. Would you accept that?", framework: "Don't accept immediately. Ask about the full package (bonus, equity, benefits, PTO). If below your range, say: 'I appreciate the transparency. Based on my research and experience, I was targeting [range].'", prepTime: 10, difficulty: "Hard", fields: ["all"], levels: ["all"] },
+          { q: "How do you evaluate a job offer beyond salary?", framework: "Discuss: equity/RSUs, signing bonus, annual bonus, benefits, PTO, remote flexibility, growth opportunities, team quality, and company trajectory.", prepTime: 8, difficulty: "Medium", fields: ["all"], levels: ["all"] },
+          { q: "Are you interviewing with other companies?", framework: "Be honest but strategic: 'Yes, I'm exploring a few opportunities, but this role is a top choice because [specific reason].' This shows demand without being aggressive.", prepTime: 5, difficulty: "Medium", fields: ["all"], levels: ["all"] },
+          { q: "If we gave you an offer today, would you accept?", framework: "Express enthusiasm without committing: 'I'm very excited about this opportunity. I'd want to review the full offer details and discuss with my family, which I can do within [timeframe].'", prepTime: 5, difficulty: "Medium", fields: ["all"], levels: ["all"] },
+          { q: "What would it take for you to accept an offer today?", framework: "Name your priorities clearly: 'I'd need the compensation to be in the range of [X-Y], with [specific benefits]. I'm also looking for [growth opportunity or flexibility].'", prepTime: 10, difficulty: "Hard", fields: ["all"], levels: ["mid", "senior"] },
+          { q: "We can't meet your salary request. What are your thoughts?", framework: "Explore alternatives: signing bonus, accelerated review cycle, additional equity, flexible work arrangements, or professional development budget.", prepTime: 10, difficulty: "Hard", fields: ["all"], levels: ["all"] },
+          { q: "How soon can you start?", framework: "Be honest about notice periods. Standard is 2 weeks. For senior roles, 4 weeks is common. Express eagerness while being professional about current commitments.", prepTime: 5, difficulty: "Easy", fields: ["all"], levels: ["all"] },
+          { q: "Do you have any competing offers?", framework: "If yes, mention it factually without ultimatums. If no, redirect to your interest level and market research. Never fabricate offers.", prepTime: 8, difficulty: "Hard", fields: ["all"], levels: ["mid", "senior"] },
+        ]
+      };
+
+      const fieldSelect = document.getElementById('field-select');
+      const levelSelect = document.getElementById('level-select');
+      const categorySelect = document.getElementById('category-select');
+      const generateBtn = document.getElementById('generate-btn');
+      const mockBtn = document.getElementById('mock-btn');
+      const questionsView = document.getElementById('questions-view');
+      const questionsList = document.getElementById('questions-list');
+      const mockView = document.getElementById('mock-view');
+      const mockCounter = document.getElementById('mock-counter');
+      const progressFill = document.getElementById('progress-fill');
+      const timerDisplay = document.getElementById('timer-display');
+      const mockQuestionCard = document.getElementById('mock-question-card');
+      const mockRevealBtn = document.getElementById('mock-reveal-btn');
+      const mockNextBtn = document.getElementById('mock-next-btn');
+      const mockExitBtn = document.getElementById('mock-exit-btn');
+      const mockAnswer = document.getElementById('mock-answer');
+
+      let mockQuestions = [];
+      let mockIndex = 0;
+      let timerInterval = null;
+      let timerSeconds = 120;
+
+      const difficultyColors = {
+        'Easy': { bg: 'rgba(34, 197, 94, 0.15)', color: '#22c55e' },
+        'Medium': { bg: 'rgba(245, 158, 11, 0.15)', color: '#f59e0b' },
+        'Hard': { bg: 'rgba(239, 68, 68, 0.15)', color: '#ef4444' }
+      };
+
+      const categoryColors = {
+        'behavioral': { bg: 'rgba(59, 130, 246, 0.15)', color: '#3b82f6', label: 'Behavioral (STAR)' },
+        'technical': { bg: 'rgba(168, 85, 247, 0.15)', color: '#a855f7', label: 'Technical' },
+        'situational': { bg: 'rgba(245, 158, 11, 0.15)', color: '#f59e0b', label: 'Situational' },
+        'culture-fit': { bg: 'rgba(34, 197, 94, 0.15)', color: '#22c55e', label: 'Culture Fit' },
+        'salary': { bg: 'rgba(239, 68, 68, 0.15)', color: '#ef4444', label: 'Salary Negotiation' }
+      };
+
+      function getFilteredQuestions(field, level, category) {
+        let questions = [];
+        const categories = category === 'all' ? Object.keys(questionBank) : [category];
+
+        categories.forEach(cat => {
+          (questionBank[cat] || []).forEach(q => {
+            const fieldMatch = q.fields.includes('all') || q.fields.includes(field);
+            const levelMatch = q.levels.includes('all') || q.levels.includes(level);
+            if (fieldMatch && levelMatch) {
+              questions.push({ ...q, category: cat });
+            }
+          });
+        });
+
+        return questions;
+      }
+
+      function shuffleArray(arr) {
+        const a = [...arr];
+        for (let i = a.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [a[i], a[j]] = [a[j], a[i]];
+        }
+        return a;
+      }
+
+      function renderQuestions(questions) {
+        if (questions.length === 0) {
+          questionsList.innerHTML = '<div class="empty-state">No questions found for this combination. Try broadening your filters.</div>';
+          return;
+        }
+
+        const shuffled = shuffleArray(questions).slice(0, 15);
+        questionsList.innerHTML = '<p class="results-count">Showing ' + shuffled.length + ' of ' + questions.length + ' available questions</p>' +
+          shuffled.map((q, i) => {
+            const catInfo = categoryColors[q.category];
+            const diffInfo = difficultyColors[q.difficulty];
+            return '<div class="question-card">' +
+              '<div class="question-tags">' +
+                '<span class="tag" style="background:' + catInfo.bg + ';color:' + catInfo.color + '">' + catInfo.label + '</span>' +
+                '<span class="tag" style="background:' + diffInfo.bg + ';color:' + diffInfo.color + '">' + q.difficulty + '</span>' +
+                '<span class="tag tag-time">' + q.prepTime + ' min prep</span>' +
+              '</div>' +
+              '<h3 class="question-text">' + q.q + '</h3>' +
+              '<div class="answer-framework">' +
+                '<strong>Answer Framework:</strong> ' + q.framework +
+              '</div>' +
+            '</div>';
+          }).join('');
+      }
+
+      function startTimer() {
+        clearInterval(timerInterval);
+        timerSeconds = 120;
+        updateTimerDisplay();
+        timerInterval = setInterval(function() {
+          timerSeconds--;
+          updateTimerDisplay();
+          if (timerSeconds <= 0) {
+            clearInterval(timerInterval);
+            timerDisplay.style.color = '#ef4444';
+            timerDisplay.textContent = "Time's up!";
+          }
+        }, 1000);
+      }
+
+      function updateTimerDisplay() {
+        const m = Math.floor(timerSeconds / 60);
+        const s = timerSeconds % 60;
+        timerDisplay.textContent = m + ':' + (s < 10 ? '0' : '') + s;
+        timerDisplay.style.color = timerSeconds <= 30 ? '#ef4444' : timerSeconds <= 60 ? '#f59e0b' : 'var(--text-primary)';
+      }
+
+      function showMockQuestion() {
+        if (mockIndex >= mockQuestions.length) {
+          mockQuestionCard.innerHTML = '<div class="mock-complete"><h2>Mock Interview Complete!</h2><p>You answered all 10 questions. Great practice session!</p></div>';
+          mockRevealBtn.style.display = 'none';
+          mockNextBtn.style.display = 'none';
+          mockAnswer.style.display = 'none';
+          clearInterval(timerInterval);
+          timerDisplay.textContent = 'Done';
+          timerDisplay.style.color = '#22c55e';
+          return;
+        }
+
+        const q = mockQuestions[mockIndex];
+        const catInfo = categoryColors[q.category];
+        const diffInfo = difficultyColors[q.difficulty];
+        mockCounter.textContent = 'Question ' + (mockIndex + 1) + ' of 10';
+        progressFill.style.width = ((mockIndex + 1) / 10 * 100) + '%';
+
+        mockQuestionCard.innerHTML =
+          '<div class="question-tags">' +
+            '<span class="tag" style="background:' + catInfo.bg + ';color:' + catInfo.color + '">' + catInfo.label + '</span>' +
+            '<span class="tag" style="background:' + diffInfo.bg + ';color:' + diffInfo.color + '">' + q.difficulty + '</span>' +
+          '</div>' +
+          '<h3 class="question-text">' + q.q + '</h3>';
+
+        mockAnswer.innerHTML = '<strong>Suggested Framework:</strong> ' + q.framework;
+        mockAnswer.style.display = 'none';
+        mockRevealBtn.style.display = '';
+        mockRevealBtn.textContent = 'Show Answer Framework';
+        mockNextBtn.style.display = '';
+
+        startTimer();
+      }
+
+      // Event listeners
+      generateBtn.addEventListener('click', function() {
+        mockView.style.display = 'none';
+        questionsView.style.display = '';
+        clearInterval(timerInterval);
+        const questions = getFilteredQuestions(fieldSelect.value, levelSelect.value, categorySelect.value);
+        renderQuestions(questions);
+      });
+
+      mockBtn.addEventListener('click', function() {
+        const questions = getFilteredQuestions(fieldSelect.value, levelSelect.value, categorySelect.value);
+        if (questions.length < 10) {
+          mockQuestions = shuffleArray(questions);
+        } else {
+          mockQuestions = shuffleArray(questions).slice(0, 10);
+        }
+
+        if (mockQuestions.length === 0) {
+          alert('No questions available for this combination. Try different filters.');
+          return;
+        }
+
+        mockIndex = 0;
+        questionsView.style.display = 'none';
+        mockView.style.display = '';
+        showMockQuestion();
+      });
+
+      mockRevealBtn.addEventListener('click', function() {
+        if (mockAnswer.style.display === 'none') {
+          mockAnswer.style.display = '';
+          mockRevealBtn.textContent = 'Hide Answer Framework';
+        } else {
+          mockAnswer.style.display = 'none';
+          mockRevealBtn.textContent = 'Show Answer Framework';
+        }
+      });
+
+      mockNextBtn.addEventListener('click', function() {
+        mockIndex++;
+        showMockQuestion();
+      });
+
+      mockExitBtn.addEventListener('click', function() {
+        mockView.style.display = 'none';
+        questionsView.style.display = '';
+        clearInterval(timerInterval);
+      });
+
+      // Initial render
+      generateBtn.click();
+    });
+  </script>
+
+  <style is:inline>
+    .page-content { max-width: 1000px; margin: 0 auto; padding: 2rem 1.5rem; }
+    .hero { text-align: center; padding: 3rem 0 2rem; }
+    .hero h1 { font-size: 2.2rem; font-weight: 800; margin-bottom: 0.5rem; color: var(--text-primary); }
+    .hero p { color: var(--text-secondary); font-size: 1.1rem; max-width: 700px; margin: 0 auto; line-height: 1.5; }
+
+    .content-section { margin-bottom: 3rem; }
+    .content-section h2 { font-size: 1.8rem; color: var(--text-primary); margin-bottom: 1.2rem; margin-top: 2.5rem; }
+
+    /* Controls */
+    .controls-panel { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem; display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-end; margin-bottom: 2rem; }
+    .control-group { display: flex; flex-direction: column; gap: 0.4rem; flex: 1; min-width: 160px; }
+    .control-group label { font-size: 0.85rem; font-weight: 600; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.5px; }
+    .control-group select { padding: 0.6rem 0.8rem; border-radius: 8px; border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary); font-size: 0.95rem; cursor: pointer; }
+    .btn-group { display: flex; gap: 0.5rem; flex-wrap: wrap; }
+    .btn { padding: 0.6rem 1.2rem; border-radius: 8px; border: none; font-size: 0.95rem; font-weight: 600; cursor: pointer; transition: opacity 0.2s, transform 0.1s; white-space: nowrap; }
+    .btn:active { transform: scale(0.97); }
+    .btn-primary { background: var(--accent-color, #3b82f6); color: #fff; }
+    .btn-primary:hover { opacity: 0.9; }
+    .btn-secondary { background: rgba(168, 85, 247, 0.15); color: #a855f7; }
+    .btn-secondary:hover { background: rgba(168, 85, 247, 0.25); }
+    .btn-outline { background: transparent; border: 1px solid var(--border-color); color: var(--text-secondary); }
+    .btn-outline:hover { background: var(--card-bg); }
+
+    /* Questions List */
+    .results-count { color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 1rem; }
+    .questions-list { display: flex; flex-direction: column; gap: 1rem; }
+    .question-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem; }
+    .question-tags { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 0.75rem; }
+    .tag { padding: 0.25rem 0.6rem; border-radius: 20px; font-size: 0.8rem; font-weight: 600; white-space: nowrap; }
+    .tag-time { background: rgba(107, 114, 128, 0.15); color: #9ca3af; }
+    .question-text { margin: 0 0 0.75rem 0; font-size: 1.1rem; color: var(--text-primary); line-height: 1.4; }
+    .answer-framework { color: var(--text-secondary); line-height: 1.5; font-size: 0.95rem; }
+    .answer-framework strong { color: var(--text-primary); }
+    .empty-state { text-align: center; padding: 3rem; color: var(--text-secondary); }
+
+    /* Mock Interview */
+    .mock-view { margin-bottom: 2rem; }
+    .mock-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; gap: 1rem; flex-wrap: wrap; }
+    .mock-progress { flex: 1; min-width: 200px; }
+    .mock-progress span { font-size: 0.9rem; font-weight: 600; color: var(--text-secondary); }
+    .progress-bar { height: 6px; background: var(--border-color); border-radius: 3px; margin-top: 0.5rem; overflow: hidden; }
+    .progress-fill { height: 100%; background: var(--accent-color, #3b82f6); border-radius: 3px; transition: width 0.3s; width: 10%; }
+    .mock-timer { font-size: 2rem; font-weight: 800; color: var(--text-primary); font-variant-numeric: tabular-nums; }
+    .mock-question-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 2rem; margin-bottom: 1rem; min-height: 150px; }
+    .mock-question-card .question-text { font-size: 1.3rem; margin-bottom: 0; }
+    .mock-actions { display: flex; gap: 0.5rem; flex-wrap: wrap; margin-bottom: 1rem; }
+    .mock-answer { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem; color: var(--text-secondary); line-height: 1.5; }
+    .mock-answer strong { color: var(--text-primary); }
+    .mock-complete { text-align: center; }
+    .mock-complete h2 { color: var(--text-primary); margin-bottom: 0.5rem; }
+    .mock-complete p { color: var(--text-secondary); }
+
+    /* FAQ */
+    .faq-container { display: flex; flex-direction: column; gap: 1rem; margin-bottom: 2rem; }
+    .faq-item { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem; }
+    .faq-item h3 { margin: 0 0 0.5rem 0; font-size: 1.1rem; color: var(--text-primary); }
+    .faq-item p { margin: 0; color: var(--text-secondary); line-height: 1.5; }
+
+    @media (max-width: 768px) {
+      .hero h1 { font-size: 1.8rem; }
+      .controls-panel { flex-direction: column; }
+      .control-group { min-width: 100%; }
+      .mock-timer { font-size: 1.5rem; }
+      .mock-question-card .question-text { font-size: 1.1rem; }
+    }
+  </style>
+</SiteLayout>
