@@ -1,9 +1,29 @@
 ---
 import SiteLayout from '../../../layouts/SiteLayout.astro';
-export const meta = { title: 'Random Number Generator', description: 'Need a fast, unpredictable number? Our random number generator reveals exactly what you need in seconds.', category: 'tools', published: '2026-03-15' };
+export const meta = { title: 'Random Number Generator — Generate Random Numbers Online', description: 'Generate truly random numbers instantly. Set min/max, generate multiple numbers, lottery picks, D&D dice rolls, and PIN codes. Uses crypto-grade randomness.', category: 'tool', published: '2026-03-21' };
 const SITE_ID = 'eeniemeenie';
+
+const faqItems = [
+  { q: 'Are these random numbers truly random?', a: 'Yes. This generator uses your browser\'s crypto.getRandomValues() API, which provides cryptographically secure random numbers. This is the same source of randomness used by password managers and encryption software — far more random than Math.random() or physical dice.' },
+  { q: 'Can I generate random numbers without duplicates?', a: 'Yes! Toggle off the "Allow Duplicates" option and the generator will ensure every number in your result set is unique. Note that the quantity cannot exceed the range size when duplicates are disabled — for example, you can\'t generate 10 unique numbers from a 1–5 range.' },
+  { q: 'What is the maximum range I can use?', a: 'You can set minimum and maximum values anywhere from -999,999,999 to 999,999,999. The generator supports both positive and negative ranges, so you can generate numbers like -50 to 50 or 1 to 1,000,000.' },
+  { q: 'How does the lottery number mode work?', a: 'The lottery mode generates 6 unique numbers from 1 to 49, sorted in ascending order — matching the format used by many popular lotteries worldwide. Each draw is completely independent and uses cryptographic randomness.' },
+  { q: 'What D&D dice types are supported?', a: 'All standard polyhedral dice used in tabletop RPGs: d4 (1–4), d6 (1–6), d8 (1–8), d10 (1–10), d12 (1–12), and d20 (1–20). You can roll any of them with a single click, and results appear with a visual dice animation.' },
+  { q: 'Is the PIN generator secure enough for real use?', a: 'The PINs are generated using cryptographic randomness, making them as unpredictable as possible. However, for sensitive applications like bank PINs, we recommend using your institution\'s official tools. Our generator is great for app lock codes, temporary access codes, or any situation where you need a random numeric code.' },
+  { q: 'Does the generator save my history?', a: 'Your generation history is stored only in your current browser session and is never sent to any server. It resets when you reload the page. We keep the last 20 generations for your convenience.' },
+];
+
+const faqSchema = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": faqItems.map(item => ({
+    "@type": "Question",
+    "name": item.q,
+    "acceptedAnswer": { "@type": "Answer", "text": item.a }
+  }))
+};
 ---
-<SiteLayout title={meta.title} description={meta.description} site={SITE_ID}>
+<SiteLayout title={meta.title} description={meta.description} site={SITE_ID} schema={faqSchema}>
 <style is:inline>
 
   .page-content {
@@ -28,268 +48,825 @@ const SITE_ID = 'eeniemeenie';
     max-width: 600px;
     margin: 0 auto;
   }
-  .rng-grid {
-    display: grid;
-    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
-    gap: 1.5rem;
-    margin-bottom: 1.5rem;
-  }
-  .toggle-group {
-    margin-bottom: 2rem;
+
+  /* Result display */
+  .result-area {
     display: flex;
-    justify-content: center;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 2rem;
   }
-  .toggle-label {
+  .result-box {
+    min-height: 120px;
     display: flex;
     align-items: center;
-    cursor: pointer;
-    gap: 0.5rem;
-    color: var(--text-primary);
-  }
-  .toggle-label input[type="checkbox"] {
-    width: 18px;
-    height: 18px;
-    accent-color: var(--accent-color);
-  }
-  .btn-primary {
-    display: block;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    padding: 1.5rem;
     width: 100%;
-    padding: 1rem;
+    max-width: 600px;
+    margin-bottom: 1.5rem;
+  }
+  .result-number {
+    font-size: 3.5rem;
+    font-weight: 900;
+    color: var(--accent-color);
+    line-height: 1;
+  }
+  .result-number.multi {
+    font-size: 1.8rem;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 0.5rem 1rem;
+    min-width: 60px;
+    text-align: center;
+  }
+  .result-number.animate {
+    animation: numPop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+  @keyframes numPop {
+    0% { transform: scale(0.3) rotateY(180deg); opacity: 0; }
+    60% { transform: scale(1.1) rotateY(0deg); }
+    100% { transform: scale(1) rotateY(0deg); opacity: 1; }
+  }
+
+  /* Dice animation */
+  .dice-container {
+    perspective: 400px;
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 1rem;
+    display: none;
+  }
+  .dice-container.visible { display: block; }
+  .dice-inner {
+    width: 100%;
+    height: 100%;
+    position: relative;
+    transform-style: preserve-3d;
+  }
+  .dice-inner.rolling {
+    animation: diceRoll 0.8s ease-out;
+  }
+  @keyframes diceRoll {
+    0% { transform: rotateX(0) rotateY(0) rotateZ(0); }
+    25% { transform: rotateX(270deg) rotateY(180deg) rotateZ(90deg); }
+    50% { transform: rotateX(540deg) rotateY(90deg) rotateZ(180deg); }
+    75% { transform: rotateX(630deg) rotateY(270deg) rotateZ(270deg); }
+    100% { transform: rotateX(720deg) rotateY(360deg) rotateZ(360deg); }
+  }
+  .dice-face {
+    position: absolute;
+    width: 100%;
+    height: 100%;
+    background: var(--card-bg);
+    border: 2px solid var(--accent-color);
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    font-weight: 900;
+    color: var(--accent-color);
+    backface-visibility: hidden;
+  }
+
+  /* Inputs */
+  .generator-form {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.5rem;
+    width: 100%;
+    max-width: 600px;
+    margin-bottom: 1.5rem;
+  }
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+  }
+  .form-label {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 600;
+  }
+  .form-input {
+    background: var(--bg-color);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    padding: 0.65rem 0.75rem;
+    border-radius: 6px;
+    font-size: 1rem;
+    font-family: var(--font-body);
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .form-input:focus { outline: none; border-color: var(--accent-color); }
+
+  /* Options toggles */
+  .options-row {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    margin-bottom: 1rem;
+  }
+  .option-toggle {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.4rem 0.8rem;
+    background: var(--bg-color);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s;
+    user-select: none;
+  }
+  .option-toggle:hover { border-color: var(--accent-color); color: var(--text-primary); }
+  .option-toggle.active { border-color: var(--accent-color); color: var(--accent-color); background: rgba(224, 64, 251, 0.08); }
+  .option-toggle input { display: none; }
+
+  /* Buttons */
+  .btn-primary {
+    padding: 1rem 2.5rem;
     background-color: var(--accent-color);
     color: #fff;
     border: none;
     border-radius: 8px;
-    font-size: 1.1rem;
-    font-weight: 600;
+    font-size: 1.3rem;
+    font-weight: 800;
     cursor: pointer;
     transition: opacity 0.2s, transform 0.1s;
+    letter-spacing: 2px;
+    text-transform: uppercase;
   }
-  .btn-primary:hover {
-    opacity: 0.9;
-  }
-  .btn-primary:active {
-    transform: scale(0.98);
-  }
-  .result-area {
-    margin-top: 2rem;
-    padding-top: 1.5rem;
-    border-top: 1px solid var(--border-color);
-    text-align: center;
-  }
-  .result-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    margin-bottom: 1rem;
-  }
-  .btn-icon {
-    background: transparent;
-    border: 1px solid var(--border-color);
+  .btn-primary:hover { opacity: 0.9; }
+  .btn-primary:active { transform: scale(0.97); }
+  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+  .generate-hint {
+    font-size: 0.85rem;
     color: var(--text-secondary);
-    padding: 0.4rem 0.8rem;
-    border-radius: 6px;
-    cursor: pointer;
-    font-size: 0.9rem;
-    transition: color 0.2s, border-color 0.2s;
+    margin-top: 0.75rem;
   }
-  .btn-icon:hover {
-    color: var(--accent-color);
-    border-color: var(--accent-color);
+
+  /* Special modes */
+  .modes-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin-top: 2rem;
+    width: 100%;
   }
-  .rng-result-display {
-    font-family: var(--font-mono);
-    font-size: 2.5rem;
-    font-weight: 800;
-    color: var(--accent-color);
-    word-break: break-all;
-    min-height: 3.5rem;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+  @media (max-width: 768px) {
+    .modes-grid { grid-template-columns: 1fr; }
   }
-  .rng-result-display.animate {
-    animation: popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-  }
-  @keyframes popIn {
-    0% { transform: scale(0.8); opacity: 0; }
-    100% { transform: scale(1); opacity: 1; }
-  }
-  .history-card {
-    background-color: var(--card-bg);
+  .card {
+    background: var(--card-bg);
     border: 1px solid var(--border-color);
     border-radius: 12px;
     padding: 1.5rem;
-    margin-top: 2rem;
   }
-  .history-card h3 {
-    margin-top: 0;
-    margin-bottom: 1rem;
-    font-size: 1.2rem;
-    color: var(--text-primary);
+  .card h3 {
+    color: var(--accent-color);
+    margin-bottom: 0.75rem;
+    font-size: 1.1rem;
   }
-  .history-list {
-    list-style: none;
-    padding: 0;
-    margin: 0;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 0.5rem;
-  }
-  .history-list li {
-    background-color: var(--bg-color);
-    border: 1px solid var(--border-color);
-    padding: 0.4rem 0.8rem;
-    border-radius: 6px;
-    font-family: var(--font-mono);
+  .card p {
     color: var(--text-secondary);
     font-size: 0.9rem;
+    margin-bottom: 1rem;
   }
+
+  /* Lottery */
+  .lottery-result {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-top: 0.75rem;
+    min-height: 42px;
+  }
+  .lottery-ball {
+    width: 42px;
+    height: 42px;
+    border-radius: 50%;
+    background: linear-gradient(145deg, var(--accent-color), #9c27b0);
+    color: #fff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 0.95rem;
+    box-shadow: 0 2px 8px rgba(224, 64, 251, 0.3);
+  }
+  .lottery-ball.animate {
+    animation: ballDrop 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+  @keyframes ballDrop {
+    0% { transform: translateY(-30px) scale(0); opacity: 0; }
+    60% { transform: translateY(3px) scale(1.1); }
+    100% { transform: translateY(0) scale(1); opacity: 1; }
+  }
+
+  /* Dice buttons */
+  .dice-buttons {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 0.5rem;
+  }
+  .dice-btn {
+    padding: 0.5rem;
+    background: var(--bg-color);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    border-radius: 6px;
+    font-size: 0.95rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+  }
+  .dice-btn:hover { border-color: var(--accent-color); color: var(--accent-color); }
+  .dice-result {
+    text-align: center;
+    margin-top: 0.75rem;
+    font-size: 2rem;
+    font-weight: 900;
+    color: var(--accent-color);
+    min-height: 2.5rem;
+  }
+
+  /* PIN */
+  .pin-controls {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-bottom: 0.75rem;
+  }
+  .pin-len-btn {
+    padding: 0.4rem 0.75rem;
+    background: var(--bg-color);
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .pin-len-btn:hover { border-color: var(--accent-color); color: var(--text-primary); }
+  .pin-len-btn.active { border-color: var(--accent-color); color: var(--accent-color); background: rgba(224, 64, 251, 0.08); }
+  .pin-result {
+    font-size: 2.2rem;
+    font-weight: 900;
+    letter-spacing: 8px;
+    color: var(--accent-color);
+    text-align: center;
+    min-height: 2.8rem;
+    font-family: monospace;
+  }
+  .mode-generate-btn {
+    padding: 0.6rem 1.2rem;
+    background: var(--accent-color);
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: opacity 0.2s;
+    width: 100%;
+  }
+  .mode-generate-btn:hover { opacity: 0.9; }
+
+  /* History */
+  .history-section {
+    margin-top: 2rem;
+    width: 100%;
+  }
+  .history-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    max-height: 400px;
+    overflow-y: auto;
+  }
+  .history-entry {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.6rem 1rem;
+    background: var(--bg-color);
+    border-radius: 8px;
+    font-size: 0.85rem;
+  }
+  .history-nums {
+    color: var(--text-primary);
+    font-weight: 600;
+    word-break: break-all;
+  }
+  .history-meta {
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+    white-space: nowrap;
+    margin-left: 1rem;
+  }
+  .history-empty {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    font-style: italic;
+    text-align: center;
+    padding: 1rem;
+  }
+
+  /* FAQ */
+  .faq-section {
+    margin-top: 3rem;
+    max-width: 700px;
+    width: 100%;
+  }
+  .faq-section h2 {
+    text-align: center;
+    margin-bottom: 1.5rem;
+    color: var(--accent-color);
+  }
+  .faq-item {
+    border-bottom: 1px solid var(--border-color);
+    padding: 1rem 0;
+  }
+  .faq-q {
+    font-weight: 700;
+    color: var(--text-primary);
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+  }
+  .faq-q::after {
+    content: '+';
+    font-size: 1.3rem;
+    color: var(--accent-color);
+    flex-shrink: 0;
+    transition: transform 0.2s;
+  }
+  .faq-item.open .faq-q::after {
+    content: '−';
+  }
+  .faq-a {
+    color: var(--text-secondary);
+    line-height: 1.6;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease, padding 0.3s ease;
+    padding-top: 0;
+  }
+  .faq-item.open .faq-a {
+    max-height: 300px;
+    padding-top: 0.75rem;
+  }
+
+  /* Related */
+  .related-section {
+    margin-top: 3rem;
+    width: 100%;
+  }
+  .related-section h2 {
+    text-align: center;
+    margin-bottom: 1.5rem;
+    color: var(--accent-color);
+  }
+  .related-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+  }
+  @media (max-width: 600px) {
+    .related-grid { grid-template-columns: 1fr; }
+  }
+  .related-link {
+    display: block;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 1.25rem;
+    text-decoration: none;
+    color: var(--text-primary);
+    transition: border-color 0.2s, transform 0.2s;
+  }
+  .related-link:hover { border-color: var(--accent-color); transform: translateY(-2px); }
+  .related-link h4 { margin-bottom: 0.4rem; }
+  .related-link p { font-size: 0.85rem; color: var(--text-secondary); margin: 0; }
 
 </style>
 <div class="page-content">
 
 <div class="hero">
   <h1>Random Number Generator</h1>
-  <p>Generate truly random numbers instantly with customizable ranges.</p>
+  <p>Generate truly random numbers in any range. Fast, fair, and powered by cryptographic randomness.</p>
 </div>
 
 <div class="container">
-  <div class="calculator-card">
-    <div class="rng-grid">
-      <div class="input-group">
-        <label for="rng-min">Minimum Value</label>
-        <div class="input-wrapper">
-          <input type="number" id="rng-min" value="1">
-        </div>
-      </div>
 
-      <div class="input-group">
-        <label for="rng-max">Maximum Value</label>
-        <div class="input-wrapper">
-          <input type="number" id="rng-max" value="100">
-        </div>
-      </div>
-
-      <div class="input-group">
-        <label for="rng-qty">Quantity (1-100)</label>
-        <div class="input-wrapper">
-          <input type="number" id="rng-qty" value="1" min="1" max="100">
-        </div>
-      </div>
-    </div>
-
-    <div class="toggle-group">
-      <label class="toggle-label">
-        <input type="checkbox" id="rng-decimal">
-        <span class="toggle-text">Allow Decimals</span>
-      </label>
-    </div>
-
-    <button id="btn-generate" class="btn-primary">Generate Number</button>
-
-    <div class="result-area" style="display: none;" id="result-container">
-      <div class="result-header">
-        <span class="calc-result-label">Result:</span>
-        <button id="btn-copy" class="btn-icon" aria-label="Copy">Copy</button>
-      </div>
-      <div id="rng-result" class="rng-result-display"></div>
+  <!-- Dice animation -->
+  <div class="dice-container" id="dice-anim">
+    <div class="dice-inner" id="dice-inner">
+      <div class="dice-face">?</div>
     </div>
   </div>
 
-  <div class="history-card" style="display: none;" id="history-container">
-    <h3>Recent History</h3>
-    <ul id="rng-history" class="history-list"></ul>
+  <!-- Result display -->
+  <div class="result-area">
+    <div class="result-box" id="result-box">
+      <span class="result-number" id="result-placeholder" style="color:var(--text-secondary);font-size:2rem;font-weight:400;">Press Generate to start</span>
+    </div>
+
+    <!-- Generator form -->
+    <div class="generator-form">
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label" for="input-min">Minimum</label>
+          <input type="number" class="form-input" id="input-min" value="1">
+        </div>
+        <div class="form-group">
+          <label class="form-label" for="input-max">Maximum</label>
+          <input type="number" class="form-input" id="input-max" value="100">
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label class="form-label" for="input-qty">Quantity</label>
+          <input type="number" class="form-input" id="input-qty" value="1" min="1" max="100">
+        </div>
+        <div class="form-group" style="justify-content:flex-end;">
+          <div class="options-row" style="margin-bottom:0;">
+            <label class="option-toggle active" id="opt-dupes"><input type="checkbox" checked> Allow Duplicates</label>
+            <label class="option-toggle" id="opt-sort"><input type="checkbox"> Sort</label>
+          </div>
+        </div>
+      </div>
+      <div class="options-row">
+        <label class="option-toggle" id="opt-even"><input type="radio" name="parity" value="even"> Even Only</label>
+        <label class="option-toggle" id="opt-odd"><input type="radio" name="parity" value="odd"> Odd Only</label>
+        <label class="option-toggle active" id="opt-any"><input type="radio" name="parity" value="any" checked> Any</label>
+      </div>
+    </div>
+
+    <button id="btn-generate" class="btn-primary">Generate</button>
+    <div class="generate-hint">or press <kbd>Space</kbd></div>
   </div>
-</div>
+
+  <!-- Special modes -->
+  <div class="modes-grid">
+
+    <!-- Lottery -->
+    <div class="card">
+      <h3>Lottery Numbers</h3>
+      <p>6 unique numbers from 1–49, sorted ascending.</p>
+      <button class="mode-generate-btn" id="btn-lottery">Draw Numbers</button>
+      <div class="lottery-result" id="lottery-result"></div>
+    </div>
+
+    <!-- D&D Dice -->
+    <div class="card">
+      <h3>D&D Dice Roller</h3>
+      <p>Roll standard polyhedral dice for tabletop RPGs.</p>
+      <div class="dice-buttons">
+        <button class="dice-btn" data-sides="4">d4</button>
+        <button class="dice-btn" data-sides="6">d6</button>
+        <button class="dice-btn" data-sides="8">d8</button>
+        <button class="dice-btn" data-sides="10">d10</button>
+        <button class="dice-btn" data-sides="12">d12</button>
+        <button class="dice-btn" data-sides="20">d20</button>
+      </div>
+      <div class="dice-result" id="dice-result"></div>
+    </div>
+
+    <!-- PIN Generator -->
+    <div class="card">
+      <h3>PIN Generator</h3>
+      <p>Generate a secure random numeric PIN code.</p>
+      <div class="pin-controls">
+        <button class="pin-len-btn active" data-len="4">4 digits</button>
+        <button class="pin-len-btn" data-len="5">5 digits</button>
+        <button class="pin-len-btn" data-len="6">6 digits</button>
+        <button class="pin-len-btn" data-len="8">8 digits</button>
+      </div>
+      <button class="mode-generate-btn" id="btn-pin">Generate PIN</button>
+      <div class="pin-result" id="pin-result"></div>
+    </div>
+
+  </div>
+
+  <!-- History -->
+  <div class="card history-section">
+    <h3>Generation History <span id="history-count" style="font-weight:400;color:var(--text-secondary);font-size:0.85rem;">(last 20)</span></h3>
+    <div id="history-list" class="history-list">
+      <div class="history-empty">No numbers generated yet.</div>
+    </div>
+  </div>
+
+  <!-- FAQ -->
+  <div class="faq-section">
+    <h2>Frequently Asked Questions</h2>
+    {faqItems.map(item => (
+      <div class="faq-item">
+        <div class="faq-q">{item.q}</div>
+        <div class="faq-a">{item.a}</div>
+      </div>
+    ))}
+  </div>
+
+  <!-- Related pages -->
+  <div class="related-section">
+    <h2>More Random Tools</h2>
+    <div class="related-grid">
+      <a href="/eeniemeenie/coin-flip" class="related-link">
+        <h4>Coin Flip</h4>
+        <p>Heads or tails? Flip a coin with realistic animation.</p>
+      </a>
+      <a href="/eeniemeenie/wheel-spinner" class="related-link">
+        <h4>Wheel Spinner</h4>
+        <p>Add your options and let the wheel decide for you.</p>
+      </a>
+      <a href="/eeniemeenie/name-generator" class="related-link">
+        <h4>Name Generator</h4>
+        <p>Pick a random name from your list in one click.</p>
+      </a>
+    </div>
+  </div>
 
 </div>
+</div>
+
 <script is:inline>
+document.addEventListener('DOMContentLoaded', () => {
 
-  document.addEventListener('DOMContentLoaded', () => {
-    const minInput = document.getElementById('rng-min');
-    const maxInput = document.getElementById('rng-max');
-    const qtyInput = document.getElementById('rng-qty');
-    const decimalToggle = document.getElementById('rng-decimal');
-    const btnGenerate = document.getElementById('btn-generate');
-    const btnCopy = document.getElementById('btn-copy');
-    const resultContainer = document.getElementById('result-container');
-    const resultDisplay = document.getElementById('rng-result');
-    const historyContainer = document.getElementById('history-container');
-    const historyList = document.getElementById('rng-history');
+  const inputMin = document.getElementById('input-min');
+  const inputMax = document.getElementById('input-max');
+  const inputQty = document.getElementById('input-qty');
+  const btnGenerate = document.getElementById('btn-generate');
+  const resultBox = document.getElementById('result-box');
+  const diceAnim = document.getElementById('dice-anim');
+  const diceInner = document.getElementById('dice-inner');
+  const historyList = document.getElementById('history-list');
 
-    let history = [];
+  let allowDupes = true;
+  let sortResults = false;
+  let parityFilter = 'any';
+  let pinLength = 4;
+  let history = [];
+  let isGenerating = false;
 
-    function generate() {
-      const min = parseFloat(minInput.value);
-      const max = parseFloat(maxInput.value);
-      let qty = parseInt(qtyInput.value, 10);
-      const allowDecimals = decimalToggle.checked;
+  // Crypto random integer in [min, max] inclusive
+  function cryptoRandInt(min, max) {
+    const range = max - min + 1;
+    if (range <= 0) return min;
+    const arr = new Uint32Array(1);
+    crypto.getRandomValues(arr);
+    return min + (arr[0] % range);
+  }
 
-      if (isNaN(min) || isNaN(max) || isNaN(qty)) return;
+  // Generate numbers with current settings
+  function generateNumbers() {
+    if (isGenerating) return;
 
-      if (min > max) {
-        resultDisplay.textContent = 'Min > Max';
-        resultContainer.style.display = 'block';
-        return;
-      }
+    const min = parseInt(inputMin.value);
+    const max = parseInt(inputMax.value);
+    let qty = parseInt(inputQty.value);
 
-      if (qty < 1) qty = 1;
-      if (qty > 100) qty = 100;
+    if (isNaN(min) || isNaN(max) || isNaN(qty)) return;
+    if (min > max) { inputMin.value = max; inputMax.value = min; return generateNumbers(); }
+    if (qty < 1) qty = 1;
+    if (qty > 100) qty = 100;
+    inputQty.value = qty;
 
-      const results = [];
-      for (let i = 0; i < qty; i++) {
-        let val;
-        if (allowDecimals) {
-          val = Math.random() * (max - min) + min;
-          val = parseFloat(val.toFixed(4));
-        } else {
-          const minInt = Math.ceil(min);
-          const maxInt = Math.floor(max);
-          val = Math.floor(Math.random() * (maxInt - minInt + 1)) + minInt;
+    // Filter available numbers by parity
+    let available = [];
+    if (parityFilter === 'any') {
+      available = null; // use full range
+    } else {
+      const rangeSize = max - min + 1;
+      if (rangeSize <= 200000) {
+        for (let i = min; i <= max; i++) {
+          if (parityFilter === 'even' && i % 2 === 0) available.push(i);
+          else if (parityFilter === 'odd' && i % 2 !== 0) available.push(i);
         }
-        results.push(val);
-      }
-
-      const resultString = results.join(', ');
-
-      // Update UI
-      resultContainer.style.display = 'block';
-
-      // Animation trigger
-      resultDisplay.classList.remove('animate');
-      void resultDisplay.offsetWidth; // Force reflow
-      resultDisplay.classList.add('animate');
-
-      resultDisplay.textContent = resultString;
-
-      // Update history
-      history.unshift(resultString);
-      if (history.length > 10) history.pop();
-      updateHistoryUI();
-    }
-
-    function updateHistoryUI() {
-      if (history.length > 0) {
-        historyContainer.style.display = 'block';
-        historyList.innerHTML = history.map(item => `<li>${item}</li>`).join('');
+      } else {
+        available = null; // fallback: generate and filter
       }
     }
 
-    btnGenerate.addEventListener('click', generate);
+    if (!allowDupes) {
+      const poolSize = available ? available.length : (max - min + 1);
+      if (qty > poolSize) {
+        qty = poolSize;
+        inputQty.value = qty;
+      }
+      if (qty === 0) return;
+    }
 
-    btnCopy.addEventListener('click', () => {
-      const text = resultDisplay.textContent;
-      if (!text || text === 'Min > Max') return;
+    isGenerating = true;
+    btnGenerate.disabled = true;
 
-      navigator.clipboard.writeText(text).then(() => {
-        const originalText = btnCopy.textContent;
-        btnCopy.textContent = 'Copied!';
-        setTimeout(() => {
-          btnCopy.textContent = originalText;
-        }, 2000);
-      });
+    // Show dice animation
+    diceAnim.classList.add('visible');
+    diceInner.classList.remove('rolling');
+    void diceInner.offsetWidth;
+    diceInner.classList.add('rolling');
+
+    setTimeout(() => {
+      const results = [];
+
+      if (available && !allowDupes) {
+        // Shuffle and pick from filtered pool
+        const pool = [...available];
+        for (let i = pool.length - 1; i > 0; i--) {
+          const j = cryptoRandInt(0, i);
+          [pool[i], pool[j]] = [pool[j], pool[i]];
+        }
+        results.push(...pool.slice(0, qty));
+      } else if (!allowDupes) {
+        const used = new Set();
+        while (results.length < qty) {
+          const n = cryptoRandInt(min, max);
+          if (parityFilter === 'even' && n % 2 !== 0) continue;
+          if (parityFilter === 'odd' && n % 2 === 0) continue;
+          if (!used.has(n)) {
+            used.add(n);
+            results.push(n);
+          }
+        }
+      } else {
+        for (let i = 0; i < qty; i++) {
+          let n;
+          do {
+            n = cryptoRandInt(min, max);
+          } while (
+            (parityFilter === 'even' && n % 2 !== 0) ||
+            (parityFilter === 'odd' && n % 2 === 0)
+          );
+          results.push(n);
+        }
+      }
+
+      if (sortResults) results.sort((a, b) => a - b);
+
+      displayResults(results);
+      addHistory(results, min + '–' + max);
+
+      diceAnim.classList.remove('visible');
+      isGenerating = false;
+      btnGenerate.disabled = false;
+    }, 850);
+  }
+
+  function displayResults(numbers) {
+    resultBox.innerHTML = '';
+    numbers.forEach((n, i) => {
+      const span = document.createElement('span');
+      span.className = 'result-number' + (numbers.length > 1 ? ' multi' : '');
+      span.textContent = n;
+      span.style.animationDelay = (i * 0.05) + 's';
+      resultBox.appendChild(span);
+      requestAnimationFrame(() => span.classList.add('animate'));
+    });
+  }
+
+  function addHistory(numbers, rangeLabel) {
+    history.unshift({ numbers: [...numbers], range: rangeLabel, time: new Date() });
+    if (history.length > 20) history.pop();
+    renderHistory();
+  }
+
+  function renderHistory() {
+    if (history.length === 0) {
+      historyList.innerHTML = '<div class="history-empty">No numbers generated yet.</div>';
+      return;
+    }
+    historyList.innerHTML = history.map(entry => {
+      const nums = entry.numbers.length > 10
+        ? entry.numbers.slice(0, 10).join(', ') + ' … +' + (entry.numbers.length - 10) + ' more'
+        : entry.numbers.join(', ');
+      const time = entry.time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      return '<div class="history-entry"><span class="history-nums">' + nums + '</span><span class="history-meta">' + entry.range + ' · ' + time + '</span></div>';
+    }).join('');
+  }
+
+  // Option toggles
+  document.getElementById('opt-dupes').addEventListener('click', function() {
+    allowDupes = !allowDupes;
+    this.classList.toggle('active', allowDupes);
+  });
+  document.getElementById('opt-sort').addEventListener('click', function() {
+    sortResults = !sortResults;
+    this.classList.toggle('active', sortResults);
+  });
+
+  // Parity toggles
+  ['opt-even', 'opt-odd', 'opt-any'].forEach(id => {
+    document.getElementById(id).addEventListener('click', function() {
+      const val = this.querySelector('input').value;
+      parityFilter = val;
+      document.getElementById('opt-even').classList.toggle('active', val === 'even');
+      document.getElementById('opt-odd').classList.toggle('active', val === 'odd');
+      document.getElementById('opt-any').classList.toggle('active', val === 'any');
     });
   });
 
+  // Generate button
+  btnGenerate.addEventListener('click', generateNumbers);
+
+  // Spacebar
+  document.addEventListener('keydown', (e) => {
+    if (e.code === 'Space' && !e.repeat && e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
+      e.preventDefault();
+      generateNumbers();
+    }
+  });
+
+  // Lottery
+  document.getElementById('btn-lottery').addEventListener('click', () => {
+    const nums = [];
+    while (nums.length < 6) {
+      const n = cryptoRandInt(1, 49);
+      if (!nums.includes(n)) nums.push(n);
+    }
+    nums.sort((a, b) => a - b);
+
+    const container = document.getElementById('lottery-result');
+    container.innerHTML = '';
+    nums.forEach((n, i) => {
+      const ball = document.createElement('span');
+      ball.className = 'lottery-ball';
+      ball.textContent = n;
+      ball.style.animationDelay = (i * 0.1) + 's';
+      container.appendChild(ball);
+      requestAnimationFrame(() => ball.classList.add('animate'));
+    });
+
+    addHistory(nums, 'Lottery 1–49');
+  });
+
+  // D&D Dice
+  document.querySelectorAll('.dice-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const sides = parseInt(btn.dataset.sides);
+      const result = cryptoRandInt(1, sides);
+
+      diceAnim.classList.add('visible');
+      diceInner.classList.remove('rolling');
+      void diceInner.offsetWidth;
+      diceInner.classList.add('rolling');
+
+      const diceResultEl = document.getElementById('dice-result');
+      diceResultEl.textContent = '';
+
+      setTimeout(() => {
+        diceAnim.classList.remove('visible');
+        diceResultEl.textContent = 'd' + sides + ' → ' + result;
+        addHistory([result], 'd' + sides);
+      }, 800);
+    });
+  });
+
+  // PIN Generator
+  const pinLenBtns = document.querySelectorAll('.pin-len-btn');
+  pinLenBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      pinLength = parseInt(btn.dataset.len);
+      pinLenBtns.forEach(b => b.classList.toggle('active', b === btn));
+    });
+  });
+
+  document.getElementById('btn-pin').addEventListener('click', () => {
+    let pin = '';
+    for (let i = 0; i < pinLength; i++) {
+      pin += cryptoRandInt(0, 9).toString();
+    }
+    document.getElementById('pin-result').textContent = pin;
+    addHistory([pin], pinLength + '-digit PIN');
+  });
+
+  // FAQ accordion
+  document.querySelectorAll('.faq-q').forEach(q => {
+    q.addEventListener('click', () => {
+      q.parentElement.classList.toggle('open');
+    });
+  });
+
+});
 </script>
 </SiteLayout>
