@@ -1,0 +1,1109 @@
+---
+import SiteLayout from "../../../layouts/SiteLayout.astro";
+
+const schema = {
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "Investment Calculator",
+  "url": "https://firemaths.info/investment-calculator",
+  "description": "Calculate investment returns with inflation and tax adjustments. Compare conservative, moderate, and aggressive scenarios side by side.",
+  "applicationCategory": "FinanceApplication",
+  "operatingSystem": "All",
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "USD"
+  }
+};
+
+const faqSchema = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "How do I calculate investment returns?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "To calculate investment returns, you need your initial investment amount, regular contributions, expected annual return rate, and investment time horizon. The formula accounts for compound growth: each period's returns are reinvested and earn additional returns in subsequent periods. Our investment calculator handles this automatically, including adjustments for inflation and taxes."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What is a good annual return rate for investments?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "The S&P 500 has historically returned about 10% annually before inflation (roughly 7% after inflation). A conservative portfolio with bonds might return 4-6%, a balanced portfolio 6-8%, and an aggressive all-stock portfolio 8-10%. Your actual returns will vary based on asset allocation, market conditions, and investment timing."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How does inflation affect my investment returns?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Inflation reduces the purchasing power of your future investment balance. If your portfolio grows to $1,000,000 over 30 years but inflation averages 3% per year, that million dollars would only buy about $412,000 worth of today's goods. Always consider inflation-adjusted (real) returns when planning long-term investments."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What is dollar-cost averaging?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Dollar-cost averaging (DCA) is an investment strategy where you invest a fixed amount at regular intervals regardless of market conditions. When prices are low, your fixed amount buys more shares; when prices are high, it buys fewer. This smooths out the impact of market volatility and removes the need to time the market."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Should I invest a lump sum or use dollar-cost averaging?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Historically, lump-sum investing outperforms dollar-cost averaging about two-thirds of the time because markets tend to go up over time. However, DCA reduces the risk of investing everything at a market peak and can be psychologically easier for investors who are nervous about large investments. For most people who earn a regular salary, DCA through automatic monthly contributions is the most practical approach."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How are investment gains taxed?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "In the US, long-term capital gains (assets held over a year) are taxed at 0%, 15%, or 20% depending on your income. Short-term gains are taxed as ordinary income. Dividends may be taxed at qualified (lower) or ordinary rates. Tax-advantaged accounts like 401(k)s and IRAs can defer or eliminate these taxes. Our calculator lets you input your expected tax rate to see its impact on your net returns."
+      }
+    }
+  ]
+};
+
+export const meta = {
+  title: "Investment Calculator — Estimate Your Investment Returns | firemaths.info",
+  description: "Free investment return calculator with inflation and tax adjustments. Compare conservative, moderate, and aggressive scenarios. Year-by-year breakdown and growth chart included.",
+  category: "tool",
+  published: "2026-03-21",
+};
+---
+
+<SiteLayout
+  site="firemaths"
+  title="Investment Calculator — Estimate Your Investment Returns | firemaths.info"
+  description="Free investment return calculator with inflation and tax adjustments. Compare conservative, moderate, and aggressive scenarios. Year-by-year breakdown and growth chart included."
+  canonical="https://firemaths.info/investment-calculator" schema={schema}
+>
+  <style>
+:root {
+            --chart-contributions: #4A90E2;
+            --chart-total: #D4A017;
+            --chart-conservative: #4A90E2;
+            --chart-moderate: #D4A017;
+            --chart-aggressive: #E25C4A;
+}
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            font-family: var(--font-ui);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        h1, h2, h3, h4 {
+            font-weight: 700;
+            line-height: 1.2;
+            color: var(--text-primary);
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            color: var(--accent-color);
+        }
+
+        header p {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+        }
+
+        .calculator-card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .calculator-card h2 {
+            font-size: 1.25rem;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .input-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1.25rem;
+        }
+
+        @media (min-width: 600px) {
+            .input-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+            .input-grid-3 {
+                grid-template-columns: 1fr 1fr 1fr;
+            }
+        }
+
+        .input-group {
+            margin-bottom: 0;
+        }
+
+        .input-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-size: 0.875rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+        }
+
+        .input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .prefix, .suffix {
+            position: absolute;
+            color: var(--text-secondary);
+            font-family: var(--font-mono);
+            font-size: 1rem;
+            pointer-events: none;
+        }
+
+        .prefix { left: 1rem; }
+        .suffix { right: 1rem; }
+
+        input[type="number"] {
+            width: 100%;
+            background-color: var(--bg-color);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            font-family: var(--font-mono);
+            font-size: 1rem;
+            padding: 0.75rem 1rem;
+            border-radius: 6px;
+            transition: border-color 0.2s;
+            -moz-appearance: textfield;
+        }
+
+        input[type="number"]::-webkit-outer-spin-button,
+        input[type="number"]::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        input[type="number"]:focus {
+            outline: none;
+            border-color: var(--accent-color);
+        }
+
+        .has-prefix input { padding-left: 2rem; }
+        .has-suffix input { padding-right: 2.5rem; }
+
+        .results-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-top: 1.5rem;
+            padding-top: 1.5rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        @media (min-width: 600px) {
+            .results-grid {
+                grid-template-columns: 1fr 1fr 1fr;
+            }
+        }
+
+        .result-box {
+            background-color: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1rem;
+        }
+
+        .result-box.highlight {
+            border-color: var(--accent-color);
+        }
+
+        .result-box .result-label {
+            color: var(--text-secondary);
+            font-size: 0.75rem;
+            font-weight: 500;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            margin-bottom: 0.25rem;
+        }
+
+        .result-box .result-value {
+            font-family: var(--font-mono);
+            font-size: 1.25rem;
+            font-weight: 700;
+        }
+
+        .result-box.highlight .result-value {
+            color: var(--accent-color);
+            font-size: 1.5rem;
+        }
+
+        .result-box .result-sub {
+            color: var(--text-secondary);
+            font-size: 0.75rem;
+            font-family: var(--font-mono);
+            margin-top: 0.125rem;
+        }
+
+        .copy-btn {
+            background: none;
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-family: var(--font-ui);
+            transition: all 0.2s;
+            margin-top: 0.5rem;
+        }
+
+        .copy-btn:hover {
+            border-color: var(--accent-color);
+            color: var(--text-primary);
+        }
+
+        .chart-section {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+        }
+
+        .chart-header {
+            margin-bottom: 1rem;
+        }
+
+        .chart-header h2 {
+            font-size: 1.25rem;
+        }
+
+        .chart-legend {
+            display: flex;
+            gap: 1.5rem;
+            margin-top: 0.75rem;
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        .legend-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            flex-shrink: 0;
+        }
+
+        .chart-container {
+            width: 100%;
+            height: 400px;
+            position: relative;
+        }
+
+        canvas {
+            width: 100%;
+            height: 100%;
+        }
+
+        /* Scenario comparison */
+        .scenario-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        @media (min-width: 768px) {
+            .scenario-grid {
+                grid-template-columns: 1fr 1fr 1fr;
+            }
+        }
+
+        .scenario-card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.25rem;
+            text-align: center;
+        }
+
+        .scenario-card h3 {
+            font-size: 1rem;
+            margin-bottom: 0.25rem;
+        }
+
+        .scenario-rate {
+            font-family: var(--font-mono);
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+            margin-bottom: 1rem;
+        }
+
+        .scenario-value {
+            font-family: var(--font-mono);
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 0.25rem;
+        }
+
+        .scenario-real {
+            font-family: var(--font-mono);
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        .scenario-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-top: 0.125rem;
+        }
+
+        .scenario-card.conservative { border-top: 3px solid var(--chart-conservative); }
+        .scenario-card.conservative .scenario-value { color: var(--chart-conservative); }
+        .scenario-card.moderate { border-top: 3px solid var(--chart-moderate); }
+        .scenario-card.moderate .scenario-value { color: var(--chart-moderate); }
+        .scenario-card.aggressive { border-top: 3px solid var(--chart-aggressive); }
+        .scenario-card.aggressive .scenario-value { color: var(--chart-aggressive); }
+
+        /* Year-by-year table */
+        .table-section {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+            margin-bottom: 2rem;
+            overflow-x: auto;
+        }
+
+        .table-section h2 {
+            font-size: 1.25rem;
+            margin-bottom: 1rem;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            font-family: var(--font-mono);
+            font-size: 0.875rem;
+        }
+
+        thead th {
+            text-align: left;
+            padding: 0.75rem 0.5rem;
+            border-bottom: 2px solid var(--border-color);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-secondary);
+            white-space: nowrap;
+        }
+
+        tbody td {
+            padding: 0.6rem 0.5rem;
+            border-bottom: 1px solid var(--border-color);
+            white-space: nowrap;
+        }
+
+        tbody tr:hover {
+            background-color: var(--bg-color);
+        }
+
+        .seo-content {
+            margin-bottom: 4rem;
+        }
+
+        .seo-content h2 {
+            font-size: 1.75rem;
+            margin-top: 2.5rem;
+            margin-bottom: 1rem;
+            color: var(--accent-color);
+        }
+
+        .seo-content h3 {
+            font-size: 1.25rem;
+            margin-top: 1.5rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .seo-content p {
+            margin-bottom: 1rem;
+            color: var(--text-secondary);
+        }
+
+        .seo-content ul, .seo-content ol {
+            margin-bottom: 1.5rem;
+            padding-left: 1.5rem;
+            color: var(--text-secondary);
+        }
+
+        .seo-content li {
+            margin-bottom: 0.5rem;
+        }
+
+        .dca-example {
+            background-color: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1.25rem;
+            margin: 1.5rem 0;
+        }
+
+        .dca-example h4 {
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--accent-color);
+            margin-bottom: 0.75rem;
+        }
+
+        .dca-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+            gap: 0.75rem;
+        }
+
+        .dca-cell {
+            text-align: center;
+        }
+
+        .dca-cell .dca-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        .dca-cell .dca-val {
+            font-family: var(--font-mono);
+            font-weight: 600;
+            font-size: 1rem;
+        }
+
+        .faq-section {
+            margin-bottom: 4rem;
+        }
+
+        .faq-section h2 {
+            font-size: 1.75rem;
+            margin-bottom: 1.5rem;
+            color: var(--accent-color);
+        }
+
+        .faq-item {
+            border-bottom: 1px solid var(--border-color);
+            padding: 1.25rem 0;
+        }
+
+        .faq-item:first-of-type {
+            border-top: 1px solid var(--border-color);
+        }
+
+        .faq-question {
+            font-weight: 600;
+            font-size: 1.05rem;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 1rem;
+            color: var(--text-primary);
+        }
+
+        .faq-question::after {
+            content: '+';
+            font-size: 1.25rem;
+            flex-shrink: 0;
+            color: var(--accent-color);
+            transition: transform 0.2s;
+        }
+
+        .faq-item.open .faq-question::after {
+            content: '−';
+        }
+
+        .faq-answer {
+            display: none;
+            padding-top: 0.75rem;
+            color: var(--text-secondary);
+            line-height: 1.7;
+        }
+
+        .faq-item.open .faq-answer {
+            display: block;
+        }
+
+        .related-links {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+
+        @media (min-width: 600px) {
+            .related-links {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        .related-link {
+            display: block;
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1rem 1.25rem;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .related-link:hover {
+            border-color: var(--accent-color);
+            transform: translateY(-2px);
+        }
+
+        .related-link h4 {
+            font-size: 0.95rem;
+            color: var(--text-primary);
+        }
+
+        .related-link p {
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+            margin-top: 0.25rem;
+        }
+  </style>
+
+<div class="container">
+    <header>
+        <h1>Investment Calculator</h1>
+        <p>Estimate your stock and investment returns over time, adjusted for inflation and taxes</p>
+    </header>
+
+    <main>
+        <!-- Calculator Inputs -->
+        <div class="calculator-card">
+            <h2>Your Investment Details</h2>
+            <div class="input-grid">
+                <div class="input-group">
+                    <label for="initial-investment">Initial Investment</label>
+                    <div class="input-wrapper has-prefix">
+                        <span class="prefix">$</span>
+                        <input type="number" id="initial-investment" value="10000" min="0" step="500">
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label for="monthly-contribution">Monthly Contribution</label>
+                    <div class="input-wrapper has-prefix">
+                        <span class="prefix">$</span>
+                        <input type="number" id="monthly-contribution" value="500" min="0" step="50">
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label for="annual-return">Annual Return Rate</label>
+                    <div class="input-wrapper has-suffix">
+                        <span class="suffix">%</span>
+                        <input type="number" id="annual-return" value="7" min="0" max="50" step="0.1">
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label for="investment-years">Investment Period (Years)</label>
+                    <div class="input-wrapper">
+                        <input type="number" id="investment-years" value="20" min="1" max="50" step="1">
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label for="inflation-rate">Inflation Rate</label>
+                    <div class="input-wrapper has-suffix">
+                        <span class="suffix">%</span>
+                        <input type="number" id="inflation-rate" value="3" min="0" max="20" step="0.1">
+                    </div>
+                </div>
+
+                <div class="input-group">
+                    <label for="tax-rate">Tax Rate on Gains</label>
+                    <div class="input-wrapper has-suffix">
+                        <span class="suffix">%</span>
+                        <input type="number" id="tax-rate" value="15" min="0" max="50" step="0.5">
+                    </div>
+                </div>
+            </div>
+
+            <!-- Results -->
+            <div class="results-grid">
+                <div class="result-box highlight">
+                    <div class="result-label">Future Value (Nominal)</div>
+                    <div class="result-value" id="result-nominal">$0</div>
+                    <div class="result-sub" id="result-real">$0 inflation-adjusted</div>
+                    <button class="copy-btn" onclick="copyValue('result-nominal', this)">Copy</button>
+                </div>
+                <div class="result-box">
+                    <div class="result-label">Total Contributions</div>
+                    <div class="result-value" id="result-contributions">$0</div>
+                </div>
+                <div class="result-box">
+                    <div class="result-label">Total Returns</div>
+                    <div class="result-value" id="result-returns">$0</div>
+                    <div class="result-sub" id="result-after-tax">$0 after tax</div>
+                </div>
+                <div class="result-box">
+                    <div class="result-label">Effective Annual Return</div>
+                    <div class="result-value" id="result-effective">0%</div>
+                    <div class="result-sub" id="result-effective-real">0% real</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Growth Chart -->
+        <div class="chart-section">
+            <div class="chart-header">
+                <h2>Investment Growth Over Time</h2>
+                <div class="chart-legend">
+                    <div class="legend-item"><span class="legend-dot" style="background-color: var(--chart-total);"></span> Total Value</div>
+                    <div class="legend-item"><span class="legend-dot" style="background-color: var(--chart-contributions);"></span> Total Contributions</div>
+                </div>
+            </div>
+            <div class="chart-container">
+                <canvas id="growthChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Scenario Comparison -->
+        <h2 style="font-size: 1.5rem; margin-bottom: 1rem;">Scenario Comparison</h2>
+        <p style="color: var(--text-secondary); margin-bottom: 1.5rem;">Same contributions, different return assumptions — based on your inputs above.</p>
+        <div class="scenario-grid">
+            <div class="scenario-card conservative">
+                <h3>Conservative</h3>
+                <div class="scenario-rate">5% annual return</div>
+                <div class="scenario-value" id="scenario-conservative">$0</div>
+                <div class="scenario-label">nominal</div>
+                <div class="scenario-real" id="scenario-conservative-real">$0</div>
+                <div class="scenario-label">inflation-adjusted</div>
+            </div>
+            <div class="scenario-card moderate">
+                <h3>Moderate</h3>
+                <div class="scenario-rate">7% annual return</div>
+                <div class="scenario-value" id="scenario-moderate">$0</div>
+                <div class="scenario-label">nominal</div>
+                <div class="scenario-real" id="scenario-moderate-real">$0</div>
+                <div class="scenario-label">inflation-adjusted</div>
+            </div>
+            <div class="scenario-card aggressive">
+                <h3>Aggressive</h3>
+                <div class="scenario-rate">10% annual return</div>
+                <div class="scenario-value" id="scenario-aggressive">$0</div>
+                <div class="scenario-label">nominal</div>
+                <div class="scenario-real" id="scenario-aggressive-real">$0</div>
+                <div class="scenario-label">inflation-adjusted</div>
+            </div>
+        </div>
+
+        <!-- Year-by-Year Table -->
+        <div class="table-section">
+            <h2>Year-by-Year Breakdown</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Year</th>
+                        <th>Contributions</th>
+                        <th>Returns</th>
+                        <th>Balance</th>
+                    </tr>
+                </thead>
+                <tbody id="breakdown-table"></tbody>
+            </table>
+        </div>
+
+        <!-- SEO Content -->
+        <div class="seo-content">
+            <h2>How to Use This Investment Return Calculator</h2>
+            <p>This investment calculator helps you estimate the future value of your portfolio based on your initial investment, regular monthly contributions, expected annual return rate, investment horizon, inflation, and tax rate on gains. It models compound growth — meaning your returns earn returns — which is the primary driver of long-term wealth building.</p>
+            <ol>
+                <li><strong>Enter your initial investment</strong> — the lump sum you're starting with today.</li>
+                <li><strong>Set your monthly contribution</strong> — the amount you plan to invest each month consistently.</li>
+                <li><strong>Choose your expected return rate</strong> — the average annual return you expect. The S&amp;P 500 has historically returned about 10% nominally (7% after inflation).</li>
+                <li><strong>Set your time horizon</strong> — how many years you plan to stay invested.</li>
+                <li><strong>Adjust inflation and tax rates</strong> — to see the real purchasing power of your future wealth.</li>
+            </ol>
+
+            <h2>Understanding Your Stock Return Calculator Results</h2>
+            <p>The <strong>nominal future value</strong> is the raw dollar amount your investment will grow to. The <strong>inflation-adjusted value</strong> shows what that amount is worth in today's purchasing power — a more useful metric for financial planning. The <strong>effective annual return</strong> considers your total contributions relative to the final balance, giving you the true annualized growth rate of your money.</p>
+            <p>The scenario comparison shows your exact contributions growing at three different rates: conservative (5%), moderate (7%), and aggressive (10%). This helps you understand the range of possible outcomes and plan accordingly.</p>
+
+            <h2>Dollar-Cost Averaging: Why Monthly Investing Works</h2>
+            <p>Dollar-cost averaging (DCA) is the strategy of investing a fixed dollar amount at regular intervals — exactly what you model when you set a monthly contribution in this investment calculator. Rather than trying to time the market, DCA smooths out the price you pay over time.</p>
+            <p>When the market drops, your fixed contribution buys more shares. When the market rises, you buy fewer. Over time, this tends to result in a lower average cost per share than trying to invest at the "right" moment.</p>
+
+            <div class="dca-example">
+                <h4>DCA Example: $500/month over 6 months</h4>
+                <div class="dca-grid">
+                    <div class="dca-cell"><div class="dca-label">Month 1</div><div class="dca-val">$50/share</div><div class="dca-label">10 shares</div></div>
+                    <div class="dca-cell"><div class="dca-label">Month 2</div><div class="dca-val">$40/share</div><div class="dca-label">12.5 shares</div></div>
+                    <div class="dca-cell"><div class="dca-label">Month 3</div><div class="dca-val">$35/share</div><div class="dca-label">14.3 shares</div></div>
+                    <div class="dca-cell"><div class="dca-label">Month 4</div><div class="dca-val">$45/share</div><div class="dca-label">11.1 shares</div></div>
+                    <div class="dca-cell"><div class="dca-label">Month 5</div><div class="dca-val">$55/share</div><div class="dca-label">9.1 shares</div></div>
+                    <div class="dca-cell"><div class="dca-label">Month 6</div><div class="dca-val">$50/share</div><div class="dca-label">10 shares</div></div>
+                </div>
+                <p style="margin-top: 0.75rem; color: var(--text-secondary); font-size: 0.875rem;"><strong>Result:</strong> 67 shares for $3,000 = $44.78 avg cost vs. $45.83 simple average price. You paid less per share than the average market price.</p>
+            </div>
+
+            <h2>Tips for Maximizing Investment Returns</h2>
+            <ul>
+                <li><strong>Start early:</strong> Time in the market matters more than timing the market. A 25-year-old investing $300/month at 7% will have more at 65 than a 35-year-old investing $600/month.</li>
+                <li><strong>Stay consistent:</strong> Automate your monthly contributions so you invest regardless of market conditions or emotions.</li>
+                <li><strong>Minimize fees:</strong> A 1% expense ratio can cost you hundreds of thousands over a career. Choose low-cost index funds and ETFs.</li>
+                <li><strong>Use tax-advantaged accounts:</strong> Max out your 401(k) match, then contribute to IRAs. Tax-deferred growth significantly boosts your effective returns.</li>
+                <li><strong>Reinvest dividends:</strong> Automatic dividend reinvestment accelerates compounding by increasing your share count over time.</li>
+                <li><strong>Diversify:</strong> Spread investments across asset classes and geographies to reduce risk without necessarily sacrificing returns.</li>
+            </ul>
+        </div>
+
+        <!-- FAQ Section -->
+        <div class="faq-section">
+            <h2>Frequently Asked Questions</h2>
+
+            <div class="faq-item">
+                <div class="faq-question" onclick="this.parentElement.classList.toggle('open')">How do I calculate investment returns?</div>
+                <div class="faq-answer">To calculate investment returns, you need your initial investment amount, regular contributions, expected annual return rate, and investment time horizon. The formula accounts for compound growth: each period's returns are reinvested and earn additional returns in subsequent periods. Our investment calculator handles this automatically, including adjustments for inflation and taxes.</div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question" onclick="this.parentElement.classList.toggle('open')">What is a good annual return rate for investments?</div>
+                <div class="faq-answer">The S&P 500 has historically returned about 10% annually before inflation (roughly 7% after inflation). A conservative portfolio with bonds might return 4–6%, a balanced portfolio 6–8%, and an aggressive all-stock portfolio 8–10%. Your actual returns will vary based on asset allocation, market conditions, and investment timing.</div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question" onclick="this.parentElement.classList.toggle('open')">How does inflation affect my investment returns?</div>
+                <div class="faq-answer">Inflation reduces the purchasing power of your future investment balance. If your portfolio grows to $1,000,000 over 30 years but inflation averages 3% per year, that million dollars would only buy about $412,000 worth of today's goods. Always consider inflation-adjusted (real) returns when planning long-term investments.</div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question" onclick="this.parentElement.classList.toggle('open')">What is dollar-cost averaging?</div>
+                <div class="faq-answer">Dollar-cost averaging (DCA) is an investment strategy where you invest a fixed amount at regular intervals regardless of market conditions. When prices are low, your fixed amount buys more shares; when prices are high, it buys fewer. This smooths out the impact of market volatility and removes the need to time the market.</div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question" onclick="this.parentElement.classList.toggle('open')">Should I invest a lump sum or use dollar-cost averaging?</div>
+                <div class="faq-answer">Historically, lump-sum investing outperforms dollar-cost averaging about two-thirds of the time because markets tend to go up over time. However, DCA reduces the risk of investing everything at a market peak and can be psychologically easier. For most people who earn a regular salary, DCA through automatic monthly contributions is the most practical approach.</div>
+            </div>
+
+            <div class="faq-item">
+                <div class="faq-question" onclick="this.parentElement.classList.toggle('open')">How are investment gains taxed?</div>
+                <div class="faq-answer">In the US, long-term capital gains (assets held over a year) are taxed at 0%, 15%, or 20% depending on your income. Short-term gains are taxed as ordinary income. Dividends may be taxed at qualified (lower) or ordinary rates. Tax-advantaged accounts like 401(k)s and IRAs can defer or eliminate these taxes. Our calculator lets you input your expected tax rate to see its impact on your net returns.</div>
+            </div>
+        </div>
+
+        <!-- Related Tools -->
+        <h3 style="margin-bottom: 1rem;">Related Calculators</h3>
+        <div class="related-links">
+            <a href="/compound-interest-calculator" class="related-link">
+                <h4>Compound Interest Calculator</h4>
+                <p>Compare two scenarios side by side with different rates and contributions.</p>
+            </a>
+            <a href="/retirement-savings-calculator" class="related-link">
+                <h4>Retirement Savings Calculator</h4>
+                <p>Plan your retirement with withdrawal projections and Social Security estimates.</p>
+            </a>
+        </div>
+    </main>
+</div>
+
+  <script is:inline type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "How do I calculate investment returns?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "To calculate investment returns, you need your initial investment amount, regular contributions, expected annual return rate, and investment time horizon. The formula accounts for compound growth: each period's returns are reinvested and earn additional returns in subsequent periods. Our investment calculator handles this automatically, including adjustments for inflation and taxes."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What is a good annual return rate for investments?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "The S&P 500 has historically returned about 10% annually before inflation (roughly 7% after inflation). A conservative portfolio with bonds might return 4-6%, a balanced portfolio 6-8%, and an aggressive all-stock portfolio 8-10%. Your actual returns will vary based on asset allocation, market conditions, and investment timing."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How does inflation affect my investment returns?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Inflation reduces the purchasing power of your future investment balance. If your portfolio grows to $1,000,000 over 30 years but inflation averages 3% per year, that million dollars would only buy about $412,000 worth of today's goods. Always consider inflation-adjusted (real) returns when planning long-term investments."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What is dollar-cost averaging?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Dollar-cost averaging (DCA) is an investment strategy where you invest a fixed amount at regular intervals regardless of market conditions. When prices are low, your fixed amount buys more shares; when prices are high, it buys fewer. This smooths out the impact of market volatility and removes the need to time the market."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Should I invest a lump sum or use dollar-cost averaging?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Historically, lump-sum investing outperforms dollar-cost averaging about two-thirds of the time because markets tend to go up over time. However, DCA reduces the risk of investing everything at a market peak and can be psychologically easier for investors who are nervous about large investments. For most people who earn a regular salary, DCA through automatic monthly contributions is the most practical approach."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How are investment gains taxed?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "In the US, long-term capital gains (assets held over a year) are taxed at 0%, 15%, or 20% depending on your income. Short-term gains are taxed as ordinary income. Dividends may be taxed at qualified (lower) or ordinary rates. Tax-advantaged accounts like 401(k)s and IRAs can defer or eliminate these taxes. Our calculator lets you input your expected tax rate to see its impact on your net returns."
+          }
+        }
+      ]
+    }
+  </script>
+
+  <script is:inline>
+    const fmt = (v) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(v);
+
+    window.copyValue = async (id, btn) => {
+        const text = document.getElementById(id).innerText;
+        try {
+            await navigator.clipboard.writeText(text);
+            const orig = btn.innerText;
+            btn.innerText = 'Copied!';
+            setTimeout(() => btn.innerText = orig, 2000);
+        } catch (e) {}
+    };
+
+    function calcInvestment(initial, monthly, rate, years) {
+        const mr = (rate / 100) / 12;
+        const months = years * 12;
+        let balance = initial;
+        let contributions = initial;
+        const yearlyData = [{ year: 0, contributions: initial, returns: 0, balance: initial }];
+
+        for (let i = 1; i <= months; i++) {
+            balance = balance * (1 + mr) + monthly;
+            contributions += monthly;
+            if (i % 12 === 0) {
+                yearlyData.push({
+                    year: i / 12,
+                    contributions: contributions,
+                    returns: balance - contributions,
+                    balance: balance
+                });
+            }
+        }
+
+        return { balance, contributions, returns: balance - contributions, yearlyData };
+    }
+
+    function adjustForInflation(nominal, inflationRate, years) {
+        return nominal / Math.pow(1 + inflationRate / 100, years);
+    }
+
+    // Chart
+    let canvas = document.getElementById('growthChart');
+    let ctx = canvas.getContext('2d');
+
+    function drawChart(yearlyData) {
+        const dpr = window.devicePixelRatio || 1;
+        const rect = canvas.parentElement.getBoundingClientRect();
+        canvas.width = rect.width * dpr;
+        canvas.height = rect.height * dpr;
+        ctx.setTransform(1, 0, 0, 1, 0, 0);
+        ctx.scale(dpr, dpr);
+
+        const w = rect.width;
+        const h = rect.height;
+        ctx.clearRect(0, 0, w, h);
+
+        const pad = { top: 20, right: 20, bottom: 40, left: 80 };
+        const cw = w - pad.left - pad.right;
+        const ch = h - pad.top - pad.bottom;
+
+        const maxVal = Math.max(...yearlyData.map(d => d.balance));
+        const totalYears = yearlyData[yearlyData.length - 1].year;
+
+        // Grid
+        ctx.strokeStyle = '#2a2010';
+        ctx.lineWidth = 1;
+        ctx.font = '12px Inter, sans-serif';
+        ctx.fillStyle = '#888888';
+        ctx.textAlign = 'right';
+        ctx.textBaseline = 'middle';
+
+        const yTicks = 5;
+        for (let i = 0; i <= yTicks; i++) {
+            const val = maxVal * (i / yTicks);
+            const y = h - pad.bottom - (ch * (i / yTicks));
+            ctx.beginPath();
+            ctx.moveTo(pad.left, y);
+            ctx.lineTo(w - pad.right, y);
+            ctx.stroke();
+            let label = val >= 1e6 ? '$' + (val / 1e6).toFixed(1) + 'M' : val >= 1000 ? '$' + (val / 1000).toFixed(0) + 'k' : '$' + val.toFixed(0);
+            ctx.fillText(label, pad.left - 10, y);
+        }
+
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'top';
+        const xTicks = Math.min(totalYears, 10);
+        for (let i = 0; i <= xTicks; i++) {
+            const yr = Math.round((totalYears / xTicks) * i);
+            const x = pad.left + (cw * (yr / totalYears));
+            ctx.beginPath();
+            ctx.moveTo(x, h - pad.bottom);
+            ctx.lineTo(x, h - pad.bottom + 5);
+            ctx.stroke();
+            ctx.fillText('Yr ' + yr, x, h - pad.bottom + 10);
+        }
+
+        function drawArea(data, getVal, color) {
+            ctx.beginPath();
+            ctx.strokeStyle = color;
+            ctx.lineWidth = 3;
+            ctx.lineJoin = 'round';
+
+            data.forEach((d, i) => {
+                const x = pad.left + (cw * (d.year / totalYears));
+                const y = h - pad.bottom - (ch * (getVal(d) / maxVal));
+                if (i === 0) ctx.moveTo(x, y);
+                else ctx.lineTo(x, y);
+            });
+            ctx.stroke();
+
+            const last = data[data.length - 1];
+            ctx.lineTo(pad.left + (cw * (last.year / totalYears)), h - pad.bottom);
+            ctx.lineTo(pad.left, h - pad.bottom);
+            ctx.closePath();
+
+            const r = parseInt(color.slice(1, 3), 16);
+            const g = parseInt(color.slice(3, 5), 16);
+            const b = parseInt(color.slice(5, 7), 16);
+            const grad = ctx.createLinearGradient(0, pad.top, 0, h - pad.bottom);
+            grad.addColorStop(0, `rgba(${r},${g},${b},0.2)`);
+            grad.addColorStop(1, `rgba(${r},${g},${b},0)`);
+            ctx.fillStyle = grad;
+            ctx.fill();
+        }
+
+        // Draw contributions first (behind), then total value
+        drawArea(yearlyData, d => d.contributions, '#4A90E2');
+        drawArea(yearlyData, d => d.balance, '#D4A017');
+    }
+
+    function buildTable(yearlyData) {
+        const tbody = document.getElementById('breakdown-table');
+        tbody.innerHTML = '';
+        yearlyData.forEach(d => {
+            if (d.year === 0) return;
+            const tr = document.createElement('tr');
+            tr.innerHTML = `<td>${d.year}</td><td>${fmt(d.contributions)}</td><td>${fmt(d.returns)}</td><td>${fmt(d.balance)}</td>`;
+            tbody.appendChild(tr);
+        });
+    }
+
+    function updateAll() {
+        const initial = parseFloat(document.getElementById('initial-investment').value) || 0;
+        const monthly = parseFloat(document.getElementById('monthly-contribution').value) || 0;
+        const rate = parseFloat(document.getElementById('annual-return').value) || 0;
+        const years = parseInt(document.getElementById('investment-years').value) || 1;
+        const inflation = parseFloat(document.getElementById('inflation-rate').value) || 0;
+        const tax = parseFloat(document.getElementById('tax-rate').value) || 0;
+
+        const res = calcInvestment(initial, monthly, rate, years);
+
+        // Main results
+        document.getElementById('result-nominal').innerText = fmt(res.balance);
+        document.getElementById('result-real').innerText = fmt(adjustForInflation(res.balance, inflation, years)) + ' inflation-adjusted';
+        document.getElementById('result-contributions').innerText = fmt(res.contributions);
+        document.getElementById('result-returns').innerText = fmt(res.returns);
+
+        const afterTax = res.returns > 0 ? res.contributions + res.returns * (1 - tax / 100) : res.balance;
+        document.getElementById('result-after-tax').innerText = fmt(afterTax) + ' after tax';
+
+        // Effective annual return
+        const effectiveRate = res.contributions > 0 ? (Math.pow(res.balance / res.contributions, 1 / years) - 1) * 100 : 0;
+        const realEffective = effectiveRate - inflation;
+        document.getElementById('result-effective').innerText = effectiveRate.toFixed(1) + '%';
+        document.getElementById('result-effective-real').innerText = realEffective.toFixed(1) + '% real';
+
+        // Chart
+        drawChart(res.yearlyData);
+
+        // Table
+        buildTable(res.yearlyData);
+
+        // Scenarios
+        const scenarios = [
+            { rate: 5, id: 'conservative' },
+            { rate: 7, id: 'moderate' },
+            { rate: 10, id: 'aggressive' }
+        ];
+
+        scenarios.forEach(s => {
+            const r = calcInvestment(initial, monthly, s.rate, years);
+            document.getElementById('scenario-' + s.id).innerText = fmt(r.balance);
+            document.getElementById('scenario-' + s.id + '-real').innerText = fmt(adjustForInflation(r.balance, inflation, years));
+        });
+    }
+
+    document.querySelectorAll('input[type="number"]').forEach(input => {
+        input.addEventListener('input', updateAll);
+    });
+
+    window.addEventListener('resize', updateAll);
+    setTimeout(updateAll, 0);
+  </script>
+
+  <!-- Pillar Guide Link -->
+  <div class="max-w-3xl mx-auto px-5 pt-8 pb-12">
+    <div class="border-t border-[var(--border-color)] pt-8">
+      <p class="text-xs font-bold text-[var(--accent-color)] tracking-wide uppercase mb-2">Complete Guide</p>
+      <a href="/guide-investing-complete" class="block bg-[var(--card-bg)] border border-[var(--border-color)] rounded-xl p-5 hover:border-[var(--accent-color)] hover:-translate-y-0.5 transition-all">
+        <h3 class="text-base font-bold text-white">Beginner's Guide to Investing Your Money</h3>
+        <p class="text-sm text-[var(--text-secondary)] mt-1">Read the full guide &rarr;</p>
+      </a>
+    </div>
+  </div>
+</SiteLayout>

@@ -1,0 +1,770 @@
+---
+import SiteLayout from "../../../layouts/SiteLayout.astro";
+
+const faqs = [
+  {
+    q: "Does aim training actually improve your gameplay?",
+    a: "Yes — but with caveats. Aim trainers build raw mechanical skills: flicking to targets, tracking moving objects, and reacting faster. Studies and pro player testimonials consistently show that 15-30 minutes of daily aim training improves accuracy in games like Valorant, CS2, and Apex Legends within 2-4 weeks. However, aim training alone won't make you better at game sense, positioning, or ability usage. Think of it like batting practice — it sharpens one critical skill, not the whole game."
+  },
+  {
+    q: "How long should I aim train per day?",
+    a: "15-30 minutes is the sweet spot for most players. Going beyond 30 minutes hits diminishing returns and can cause wrist fatigue. The key is consistency — 15 minutes every day beats a 2-hour session once a week. Many pros warm up with 10-15 minutes of aim training before competitive matches. If you're new to aim training, start with 10 minutes and build up as your hand endurance improves."
+  },
+  {
+    q: "What DPI and sensitivity should I use for aim training?",
+    a: "Use the same DPI and sensitivity you use in your actual games. The entire point of aim training is building muscle memory, and that memory is tied to your specific sensitivity. Most competitive FPS players use 400-1600 DPI with a low to medium in-game sensitivity, resulting in roughly 25-50cm per 360-degree turn. If you don't have a set sensitivity yet, start at 800 DPI and adjust until a 180-degree turn uses about half your mousepad."
+  },
+  {
+    q: "What's a good reaction time for gaming?",
+    a: "The average human reaction time to a visual stimulus is about 250ms. Competitive gamers typically react in 180-220ms, and elite players can consistently hit 150-180ms. Reaction time below 150ms is exceptional. Keep in mind that in-game reaction time is slower than raw click tests because you need to process game context (is it an enemy? where are they? should I shoot?). This aim trainer measures your click reaction time, which is a useful baseline."
+  },
+  {
+    q: "Which aim training mode should I practice?",
+    a: "It depends on your weakest skill. Classic mode builds general click speed and target acquisition — good for all players. Precision mode trains crosshair placement accuracy, crucial for tactical shooters like CS2 and Valorant. Tracking mode is essential for games with strafing targets like Apex Legends and Overwatch. Flick Shot mode trains fast target switching, critical for AWP/Op players and aggressive aimers. Start with Classic to build a baseline, then focus on the mode that matches your game."
+  },
+  {
+    q: "Is this aim trainer as good as Aim Lab or Kovaak's?",
+    a: "This browser-based trainer is great for quick warm-ups and casual practice without installing anything. Dedicated applications like Aim Lab and Kovaak's offer more features: custom scenarios, detailed analytics, sensitivity matching across games, and community-created routines. If you're serious about improving, use this trainer for convenience and a dedicated app for deep practice sessions. The best aim trainer is the one you actually use consistently."
+  },
+  {
+    q: "Does my mouse and mousepad affect aim training results?",
+    a: "Absolutely. A gaming mouse with a good optical sensor (PAW3395, HERO 2, Focus Pro 30K) tracks accurately with no acceleration or smoothing. A cheap office mouse may skip, drift, or add unwanted acceleration that undermines your practice. Your mousepad also matters — a consistent, large surface (at least 400x450mm) lets you build reliable muscle memory. A worn-out or inconsistent pad introduces randomness into your aim."
+  }
+];
+
+const schema = [
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "Aim Trainer — Free Online FPS Aim Practice",
+    "description": "Free browser-based aim trainer with Classic, Precision, Tracking, and Flick Shot modes. Track accuracy, reaction time, and hits with a local leaderboard.",
+    "applicationCategory": "Game",
+    "operatingSystem": "Any",
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+    "author": { "@type": "Organization", "name": "Leeroy Jenkins" }
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": faqs.map(f => ({
+      "@type": "Question",
+      "name": f.q,
+      "acceptedAnswer": { "@type": "Answer", "text": f.a }
+    }))
+  }
+];
+
+export const meta = {
+  title: "Aim Trainer — Free Online FPS Aim Practice & Mouse Accuracy Test",
+  description: "Free browser-based aim trainer with 4 modes: Classic, Precision, Tracking, and Flick Shot. Track accuracy %, reaction time, and hits. No download required.",
+  category: "tool",
+  published: "2026-03-21",
+};
+---
+
+<SiteLayout
+  site="leeroyjenkins"
+  title="Aim Trainer — Free Online FPS Aim Practice & Mouse Accuracy Test"
+  description="Free browser-based aim trainer with 4 modes: Classic, Precision, Tracking, and Flick Shot. Track accuracy %, reaction time, and hits. No download required."
+  canonical="https://leeroyjenkins.quest/aim-trainer"
+  schema={schema}
+>
+  <div class="page-content">
+    <div class="hero">
+      <h1>Aim Trainer</h1>
+      <p>Free online FPS aim practice — 4 modes, 3 difficulty levels, reaction time tracking. No download, no account. Just click and improve.</p>
+    </div>
+
+    <section class="content-section">
+      <!-- Game Controls -->
+      <div class="game-controls">
+        <div class="control-group">
+          <label>Mode</label>
+          <div class="btn-group" id="mode-select">
+            <button class="btn active" data-mode="classic">Classic</button>
+            <button class="btn" data-mode="precision">Precision</button>
+            <button class="btn" data-mode="tracking">Tracking</button>
+            <button class="btn" data-mode="flick">Flick Shot</button>
+          </div>
+        </div>
+        <div class="control-group">
+          <label>Difficulty</label>
+          <div class="btn-group" id="difficulty-select">
+            <button class="btn" data-diff="easy">Easy</button>
+            <button class="btn active" data-diff="medium">Medium</button>
+            <button class="btn" data-diff="hard">Hard</button>
+          </div>
+        </div>
+        <div class="control-actions">
+          <button class="btn btn-primary" id="start-btn">Start</button>
+          <button class="btn btn-secondary" id="fullscreen-btn">Fullscreen</button>
+        </div>
+      </div>
+
+      <!-- Mode Descriptions -->
+      <div class="mode-desc" id="mode-desc">
+        <span id="mode-desc-text">Hit as many targets as you can in 30 seconds. Pure speed and accuracy.</span>
+      </div>
+
+      <!-- Live Stats Bar -->
+      <div class="live-stats" id="live-stats">
+        <div class="live-stat"><span class="live-label">Time</span><span class="live-value" id="stat-time">30</span></div>
+        <div class="live-stat"><span class="live-label">Hits</span><span class="live-value" id="stat-hits">0</span></div>
+        <div class="live-stat"><span class="live-label">Misses</span><span class="live-value" id="stat-misses">0</span></div>
+        <div class="live-stat"><span class="live-label">Accuracy</span><span class="live-value" id="stat-accuracy">0%</span></div>
+        <div class="live-stat"><span class="live-label">Avg RT</span><span class="live-value" id="stat-avg-rt">—</span></div>
+      </div>
+
+      <!-- Game Area -->
+      <div class="game-wrapper" id="game-wrapper">
+        <div class="game-area" id="game-area">
+          <div class="game-overlay" id="game-overlay">
+            <span>Click <strong>Start</strong> to begin</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Results Panel -->
+      <div class="results-panel" id="results-panel" style="display:none;">
+        <h2>Results</h2>
+        <div class="results-grid">
+          <div class="result-item"><span class="result-label">Hits</span><span class="result-value" id="res-hits">0</span></div>
+          <div class="result-item"><span class="result-label">Misses</span><span class="result-value" id="res-misses">0</span></div>
+          <div class="result-item"><span class="result-label">Accuracy</span><span class="result-value" id="res-accuracy">0%</span></div>
+          <div class="result-item"><span class="result-label">Avg Reaction</span><span class="result-value" id="res-avg-rt">—</span></div>
+          <div class="result-item"><span class="result-label">Best Reaction</span><span class="result-value" id="res-best-rt">—</span></div>
+          <div class="result-item"><span class="result-label">Score</span><span class="result-value" id="res-score">0</span></div>
+        </div>
+        <button class="btn btn-primary" id="play-again-btn" style="margin-top:1rem;">Play Again</button>
+      </div>
+
+      <!-- Leaderboard -->
+      <h2>Leaderboard (Local)</h2>
+      <div class="leaderboard-tabs" id="lb-tabs">
+        <button class="btn btn-sm active" data-lbmode="classic">Classic</button>
+        <button class="btn btn-sm" data-lbmode="precision">Precision</button>
+        <button class="btn btn-sm" data-lbmode="tracking">Tracking</button>
+        <button class="btn btn-sm" data-lbmode="flick">Flick Shot</button>
+      </div>
+      <div class="table-wrapper">
+        <table id="leaderboard-table">
+          <thead>
+            <tr>
+              <th>#</th>
+              <th>Score</th>
+              <th>Accuracy</th>
+              <th>Avg RT</th>
+              <th>Difficulty</th>
+              <th>Date</th>
+            </tr>
+          </thead>
+          <tbody id="leaderboard-body"></tbody>
+        </table>
+      </div>
+      <button class="btn btn-sm" id="clear-lb-btn" style="margin-top:0.5rem;">Clear Leaderboard</button>
+
+      <!-- Content -->
+      <h2>How to Use This Aim Trainer</h2>
+      <p>Select your mode and difficulty, then click Start. Targets will appear in the play area — click them as fast and accurately as you can. Your accuracy, reaction time, and score are tracked in real-time. After each round, your results are saved to the local leaderboard so you can track your improvement over time.</p>
+
+      <h3>Game Modes Explained</h3>
+      <p><strong>Classic:</strong> Targets appear one at a time at random positions. You have 30 seconds to hit as many as possible. This mode trains raw target acquisition speed — the most transferable aim skill across all FPS games.</p>
+      <p><strong>Precision:</strong> Targets start large and shrink over time. You must click before they disappear. This mode builds crosshair placement accuracy and punishes sloppy clicking. Essential practice for tactical shooters where headshots matter.</p>
+      <p><strong>Tracking:</strong> A single target moves smoothly around the play area. Click and hold on the target to score — your accuracy is measured by how long you stay on target. This mode is critical for games like Apex Legends and Overwatch where enemies strafe constantly.</p>
+      <p><strong>Flick Shot:</strong> Targets appear briefly in random positions and disappear quickly. You must snap to each target before it vanishes. This mode trains the fast-twitch muscle memory used by AWP players in CS2 and Op players in Valorant.</p>
+
+      <h3>Difficulty Levels</h3>
+      <p><strong>Easy:</strong> Large targets, slow timing. Good for beginners or warming up before a gaming session.</p>
+      <p><strong>Medium:</strong> Standard target size and speed. Matches the challenge level of typical in-game encounters.</p>
+      <p><strong>Hard:</strong> Small targets, fast timing. Designed for experienced players pushing their mechanical limits.</p>
+
+      <h3>Tips for Better Aim</h3>
+      <ul>
+        <li><strong>Use your arm, not just your wrist.</strong> Large arm movements for big flicks, wrist adjustments for fine-tuning. Wrist-only aiming causes fatigue and limits range of motion.</li>
+        <li><strong>Keep your crosshair at head level.</strong> In-game, this reduces the distance you need to flick. Practice placing your cursor where targets are likely to appear.</li>
+        <li><strong>Lower your sensitivity.</strong> Most competitive players use low sensitivity (25-50cm/360). It takes more desk space but gives much finer control.</li>
+        <li><strong>Train consistently.</strong> 15 minutes daily beats a 2-hour binge once a week. Muscle memory builds through repetition over time.</li>
+        <li><strong>Focus on accuracy first, then speed.</strong> A 90% accuracy at moderate speed is better than 50% accuracy at max speed. Speed follows accuracy naturally.</li>
+      </ul>
+
+      <h2>Frequently Asked Questions</h2>
+      {faqs.map(f => (
+        <div class="faq-item">
+          <h3>{f.q}</h3>
+          <p>{f.a}</p>
+        </div>
+      ))}
+
+      <h2>Related Pages</h2>
+      <div class="related-grid">
+        <a href="/best-gaming-mouse" class="related-link">
+          <strong>Best Gaming Mouse 2026</strong>
+          <span>Top 12 mice compared — find the right mouse for your grip and game</span>
+        </a>
+        <a href="/best-gaming-monitor" class="related-link">
+          <strong>Best Gaming Monitors</strong>
+          <span>High-refresh displays that make aim training smoother and more responsive</span>
+        </a>
+        <a href="/reaction-time-test" class="related-link">
+          <strong>Reaction Time Test</strong>
+          <span>Measure your raw reaction time with a simple visual test</span>
+        </a>
+      </div>
+    </section>
+  </div>
+
+  <script is:inline>
+  (function() {
+    /* ── State ── */
+    let mode = 'classic';
+    let difficulty = 'medium';
+    let running = false;
+    let hits = 0, misses = 0, totalClicks = 0;
+    let reactionTimes = [];
+    let targetSpawnTime = 0;
+    let timer = null;
+    let timeLeft = 30;
+    let animFrame = null;
+    let trackingTarget = null;
+    let trackingOnTarget = false;
+    let trackingTotalFrames = 0;
+    let trackingOnFrames = 0;
+
+    /* ── Audio (Web Audio API) ── */
+    let audioCtx = null;
+    function getAudioCtx() {
+      if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      return audioCtx;
+    }
+    function playHit() {
+      try {
+        const ctx = getAudioCtx();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.frequency.setValueAtTime(880, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(1760, ctx.currentTime + 0.05);
+        gain.gain.setValueAtTime(0.15, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.1);
+        osc.start(ctx.currentTime);
+        osc.stop(ctx.currentTime + 0.1);
+      } catch(e) {}
+    }
+    function playMiss() {
+      try {
+        const ctx = getAudioCtx();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.type = 'sawtooth';
+        osc.frequency.setValueAtTime(200, ctx.currentTime);
+        osc.frequency.exponentialRampToValueAtTime(100, ctx.currentTime + 0.12);
+        gain.gain.setValueAtTime(0.1, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.12);
+        osc.start(ctx.currentTime);
+        osc.stop(ctx.currentTime + 0.12);
+      } catch(e) {}
+    }
+    function playStart() {
+      try {
+        const ctx = getAudioCtx();
+        [523.25, 659.25, 783.99].forEach((freq, i) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.frequency.value = freq;
+          gain.gain.setValueAtTime(0.1, ctx.currentTime + i * 0.08);
+          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.08 + 0.15);
+          osc.start(ctx.currentTime + i * 0.08);
+          osc.stop(ctx.currentTime + i * 0.08 + 0.15);
+        });
+      } catch(e) {}
+    }
+    function playEnd() {
+      try {
+        const ctx = getAudioCtx();
+        [783.99, 523.25].forEach((freq, i) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.frequency.value = freq;
+          gain.gain.setValueAtTime(0.12, ctx.currentTime + i * 0.12);
+          gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + i * 0.12 + 0.2);
+          osc.start(ctx.currentTime + i * 0.12);
+          osc.stop(ctx.currentTime + i * 0.12 + 0.2);
+        });
+      } catch(e) {}
+    }
+
+    /* ── Config ── */
+    const CONFIG = {
+      easy:   { size: 60, shrinkSpeed: 0.92, flickDuration: 1800, trackSpeed: 1.2 },
+      medium: { size: 44, shrinkSpeed: 0.88, flickDuration: 1200, trackSpeed: 2.2 },
+      hard:   { size: 28, shrinkSpeed: 0.83, flickDuration: 700,  trackSpeed: 3.5 }
+    };
+
+    const modeDescs = {
+      classic: 'Hit as many targets as you can in 30 seconds. Pure speed and accuracy.',
+      precision: 'Targets shrink over time — click before they vanish. Accuracy matters.',
+      tracking: 'Follow the moving target with your cursor. Click and hold to score.',
+      flick: 'Targets appear briefly — snap to them before they disappear.'
+    };
+
+    /* ── DOM ── */
+    const area = document.getElementById('game-area');
+    const overlay = document.getElementById('game-overlay');
+    const wrapper = document.getElementById('game-wrapper');
+    const startBtn = document.getElementById('start-btn');
+    const fsBtn = document.getElementById('fullscreen-btn');
+    const playAgainBtn = document.getElementById('play-again-btn');
+    const resultsPanel = document.getElementById('results-panel');
+    const modeDescEl = document.getElementById('mode-desc-text');
+    const clearLbBtn = document.getElementById('clear-lb-btn');
+
+    const statTime = document.getElementById('stat-time');
+    const statHits = document.getElementById('stat-hits');
+    const statMisses = document.getElementById('stat-misses');
+    const statAccuracy = document.getElementById('stat-accuracy');
+    const statAvgRt = document.getElementById('stat-avg-rt');
+
+    /* ── Mode/Difficulty Selection ── */
+    document.getElementById('mode-select').addEventListener('click', function(e) {
+      const btn = e.target.closest('[data-mode]');
+      if (!btn || running) return;
+      this.querySelectorAll('.btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      mode = btn.dataset.mode;
+      modeDescEl.textContent = modeDescs[mode];
+    });
+
+    document.getElementById('difficulty-select').addEventListener('click', function(e) {
+      const btn = e.target.closest('[data-diff]');
+      if (!btn || running) return;
+      this.querySelectorAll('.btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      difficulty = btn.dataset.diff;
+    });
+
+    /* ── Fullscreen ── */
+    fsBtn.addEventListener('click', function() {
+      if (!document.fullscreenElement) {
+        wrapper.requestFullscreen().catch(() => {});
+      } else {
+        document.exitFullscreen();
+      }
+    });
+
+    /* ── Start Game ── */
+    startBtn.addEventListener('click', startGame);
+    playAgainBtn.addEventListener('click', startGame);
+
+    function startGame() {
+      if (running) return;
+      running = true;
+      hits = 0; misses = 0; totalClicks = 0;
+      reactionTimes = [];
+      timeLeft = 30;
+      trackingOnFrames = 0;
+      trackingTotalFrames = 0;
+      trackingOnTarget = false;
+
+      resultsPanel.style.display = 'none';
+      overlay.style.display = 'none';
+      area.innerHTML = '';
+      area.style.cursor = 'crosshair';
+
+      updateStats();
+      playStart();
+
+      startBtn.textContent = 'Running...';
+      startBtn.disabled = true;
+
+      if (mode === 'tracking') {
+        spawnTrackingTarget();
+      } else {
+        spawnTarget();
+      }
+
+      timer = setInterval(function() {
+        timeLeft--;
+        statTime.textContent = timeLeft;
+        if (timeLeft <= 0) endGame();
+      }, 1000);
+    }
+
+    /* ── End Game ── */
+    function endGame() {
+      running = false;
+      clearInterval(timer);
+      if (animFrame) cancelAnimationFrame(animFrame);
+      animFrame = null;
+      area.innerHTML = '';
+      area.style.cursor = 'default';
+
+      startBtn.textContent = 'Start';
+      startBtn.disabled = false;
+
+      playEnd();
+
+      let accuracy, avgRt, bestRt, score;
+
+      if (mode === 'tracking') {
+        accuracy = trackingTotalFrames > 0 ? Math.round((trackingOnFrames / trackingTotalFrames) * 100) : 0;
+        avgRt = '—';
+        bestRt = '—';
+        score = Math.round(accuracy * 10 * (difficulty === 'hard' ? 3 : difficulty === 'medium' ? 2 : 1));
+      } else {
+        accuracy = totalClicks > 0 ? Math.round((hits / totalClicks) * 100) : 0;
+        avgRt = reactionTimes.length > 0 ? Math.round(reactionTimes.reduce((a,b) => a+b, 0) / reactionTimes.length) : 0;
+        bestRt = reactionTimes.length > 0 ? Math.round(Math.min(...reactionTimes)) : 0;
+        const diffMult = difficulty === 'hard' ? 3 : difficulty === 'medium' ? 2 : 1;
+        score = Math.round(hits * (accuracy / 100) * diffMult * (avgRt > 0 ? Math.max(1, (500 - avgRt) / 100) : 1) * 100);
+      }
+
+      document.getElementById('res-hits').textContent = mode === 'tracking' ? trackingOnFrames : hits;
+      document.getElementById('res-misses').textContent = mode === 'tracking' ? (trackingTotalFrames - trackingOnFrames) : misses;
+      document.getElementById('res-accuracy').textContent = accuracy + '%';
+      document.getElementById('res-avg-rt').textContent = avgRt === '—' ? '—' : avgRt + 'ms';
+      document.getElementById('res-best-rt').textContent = bestRt === '—' ? '—' : bestRt + 'ms';
+      document.getElementById('res-score').textContent = score;
+
+      resultsPanel.style.display = 'block';
+
+      saveToLeaderboard(mode, difficulty, score, accuracy, avgRt);
+      renderLeaderboard();
+    }
+
+    /* ── Update Live Stats ── */
+    function updateStats() {
+      statTime.textContent = timeLeft;
+      statHits.textContent = hits;
+      statMisses.textContent = misses;
+      const acc = totalClicks > 0 ? Math.round((hits / totalClicks) * 100) : 0;
+      statAccuracy.textContent = (mode === 'tracking' && trackingTotalFrames > 0)
+        ? Math.round((trackingOnFrames / trackingTotalFrames) * 100) + '%'
+        : acc + '%';
+      if (reactionTimes.length > 0) {
+        statAvgRt.textContent = Math.round(reactionTimes.reduce((a,b) => a+b, 0) / reactionTimes.length) + 'ms';
+      } else {
+        statAvgRt.textContent = '—';
+      }
+    }
+
+    /* ── Spawn Target (Classic / Precision / Flick) ── */
+    function spawnTarget() {
+      if (!running) return;
+      const conf = CONFIG[difficulty];
+      const el = document.createElement('div');
+      el.className = 'target';
+      const size = conf.size;
+      const rect = area.getBoundingClientRect();
+      const x = Math.random() * (rect.width - size);
+      const y = Math.random() * (rect.height - size);
+      el.style.width = size + 'px';
+      el.style.height = size + 'px';
+      el.style.left = x + 'px';
+      el.style.top = y + 'px';
+      area.innerHTML = '';
+      area.appendChild(el);
+      targetSpawnTime = performance.now();
+
+      if (mode === 'precision') {
+        let currentSize = size;
+        const shrink = () => {
+          if (!running || !el.parentNode) return;
+          currentSize *= conf.shrinkSpeed;
+          if (currentSize < 6) {
+            misses++;
+            totalClicks++;
+            playMiss();
+            updateStats();
+            spawnTarget();
+            return;
+          }
+          el.style.width = currentSize + 'px';
+          el.style.height = currentSize + 'px';
+          el.style.left = (x + (size - currentSize) / 2) + 'px';
+          el.style.top = (y + (size - currentSize) / 2) + 'px';
+          animFrame = requestAnimationFrame(shrink);
+        };
+        animFrame = requestAnimationFrame(shrink);
+      }
+
+      if (mode === 'flick') {
+        setTimeout(function() {
+          if (el.parentNode && running) {
+            misses++;
+            totalClicks++;
+            playMiss();
+            updateStats();
+            spawnTarget();
+          }
+        }, conf.flickDuration);
+      }
+
+      el.addEventListener('click', function(e) {
+        e.stopPropagation();
+        if (!running) return;
+        hits++;
+        totalClicks++;
+        const rt = performance.now() - targetSpawnTime;
+        reactionTimes.push(rt);
+        playHit();
+
+        /* Hit burst effect */
+        el.classList.add('hit');
+        setTimeout(() => { if (el.parentNode) el.remove(); }, 120);
+
+        updateStats();
+        if (mode === 'precision' && animFrame) {
+          cancelAnimationFrame(animFrame);
+          animFrame = null;
+        }
+        setTimeout(spawnTarget, 100);
+      });
+    }
+
+    /* ── Area miss click ── */
+    area.addEventListener('click', function(e) {
+      if (!running || mode === 'tracking') return;
+      if (e.target === area) {
+        misses++;
+        totalClicks++;
+        playMiss();
+        updateStats();
+      }
+    });
+
+    /* ── Tracking Mode ── */
+    function spawnTrackingTarget() {
+      if (!running) return;
+      const conf = CONFIG[difficulty];
+      const size = conf.size + 10;
+      const rect = area.getBoundingClientRect();
+      let tx = Math.random() * (rect.width - size);
+      let ty = Math.random() * (rect.height - size);
+      let vx = (Math.random() - 0.5) * conf.trackSpeed * 2;
+      let vy = (Math.random() - 0.5) * conf.trackSpeed * 2;
+
+      const el = document.createElement('div');
+      el.className = 'target tracking-target';
+      el.style.width = size + 'px';
+      el.style.height = size + 'px';
+      el.style.left = tx + 'px';
+      el.style.top = ty + 'px';
+      area.innerHTML = '';
+      area.appendChild(el);
+      trackingTarget = el;
+
+      let mouseX = 0, mouseY = 0;
+      function onMouseMove(e) {
+        const ar = area.getBoundingClientRect();
+        mouseX = e.clientX - ar.left;
+        mouseY = e.clientY - ar.top;
+      }
+      area.addEventListener('mousemove', onMouseMove);
+
+      let mouseDown = false;
+      function onDown() { mouseDown = true; }
+      function onUp() { mouseDown = false; }
+      area.addEventListener('mousedown', onDown);
+      area.addEventListener('mouseup', onUp);
+
+      function animate() {
+        if (!running) {
+          area.removeEventListener('mousemove', onMouseMove);
+          area.removeEventListener('mousedown', onDown);
+          area.removeEventListener('mouseup', onUp);
+          return;
+        }
+        const rect2 = area.getBoundingClientRect();
+        tx += vx;
+        ty += vy;
+        if (tx <= 0 || tx >= rect2.width - size) vx *= -1;
+        if (ty <= 0 || ty >= rect2.height - size) vy *= -1;
+        tx = Math.max(0, Math.min(rect2.width - size, tx));
+        ty = Math.max(0, Math.min(rect2.height - size, ty));
+
+        /* Slight random direction change */
+        if (Math.random() < 0.02) {
+          vx += (Math.random() - 0.5) * conf.trackSpeed * 0.5;
+          vy += (Math.random() - 0.5) * conf.trackSpeed * 0.5;
+          const maxV = conf.trackSpeed * 2;
+          vx = Math.max(-maxV, Math.min(maxV, vx));
+          vy = Math.max(-maxV, Math.min(maxV, vy));
+        }
+
+        el.style.left = tx + 'px';
+        el.style.top = ty + 'px';
+
+        /* Check if mouse is on target */
+        trackingTotalFrames++;
+        const cx = tx + size / 2;
+        const cy = ty + size / 2;
+        const dist = Math.sqrt((mouseX - cx) ** 2 + (mouseY - cy) ** 2);
+        const isOn = dist <= size / 2 && mouseDown;
+        if (isOn) {
+          trackingOnFrames++;
+          el.classList.add('on-target');
+        } else {
+          el.classList.remove('on-target');
+        }
+
+        updateStats();
+        animFrame = requestAnimationFrame(animate);
+      }
+      animFrame = requestAnimationFrame(animate);
+    }
+
+    /* ── Leaderboard ── */
+    function getLeaderboard() {
+      try { return JSON.parse(localStorage.getItem('aimTrainerLB') || '{}'); } catch { return {}; }
+    }
+    function saveToLeaderboard(m, d, score, accuracy, avgRt) {
+      const lb = getLeaderboard();
+      if (!lb[m]) lb[m] = [];
+      lb[m].push({ score, accuracy, avgRt, difficulty: d, date: new Date().toLocaleDateString() });
+      lb[m].sort((a, b) => b.score - a.score);
+      lb[m] = lb[m].slice(0, 10);
+      localStorage.setItem('aimTrainerLB', JSON.stringify(lb));
+    }
+    function renderLeaderboard(m) {
+      m = m || mode;
+      const lb = getLeaderboard();
+      const entries = lb[m] || [];
+      const tbody = document.getElementById('leaderboard-body');
+      if (entries.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="6" style="text-align:center;color:var(--text-secondary);padding:1rem;">No scores yet — play a round!</td></tr>';
+        return;
+      }
+      tbody.innerHTML = entries.map((e, i) =>
+        '<tr><td>' + (i + 1) + '</td><td><strong>' + e.score + '</strong></td><td>' + e.accuracy + '%</td><td>' + (e.avgRt === '—' ? '—' : e.avgRt + 'ms') + '</td><td>' + e.difficulty + '</td><td>' + e.date + '</td></tr>'
+      ).join('');
+    }
+
+    document.getElementById('lb-tabs').addEventListener('click', function(e) {
+      const btn = e.target.closest('[data-lbmode]');
+      if (!btn) return;
+      this.querySelectorAll('.btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      renderLeaderboard(btn.dataset.lbmode);
+    });
+
+    clearLbBtn.addEventListener('click', function() {
+      if (confirm('Clear all leaderboard data?')) {
+        localStorage.removeItem('aimTrainerLB');
+        renderLeaderboard();
+      }
+    });
+
+    renderLeaderboard();
+  })();
+  </script>
+
+  <style is:inline>
+    .page-content { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem; }
+    .hero { text-align: center; padding: 3rem 0 2rem; }
+    .hero h1 { font-size: 2.2rem; font-weight: 800; margin-bottom: 0.5rem; color: var(--text-primary); }
+    .hero p { color: var(--text-secondary); font-size: 1.1rem; max-width: 650px; margin: 0 auto; line-height: 1.5; }
+
+    .content-section { margin-bottom: 3rem; }
+    .content-section h2 { font-size: 1.8rem; color: var(--text-primary); margin-bottom: 1rem; margin-top: 2.5rem; }
+    .content-section h3 { font-size: 1.3rem; color: var(--text-primary); margin-bottom: 0.5rem; margin-top: 1.5rem; }
+    .content-section p { color: var(--text-secondary); line-height: 1.6; margin-bottom: 1rem; }
+    .content-section ul { color: var(--text-secondary); margin-bottom: 1rem; padding-left: 1.5rem; line-height: 1.6; }
+    .content-section li { margin-bottom: 0.5rem; }
+    a { color: var(--accent-color); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    strong { color: var(--text-primary); }
+
+    /* Controls */
+    .game-controls { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.2rem 1.5rem; display: flex; flex-wrap: wrap; gap: 1rem; align-items: flex-end; margin-bottom: 0.5rem; }
+    .control-group { display: flex; flex-direction: column; gap: 0.4rem; }
+    .control-group label { font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); }
+    .control-actions { display: flex; gap: 0.5rem; margin-left: auto; align-items: flex-end; }
+    .btn-group { display: flex; gap: 0.3rem; }
+    .btn { padding: 0.45rem 0.9rem; border-radius: 8px; border: 1px solid var(--border-color); background: transparent; color: var(--text-secondary); font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: all 0.15s; white-space: nowrap; }
+    .btn:hover { border-color: var(--accent-color); color: var(--text-primary); }
+    .btn.active { background: var(--accent-color); color: #fff; border-color: var(--accent-color); }
+    .btn-primary { background: var(--accent-color); color: #fff; border-color: var(--accent-color); padding: 0.5rem 1.4rem; font-size: 0.95rem; }
+    .btn-primary:hover { opacity: 0.9; }
+    .btn-primary:disabled { opacity: 0.5; cursor: default; }
+    .btn-secondary { border-color: var(--border-color); color: var(--text-secondary); }
+    .btn-sm { padding: 0.3rem 0.7rem; font-size: 0.8rem; }
+
+    .mode-desc { padding: 0.5rem 0; margin-bottom: 0.5rem; }
+    .mode-desc span { color: var(--text-secondary); font-size: 0.9rem; font-style: italic; }
+
+    /* Live Stats */
+    .live-stats { display: flex; gap: 0; border: 1px solid var(--border-color); border-radius: 10px; overflow: hidden; margin-bottom: 0.5rem; }
+    .live-stat { flex: 1; text-align: center; padding: 0.5rem 0.3rem; border-right: 1px solid var(--border-color); }
+    .live-stat:last-child { border-right: none; }
+    .live-label { display: block; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-secondary); font-weight: 600; }
+    .live-value { display: block; font-size: 1.1rem; font-weight: 800; color: var(--text-primary); }
+
+    /* Game Area */
+    .game-wrapper { border-radius: 12px; overflow: hidden; border: 2px solid var(--border-color); margin-bottom: 1rem; background: var(--card-bg); }
+    .game-wrapper:fullscreen { display: flex; align-items: center; justify-content: center; background: #0a0a0f; }
+    .game-wrapper:fullscreen .game-area { width: 100%; height: 100%; max-width: none; max-height: none; border-radius: 0; }
+    .game-area { position: relative; width: 100%; height: 450px; overflow: hidden; user-select: none; -webkit-user-select: none; }
+    .game-overlay { position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; background: rgba(0,0,0,0.3); color: var(--text-secondary); font-size: 1.1rem; z-index: 5; }
+
+    /* Target */
+    .target { position: absolute; border-radius: 50%; cursor: crosshair; z-index: 2;
+      background: radial-gradient(circle at 35% 35%, #ff6b6b, #ee5a24);
+      box-shadow: 0 0 12px rgba(255,107,107,0.5), inset 0 0 8px rgba(255,255,255,0.2);
+      transition: transform 0.06s;
+    }
+    .target::before { content: ''; position: absolute; top: 50%; left: 50%; width: 30%; height: 30%; background: rgba(255,255,255,0.7); border-radius: 50%; transform: translate(-50%, -50%); }
+    .target::after { content: ''; position: absolute; top: 50%; left: 50%; width: 60%; height: 60%; border: 2px solid rgba(255,255,255,0.3); border-radius: 50%; transform: translate(-50%, -50%); }
+    .target:hover { transform: scale(1.05); }
+    .target.hit { transform: scale(1.5); opacity: 0; transition: all 0.12s ease-out; }
+    .target.on-target { background: radial-gradient(circle at 35% 35%, #51cf66, #2f9e44); box-shadow: 0 0 16px rgba(81,207,102,0.6), inset 0 0 8px rgba(255,255,255,0.2); }
+    .tracking-target { transition: none; }
+
+    /* Results Panel */
+    .results-panel { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem; text-align: center; }
+    .results-panel h2 { margin-top: 0; font-size: 1.5rem; color: var(--text-primary); }
+    .results-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 0.75rem; }
+    .result-item { display: flex; flex-direction: column; padding: 0.6rem; border-radius: 8px; border: 1px solid var(--border-color); }
+    .result-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-secondary); font-weight: 600; }
+    .result-value { font-size: 1.3rem; font-weight: 800; color: var(--text-primary); }
+
+    /* Leaderboard */
+    .leaderboard-tabs { display: flex; gap: 0.3rem; margin-bottom: 0.5rem; }
+    .table-wrapper { overflow-x: auto; border: 1px solid var(--border-color); border-radius: 12px; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+    th { background: var(--card-bg); padding: 0.65rem 0.6rem; text-align: left; font-weight: 700; color: var(--text-primary); border-bottom: 2px solid var(--border-color); white-space: nowrap; }
+    td { padding: 0.55rem 0.6rem; border-bottom: 1px solid var(--border-color); color: var(--text-secondary); }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: var(--card-bg); }
+
+    /* FAQ */
+    .faq-item { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 10px; padding: 1.2rem 1.5rem; margin: 1rem 0; }
+    .faq-item h3 { margin-top: 0; font-size: 1.1rem; color: var(--text-primary); }
+    .faq-item p { margin-bottom: 0; }
+
+    /* Related */
+    .related-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1rem; margin: 1.5rem 0; }
+    .related-link { display: flex; flex-direction: column; gap: 0.3rem; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 10px; padding: 1.2rem; text-decoration: none; transition: border-color 0.2s; }
+    .related-link:hover { border-color: var(--accent-color); text-decoration: none; }
+    .related-link strong { color: var(--text-primary); font-size: 1rem; }
+    .related-link span { color: var(--text-secondary); font-size: 0.85rem; }
+
+    @media (max-width: 600px) {
+      .hero h1 { font-size: 1.6rem; }
+      .game-controls { flex-direction: column; align-items: stretch; }
+      .control-actions { margin-left: 0; justify-content: stretch; }
+      .control-actions .btn { flex: 1; text-align: center; }
+      .btn-group { flex-wrap: wrap; }
+      .game-area { height: 320px; }
+      .results-grid { grid-template-columns: repeat(2, 1fr); }
+      .live-stats { flex-wrap: wrap; }
+      .live-stat { min-width: 33%; }
+    }
+  </style>
+</SiteLayout>
