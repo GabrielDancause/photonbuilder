@@ -154,6 +154,7 @@ const htmlBody = `<div class="page-content">
     <div class="pane-header">
       <div class="pane-dot signature-dot"></div>
       <div class="header-title">Signature</div>
+      <button class="copy-btn" id="copySig">Copy</button>
     </div>
     <div class="signature-box" id="signatureBox"></div>
   </div>
@@ -306,10 +307,12 @@ const clearBtn = document.getElementById('clearBtn');
 const sampleBtn = document.getElementById('sampleBtn');
 const copyHeader = document.getElementById('copyHeader');
 const copyPayload = document.getElementById('copyPayload');
+const copySig = document.getElementById('copySig');
 
 let countdownInterval = null;
 let decodedHeaderObj = null;
 let decodedPayloadObj = null;
+let decodedSigHex = null;
 
 function init() {
   tokenInput.addEventListener('input', decode);
@@ -317,6 +320,13 @@ function init() {
   sampleBtn.addEventListener('click', loadSample);
   copyHeader.addEventListener('click', function() { copyJson('header'); });
   copyPayload.addEventListener('click', function() { copyJson('payload'); });
+  copySig.addEventListener('click', function() {
+    if (!decodedSigHex) return;
+    navigator.clipboard.writeText(decodedSigHex).then(function() {
+      copySig.textContent = '\u2713 Copied';
+      setTimeout(function() { copySig.textContent = 'Copy'; }, 1500);
+    });
+  });
   decode();
 }
 
@@ -363,6 +373,7 @@ function decode() {
 
   signatureSection.style.display = 'block';
   var sigHex = base64UrlToHex(parts[2]);
+  decodedSigHex = sigHex;
   signatureBox.innerHTML =
     '<div class="sig-algo">Algorithm: <strong>' + escapeHtml(header.alg || 'none') + '</strong> &nbsp;|&nbsp; Type: <strong>' + escapeHtml(header.typ || 'JWT') + '</strong></div>' +
     '<div class="sig-hex"><code>' + sigHex + '</code></div>';
@@ -534,6 +545,7 @@ function showError(msg) {
   tokenColorBar.style.display = 'none';
   decodedHeaderObj = null;
   decodedPayloadObj = null;
+  decodedSigHex = null;
   if (countdownInterval) { clearInterval(countdownInterval); countdownInterval = null; }
 }
 
@@ -547,6 +559,7 @@ function resetUI() {
   expiryCountdown.style.display = 'none';
   decodedHeaderObj = null;
   decodedPayloadObj = null;
+  decodedSigHex = null;
   if (countdownInterval) { clearInterval(countdownInterval); countdownInterval = null; }
 }
 

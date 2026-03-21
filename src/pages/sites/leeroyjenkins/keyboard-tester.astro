@@ -1,0 +1,589 @@
+---
+import SiteLayout from "../../../layouts/SiteLayout.astro";
+
+const faqs = [
+  {
+    q: "What is a keyboard tester and how does it work?",
+    a: "A keyboard tester is an online tool that detects and displays every key you press on your keyboard. When you press a key, the browser fires a KeyboardEvent containing the key name, keyCode, code, and location. This tool visualizes that data on an interactive keyboard layout, highlighting each pressed key in real time. It's useful for verifying that every key on your keyboard registers correctly, testing new keyboards before purchase, or diagnosing hardware issues like stuck or unresponsive keys."
+  },
+  {
+    q: "What is keyboard ghosting and how do I test for it?",
+    a: "Keyboard ghosting occurs when pressing multiple keys simultaneously causes some keys to not register. This happens because most membrane keyboards use a key matrix where certain key combinations share electrical pathways. To test for ghosting, press 3 or more keys at the same time on this tool — if a key doesn't light up, your keyboard is ghosting. Gaming keyboards with N-key rollover (NKRO) or anti-ghosting technology can register all keys simultaneously, which is critical for gaming and fast typing."
+  },
+  {
+    q: "What's the difference between key, keyCode, and code?",
+    a: "These are three different properties of a JavaScript KeyboardEvent. 'key' returns the character value of the key (e.g., 'a', 'Enter', 'Shift'). 'keyCode' is a legacy numeric code (e.g., 65 for 'A') — it's deprecated but still widely used. 'code' represents the physical key on the keyboard regardless of layout (e.g., 'KeyA' is always the same physical key, even on a French AZERTY keyboard where it types 'q'). For keyboard testing, 'code' is the most reliable identifier because it maps to the physical key position."
+  },
+  {
+    q: "Why does my keyboard not register certain key combinations?",
+    a: "This is almost always caused by keyboard ghosting or the keyboard's rollover limit. Budget membrane keyboards typically support 2-key rollover (2KRO), meaning only 2 non-modifier keys can be pressed simultaneously. Modifier keys (Shift, Ctrl, Alt) are usually on separate circuits and don't count toward this limit. If you need to press many keys at once (common in gaming), look for keyboards advertising N-key rollover (NKRO) or at minimum 6-key rollover (6KRO). Mechanical keyboards generally have better rollover than membrane keyboards."
+  },
+  {
+    q: "Can this tool detect hardware problems with my keyboard?",
+    a: "Yes. If a key doesn't register when pressed firmly, it likely indicates a hardware issue — either a faulty switch (on mechanical keyboards), worn-out membrane contact, debris under the keycap, or a damaged trace on the PCB. Try pressing the key multiple times; if it registers intermittently, the switch may be chattering (common on worn mechanical switches). If an entire row or column of keys fails, the keyboard's matrix circuit may be damaged. This tool can help you identify exactly which keys are affected before deciding on repair or replacement."
+  },
+  {
+    q: "Does this keyboard tester work with any keyboard layout?",
+    a: "This tool displays a standard full-size ANSI (US) keyboard layout, which is the most common layout worldwide. The key detection works with any keyboard regardless of layout — ANSI, ISO, JIS, AZERTY, QWERTZ, Dvorak, or Colemak. When you press a key, it highlights the corresponding physical position on the displayed layout using the 'code' property, which maps to physical key positions. Some keys on non-ANSI layouts (like the ISO extra key or JIS-specific keys) may not appear on the visual layout but will still be detected and shown in the key info panel."
+  },
+  {
+    q: "Why do some keys not work in the browser?",
+    a: "Certain keys are intercepted by the operating system or browser before they reach the webpage. Common examples include: F11 (toggles fullscreen), Alt+F4 (closes window on Windows), Cmd+Q (quits app on Mac), Print Screen (screenshot), and the Windows/Super key (opens Start menu). The Fn key on laptops is handled at the hardware/firmware level and never generates a browser event at all. This tool prevents default browser behavior for most keys, but OS-level shortcuts cannot be overridden. If a key seems unresponsive, try it in combination with Fn or check your OS keyboard settings."
+  }
+];
+
+const schema = [
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "Keyboard Tester — Free Online Key Test Tool",
+    "description": "Free online keyboard tester. Press any key to test if it registers. Visual keyboard layout, anti-ghosting test, key info display. Works with any keyboard.",
+    "applicationCategory": "Utility",
+    "operatingSystem": "Any",
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+    "author": { "@type": "Organization", "name": "Leeroy Jenkins" }
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": faqs.map(f => ({
+      "@type": "Question",
+      "name": f.q,
+      "acceptedAnswer": { "@type": "Answer", "text": f.a }
+    }))
+  }
+];
+
+export const meta = {
+  title: "Keyboard Tester — Free Online Key Test & Anti-Ghosting Check",
+  description: "Test every key on your keyboard online. Visual keyboard layout highlights pressed keys in real time. Check for ghosting, view keyCodes, and verify all keys work. Free, no download.",
+  category: "tool",
+  published: "2026-03-21",
+};
+---
+
+<SiteLayout
+  site="leeroyjenkins"
+  title="Keyboard Tester — Free Online Key Test & Anti-Ghosting Check"
+  description="Test every key on your keyboard online. Visual keyboard layout highlights pressed keys in real time. Check for ghosting, view keyCodes, and verify all keys work. Free, no download."
+  canonical="https://leeroyjenkins.quest/keyboard-tester"
+  schema={schema}
+>
+  <div class="page-content">
+    <div class="hero">
+      <h1>Keyboard Tester</h1>
+      <p>Press any key to test it. Every key lights up on the visual keyboard below. Test anti-ghosting by pressing multiple keys at once.</p>
+    </div>
+
+    <section class="content-section">
+      <!-- Key Info Panel -->
+      <div class="key-info-panel" id="key-info-panel">
+        <div class="key-info-placeholder" id="key-info-placeholder">Press any key to begin</div>
+        <div class="key-info-grid" id="key-info-grid" style="display:none;">
+          <div class="key-info-item">
+            <span class="key-info-label">Key</span>
+            <span class="key-info-value" id="info-key">—</span>
+          </div>
+          <div class="key-info-item">
+            <span class="key-info-label">Code</span>
+            <span class="key-info-value" id="info-code">—</span>
+          </div>
+          <div class="key-info-item">
+            <span class="key-info-label">keyCode</span>
+            <span class="key-info-value" id="info-keycode">—</span>
+          </div>
+          <div class="key-info-item">
+            <span class="key-info-label">Location</span>
+            <span class="key-info-value" id="info-location">—</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Stats Bar -->
+      <div class="stats-bar">
+        <div class="stat">
+          <span class="stat-label">Keys Pressed</span>
+          <span class="stat-value" id="stat-count">0</span>
+        </div>
+        <div class="stat">
+          <span class="stat-label">Currently Held</span>
+          <span class="stat-value" id="stat-held">0</span>
+        </div>
+        <button class="btn btn-sm" id="reset-btn">Reset</button>
+      </div>
+
+      <!-- Visual Keyboard -->
+      <div class="keyboard-wrapper" id="keyboard-wrapper">
+        <div class="keyboard" id="keyboard"></div>
+      </div>
+
+      <!-- Pressed Keys List -->
+      <div class="pressed-list-section">
+        <h2>Pressed Keys</h2>
+        <div class="pressed-list" id="pressed-list">
+          <span class="pressed-placeholder">No keys pressed yet</span>
+        </div>
+      </div>
+
+      <!-- How to use -->
+      <h2>How to Use This Keyboard Tester</h2>
+      <ol>
+        <li><strong>Click anywhere on this page</strong> to make sure it has focus, then start pressing keys.</li>
+        <li><strong>Each key you press</strong> will light up on the virtual keyboard above and appear in the pressed keys list.</li>
+        <li><strong>Check the key info panel</strong> to see the key name, code, keyCode, and location for each keypress.</li>
+        <li><strong>Test anti-ghosting</strong> by holding down multiple keys simultaneously — all pressed keys should light up.</li>
+        <li><strong>Click Reset</strong> to clear all highlights and start a fresh test.</li>
+      </ol>
+
+      <h2>What This Tool Tests</h2>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Test</th>
+              <th>What It Checks</th>
+              <th>Why It Matters</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>Key Registration</strong></td><td>Whether each key sends a signal when pressed</td><td>Detects dead or stuck keys before they cause problems</td></tr>
+            <tr><td><strong>Anti-Ghosting</strong></td><td>How many keys can be pressed simultaneously</td><td>Critical for gaming — WASD + Shift + Space is 4+ keys at once</td></tr>
+            <tr><td><strong>Key Identification</strong></td><td>Shows key, code, keyCode, and location values</td><td>Essential for developers building keyboard shortcuts or game controls</td></tr>
+            <tr><td><strong>Modifier Keys</strong></td><td>Tests Shift, Ctrl, Alt, Meta on both sides</td><td>Verifies left and right modifier keys register independently</td></tr>
+            <tr><td><strong>Numpad</strong></td><td>Tests numeric keypad separately from number row</td><td>Ensures numpad keys send distinct codes from main number keys</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2>Understanding Key Properties</h2>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Property</th>
+              <th>Example (pressing 'A')</th>
+              <th>Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>key</strong></td><td>"a" or "A"</td><td>The character produced by the key — changes with Shift/Caps Lock</td></tr>
+            <tr><td><strong>code</strong></td><td>"KeyA"</td><td>Physical key position — same regardless of keyboard layout</td></tr>
+            <tr><td><strong>keyCode</strong></td><td>65</td><td>Legacy numeric identifier — deprecated but still widely used</td></tr>
+            <tr><td><strong>location</strong></td><td>0 (Standard)</td><td>Where the key is: 0=Standard, 1=Left, 2=Right, 3=Numpad</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h2>Frequently Asked Questions</h2>
+      {faqs.map(f => (
+        <div class="faq-item">
+          <h3>{f.q}</h3>
+          <p>{f.a}</p>
+        </div>
+      ))}
+
+      <h2>Related Tools</h2>
+      <div class="related-grid">
+        <a href="/reaction-time-test" class="related-link">
+          <strong>Reaction Time Test</strong>
+          <span>Measure your reaction speed in milliseconds — test your reflexes</span>
+        </a>
+        <a href="/typing-speed-test" class="related-link">
+          <strong>Typing Speed Test</strong>
+          <span>Check your words per minute and accuracy with a timed typing test</span>
+        </a>
+      </div>
+    </section>
+  </div>
+
+  <script is:inline>
+  (function() {
+    /* ── Keyboard Layout Definition (Full-size ANSI) ── */
+    var ROWS = [
+      /* Row 0: Function row */
+      [
+        { code: 'Escape', label: 'Esc', w: 1 },
+        { spacer: 1 },
+        { code: 'F1', label: 'F1', w: 1 },
+        { code: 'F2', label: 'F2', w: 1 },
+        { code: 'F3', label: 'F3', w: 1 },
+        { code: 'F4', label: 'F4', w: 1 },
+        { spacer: 0.5 },
+        { code: 'F5', label: 'F5', w: 1 },
+        { code: 'F6', label: 'F6', w: 1 },
+        { code: 'F7', label: 'F7', w: 1 },
+        { code: 'F8', label: 'F8', w: 1 },
+        { spacer: 0.5 },
+        { code: 'F9', label: 'F9', w: 1 },
+        { code: 'F10', label: 'F10', w: 1 },
+        { code: 'F11', label: 'F11', w: 1 },
+        { code: 'F12', label: 'F12', w: 1 },
+        { spacer: 0.25 },
+        { code: 'PrintScreen', label: 'PrtSc', w: 1 },
+        { code: 'ScrollLock', label: 'ScrLk', w: 1 },
+        { code: 'Pause', label: 'Pause', w: 1 },
+      ],
+      /* Row 1: Number row */
+      [
+        { code: 'Backquote', label: '`', w: 1 },
+        { code: 'Digit1', label: '1', w: 1 },
+        { code: 'Digit2', label: '2', w: 1 },
+        { code: 'Digit3', label: '3', w: 1 },
+        { code: 'Digit4', label: '4', w: 1 },
+        { code: 'Digit5', label: '5', w: 1 },
+        { code: 'Digit6', label: '6', w: 1 },
+        { code: 'Digit7', label: '7', w: 1 },
+        { code: 'Digit8', label: '8', w: 1 },
+        { code: 'Digit9', label: '9', w: 1 },
+        { code: 'Digit0', label: '0', w: 1 },
+        { code: 'Minus', label: '-', w: 1 },
+        { code: 'Equal', label: '=', w: 1 },
+        { code: 'Backspace', label: 'Backspace', w: 2 },
+        { spacer: 0.25 },
+        { code: 'Insert', label: 'Ins', w: 1 },
+        { code: 'Home', label: 'Home', w: 1 },
+        { code: 'PageUp', label: 'PgUp', w: 1 },
+        { spacer: 0.25 },
+        { code: 'NumLock', label: 'Num', w: 1 },
+        { code: 'NumpadDivide', label: '/', w: 1 },
+        { code: 'NumpadMultiply', label: '*', w: 1 },
+        { code: 'NumpadSubtract', label: '-', w: 1 },
+      ],
+      /* Row 2: QWERTY row */
+      [
+        { code: 'Tab', label: 'Tab', w: 1.5 },
+        { code: 'KeyQ', label: 'Q', w: 1 },
+        { code: 'KeyW', label: 'W', w: 1 },
+        { code: 'KeyE', label: 'E', w: 1 },
+        { code: 'KeyR', label: 'R', w: 1 },
+        { code: 'KeyT', label: 'T', w: 1 },
+        { code: 'KeyY', label: 'Y', w: 1 },
+        { code: 'KeyU', label: 'U', w: 1 },
+        { code: 'KeyI', label: 'I', w: 1 },
+        { code: 'KeyO', label: 'O', w: 1 },
+        { code: 'KeyP', label: 'P', w: 1 },
+        { code: 'BracketLeft', label: '[', w: 1 },
+        { code: 'BracketRight', label: ']', w: 1 },
+        { code: 'Backslash', label: '\\', w: 1.5 },
+        { spacer: 0.25 },
+        { code: 'Delete', label: 'Del', w: 1 },
+        { code: 'End', label: 'End', w: 1 },
+        { code: 'PageDown', label: 'PgDn', w: 1 },
+        { spacer: 0.25 },
+        { code: 'Numpad7', label: '7', w: 1 },
+        { code: 'Numpad8', label: '8', w: 1 },
+        { code: 'Numpad9', label: '9', w: 1 },
+        { code: 'NumpadAdd', label: '+', w: 1, h: 2 },
+      ],
+      /* Row 3: Home row */
+      [
+        { code: 'CapsLock', label: 'Caps', w: 1.75 },
+        { code: 'KeyA', label: 'A', w: 1 },
+        { code: 'KeyS', label: 'S', w: 1 },
+        { code: 'KeyD', label: 'D', w: 1 },
+        { code: 'KeyF', label: 'F', w: 1 },
+        { code: 'KeyG', label: 'G', w: 1 },
+        { code: 'KeyH', label: 'H', w: 1 },
+        { code: 'KeyJ', label: 'J', w: 1 },
+        { code: 'KeyK', label: 'K', w: 1 },
+        { code: 'KeyL', label: 'L', w: 1 },
+        { code: 'Semicolon', label: ';', w: 1 },
+        { code: 'Quote', label: "'", w: 1 },
+        { code: 'Enter', label: 'Enter', w: 2.25 },
+        { spacer: 3.5 },
+        { code: 'Numpad4', label: '4', w: 1 },
+        { code: 'Numpad5', label: '5', w: 1 },
+        { code: 'Numpad6', label: '6', w: 1 },
+      ],
+      /* Row 4: Shift row */
+      [
+        { code: 'ShiftLeft', label: 'Shift', w: 2.25 },
+        { code: 'KeyZ', label: 'Z', w: 1 },
+        { code: 'KeyX', label: 'X', w: 1 },
+        { code: 'KeyC', label: 'C', w: 1 },
+        { code: 'KeyV', label: 'V', w: 1 },
+        { code: 'KeyB', label: 'B', w: 1 },
+        { code: 'KeyN', label: 'N', w: 1 },
+        { code: 'KeyM', label: 'M', w: 1 },
+        { code: 'Comma', label: ',', w: 1 },
+        { code: 'Period', label: '.', w: 1 },
+        { code: 'Slash', label: '/', w: 1 },
+        { code: 'ShiftRight', label: 'Shift', w: 2.75 },
+        { spacer: 1.25 },
+        { code: 'ArrowUp', label: '↑', w: 1 },
+        { spacer: 1.25 },
+        { code: 'Numpad1', label: '1', w: 1 },
+        { code: 'Numpad2', label: '2', w: 1 },
+        { code: 'Numpad3', label: '3', w: 1 },
+        { code: 'NumpadEnter', label: 'Ent', w: 1, h: 2 },
+      ],
+      /* Row 5: Bottom row */
+      [
+        { code: 'ControlLeft', label: 'Ctrl', w: 1.25 },
+        { code: 'MetaLeft', label: 'Meta', w: 1.25 },
+        { code: 'AltLeft', label: 'Alt', w: 1.25 },
+        { code: 'Space', label: 'Space', w: 6.25 },
+        { code: 'AltRight', label: 'Alt', w: 1.25 },
+        { code: 'MetaRight', label: 'Meta', w: 1.25 },
+        { code: 'ContextMenu', label: 'Menu', w: 1.25 },
+        { code: 'ControlRight', label: 'Ctrl', w: 1.25 },
+        { spacer: 0.25 },
+        { code: 'ArrowLeft', label: '←', w: 1 },
+        { code: 'ArrowDown', label: '↓', w: 1 },
+        { code: 'ArrowRight', label: '→', w: 1 },
+        { spacer: 0.25 },
+        { code: 'Numpad0', label: '0', w: 2 },
+        { code: 'NumpadDecimal', label: '.', w: 1 },
+      ]
+    ];
+
+    /* ── Build Keyboard DOM ── */
+    var keyboardEl = document.getElementById('keyboard');
+    var keyElements = {};
+
+    ROWS.forEach(function(row) {
+      var rowEl = document.createElement('div');
+      rowEl.className = 'kb-row';
+      row.forEach(function(k) {
+        if (k.spacer !== undefined) {
+          var sp = document.createElement('div');
+          sp.className = 'kb-spacer';
+          sp.style.width = (k.spacer * 3) + 'rem';
+          rowEl.appendChild(sp);
+          return;
+        }
+        var keyEl = document.createElement('div');
+        keyEl.className = 'kb-key';
+        keyEl.style.width = (k.w * 3) + 'rem';
+        if (k.h === 2) {
+          keyEl.classList.add('kb-key-tall');
+        }
+        keyEl.textContent = k.label;
+        keyEl.setAttribute('data-code', k.code);
+        rowEl.appendChild(keyEl);
+        keyElements[k.code] = keyEl;
+      });
+      keyboardEl.appendChild(rowEl);
+    });
+
+    /* ── State ── */
+    var pressedKeys = new Set();
+    var allPressedKeys = [];
+    var allPressedSet = new Set();
+    var heldKeys = new Set();
+
+    /* ── DOM refs ── */
+    var infoPlaceholder = document.getElementById('key-info-placeholder');
+    var infoGrid = document.getElementById('key-info-grid');
+    var infoKey = document.getElementById('info-key');
+    var infoCode = document.getElementById('info-code');
+    var infoKeycode = document.getElementById('info-keycode');
+    var infoLocation = document.getElementById('info-location');
+    var statCount = document.getElementById('stat-count');
+    var statHeld = document.getElementById('stat-held');
+    var pressedList = document.getElementById('pressed-list');
+    var resetBtn = document.getElementById('reset-btn');
+
+    var locationNames = { 0: 'Standard', 1: 'Left', 2: 'Right', 3: 'Numpad' };
+
+    /* ── Key Events ── */
+    document.addEventListener('keydown', function(e) {
+      e.preventDefault();
+      e.stopPropagation();
+
+      var code = e.code;
+      heldKeys.add(code);
+
+      /* Highlight key on visual keyboard */
+      if (keyElements[code]) {
+        keyElements[code].classList.add('kb-key-active');
+        keyElements[code].classList.add('kb-key-pressed');
+      }
+
+      /* Track unique presses */
+      if (!allPressedSet.has(code)) {
+        allPressedSet.add(code);
+        allPressedKeys.push({ code: code, label: e.key });
+        updatePressedList();
+      }
+
+      /* Update info panel */
+      infoPlaceholder.style.display = 'none';
+      infoGrid.style.display = '';
+      infoKey.textContent = e.key;
+      infoCode.textContent = code;
+      infoKeycode.textContent = e.keyCode;
+      infoLocation.textContent = (locationNames[e.location] || e.location) + ' (' + e.location + ')';
+
+      /* Update stats */
+      statCount.textContent = allPressedSet.size;
+      statHeld.textContent = heldKeys.size;
+    });
+
+    document.addEventListener('keyup', function(e) {
+      e.preventDefault();
+      var code = e.code;
+      heldKeys.delete(code);
+      if (keyElements[code]) {
+        keyElements[code].classList.remove('kb-key-active');
+      }
+      statHeld.textContent = heldKeys.size;
+    });
+
+    /* Clear active state when window loses focus */
+    window.addEventListener('blur', function() {
+      heldKeys.clear();
+      Object.keys(keyElements).forEach(function(code) {
+        keyElements[code].classList.remove('kb-key-active');
+      });
+      statHeld.textContent = '0';
+    });
+
+    /* ── Pressed List ── */
+    function updatePressedList() {
+      pressedList.innerHTML = allPressedKeys.map(function(k) {
+        var display = k.label.length === 1 ? k.label.toUpperCase() : k.label;
+        return '<span class="pressed-tag" title="' + k.code + '">' + escapeHtml(display) + '</span>';
+      }).join('');
+    }
+
+    function escapeHtml(str) {
+      var div = document.createElement('div');
+      div.textContent = str;
+      return div.innerHTML;
+    }
+
+    /* ── Reset ── */
+    resetBtn.addEventListener('click', function() {
+      allPressedKeys = [];
+      allPressedSet.clear();
+      heldKeys.clear();
+      Object.keys(keyElements).forEach(function(code) {
+        keyElements[code].classList.remove('kb-key-active', 'kb-key-pressed');
+      });
+      infoPlaceholder.style.display = '';
+      infoGrid.style.display = 'none';
+      statCount.textContent = '0';
+      statHeld.textContent = '0';
+      pressedList.innerHTML = '<span class="pressed-placeholder">No keys pressed yet</span>';
+    });
+  })();
+  </script>
+
+  <style is:inline>
+    .page-content { max-width: 1100px; margin: 0 auto; padding: 2rem 1.5rem; }
+    .hero { text-align: center; padding: 3rem 0 2rem; }
+    .hero h1 { font-size: 2.2rem; font-weight: 800; margin-bottom: 0.5rem; color: var(--text-primary); }
+    .hero p { color: var(--text-secondary); font-size: 1.1rem; max-width: 650px; margin: 0 auto; line-height: 1.5; }
+
+    .content-section { margin-bottom: 3rem; }
+    .content-section h2 { font-size: 1.8rem; color: var(--text-primary); margin-bottom: 1rem; margin-top: 2.5rem; }
+    .content-section h3 { font-size: 1.3rem; color: var(--text-primary); margin-bottom: 0.5rem; margin-top: 1.5rem; }
+    .content-section p { color: var(--text-secondary); line-height: 1.6; margin-bottom: 1rem; }
+    .content-section ul, .content-section ol { color: var(--text-secondary); margin-bottom: 1rem; padding-left: 1.5rem; line-height: 1.6; }
+    .content-section li { margin-bottom: 0.5rem; }
+    a { color: var(--accent-color); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    strong { color: var(--text-primary); }
+
+    /* Key Info Panel */
+    .key-info-panel { background: var(--card-bg); border: 2px solid var(--border-color); border-radius: 12px; padding: 1.5rem; text-align: center; margin-bottom: 1rem; min-height: 80px; display: flex; align-items: center; justify-content: center; }
+    .key-info-placeholder { color: var(--text-secondary); font-size: 1.2rem; font-weight: 600; }
+    .key-info-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; width: 100%; }
+    .key-info-item { display: flex; flex-direction: column; align-items: center; gap: 0.25rem; }
+    .key-info-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); font-weight: 600; }
+    .key-info-value { font-size: 1.1rem; font-weight: 700; color: var(--accent-color); word-break: break-all; text-align: center; font-family: monospace; }
+
+    /* Stats Bar */
+    .stats-bar { display: flex; align-items: center; gap: 1.5rem; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 10px; padding: 0.8rem 1.2rem; margin-bottom: 1rem; }
+    .stat { display: flex; flex-direction: column; }
+    .stat-label { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-secondary); font-weight: 600; }
+    .stat-value { font-size: 1.4rem; font-weight: 800; color: var(--text-primary); }
+    .stats-bar .btn { margin-left: auto; }
+
+    /* Keyboard Wrapper */
+    .keyboard-wrapper { overflow-x: auto; padding-bottom: 0.5rem; margin-bottom: 1.5rem; }
+    .keyboard { display: inline-flex; flex-direction: column; gap: 0.25rem; padding: 1rem; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; min-width: fit-content; }
+    .kb-row { display: flex; gap: 0.25rem; align-items: flex-start; }
+    .kb-spacer { flex-shrink: 0; }
+    .kb-key {
+      height: 2.8rem;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.72rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+      background: var(--bg-color, #1a1a2e);
+      cursor: default;
+      user-select: none;
+      -webkit-user-select: none;
+      transition: background 0.08s, border-color 0.08s, color 0.08s, box-shadow 0.08s;
+      flex-shrink: 0;
+      text-align: center;
+      padding: 0 0.3rem;
+      box-sizing: border-box;
+    }
+    .kb-key-tall {
+      height: calc(2.8rem * 2 + 0.25rem);
+    }
+    .kb-key-active {
+      background: var(--accent-color) !important;
+      border-color: var(--accent-color) !important;
+      color: #fff !important;
+      box-shadow: 0 0 12px color-mix(in srgb, var(--accent-color) 50%, transparent);
+      transform: scale(0.95);
+    }
+    .kb-key-pressed {
+      border-color: var(--accent-color);
+      color: var(--accent-color);
+      background: color-mix(in srgb, var(--accent-color) 12%, transparent);
+    }
+    .kb-key-active.kb-key-pressed {
+      background: var(--accent-color) !important;
+      color: #fff !important;
+    }
+
+    /* Pressed Keys List */
+    .pressed-list-section { margin-bottom: 1.5rem; }
+    .pressed-list { display: flex; flex-wrap: wrap; gap: 0.4rem; min-height: 2.5rem; padding: 1rem; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 10px; }
+    .pressed-tag { display: inline-flex; align-items: center; padding: 0.3rem 0.65rem; background: color-mix(in srgb, var(--accent-color) 15%, transparent); border: 1px solid var(--accent-color); border-radius: 6px; font-size: 0.8rem; font-weight: 700; color: var(--accent-color); font-family: monospace; }
+    .pressed-placeholder { color: var(--text-secondary); font-size: 0.9rem; }
+
+    /* Buttons */
+    .btn { padding: 0.45rem 0.9rem; border-radius: 8px; border: 1px solid var(--border-color); background: transparent; color: var(--text-secondary); font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: all 0.15s; white-space: nowrap; }
+    .btn:hover { border-color: var(--accent-color); color: var(--text-primary); }
+    .btn-sm { padding: 0.3rem 0.7rem; font-size: 0.8rem; }
+
+    /* Table */
+    .table-wrapper { overflow-x: auto; border: 1px solid var(--border-color); border-radius: 12px; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+    th { background: var(--card-bg); padding: 0.65rem 0.6rem; text-align: left; font-weight: 700; color: var(--text-primary); border-bottom: 2px solid var(--border-color); white-space: nowrap; }
+    td { padding: 0.55rem 0.6rem; border-bottom: 1px solid var(--border-color); color: var(--text-secondary); }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: var(--card-bg); }
+
+    /* FAQ */
+    .faq-item { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 10px; padding: 1.2rem 1.5rem; margin: 1rem 0; }
+    .faq-item h3 { margin-top: 0; font-size: 1.1rem; color: var(--text-primary); }
+    .faq-item p { margin-bottom: 0; }
+
+    /* Related */
+    .related-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1rem; margin: 1.5rem 0; }
+    .related-link { display: flex; flex-direction: column; gap: 0.3rem; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 10px; padding: 1.2rem; text-decoration: none; transition: border-color 0.2s; }
+    .related-link:hover { border-color: var(--accent-color); text-decoration: none; }
+    .related-link strong { color: var(--text-primary); font-size: 1rem; }
+    .related-link span { color: var(--text-secondary); font-size: 0.85rem; }
+
+    @media (max-width: 600px) {
+      .hero h1 { font-size: 1.6rem; }
+      .key-info-grid { grid-template-columns: repeat(2, 1fr); }
+      .stats-bar { gap: 1rem; }
+      .keyboard { padding: 0.5rem; }
+      .kb-key { height: 2.4rem; font-size: 0.6rem; }
+      .kb-key-tall { height: calc(2.4rem * 2 + 0.25rem); }
+    }
+  </style>
+</SiteLayout>
