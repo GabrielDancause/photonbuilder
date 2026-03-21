@@ -107,6 +107,8 @@ const htmlBody = `<div class="page-content">
       <div class="input-header">
         <div class="header-title">JSON Input</div>
         <div class="header-actions">
+          <button class="action-btn active" id="treeViewBtn">Tree</button>
+          <button class="action-btn" id="editViewBtn">Edit</button>
           <button class="action-btn" id="clearBtn">Clear</button>
         </div>
       </div>
@@ -116,7 +118,7 @@ const htmlBody = `<div class="page-content">
           <pre class="output-pre" id="jsonTree"></pre>
         </div>
       </div>
-      <textarea id="jsonInput" class="json-input" placeholder="Paste your JSON here..." spellcheck="false"></textarea>
+      <textarea id="jsonInput" class="json-input" placeholder="Paste your JSON here..." spellcheck="false" style="display:none;"></textarea>
     </div>
 
     <!-- Results Pane -->
@@ -318,10 +320,13 @@ const clearBtn = document.getElementById('clearBtn');
 const sampleBtn = document.getElementById('sampleBtn');
 const treeCard = document.getElementById('treeCard');
 const sampleQueries = document.getElementById('sampleQueries');
+const treeViewBtn = document.getElementById('treeViewBtn');
+const editViewBtn = document.getElementById('editViewBtn');
 
 let debounceTimer;
 let currentResults = '';
 let parsedData = null;
+let viewMode = 'tree';
 
 const SAMPLE_JSON = {
   "store": {
@@ -355,10 +360,14 @@ function init() {
     parsedData = null;
     clearOutput();
     clearTree();
+    setViewMode('edit');
     jsonInput.focus();
   });
 
   sampleBtn.addEventListener('click', loadSample);
+
+  treeViewBtn.addEventListener('click', () => setViewMode('tree'));
+  editViewBtn.addEventListener('click', () => setViewMode('edit'));
 
   copyBtn.addEventListener('click', () => {
     if (!currentResults) return;
@@ -394,11 +403,39 @@ function init() {
   loadSample();
 }
 
+function setViewMode(mode) {
+  viewMode = mode;
+  treeViewBtn.classList.toggle('active', mode === 'tree');
+  editViewBtn.classList.toggle('active', mode === 'edit');
+  if (mode === 'edit') {
+    treeCard.style.display = 'none';
+    jsonInput.style.display = '';
+    jsonInput.focus();
+  } else {
+    jsonInput.style.display = 'none';
+    if (parsedData) {
+      renderTree(parsedData);
+    } else {
+      // Try to parse current input
+      try {
+        const d = JSON.parse(jsonInput.value.trim());
+        parsedData = d;
+        renderTree(d);
+      } catch(e) {
+        // Can't show tree for invalid JSON, stay in edit
+        setViewMode('edit');
+        return;
+      }
+    }
+  }
+}
+
 function loadSample() {
   jsonInput.value = JSON.stringify(SAMPLE_JSON, null, 2);
   pathInput.value = '$.store.book[*].author';
   sampleQueries.style.display = 'block';
   evaluate();
+  setViewMode('tree');
 }
 
 function evaluate() {
@@ -417,8 +454,8 @@ function evaluate() {
     return;
   }
 
-  // Render tree
-  renderTree(parsedData);
+  // Render tree if in tree view
+  if (viewMode === 'tree') renderTree(parsedData);
 
   const expr = pathInput.value.trim();
   if (!expr) {
@@ -585,34 +622,6 @@ function syntaxHighlight(json) {
 // ── Minimal JSONPath implementation ──
 function jsonPath(obj, expr) {
   if (!obj || !expr) return false;
-
-  const normalize = function(expr) {
-    const parts = [];
-    // Replace bracket notation and split
-    expr = expr.replace(/\['([^']+)'\]/g, '.$1');
-    expr = expr.replace(/\[(\d+)\]/g, '.$1');
-
-    // Handle the expression character by character to support .. correctly
-    let current = '';
-    let i = 0;
-    while (i < expr.length) {
-      if (expr[i] === '.' && expr[i+1] === '.') {
-        if (current) parts.push(current);
-        current = '';
-        parts.push('..');
-        i += 2;
-      } else if (expr[i] === '.') {
-        if (current) parts.push(current);
-        current = '';
-        i++;
-      } else {
-        current += expr[i];
-        i++;
-      }
-    }
-    if (current) parts.push(current);
-    return parts;
-  };
 
   const walk = function(obj, parts) {
     if (parts.length === 0) return [obj];
@@ -840,10 +849,8 @@ code, pre, .mono { font-family: 'JetBrains Mono', monospace; }
 textarea.json-input { flex: 1; min-height: 400px; background: #0a1020; border: 2px solid #152040; border-radius: 12px; padding: 16px; color: #e0e0e0; font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; resize: vertical; outline: none; transition: border-color 0.2s; line-height: 1.6; white-space: pre; }
 textarea.json-input:focus { border-color: #818cf8; }
 
-/* Tree Card (overlays textarea) */
-.tree-card { display: none; flex-direction: column; min-height: 400px; background: #0a1020; border: 2px solid #152040; border-radius: 12px; overflow: hidden; margin-bottom: -400px; position: relative; z-index: 2; }
-.tree-card ~ textarea.json-input { opacity: 0; }
-.tree-card[style*="display: none"] ~ textarea.json-input { opacity: 1; }
+/* Tree Card */
+.tree-card { display: none; flex-direction: column; min-height: 400px; background: #0a1020; border: 2px solid #152040; border-radius: 12px; overflow: hidden; flex: 1; }
 
 /* Output */
 .output-card { flex: 1; min-height: 400px; background: #0a1020; border: 2px solid #152040; border-radius: 12px; position: relative; display: flex; flex-direction: column; overflow: hidden; }
