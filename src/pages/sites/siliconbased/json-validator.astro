@@ -157,12 +157,22 @@ const htmlBody = `<div class="page-content">
           <button class="action-btn" id="expandAllBtn">Expand All</button>
           <button class="action-btn" id="collapseAllBtn">Collapse All</button>
           <button class="copy-btn" id="copyBtn">Copy</button>
+          <button class="copy-btn" id="downloadBtn">Download</button>
         </div>
       </div>
       <div id="treeView" class="tree-view">
         <div class="tree-placeholder">Tree view will appear here after validation...</div>
       </div>
     </div>
+  </div>
+
+  <!-- Stats Bar -->
+  <div class="stats-bar" id="statsBar" style="display:none;">
+    <span class="stat-item" id="statKeys">Keys: 0</span>
+    <span class="stat-sep">&middot;</span>
+    <span class="stat-item" id="statDepth">Depth: 0</span>
+    <span class="stat-sep">&middot;</span>
+    <span class="stat-item" id="statSize">Size: 0 B</span>
   </div>
 
   <!-- JSON Path Display -->
@@ -276,9 +286,9 @@ const htmlBody = `<div class="page-content">
 
     <h2>Related Tools</h2>
     <ul>
+      <li><a href="/json-formatter">JSON Formatter</a> — Format, minify, and sort JSON keys with syntax highlighting.</li>
       <li><a href="/regex-tester">Regex Tester</a> — Test and debug regular expressions online with real-time highlighting.</li>
       <li><a href="/base64-encoder-decoder">Base64 Encoder Decoder</a> — Encode and decode Base64 strings with file support.</li>
-      <li><a href="/html-to-markdown-converter">HTML to Markdown Converter</a> — Convert HTML to clean Markdown with live preview.</li>
     </ul>
   </div>
 
@@ -322,6 +332,11 @@ const copyBtn = document.getElementById('copyBtn');
 const pathCopyBtn = document.getElementById('pathCopyBtn');
 const expandAllBtn = document.getElementById('expandAllBtn');
 const collapseAllBtn = document.getElementById('collapseAllBtn');
+const downloadBtn = document.getElementById('downloadBtn');
+const statsBar = document.getElementById('statsBar');
+const statKeys = document.getElementById('statKeys');
+const statDepth = document.getElementById('statDepth');
+const statSize = document.getElementById('statSize');
 
 let parsedJSON = null;
 
@@ -362,6 +377,7 @@ function init() {
     setStatus('neutral', 'Paste JSON to validate');
     treeView.innerHTML = '<div class="tree-placeholder">Tree view will appear here after validation...</div>';
     pathBar.style.display = 'none';
+    statsBar.style.display = 'none';
     updateCounts();
     inputArea.focus();
   });
@@ -387,6 +403,23 @@ function init() {
       pathCopyBtn.textContent = '\u2713 Copied';
       setTimeout(() => { pathCopyBtn.textContent = 'Copy Path'; }, 1500);
     });
+  });
+
+  downloadBtn.addEventListener('click', () => {
+    const text = inputArea.value.trim();
+    if (!text) return;
+    try {
+      JSON.parse(text);
+      const blob = new Blob([text], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'validated.json';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    } catch(e) {}
   });
 
   expandAllBtn.addEventListener('click', () => {
@@ -436,10 +469,12 @@ function validate() {
     parsedJSON = JSON.parse(input);
     setStatus('valid', 'Valid JSON — ' + describeJSON(parsedJSON));
     renderTree(parsedJSON);
+    updateStats(parsedJSON, input);
   } catch (e) {
     parsedJSON = null;
     const errInfo = parseError(e.message, input);
     setStatus('invalid', 'Invalid JSON — ' + errInfo);
+    statsBar.style.display = 'none';
     treeView.innerHTML = '<div class="tree-error">' + escapeHTML(errInfo) + '</div>';
     pathBar.style.display = 'none';
   }
@@ -477,6 +512,7 @@ function formatJSON() {
     parsedJSON = parsed;
     setStatus('valid', 'Valid JSON — formatted with ' + (indent === '\t' ? 'tabs' : indent + '-space indent'));
     renderTree(parsed);
+    updateStats(parsed, inputArea.value);
   } catch (e) {
     const errInfo = parseError(e.message, input);
     setStatus('invalid', 'Cannot format — ' + errInfo);
@@ -493,6 +529,7 @@ function minifyJSON() {
     parsedJSON = parsed;
     setStatus('valid', 'Valid JSON — minified (' + inputArea.value.length.toLocaleString() + ' chars)');
     renderTree(parsed);
+    updateStats(parsed, inputArea.value);
   } catch (e) {
     const errInfo = parseError(e.message, input);
     setStatus('invalid', 'Cannot minify — ' + errInfo);
@@ -531,6 +568,7 @@ function fixErrors() {
     parsedJSON = parsed;
     setStatus('valid', 'Fixed & valid — applied automatic corrections');
     renderTree(parsed);
+    updateStats(parsed, inputArea.value);
   } catch (e) {
     // Try formatting the fixed version with indent
     try {
@@ -661,6 +699,35 @@ function escapeHTML(str) {
   return str.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;');
 }
 
+function updateStats(data, raw) {
+  const keys = countKeys(data);
+  const depth = getDepth(data);
+  const size = new Blob([raw]).size;
+  statKeys.textContent = 'Keys: ' + keys;
+  statDepth.textContent = 'Depth: ' + depth;
+  statSize.textContent = 'Size: ' + formatBytes(size);
+  statsBar.style.display = 'flex';
+}
+
+function countKeys(obj) {
+  if (obj === null || typeof obj !== 'object') return 0;
+  if (Array.isArray(obj)) return obj.reduce(function(s, v) { return s + countKeys(v); }, 0);
+  return Object.keys(obj).reduce(function(s, k) { return s + 1 + countKeys(obj[k]); }, 0);
+}
+
+function getDepth(obj) {
+  if (obj === null || typeof obj !== 'object') return 0;
+  var children = Array.isArray(obj) ? obj : Object.values(obj);
+  if (children.length === 0) return 1;
+  return 1 + Math.max.apply(null, children.map(getDepth));
+}
+
+function formatBytes(bytes) {
+  if (bytes < 1024) return bytes + ' B';
+  if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB';
+  return (bytes / 1048576).toFixed(1) + ' MB';
+}
+
 function updateCounts() {
   const val = inputArea.value;
   const chars = val.length;
@@ -741,6 +808,11 @@ code, pre, .mono { font-family: 'JetBrains Mono', monospace; }
 .tree-type-number { color: #fb923c; }
 .tree-type-boolean { color: #f472b6; }
 .tree-type-null { color: #888; font-style: italic; }
+
+/* Stats Bar */
+.stats-bar { display: flex; align-items: center; gap: 16px; padding: 10px 16px; margin-bottom: 8px; background: #0a1020; border: 2px solid #152040; border-radius: 10px; font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; }
+.stat-item { color: #93c5fd; }
+.stat-sep { color: #333; }
 
 /* Path Bar */
 .path-bar { display: flex; align-items: center; gap: 12px; padding: 10px 16px; margin-bottom: 32px; background: #0a1020; border: 2px solid #152040; border-radius: 10px; }
