@@ -1,12 +1,14 @@
 ---
 import SiteLayout from "../../../layouts/SiteLayout.astro";
 
+export const meta = { category: "tool" };
+
 const schema = {
   "@context": "https://schema.org",
   "@type": "WebApplication",
-  "name": "BMR & TDEE Calculator",
+  "name": "BMR Calculator",
   "url": "https://photonbuilder.com/health/bmr-calculator.html",
-  "description": "Calculate your Basal Metabolic Rate (BMR) and Total Daily Energy Expenditure (TDEE). Supports multiple formulas and provides calories for weight loss, maintenance, and bulking.",
+  "description": "Calculate your Basal Metabolic Rate using Mifflin-St Jeor, Harris-Benedict, and Katch-McArdle formulas. Compare results and estimate your TDEE.",
   "applicationCategory": "HealthAndFitnessApplication",
   "operatingSystem": "Any",
   "offers": {
@@ -15,14 +17,86 @@ const schema = {
     "priceCurrency": "USD"
   }
 };
+
+const faqSchema = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What is BMR?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "BMR (Basal Metabolic Rate) is the number of calories your body burns at complete rest to maintain basic life-sustaining functions like breathing, circulation, and cell production. It represents the minimum energy your body needs to survive if you were to stay in bed all day. BMR typically accounts for 60-75% of your total daily calorie expenditure."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Which BMR formula is the most accurate?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "The Mifflin-St Jeor equation is considered the most accurate for the general population and is recommended by the Academy of Nutrition and Dietetics. However, if you know your body fat percentage, the Katch-McArdle formula can be more accurate because it accounts for lean body mass. The original Harris-Benedict equation tends to overestimate BMR by about 5%."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What is the difference between BMR and TDEE?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "BMR is the calories your body burns at complete rest. TDEE (Total Daily Energy Expenditure) is your BMR multiplied by an activity factor that accounts for all physical activity including exercise, walking, and daily tasks. TDEE represents the total calories you burn in a day. To maintain your weight, eat at your TDEE. To lose weight, eat below it."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How does age affect BMR?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "BMR decreases by roughly 1-2% per decade after age 20. This decline is primarily due to loss of muscle mass (sarcopenia) and hormonal changes. A 50-year-old typically has a BMR about 200-300 calories lower than a 20-year-old of the same size. Regular strength training can help slow this decline by preserving muscle mass."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Can I increase my BMR?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes, the most effective way to increase your BMR is to build lean muscle mass through strength training, since muscle burns more calories at rest than fat. Other factors include getting adequate sleep, eating enough protein, staying hydrated, and avoiding prolonged extreme calorie restriction which can lower your metabolic rate."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Should I eat at my BMR to lose weight?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "No, you should not eat at or below your BMR for extended periods. Your BMR represents the bare minimum your body needs for basic functions. Eating below BMR can cause metabolic adaptation, muscle loss, nutrient deficiencies, and hormonal disruption. Instead, calculate your TDEE and create a moderate deficit of 500-750 calories below TDEE for safe, sustainable weight loss."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What is the Katch-McArdle formula?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "The Katch-McArdle formula calculates BMR based on lean body mass rather than total body weight: BMR = 370 + (21.6 × lean mass in kg). It requires knowing your body fat percentage. This formula is especially useful for athletic or muscular individuals, as it accounts for the metabolic advantage of having more muscle mass."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Why do men have a higher BMR than women?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Men generally have a higher BMR because they tend to have more lean muscle mass, larger organs, and higher testosterone levels. On average, men's BMR is 5-10% higher than women's of similar height and weight. This is why most BMR formulas include a gender-specific adjustment factor."
+      }
+    }
+  ]
+};
 ---
 
 <SiteLayout
   site="bodycount"
-  title="BMR & TDEE Calculator | ijustwantto.live"
-  description="Calculate your Basal Metabolic Rate (BMR) and Total Daily Energy Expenditure (TDEE) accurately. Use Mifflin-St Jeor or Harris-Benedict formulas to find calories for weight loss, maintenance, or bulking."
+  title="BMR Calculator — Basal Metabolic Rate | ijustwantto.live"
+  description="Calculate your Basal Metabolic Rate with 3 formulas: Mifflin-St Jeor, Harris-Benedict, and Katch-McArdle. Compare results, estimate TDEE, and learn what affects your metabolism."
   canonical="https://photonbuilder.com/health/bmr-calculator" schema={schema}
 >
+  <script type="application/ld+json" set:html={JSON.stringify(faqSchema)} />
   <style>
 :root {
             --bg-color: #060c0a;
@@ -34,6 +108,10 @@ const schema = {
             --text-secondary: #888888;
             --font-ui: 'Inter', sans-serif;
             --font-mono: 'JetBrains Mono', monospace;
+
+            --color-mifflin: #3b82f6;
+            --color-harris: #f59e0b;
+            --color-katch: #a855f7;
         }
 
         * {
@@ -54,11 +132,6 @@ const schema = {
             max-width: 800px;
             margin: 0 auto;
             padding: 2rem 1rem;
-        }
-
-        header {
-            text-align: center;
-            margin-bottom: 2rem;
         }
 
         h1 {
@@ -118,14 +191,7 @@ const schema = {
             appearance: none;
         }
 
-        select {
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%23888888' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
-            background-repeat: no-repeat;
-            background-position: right 1rem center;
-        }
-
-        input[type="number"]:focus,
-        select:focus {
+        input[type="number"]:focus {
             outline: none;
             border-color: var(--accent-color);
         }
@@ -178,6 +244,51 @@ const schema = {
             background-color: var(--accent-hover);
         }
 
+        .unit-toggle-container {
+            display: flex;
+            justify-content: center;
+            margin-bottom: 1.5rem;
+        }
+
+        .unit-toggle {
+            display: flex;
+            background-color: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            overflow: hidden;
+        }
+
+        .unit-btn {
+            background: none;
+            border: none;
+            color: var(--text-secondary);
+            padding: 0.5rem 1.5rem;
+            font-size: 0.875rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-family: var(--font-ui);
+        }
+
+        .unit-btn.active {
+            background-color: var(--accent-color);
+            color: #000000;
+        }
+
+        .imperial-inputs {
+            display: none;
+        }
+
+        .bf-row {
+            margin-top: 0.5rem;
+        }
+
+        .bf-note {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-top: 0.25rem;
+        }
+
         .results {
             display: none;
             margin-top: 2rem;
@@ -193,346 +304,660 @@ const schema = {
             display: block;
         }
 
-        .result-box {
+        .bmr-comparison {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-bottom: 1.5rem;
+        }
+
+        .bmr-card {
+            flex: 1;
+            min-width: 140px;
             background-color: var(--bg-color);
             border: 1px solid var(--border-color);
             border-radius: 8px;
             padding: 1.25rem;
-            margin-bottom: 1rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+            text-align: center;
         }
 
-        .result-title {
-            font-size: 0.875rem;
+        .bmr-card-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
             color: var(--text-secondary);
-            font-weight: 500;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
         }
 
-        .result-value {
+        .bmr-card-value {
             font-family: var(--font-mono);
             font-size: 1.5rem;
+            font-weight: 700;
+        }
+
+        .bmr-card-detail {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            margin-top: 0.25rem;
+        }
+
+        .bmr-card-formula {
+            font-size: 0.65rem;
+            color: var(--text-secondary);
+            margin-top: 0.5rem;
+            font-family: var(--font-mono);
+            opacity: 0.7;
+        }
+
+        .bar-chart-container {
+            margin-bottom: 2rem;
+        }
+
+        .bar-chart-title {
+            font-size: 0.875rem;
             font-weight: 600;
-            color: var(--accent-color);
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+        }
+
+        .bar-row {
             display: flex;
             align-items: center;
+            margin-bottom: 0.75rem;
             gap: 0.75rem;
         }
 
-        .copy-btn {
-            background: none;
-            border: none;
+        .bar-label {
+            width: 110px;
+            font-size: 0.8rem;
             color: var(--text-secondary);
-            cursor: pointer;
-            padding: 0.25rem;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: color 0.2s;
+            flex-shrink: 0;
+            text-align: right;
         }
 
-        .copy-btn:hover {
-            color: var(--text-primary);
-        }
-
-        .copy-btn svg {
-            width: 16px;
-            height: 16px;
-        }
-
-        .macros-grid {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 1rem;
-            margin-top: 1.5rem;
-        }
-
-        .macro-card {
+        .bar-track {
+            flex: 1;
+            height: 36px;
             background-color: var(--bg-color);
             border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 1.25rem;
-            text-align: center;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
+            border-radius: 6px;
+            overflow: hidden;
             position: relative;
         }
 
-        .macro-card h3 {
-            font-size: 1rem;
+        .bar-fill {
+            height: 100%;
+            border-radius: 6px;
+            display: flex;
+            align-items: center;
+            padding-left: 0.75rem;
+            font-family: var(--font-mono);
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: #000;
+            transition: width 0.5s ease;
+            min-width: fit-content;
+        }
+
+        .bar-fill.mifflin { background-color: var(--color-mifflin); }
+        .bar-fill.harris { background-color: var(--color-harris); }
+        .bar-fill.katch { background-color: var(--color-katch); }
+
+        .activity-table-container {
+            margin-bottom: 2rem;
+            overflow-x: auto;
+        }
+
+        .activity-table-title {
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-bottom: 1rem;
+            color: var(--text-primary);
+        }
+
+        table.activity-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 0.85rem;
+        }
+
+        table.activity-table th,
+        table.activity-table td {
+            padding: 0.75rem;
+            text-align: left;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        table.activity-table th {
+            font-weight: 600;
+            color: var(--text-secondary);
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        table.activity-table td {
+            color: var(--text-primary);
+        }
+
+        table.activity-table td.highlight {
+            color: var(--accent-color);
+            font-weight: 600;
+            font-family: var(--font-mono);
+        }
+
+        .section-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 1rem;
+            margin-top: 1rem;
+        }
+
+        .info-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        .info-item {
+            background-color: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1rem;
+        }
+
+        .info-item-title {
+            font-size: 0.875rem;
+            font-weight: 600;
+            color: var(--accent-color);
             margin-bottom: 0.5rem;
+        }
+
+        .info-item-text {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+
+        .tips-list {
+            list-style: none;
+            padding: 0;
+        }
+
+        .tips-list li {
+            padding: 0.75rem 0;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            display: flex;
+            gap: 0.75rem;
+            align-items: flex-start;
+        }
+
+        .tips-list li:last-child {
+            border-bottom: none;
+        }
+
+        .tip-number {
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            font-weight: 700;
+            color: var(--accent-color);
+            background-color: rgba(45, 184, 154, 0.1);
+            border-radius: 4px;
+            padding: 0.2rem 0.5rem;
+            flex-shrink: 0;
+        }
+
+        .faq-section {
+            margin-top: 2rem;
+        }
+
+        .faq-item {
+            border-bottom: 1px solid var(--border-color);
+            padding: 1rem 0;
+        }
+
+        .faq-question {
+            font-weight: 600;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            color: var(--text-primary);
+        }
+
+        .faq-question::after {
+            content: '+';
+            font-size: 1.25rem;
+            color: var(--accent-color);
+            transition: transform 0.2s;
+        }
+
+        .faq-item.open .faq-question::after {
+            content: '−';
+        }
+
+        .faq-answer {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+            line-height: 1.7;
+        }
+
+        .faq-item.open .faq-answer {
+            max-height: 500px;
+            padding-top: 0.75rem;
+        }
+
+        .related-links {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-top: 2rem;
+        }
+
+        .related-link {
+            flex: 1;
+            min-width: 200px;
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1rem 1.25rem;
+            text-decoration: none;
             color: var(--text-primary);
             font-weight: 600;
+            font-size: 0.9rem;
+            transition: border-color 0.2s;
         }
 
-        .macro-card .value {
-            font-family: var(--font-mono);
-            font-size: 1.5rem;
-            color: var(--accent-color);
-            margin-bottom: 0.25rem;
-            font-weight: 600;
+        .related-link:hover {
+            border-color: var(--accent-color);
         }
 
-        .macro-card .desc {
+        .related-link span {
+            display: block;
             font-size: 0.75rem;
             color: var(--text-secondary);
+            font-weight: 400;
+            margin-top: 0.25rem;
         }
 
-        .macro-card .copy-btn {
-            position: absolute;
-            top: 0.5rem;
-            right: 0.5rem;
-        }
-
-        .seo-content {
-            margin-top: 4rem;
-        }
-
-        .seo-content h2 {
-            font-size: 1.5rem;
-            font-weight: 700;
-            margin-bottom: 1rem;
-            color: #ffffff;
-        }
-
-        .seo-content p {
-            margin-bottom: 1.5rem;
-            color: var(--text-secondary);
-        }
-
-        .seo-content ul {
-            margin-bottom: 1.5rem;
-            padding-left: 1.5rem;
-            color: var(--text-secondary);
-        }
-
-        .seo-content li {
-            margin-bottom: 0.5rem;
-        }
-
-        footer {
-            margin-top: 4rem;
-            text-align: center;
-            padding: 2rem 0;
-            border-top: 1px solid var(--border-color);
-            color: var(--text-secondary);
-            font-size: 0.875rem;
-        }
-
-        footer a {
-            color: var(--accent-color);
-            text-decoration: none;
-        }
-
-        footer a:hover {
-            text-decoration: underline;
-        }
-
-        @media (min-width: 640px) {
-            .macros-grid {
-                grid-template-columns: repeat(3, 1fr);
-            }
+        @media (max-width: 640px) {
+            h1 { font-size: 1.5rem; }
+            .bmr-comparison { flex-direction: column; }
+            .info-grid { grid-template-columns: 1fr; }
+            .bar-label { width: 80px; font-size: 0.7rem; }
         }
   </style>
 
-<div class="container">
-        
+  <div class="container">
+    <h1>BMR Calculator</h1>
+    <p class="subtitle">Calculate your Basal Metabolic Rate using 3 proven formulas and compare results side by side.</p>
 
-        <main>
-            <div class="card">
-                <form id="bmrForm">
-                    <div class="form-group">
-                        <label>Gender</label>
-                        <div class="radio-group">
-                            <label class="radio-label">
-                                <input type="radio" name="gender" value="male" checked>
-                                Male
-                            </label>
-                            <label class="radio-label">
-                                <input type="radio" name="gender" value="female">
-                                Female
-                            </label>
-                        </div>
-                    </div>
+    <div class="card" style="margin-top: 2rem;">
+      <div class="unit-toggle-container">
+        <div class="unit-toggle">
+          <button class="unit-btn active" data-unit="metric">Metric</button>
+          <button class="unit-btn" data-unit="imperial">Imperial</button>
+        </div>
+      </div>
 
-                    <div class="form-row">
-                        <div class="form-group form-col">
-                            <label for="age">Age (years)</label>
-                            <input type="number" id="age" name="age" required min="1" max="120" placeholder="e.g. 30">
-                        </div>
-                        <div class="form-group form-col">
-                            <label for="weight">Weight (kg)</label>
-                            <input type="number" id="weight" name="weight" required min="1" step="0.1" placeholder="e.g. 70">
-                        </div>
-                        <div class="form-group form-col">
-                            <label for="height">Height (cm)</label>
-                            <input type="number" id="height" name="height" required min="1" step="0.1" placeholder="e.g. 175">
-                        </div>
-                    </div>
+      <div class="form-group">
+        <label>Gender</label>
+        <div class="radio-group">
+          <label class="radio-label"><input type="radio" name="gender" value="male" checked /> Male</label>
+          <label class="radio-label"><input type="radio" name="gender" value="female" /> Female</label>
+        </div>
+      </div>
 
-                    <div class="form-group">
-                        <label for="activity">Activity Level</label>
-                        <select id="activity" name="activity">
-                            <option value="1.2">Sedentary (little to no exercise)</option>
-                            <option value="1.375">Lightly Active (light exercise/sports 1-3 days/week)</option>
-                            <option value="1.55">Moderately Active (moderate exercise/sports 3-5 days/week)</option>
-                            <option value="1.725">Very Active (hard exercise/sports 6-7 days a week)</option>
-                            <option value="1.9">Extra Active (very hard exercise/sports & physical job)</option>
-                        </select>
-                    </div>
+      <div class="form-row">
+        <div class="form-col">
+          <div class="form-group">
+            <label for="age">Age</label>
+            <input type="number" id="age" min="15" max="100" value="30" />
+          </div>
+        </div>
+        <div class="form-col metric-inputs">
+          <div class="form-group">
+            <label for="weight-kg">Weight (kg)</label>
+            <input type="number" id="weight-kg" min="30" max="300" value="75" />
+          </div>
+        </div>
+        <div class="form-col imperial-inputs">
+          <div class="form-group">
+            <label for="weight-lbs">Weight (lbs)</label>
+            <input type="number" id="weight-lbs" min="66" max="660" value="165" />
+          </div>
+        </div>
+      </div>
 
-                    <div class="form-group">
-                        <label for="formula">Formula</label>
-                        <select id="formula" name="formula">
-                            <option value="mifflin">Mifflin-St Jeor (Most accurate)</option>
-                            <option value="harris">Harris-Benedict</option>
-                        </select>
-                    </div>
+      <div class="form-row metric-inputs">
+        <div class="form-col">
+          <div class="form-group">
+            <label for="height-cm">Height (cm)</label>
+            <input type="number" id="height-cm" min="100" max="250" value="175" />
+          </div>
+        </div>
+      </div>
 
-                    <button type="submit" class="calculate-btn">Calculate BMR & TDEE</button>
-                </form>
+      <div class="form-row imperial-inputs">
+        <div class="form-col">
+          <div class="form-group">
+            <label for="height-ft">Height (ft)</label>
+            <input type="number" id="height-ft" min="3" max="8" value="5" />
+          </div>
+        </div>
+        <div class="form-col">
+          <div class="form-group">
+            <label for="height-in">Height (in)</label>
+            <input type="number" id="height-in" min="0" max="11" value="9" />
+          </div>
+        </div>
+      </div>
 
-                <div id="results" class="results">
-                    <div class="result-box">
-                        <div class="result-title">Basal Metabolic Rate (BMR)</div>
-                        <div class="result-value">
-                            <span id="bmrValue">0</span> kcal
-                            <button class="copy-btn" onclick="copyToClipboard('bmrValue')" title="Copy">
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-                            </button>
-                        </div>
-                    </div>
+      <div class="form-row bf-row">
+        <div class="form-col">
+          <div class="form-group">
+            <label for="bodyfat">Body Fat % <span style="font-weight:400;color:var(--text-secondary)">(optional — for Katch-McArdle)</span></label>
+            <input type="number" id="bodyfat" min="3" max="60" step="0.5" placeholder="e.g. 20" />
+            <div class="bf-note">Leave blank to skip Katch-McArdle formula</div>
+          </div>
+        </div>
+      </div>
 
-                    <div class="result-box">
-                        <div class="result-title">Total Daily Energy Expenditure (TDEE)</div>
-                        <div class="result-value">
-                            <span id="tdeeValue">0</span> kcal
-                            <button class="copy-btn" onclick="copyToClipboard('tdeeValue')" title="Copy">
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-                            </button>
-                        </div>
-                    </div>
-
-                    <div class="macros-grid">
-                        <div class="macro-card">
-                            <button class="copy-btn" onclick="copyToClipboard('lossValue')" title="Copy">
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-                            </button>
-                            <h3>Weight Loss</h3>
-                            <div class="value"><span id="lossValue">0</span></div>
-                            <div class="desc">kcal/day (-500 kcal)</div>
-                        </div>
-                        <div class="macro-card">
-                            <button class="copy-btn" onclick="copyToClipboard('mainValue')" title="Copy">
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-                            </button>
-                            <h3>Maintenance</h3>
-                            <div class="value"><span id="mainValue">0</span></div>
-                            <div class="desc">kcal/day</div>
-                        </div>
-                        <div class="macro-card">
-                            <button class="copy-btn" onclick="copyToClipboard('bulkValue')" title="Copy">
-                                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
-                            </button>
-                            <h3>Bulking</h3>
-                            <div class="value"><span id="bulkValue">0</span></div>
-                            <div class="desc">kcal/day (+500 kcal)</div>
-                        </div>
-                    </div>
-                </div>
-            </div>
-
-            <div class="seo-content">
-                <h2>Understanding BMR and TDEE</h2>
-                <p>Basal Metabolic Rate (BMR) represents the minimum amount of energy (calories) your body requires to function while resting. This includes energy needed for vital organs like the heart, lungs, brain, and liver, as well as basic cellular processes.</p>
-                <p>Total Daily Energy Expenditure (TDEE) is an estimation of how many calories you burn per day when exercise and physical activity are taken into account. It's calculated by multiplying your BMR by an activity multiplier.</p>
-
-                <h2>How to Use Your TDEE for Dieting</h2>
-                <p>Knowing your TDEE is the cornerstone of any nutritional plan. Whether your goal is to lose, maintain, or gain weight, your caloric intake relative to your TDEE will dictate your progress.</p>
-                <ul>
-                    <li><strong>Weight Loss:</strong> To lose weight, you need to consume fewer calories than your TDEE. A common and sustainable deficit is 500 calories per day, which typically leads to about 1 lb (0.45 kg) of weight loss per week.</li>
-                    <li><strong>Maintenance:</strong> Consuming calories equal to your TDEE will allow you to maintain your current weight.</li>
-                    <li><strong>Bulking (Muscle Gain):</strong> To build muscle effectively, you need a caloric surplus. Consuming 250-500 calories above your TDEE provides the extra energy your body needs to synthesize new muscle tissue.</li>
-                </ul>
-
-                <h2>Which Formula Should You Choose?</h2>
-                <p>The <strong>Mifflin-St Jeor</strong> equation is widely considered the most accurate formula for calculating BMR in modern populations. It was introduced in 1990 and tends to be more precise than older formulas.</p>
-                <p>The <strong>Harris-Benedict</strong> equation is an older formula originally created in 1919 and revised in 1984. While still commonly used, it may slightly overestimate calorie needs for some individuals, particularly those who are overweight or obese.</p>
-            </div>
-        </main>
-
-        
+      <button class="calculate-btn" id="calculateBtn">Calculate BMR</button>
     </div>
-  <script is:inline>
-document.getElementById('bmrForm').addEventListener('submit', function(e) {
-            e.preventDefault();
 
-            const gender = document.querySelector('input[name="gender"]:checked').value;
-            const age = parseFloat(document.getElementById('age').value);
-            const weight = parseFloat(document.getElementById('weight').value);
-            const height = parseFloat(document.getElementById('height').value);
-            const activity = parseFloat(document.getElementById('activity').value);
-            const formula = document.getElementById('formula').value;
+    <div class="results" id="results">
+      <div class="card">
+        <h2 class="section-title">Your BMR Results</h2>
 
-            if (isNaN(age) || isNaN(weight) || isNaN(height)) {
-                return;
-            }
+        <div class="bmr-comparison">
+          <div class="bmr-card">
+            <div class="bmr-card-label">Mifflin-St Jeor</div>
+            <div class="bmr-card-value" id="mifflinValue" style="color: var(--color-mifflin);">—</div>
+            <div class="bmr-card-detail">cal/day</div>
+            <div class="bmr-card-formula">Most recommended</div>
+          </div>
+          <div class="bmr-card">
+            <div class="bmr-card-label">Harris-Benedict</div>
+            <div class="bmr-card-value" id="harrisValue" style="color: var(--color-harris);">—</div>
+            <div class="bmr-card-detail">cal/day</div>
+            <div class="bmr-card-formula">Original (1919)</div>
+          </div>
+          <div class="bmr-card" id="katchCard">
+            <div class="bmr-card-label">Katch-McArdle</div>
+            <div class="bmr-card-value" id="katchValue" style="color: var(--color-katch);">—</div>
+            <div class="bmr-card-detail">cal/day</div>
+            <div class="bmr-card-formula">Lean mass based</div>
+          </div>
+        </div>
 
-            let bmr = 0;
+        <div class="bar-chart-container">
+          <div class="bar-chart-title">BMR Comparison</div>
+          <div class="bar-row">
+            <div class="bar-label">Mifflin-St Jeor</div>
+            <div class="bar-track"><div class="bar-fill mifflin" id="barMifflin"></div></div>
+          </div>
+          <div class="bar-row">
+            <div class="bar-label">Harris-Benedict</div>
+            <div class="bar-track"><div class="bar-fill harris" id="barHarris"></div></div>
+          </div>
+          <div class="bar-row" id="barKatchRow">
+            <div class="bar-label">Katch-McArdle</div>
+            <div class="bar-track"><div class="bar-fill katch" id="barKatch"></div></div>
+          </div>
+        </div>
+      </div>
 
-            if (formula === 'mifflin') {
-                if (gender === 'male') {
-                    bmr = (10 * weight) + (6.25 * height) - (5 * age) + 5;
-                } else {
-                    bmr = (10 * weight) + (6.25 * height) - (5 * age) - 161;
-                }
-            } else {
-                // Harris-Benedict (Revised)
-                if (gender === 'male') {
-                    bmr = 88.362 + (13.397 * weight) + (4.799 * height) - (5.677 * age);
-                } else {
-                    bmr = 447.593 + (9.247 * weight) + (3.098 * height) - (4.330 * age);
-                }
-            }
+      <div class="card">
+        <div class="activity-table-container">
+          <div class="activity-table-title">Estimated TDEE by Activity Level</div>
+          <table class="activity-table">
+            <thead>
+              <tr>
+                <th>Activity Level</th>
+                <th>Multiplier</th>
+                <th>Daily Calories</th>
+              </tr>
+            </thead>
+            <tbody id="activityTableBody"></tbody>
+          </table>
+        </div>
+      </div>
 
-            const tdee = bmr * activity;
+      <div class="card">
+        <h2 class="section-title">What Affects Your BMR</h2>
+        <div class="info-grid">
+          <div class="info-item">
+            <div class="info-item-title">Muscle Mass</div>
+            <div class="info-item-text">Muscle tissue burns significantly more calories at rest than fat tissue — roughly 6 cal/lb vs 2 cal/lb per day. More lean mass means a higher BMR, which is why strength training is the most effective way to boost your metabolism long-term.</div>
+          </div>
+          <div class="info-item">
+            <div class="info-item-title">Age</div>
+            <div class="info-item-text">BMR declines approximately 1-2% per decade after your 20s, primarily due to age-related muscle loss (sarcopenia). By age 60, you may burn 200-400 fewer calories at rest compared to age 20. Staying active helps counteract this decline.</div>
+          </div>
+          <div class="info-item">
+            <div class="info-item-title">Hormones</div>
+            <div class="info-item-text">Thyroid hormones (T3 and T4) are the primary regulators of metabolic rate. Testosterone, growth hormone, and insulin also play significant roles. Conditions like hypothyroidism can lower BMR by 15-40%, while hyperthyroidism can raise it significantly.</div>
+          </div>
+          <div class="info-item">
+            <div class="info-item-title">Body Temperature</div>
+            <div class="info-item-text">For every 0.5°C increase in body temperature, BMR rises by approximately 7%. Cold exposure activates brown fat and can temporarily boost metabolic rate. Fever, climate, and even spicy food can cause short-term BMR increases.</div>
+          </div>
+        </div>
+      </div>
 
-            document.getElementById('bmrValue').textContent = Math.round(bmr).toLocaleString();
-            document.getElementById('tdeeValue').textContent = Math.round(tdee).toLocaleString();
+      <div class="card">
+        <h2 class="section-title">Tips to Boost Your Metabolism</h2>
+        <ul class="tips-list">
+          <li><span class="tip-number">01</span>Build lean muscle with strength training — each pound of muscle burns ~6 calories per day at rest, compared to ~2 for fat. Compound lifts like squats, deadlifts, and bench press are most effective.</li>
+          <li><span class="tip-number">02</span>Eat enough protein — the thermic effect of protein is 20-30%, meaning your body burns 20-30% of protein calories just digesting it. Aim for 0.7-1g per pound of body weight daily.</li>
+          <li><span class="tip-number">03</span>Don't crash diet — severe calorie restriction (below BMR) triggers metabolic adaptation, where your body lowers its metabolic rate to conserve energy. Stick to moderate deficits of 500-750 cal below TDEE.</li>
+          <li><span class="tip-number">04</span>Stay hydrated — even mild dehydration can slow metabolism by 2-3%. Drinking cold water may provide a small additional boost as your body expends energy warming it up.</li>
+          <li><span class="tip-number">05</span>Prioritize sleep — poor sleep (less than 7 hours) is linked to lower BMR, increased hunger hormones, and reduced muscle recovery. Aim for 7-9 hours of quality sleep per night.</li>
+          <li><span class="tip-number">06</span>Move more throughout the day — NEAT (Non-Exercise Activity Thermogenesis) from fidgeting, standing, and walking can account for 200-900 calories per day. Take breaks from sitting every 30 minutes.</li>
+        </ul>
+      </div>
 
-            document.getElementById('lossValue').textContent = Math.round(tdee - 500).toLocaleString();
-            document.getElementById('mainValue').textContent = Math.round(tdee).toLocaleString();
-            document.getElementById('bulkValue').textContent = Math.round(tdee + 500).toLocaleString();
+      <div class="card faq-section">
+        <h2 class="section-title">Frequently Asked Questions</h2>
+        <div class="faq-item">
+          <div class="faq-question">What is BMR?</div>
+          <div class="faq-answer">BMR (Basal Metabolic Rate) is the number of calories your body burns at complete rest to maintain basic life-sustaining functions like breathing, circulation, and cell production. It represents the minimum energy your body needs to survive if you were to stay in bed all day. BMR typically accounts for 60-75% of your total daily calorie expenditure.</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-question">Which BMR formula is the most accurate?</div>
+          <div class="faq-answer">The Mifflin-St Jeor equation is considered the most accurate for the general population and is recommended by the Academy of Nutrition and Dietetics. However, if you know your body fat percentage, the Katch-McArdle formula can be more accurate because it accounts for lean body mass. The original Harris-Benedict equation tends to overestimate BMR by about 5%.</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-question">What is the difference between BMR and TDEE?</div>
+          <div class="faq-answer">BMR is the calories your body burns at complete rest. TDEE (Total Daily Energy Expenditure) is your BMR multiplied by an activity factor that accounts for all physical activity including exercise, walking, and daily tasks. TDEE represents the total calories you burn in a day. To maintain your weight, eat at your TDEE. To lose weight, eat below it.</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-question">How does age affect BMR?</div>
+          <div class="faq-answer">BMR decreases by roughly 1-2% per decade after age 20. This decline is primarily due to loss of muscle mass (sarcopenia) and hormonal changes. A 50-year-old typically has a BMR about 200-300 calories lower than a 20-year-old of the same size. Regular strength training can help slow this decline by preserving muscle mass.</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-question">Can I increase my BMR?</div>
+          <div class="faq-answer">Yes, the most effective way to increase your BMR is to build lean muscle mass through strength training, since muscle burns more calories at rest than fat. Other factors include getting adequate sleep, eating enough protein, staying hydrated, and avoiding prolonged extreme calorie restriction which can lower your metabolic rate.</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-question">Should I eat at my BMR to lose weight?</div>
+          <div class="faq-answer">No, you should not eat at or below your BMR for extended periods. Your BMR represents the bare minimum your body needs for basic functions. Eating below BMR can cause metabolic adaptation, muscle loss, nutrient deficiencies, and hormonal disruption. Instead, calculate your TDEE and create a moderate deficit of 500-750 calories below TDEE for safe, sustainable weight loss.</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-question">What is the Katch-McArdle formula?</div>
+          <div class="faq-answer">The Katch-McArdle formula calculates BMR based on lean body mass rather than total body weight: BMR = 370 + (21.6 × lean mass in kg). It requires knowing your body fat percentage. This formula is especially useful for athletic or muscular individuals, as it accounts for the metabolic advantage of having more muscle mass.</div>
+        </div>
+        <div class="faq-item">
+          <div class="faq-question">Why do men have a higher BMR than women?</div>
+          <div class="faq-answer">Men generally have a higher BMR because they tend to have more lean muscle mass, larger organs, and higher testosterone levels. On average, men's BMR is 5-10% higher than women's of similar height and weight. This is why most BMR formulas include a gender-specific adjustment factor.</div>
+        </div>
+      </div>
 
-            document.getElementById('results').classList.add('active');
-        });
-
-        function copyToClipboard(elementId) {
-            const text = document.getElementById(elementId).textContent;
-            navigator.clipboard.writeText(text).then(() => {
-                const btn = document.querySelector(`[onclick="copyToClipboard('${elementId}')"]`);
-                if (!btn) return;
-                const originalHTML = btn.innerHTML;
-                btn.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#2DB89A" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"></polyline></svg>';
-                setTimeout(() => {
-                    btn.innerHTML = originalHTML;
-                }, 2000);
-            }).catch(err => {
-                console.error('Failed to copy: ', err);
-            });
-        }
-  </script>
-
-  <!-- Pillar Guide Link -->
-  <div class="max-w-3xl mx-auto px-5 pt-8 pb-12">
-    <div class="border-t border-[var(--border-color)] pt-8">
-      <p class="text-xs font-bold text-[var(--accent-color)] tracking-wide uppercase mb-2">📚 Complete Guide</p>
-      <a href="/health/guide-nutrition-complete" class="block bg-[var(--card-bg)] border border-[var(--border-color)] rounded-xl p-5 hover:border-[var(--accent-color)] hover:-translate-y-0.5 transition-all">
-        <h3 class="text-base font-bold text-white">Nutrition Fundamentals: Calories, Macros & Meal Planning</h3>
-        <p class="text-sm text-[var(--text-secondary)] mt-1">Read the full guide →</p>
-      </a>
+      <div class="related-links">
+        <a href="/sites/bodycount/calorie-calculator" class="related-link">
+          Calorie Calculator
+          <span>Calculate your daily calorie needs</span>
+        </a>
+        <a href="/sites/bodycount/macro-calculator" class="related-link">
+          Macro Calculator
+          <span>Get your protein, carb, and fat targets</span>
+        </a>
+        <a href="/sites/bodycount/bmi-calculator" class="related-link">
+          BMI Calculator
+          <span>Check your body mass index</span>
+        </a>
+      </div>
     </div>
   </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      let currentUnit = 'metric';
+
+      // Unit toggle
+      document.querySelectorAll('.unit-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('.unit-btn').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          currentUnit = btn.dataset.unit;
+          document.querySelectorAll('.metric-inputs').forEach(el => el.style.display = currentUnit === 'metric' ? '' : 'none');
+          document.querySelectorAll('.imperial-inputs').forEach(el => el.style.display = currentUnit === 'imperial' ? '' : 'none');
+        });
+      });
+
+      // FAQ toggle
+      document.querySelectorAll('.faq-question').forEach(q => {
+        q.addEventListener('click', () => {
+          q.parentElement.classList.toggle('open');
+        });
+      });
+
+      // Calculate
+      document.getElementById('calculateBtn').addEventListener('click', calculate);
+
+      function getInputs() {
+        const gender = document.querySelector('input[name="gender"]:checked').value;
+        const age = parseFloat(document.getElementById('age').value);
+        const bodyfat = document.getElementById('bodyfat').value ? parseFloat(document.getElementById('bodyfat').value) : null;
+
+        let weightKg, heightCm;
+        if (currentUnit === 'metric') {
+          weightKg = parseFloat(document.getElementById('weight-kg').value);
+          heightCm = parseFloat(document.getElementById('height-cm').value);
+        } else {
+          weightKg = parseFloat(document.getElementById('weight-lbs').value) * 0.453592;
+          const ft = parseFloat(document.getElementById('height-ft').value) || 0;
+          const inches = parseFloat(document.getElementById('height-in').value) || 0;
+          heightCm = (ft * 12 + inches) * 2.54;
+        }
+
+        return { gender, age, weightKg, heightCm, bodyfat };
+      }
+
+      function calcMifflin(gender, weightKg, heightCm, age) {
+        if (gender === 'male') {
+          return 10 * weightKg + 6.25 * heightCm - 5 * age + 5;
+        }
+        return 10 * weightKg + 6.25 * heightCm - 5 * age - 161;
+      }
+
+      function calcHarris(gender, weightKg, heightCm, age) {
+        if (gender === 'male') {
+          return 88.362 + 13.397 * weightKg + 4.799 * heightCm - 5.677 * age;
+        }
+        return 447.593 + 9.247 * weightKg + 3.098 * heightCm - 4.330 * age;
+      }
+
+      function calcKatch(weightKg, bodyfat) {
+        const leanMass = weightKg * (1 - bodyfat / 100);
+        return 370 + 21.6 * leanMass;
+      }
+
+      function calculate() {
+        const { gender, age, weightKg, heightCm, bodyfat } = getInputs();
+
+        if (!weightKg || !heightCm || !age) return;
+
+        const mifflin = Math.round(calcMifflin(gender, weightKg, heightCm, age));
+        const harris = Math.round(calcHarris(gender, weightKg, heightCm, age));
+        let katch = null;
+
+        if (bodyfat !== null && bodyfat > 0 && bodyfat < 100) {
+          katch = Math.round(calcKatch(weightKg, bodyfat));
+        }
+
+        // Display values
+        document.getElementById('mifflinValue').textContent = mifflin.toLocaleString();
+        document.getElementById('harrisValue').textContent = harris.toLocaleString();
+
+        const katchCard = document.getElementById('katchCard');
+        const katchRow = document.getElementById('barKatchRow');
+        if (katch !== null) {
+          document.getElementById('katchValue').textContent = katch.toLocaleString();
+          document.getElementById('katchValue').style.opacity = '1';
+          katchCard.style.opacity = '1';
+          katchRow.style.display = '';
+        } else {
+          document.getElementById('katchValue').textContent = '—';
+          document.getElementById('katchValue').style.opacity = '0.4';
+          katchCard.style.opacity = '0.5';
+          katchRow.style.display = 'none';
+        }
+
+        // Bar chart
+        const allValues = [mifflin, harris];
+        if (katch !== null) allValues.push(katch);
+        const maxVal = Math.max(...allValues) * 1.15;
+
+        document.getElementById('barMifflin').style.width = `${(mifflin / maxVal) * 100}%`;
+        document.getElementById('barMifflin').textContent = `${mifflin.toLocaleString()} cal`;
+        document.getElementById('barHarris').style.width = `${(harris / maxVal) * 100}%`;
+        document.getElementById('barHarris').textContent = `${harris.toLocaleString()} cal`;
+
+        if (katch !== null) {
+          document.getElementById('barKatch').style.width = `${(katch / maxVal) * 100}%`;
+          document.getElementById('barKatch').textContent = `${katch.toLocaleString()} cal`;
+        }
+
+        // TDEE table — use Mifflin as primary BMR
+        const bmrForTdee = mifflin;
+        const activities = [
+          { name: 'Sedentary', mult: 1.2, desc: 'Little or no exercise, desk job' },
+          { name: 'Lightly Active', mult: 1.375, desc: 'Light exercise 1-3 days/week' },
+          { name: 'Moderately Active', mult: 1.55, desc: 'Moderate exercise 3-5 days/week' },
+          { name: 'Very Active', mult: 1.725, desc: 'Hard exercise 6-7 days/week' },
+          { name: 'Extra Active', mult: 1.9, desc: 'Very hard exercise, physical job' }
+        ];
+
+        const tbody = document.getElementById('activityTableBody');
+        tbody.innerHTML = '';
+        activities.forEach(a => {
+          const tdee = Math.round(bmrForTdee * a.mult);
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td>${a.name}<br><small style="color:var(--text-secondary)">${a.desc}</small></td>
+            <td>×${a.mult}</td>
+            <td class="highlight">${tdee.toLocaleString()}</td>
+          `;
+          tbody.appendChild(tr);
+        });
+
+        // Show results
+        document.getElementById('results').classList.add('active');
+        document.getElementById('results').scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
+
+      // Auto-calculate on load
+      calculate();
+    });
+  </script>
 </SiteLayout>
