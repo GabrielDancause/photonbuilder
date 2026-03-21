@@ -113,6 +113,10 @@ tr:hover{background:rgba(74,143,231,.06)}
 .rating-hy{background:rgba(245,158,11,.15);color:#f59e0b}
 .rating-d{background:rgba(239,68,68,.15);color:#ef4444}
 
+/* Cash Flow Table */
+.cashflow-section{margin:32px 0}
+.cashflow-section h2{font-size:22px;margin-bottom:16px}
+
 /* Findings */
 .findings{margin:32px 0}
 .findings h2{font-size:22px;margin-bottom:16px}
@@ -218,6 +222,24 @@ footer{border-top:1px solid var(--border-color);padding:24px 0;text-align:center
         <div class="chart-canvas-wrap">
           <canvas id="priceYieldCanvas"></canvas>
         </div>
+      </div>
+    </div>
+
+    <div class="cashflow-section" id="cashflowSection" style="display:none">
+      <h2>Cash Flow Schedule</h2>
+      <p style="color:var(--text-secondary);font-size:14px;margin-bottom:16px">Breakdown of coupon payments by period with running totals showing cumulative income over the life of the bond.</p>
+      <div class="table-wrap" style="max-height:400px;overflow-y:auto">
+        <table id="cashflowTable">
+          <thead style="position:sticky;top:0;z-index:1;background:#0c1428">
+            <tr>
+              <th>Period</th>
+              <th class="num">Coupon Payment</th>
+              <th class="num">Running Total</th>
+              <th class="num">PV of Cash Flow</th>
+            </tr>
+          </thead>
+          <tbody id="cashflowTbody"></tbody>
+        </table>
       </div>
     </div>
 
@@ -380,11 +402,11 @@ footer{border-top:1px solid var(--border-color);padding:24px 0;text-align:center
     <div class="related-section">
       <h2>Related Tools &amp; Research</h2>
       <div class="related-grid">
-        <a class="related-card" href="/sites/westmount/etf-screener">
-          <h3>ETF Screener</h3>
-          <p>Screen bond ETFs and equity ETFs by expense ratio, yield, performance, and category to find the right fund.</p>
+        <a class="related-card" href="/sites/westmount/investment-calculator">
+          <h3>Investment Calculator</h3>
+          <p>See how your money grows over time with compound interest, monthly contributions, and customizable return rates.</p>
         </a>
-        <a class="related-card" href="/sites/westmount/best-index-funds">
+        <a class="related-card" href="/sites/westmount/guide-sp500-index-funds">
           <h3>Best Index Funds</h3>
           <p>Compare top index funds including bond index funds by returns, expense ratios, and tracking error.</p>
         </a>
@@ -570,6 +592,50 @@ function calculate() {
 
   // Draw price-yield chart
   drawPriceYieldChart(fv, coupon, r.ytm, years, freq, price);
+
+  // Cash flow table
+  buildCashFlowTable(fv, coupon, r.ytm, years, freq);
+}
+
+function buildCashFlowTable(fv, couponRate, ytm, years, freq) {
+  const section = document.getElementById('cashflowSection');
+  section.style.display = '';
+  const tbody = document.getElementById('cashflowTbody');
+  const couponPerPeriod = (fv * couponRate / 100) / freq;
+  const n = Math.round(years * freq);
+  let runningTotal = 0;
+  let rows = '';
+
+  for (let t = 1; t <= n; t++) {
+    const isLast = t === n;
+    const cashFlow = couponPerPeriod + (isLast ? fv : 0);
+    runningTotal += couponPerPeriod;
+    const pv = cashFlow / Math.pow(1 + ytm / freq, t);
+    const periodLabel = freq === 1 ? `Year ${t}` : freq === 2 ? `Period ${t} (${Math.ceil(t/2)}${t % 2 === 1 ? 'a' : 'b'})` : `Q${((t-1)%4)+1} Year ${Math.ceil(t/4)}`;
+
+    rows += `<tr${isLast ? ' style="font-weight:600"' : ''}>
+      <td>${periodLabel}${isLast ? ' (maturity)' : ''}</td>
+      <td class="num">$${couponPerPeriod.toFixed(2)}</td>
+      <td class="num">$${runningTotal.toFixed(2)}</td>
+      <td class="num" style="color:var(--accent-color)">$${pv.toFixed(2)}</td>
+    </tr>`;
+  }
+
+  // Summary row
+  const totalPV = parseFloat([...Array(n)].reduce((sum, _, i) => {
+    const t = i + 1;
+    const cf = couponPerPeriod + (t === n ? fv : 0);
+    return sum + cf / Math.pow(1 + ytm / freq, t);
+  }, 0).toFixed(2));
+
+  rows += `<tr style="border-top:2px solid var(--accent-color);font-weight:700">
+    <td>Total</td>
+    <td class="num">$${(couponPerPeriod * n).toFixed(2)}</td>
+    <td class="num">$${runningTotal.toFixed(2)}</td>
+    <td class="num" style="color:var(--accent-color)">$${totalPV.toFixed(2)}</td>
+  </tr>`;
+
+  tbody.innerHTML = rows;
 }
 
 // ===== Price-Yield Chart =====
