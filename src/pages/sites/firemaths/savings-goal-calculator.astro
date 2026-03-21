@@ -6,7 +6,7 @@ const schema = {
   "@type": "WebApplication",
   "name": "Savings Goal Calculator",
   "url": "https://firemaths.info/savings-goal-calculator",
-  "description": "Interactive savings timeline calculator to determine how long to save for your financial targets.",
+  "description": "Calculate how much to save monthly or how long it takes to reach your savings goal with compound interest.",
   "applicationCategory": "FinanceApplication",
   "operatingSystem": "All",
   "offers": {
@@ -16,828 +16,957 @@ const schema = {
   }
 };
 
+const faqSchema = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "How much should I save each month?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "A common guideline is the 50/30/20 rule: 50% of income for needs, 30% for wants, and 20% for savings and debt repayment. Use the savings goal calculator above to find the exact monthly amount needed to reach your specific goal based on your timeline and expected interest rate."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How long will it take to save $10,000?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "The time depends on your monthly contribution and interest rate. For example, saving $400/month with a 4% annual return takes about 24 months. Saving $200/month at the same rate takes about 47 months. Switch to 'How long to save' mode in our calculator to get your exact timeline."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What interest rate should I use for my savings plan?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "For a high-yield savings account, use 4-5% APY. For a regular savings account, use 0.5-1%. For investments in index funds, a historical average of 7-10% is common, though returns are not guaranteed and vary year to year."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Should I save for multiple goals at the same time?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes, it's generally recommended to save for multiple goals simultaneously by splitting your savings across different accounts. Prioritize your emergency fund first (3-6 months of expenses), then allocate remaining savings toward other goals based on timeline and importance."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How does compound interest help me reach my savings goal faster?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Compound interest earns interest on both your original contributions and previously earned interest. Over time this creates exponential growth. The longer your savings timeline, the more powerful compounding becomes — which is why starting early makes a significant difference."
+      }
+    }
+  ]
+};
+
 export const meta = {
-  title: "Savings Goal Calculator — Reach Your Target Faster",
-  description: "Find out exactly when you'll hit your financial target. Your timeline might be years shorter than you think—discover the math that makes it happen.",
+  title: "Savings Goal Calculator | firemaths.info",
+  description: "Calculate how much to save monthly to reach your goal or how long it will take. Visualize contributions vs interest with milestone tracking.",
   category: "tool",
-  published: "2026-03-15",
+  published: "2026-03-21",
 };
 ---
 
 <SiteLayout
   site="firemaths"
-  title="Savings Goal Calculator: How Long Until You Hit Your Target?"
-  description="Find out exactly when you'll hit your financial target. Your timeline might be years shorter than you think—discover the math that makes it happen."
+  title="Savings Goal Calculator | firemaths.info"
+  description="Calculate how much to save monthly to reach your goal or how long it will take. Visualize contributions vs interest with milestone tracking."
   canonical="https://firemaths.info/savings-goal-calculator" schema={schema}
 >
   <style>
-:root {
-            --chart-color-a: #D4A017;
+    :root {
+      --clr-contrib: #4A90E2;
+      --clr-interest: #D4A017;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-primary);
+      font-family: var(--font-ui);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+    h1, h2, h3, h4 { font-weight: 700; line-height: 1.2; color: var(--text-primary); }
+    .container { max-width: 1000px; margin: 0 auto; padding: 2rem 1.5rem; }
 
-}
+    header { text-align: center; margin-bottom: 2rem; }
+    header h1 { font-size: 2.5rem; margin-bottom: 0.5rem; color: var(--accent-color); }
+    header p { color: var(--text-secondary); font-size: 1.1rem; }
 
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-        }
+    /* Mode toggle */
+    .mode-toggle {
+      display: flex;
+      background-color: var(--bg-color);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      overflow: hidden;
+      margin-bottom: 2rem;
+    }
+    .mode-btn {
+      flex: 1;
+      padding: 0.75rem 1rem;
+      background: none;
+      border: none;
+      color: var(--text-secondary);
+      font-family: var(--font-ui);
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .mode-btn.active {
+      background-color: var(--accent-color);
+      color: #000;
+    }
 
-        body {
-            background-color: var(--bg-color);
-            color: var(--text-primary);
-            font-family: var(--font-ui);
-            line-height: 1.6;
-            -webkit-font-smoothing: antialiased;
-        }
+    /* Layout */
+    .calc-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 2rem;
+      margin-bottom: 2rem;
+    }
+    @media (min-width: 768px) {
+      .calc-grid { grid-template-columns: 1fr 1fr; }
+    }
 
-        h1, h2, h3, h4 {
-            font-weight: 700;
-            line-height: 1.2;
-            color: var(--text-primary);
-        }
+    .card {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 1.5rem;
+    }
+    .card-title {
+      font-size: 1.25rem;
+      margin-bottom: 1.5rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--border-color);
+    }
 
-        .container {
-            max-width: 1000px;
-            margin: 0 auto;
-            padding: 2rem 1.5rem;
-        }
+    /* Inputs */
+    .input-group { margin-bottom: 1.25rem; }
+    .input-group label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+    }
+    .input-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+    .prefix, .suffix {
+      position: absolute;
+      color: var(--text-secondary);
+      font-family: var(--font-mono);
+      font-size: 1rem;
+      pointer-events: none;
+    }
+    .prefix { left: 1rem; }
+    .suffix { right: 1rem; }
+    input[type="number"] {
+      width: 100%;
+      background-color: var(--bg-color);
+      border: 1px solid var(--border-color);
+      color: var(--text-primary);
+      font-family: var(--font-mono);
+      font-size: 1rem;
+      padding: 0.75rem 1rem;
+      border-radius: 6px;
+      transition: border-color 0.2s;
+      -moz-appearance: textfield;
+    }
+    input[type="number"]::-webkit-outer-spin-button,
+    input[type="number"]::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    input[type="number"]:focus { outline: none; border-color: var(--accent-color); }
+    .has-prefix input { padding-left: 2rem; }
+    .has-suffix input { padding-right: 2.5rem; }
 
-        header {
-            text-align: center;
-            margin-bottom: 3rem;
-        }
+    /* Presets */
+    .presets {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+      margin-bottom: 1.5rem;
+    }
+    .preset-btn {
+      padding: 0.4rem 0.75rem;
+      background-color: var(--bg-color);
+      border: 1px solid var(--border-color);
+      color: var(--text-secondary);
+      font-family: var(--font-ui);
+      font-size: 0.8rem;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .preset-btn:hover {
+      border-color: var(--accent-color);
+      color: var(--text-primary);
+    }
+    .preset-btn.active {
+      border-color: var(--accent-color);
+      background-color: rgba(212,160,23,0.1);
+      color: var(--accent-color);
+    }
 
-        header h1 {
-            font-size: 2.5rem;
-            margin-bottom: 0.5rem;
-            color: var(--accent-color);
-        }
+    /* Results */
+    .results {
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--border-color);
+    }
+    .result-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+    .result-label {
+      color: var(--text-secondary);
+      font-size: 0.875rem;
+    }
+    .result-value {
+      font-family: var(--font-mono);
+      font-size: 1.125rem;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .result-final .result-value {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--accent-color);
+    }
+    .copy-btn {
+      background: none;
+      border: 1px solid var(--border-color);
+      color: var(--text-secondary);
+      cursor: pointer;
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+      font-size: 0.75rem;
+      font-family: var(--font-ui);
+      transition: all 0.2s;
+    }
+    .copy-btn:hover {
+      border-color: var(--accent-color);
+      color: var(--text-primary);
+    }
 
-        header p {
-            color: var(--text-secondary);
-            font-size: 1.1rem;
-        }
+    /* Milestones */
+    .milestones {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.75rem;
+      margin-top: 1.5rem;
+    }
+    .milestone {
+      text-align: center;
+      padding: 0.75rem 0.5rem;
+      background-color: var(--bg-color);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      transition: border-color 0.3s;
+    }
+    .milestone.reached { border-color: var(--accent-color); }
+    .milestone-pct {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--accent-color);
+      margin-bottom: 0.25rem;
+    }
+    .milestone-val {
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      color: var(--text-primary);
+    }
+    .milestone-date {
+      font-size: 0.7rem;
+      color: var(--text-secondary);
+      margin-top: 0.15rem;
+    }
+    @media (max-width: 500px) {
+      .milestones { grid-template-columns: repeat(2, 1fr); }
+    }
 
-        .calculator-grid {
-            display: grid;
-            grid-template-columns: 1fr;
-            gap: 2rem;
-            margin-bottom: 3rem;
-        }
+    /* Chart */
+    .chart-section {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+    }
+    .chart-header { margin-bottom: 1rem; text-align: center; }
+    .chart-header h2 { font-size: 1.25rem; }
+    .chart-legend {
+      display: flex;
+      justify-content: center;
+      gap: 1.5rem;
+      margin-bottom: 1rem;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+    }
+    .legend-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+    .chart-container { width: 100%; height: 400px; position: relative; }
+    canvas { width: 100%; height: 100%; }
 
-        @media (min-width: 768px) {
-            .calculator-grid {
-                grid-template-columns: 1fr 1fr;
-            }
-        }
+    /* SEO content */
+    .seo-content { margin-bottom: 4rem; }
+    .seo-content h2 {
+      font-size: 1.75rem;
+      margin-top: 2.5rem;
+      margin-bottom: 1rem;
+      color: var(--accent-color);
+    }
+    .seo-content p { margin-bottom: 1rem; color: var(--text-secondary); }
+    .seo-content ul { margin-bottom: 1.5rem; padding-left: 1.5rem; color: var(--text-secondary); }
+    .seo-content li { margin-bottom: 0.5rem; }
 
-        .scenario-card {
-            background-color: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 1.5rem;
-        }
+    /* FAQ */
+    .faq-section { margin-bottom: 4rem; }
+    .faq-section h2 {
+      font-size: 1.75rem;
+      margin-bottom: 1.5rem;
+      color: var(--accent-color);
+    }
+    .faq-item {
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      margin-bottom: 0.75rem;
+      overflow: hidden;
+    }
+    .faq-question {
+      width: 100%;
+      background-color: var(--card-bg);
+      border: none;
+      color: var(--text-primary);
+      font-family: var(--font-ui);
+      font-size: 1rem;
+      font-weight: 600;
+      padding: 1rem 1.25rem;
+      text-align: left;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: background-color 0.2s;
+    }
+    .faq-question:hover { background-color: var(--bg-color); }
+    .faq-arrow {
+      transition: transform 0.2s;
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+    }
+    .faq-item.open .faq-arrow { transform: rotate(180deg); }
+    .faq-answer {
+      display: none;
+      padding: 0 1.25rem 1rem;
+      color: var(--text-secondary);
+      line-height: 1.7;
+      background-color: var(--card-bg);
+    }
+    .faq-item.open .faq-answer { display: block; }
 
-        .scenario-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1.5rem;
-            padding-bottom: 1rem;
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        .scenario-header h2 {
-            font-size: 1.25rem;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .input-group {
-            margin-bottom: 1.25rem;
-        }
-
-        .input-group label {
-            display: flex;
-            justify-content: space-between;
-            margin-bottom: 0.5rem;
-            font-size: 0.875rem;
-            font-weight: 500;
-            color: var(--text-secondary);
-        }
-
-        .input-wrapper {
-            position: relative;
-            display: flex;
-            align-items: center;
-            margin-bottom: 0.5rem;
-        }
-
-        .prefix, .suffix {
-            position: absolute;
-            color: var(--text-secondary);
-            font-family: var(--font-mono);
-            font-size: 1rem;
-            pointer-events: none;
-        }
-
-        .prefix { left: 1rem; }
-        .suffix { right: 1rem; }
-
-        input[type="number"] {
-            width: 100%;
-            background-color: var(--bg-color);
-            border: 1px solid var(--border-color);
-            color: var(--text-primary);
-            font-family: var(--font-mono);
-            font-size: 1rem;
-            padding: 0.75rem 1rem;
-            border-radius: 6px;
-            transition: border-color 0.2s;
-            -moz-appearance: textfield;
-        }
-
-        input[type="number"]::-webkit-outer-spin-button,
-        input[type="number"]::-webkit-inner-spin-button {
-            -webkit-appearance: none;
-            margin: 0;
-        }
-
-        input[type="number"]:focus {
-            outline: none;
-            border-color: var(--accent-color);
-        }
-
-        .has-prefix input { padding-left: 2rem; }
-        .has-suffix input { padding-right: 2.5rem; }
-
-        input[type="range"] {
-            width: 100%;
-            accent-color: var(--accent-color);
-            cursor: pointer;
-        }
-
-        .checkbox-group {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            margin-top: 1rem;
-        }
-
-        .checkbox-group input {
-            accent-color: var(--accent-color);
-            width: 1.2rem;
-            height: 1.2rem;
-            cursor: pointer;
-        }
-
-        .checkbox-group label {
-            font-size: 0.875rem;
-            color: var(--text-secondary);
-            cursor: pointer;
-            margin-bottom: 0;
-        }
-
-        .results {
-            padding-top: 1.5rem;
-            border-top: 1px solid var(--border-color);
-        }
-
-        .result-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 1rem;
-        }
-
-        .result-label {
-            color: var(--text-secondary);
-            font-size: 0.875rem;
-        }
-
-        .result-value {
-            font-family: var(--font-mono);
-            font-size: 1.125rem;
-            font-weight: 500;
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-        }
-
-        .result-final {
-            margin-bottom: 1.5rem;
-            padding-bottom: 1.5rem;
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        .result-final .result-label {
-            font-size: 1rem;
-            color: var(--text-primary);
-        }
-
-        .result-final .result-value {
-            font-size: 1.75rem;
-            font-weight: 700;
-            color: var(--accent-color);
-        }
-
-        .copy-btn {
-            background: none;
-            border: 1px solid var(--border-color);
-            color: var(--text-secondary);
-            cursor: pointer;
-            padding: 0.25rem 0.5rem;
-            border-radius: 4px;
-            font-size: 0.75rem;
-            font-family: var(--font-ui);
-            transition: all 0.2s;
-        }
-
-        .copy-btn:hover {
-            border-color: var(--accent-color);
-            color: var(--text-primary);
-        }
-
-        .milestones {
-            margin-top: 1.5rem;
-        }
-
-        .milestone-item {
-            display: flex;
-            align-items: center;
-            margin-bottom: 0.75rem;
-            font-size: 0.875rem;
-        }
-
-        .milestone-marker {
-            width: 3rem;
-            font-family: var(--font-mono);
-            color: var(--accent-color);
-            font-weight: 700;
-        }
-
-        .milestone-bar-container {
-            flex-grow: 1;
-            height: 8px;
-            background-color: var(--border-color);
-            border-radius: 4px;
-            margin: 0 1rem;
-            overflow: hidden;
-        }
-
-        .milestone-bar {
-            height: 100%;
-            background-color: var(--accent-color);
-            border-radius: 4px;
-        }
-
-        .milestone-time {
-            width: 5rem;
-            text-align: right;
-            font-family: var(--font-mono);
-            color: var(--text-secondary);
-        }
-
-        .what-if-scenarios {
-            margin-top: 1.5rem;
-            padding-top: 1.5rem;
-            border-top: 1px solid var(--border-color);
-        }
-
-        .what-if-item {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 0.75rem;
-            font-size: 0.875rem;
-            color: var(--text-secondary);
-        }
-
-        .what-if-val {
-            font-family: var(--font-mono);
-            color: var(--text-primary);
-        }
-
-        .chart-section {
-            background-color: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 1.5rem;
-            margin-bottom: 4rem;
-        }
-
-        .chart-header {
-            margin-bottom: 1.5rem;
-            text-align: center;
-        }
-
-        .chart-container {
-            width: 100%;
-            height: 400px;
-            position: relative;
-        }
-
-        canvas {
-            width: 100%;
-            height: 100%;
-        }
-
-        .seo-content {
-            margin-bottom: 4rem;
-        }
-
-        .seo-content h2 {
-            font-size: 1.75rem;
-            margin-top: 2.5rem;
-            margin-bottom: 1rem;
-            color: var(--accent-color);
-        }
-
-        .seo-content p {
-            margin-bottom: 1rem;
-            color: var(--text-secondary);
-        }
-
-        .faq-section {
-            margin-top: 3rem;
-        }
-
-        .faq-item {
-            background-color: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 1.5rem;
-            margin-bottom: 1rem;
-        }
-
-        .faq-item h3 {
-            font-size: 1.1rem;
-            margin-bottom: 0.5rem;
-            color: var(--text-primary);
-        }
-
-        .faq-item p {
-            color: var(--text-secondary);
-            font-size: 0.95rem;
-            margin-bottom: 0;
-        }
-
-        footer {
-            text-align: center;
-            padding: 2rem 0;
-            border-top: 1px solid var(--border-color);
-            color: var(--text-secondary);
-            font-size: 0.875rem;
-        }
+    /* Related */
+    .related-tools {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+    @media (max-width: 500px) {
+      .related-tools { grid-template-columns: 1fr; }
+    }
+    .related-link {
+      display: block;
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 1rem;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+    .related-link:hover {
+      border-color: var(--accent-color);
+      transform: translateY(-2px);
+    }
+    .related-link h3 { font-size: 0.9rem; color: var(--text-primary); margin-bottom: 0.25rem; }
+    .related-link p { font-size: 0.8rem; color: var(--text-secondary); }
   </style>
 
-<div class="container">
-    <h1>Savings Goal Calculator: How Long Until You Hit Your Target?</h1>
+  <script type="application/ld+json" set:html={JSON.stringify(faqSchema)} />
+
+  <div class="container">
+    <header>
+      <h1>Savings Goal Calculator</h1>
+      <p>Find out how much to save monthly or how long it takes to reach any savings goal.</p>
+    </header>
 
     <main>
-        <div class="calculator-grid">
-            <!-- Inputs -->
-            <div class="scenario-card">
-                <div class="scenario-header">
-                    <h2>Your Parameters</h2>
-                </div>
+      <div class="mode-toggle">
+        <button class="mode-btn active" id="mode-monthly" type="button">How Much to Save Monthly</button>
+        <button class="mode-btn" id="mode-timeline" type="button">How Long to Save</button>
+      </div>
 
-                <div class="inputs">
-                    <div class="input-group">
-                        <label for="goal-amount"><span>Savings Goal</span> <span id="goal-val-display" style="font-family: var(--font-mono);">$100,000</span></label>
-                        <div class="input-wrapper has-prefix">
-                            <span class="prefix">$</span>
-                            <input type="number" id="goal-amount" value="100000" min="1000" step="1000">
-                        </div>
-                        <input type="range" id="goal-slider" min="1000" max="1000000" step="1000" value="100000">
-                    </div>
+      <div class="calc-grid">
+        <!-- Inputs -->
+        <div class="card">
+          <h2 class="card-title">Your Savings Goal</h2>
 
-                    <div class="input-group">
-                        <label for="current-savings"><span>Current Savings</span> <span id="current-val-display" style="font-family: var(--font-mono);">$10,000</span></label>
-                        <div class="input-wrapper has-prefix">
-                            <span class="prefix">$</span>
-                            <input type="number" id="current-savings" value="10000" min="0" step="100">
-                        </div>
-                        <input type="range" id="current-slider" min="0" max="500000" step="1000" value="10000">
-                    </div>
+          <div class="presets" id="presets">
+            <button class="preset-btn" type="button" data-goal="15000">Emergency Fund</button>
+            <button class="preset-btn" type="button" data-goal="60000">Down Payment</button>
+            <button class="preset-btn" type="button" data-goal="5000">Vacation</button>
+            <button class="preset-btn" type="button" data-goal="30000">Car</button>
+            <button class="preset-btn" type="button" data-goal="25000">Wedding</button>
+          </div>
 
-                    <div class="input-group">
-                        <label for="monthly-contrib"><span>Monthly Contribution</span> <span id="monthly-val-display" style="font-family: var(--font-mono);">$500</span></label>
-                        <div class="input-wrapper has-prefix">
-                            <span class="prefix">$</span>
-                            <input type="number" id="monthly-contrib" value="500" min="0" step="50">
-                        </div>
-                        <input type="range" id="monthly-slider" min="0" max="10000" step="50" value="500">
-                    </div>
-
-                    <div class="input-group">
-                        <label for="expected-return"><span>Expected Annual Return</span> <span id="return-val-display" style="font-family: var(--font-mono);">7.0%</span></label>
-                        <div class="input-wrapper has-suffix">
-                            <span class="suffix">%</span>
-                            <input type="number" id="expected-return" value="7" min="0" step="0.1" max="30">
-                        </div>
-                        <input type="range" id="return-slider" min="0" max="15" step="0.1" value="7">
-                    </div>
-
-                    <div class="checkbox-group">
-                        <input type="checkbox" id="adjust-inflation" checked>
-                        <label for="adjust-inflation">Adjust for 3% annual inflation</label>
-                    </div>
-                </div>
+          <div class="input-group">
+            <label for="goal-amount">Goal Amount</label>
+            <div class="input-wrapper has-prefix">
+              <span class="prefix">$</span>
+              <input type="number" id="goal-amount" value="10000" min="0" step="500">
             </div>
+          </div>
 
-            <!-- Results -->
-            <div class="scenario-card">
-                <div class="scenario-header">
-                    <h2>Your Timeline</h2>
-                </div>
-
-                <div class="results">
-                    <div class="result-item result-final">
-                        <span class="result-label">Time to Goal</span>
-                        <div class="result-value">
-                            <span id="time-to-goal">0 yrs 0 mos</span>
-                            <button class="copy-btn" onclick="copyValue('time-to-goal', this)">Copy</button>
-                        </div>
-                    </div>
-
-                    <div class="result-item">
-                        <span class="result-label">Total Contributions</span>
-                        <span class="result-value" id="total-contributions">$0</span>
-                    </div>
-                    <div class="result-item">
-                        <span class="result-label">Total Interest Earned</span>
-                        <span class="result-value" id="total-interest">$0</span>
-                    </div>
-
-                    <div class="milestones">
-                        <h3 style="font-size: 1rem; margin-bottom: 1rem; color: var(--text-primary);">Milestones</h3>
-
-                        <div class="milestone-item">
-                            <div class="milestone-marker">25%</div>
-                            <div class="milestone-bar-container"><div class="milestone-bar" style="width: 25%"></div></div>
-                            <div class="milestone-time" id="time-25">--</div>
-                        </div>
-                        <div class="milestone-item">
-                            <div class="milestone-marker">50%</div>
-                            <div class="milestone-bar-container"><div class="milestone-bar" style="width: 50%"></div></div>
-                            <div class="milestone-time" id="time-50">--</div>
-                        </div>
-                        <div class="milestone-item">
-                            <div class="milestone-marker">75%</div>
-                            <div class="milestone-bar-container"><div class="milestone-bar" style="width: 75%"></div></div>
-                            <div class="milestone-time" id="time-75">--</div>
-                        </div>
-                    </div>
-
-                    <div class="what-if-scenarios">
-                        <h3 style="font-size: 1rem; margin-bottom: 1rem; color: var(--text-primary);">What If?</h3>
-                        <div class="what-if-item">
-                            <span>Add $100/mo to contribution:</span>
-                            <span class="what-if-val" id="what-if-add-100">--</span>
-                        </div>
-                        <div class="what-if-item">
-                            <span>Return drops by 2%:</span>
-                            <span class="what-if-val" id="what-if-drop-return">--</span>
-                        </div>
-                    </div>
-                </div>
+          <div class="input-group">
+            <label for="current-savings">Current Savings</label>
+            <div class="input-wrapper has-prefix">
+              <span class="prefix">$</span>
+              <input type="number" id="current-savings" value="0" min="0" step="100">
             </div>
+          </div>
+
+          <div class="input-group">
+            <label for="interest-rate">Annual Interest Rate (APY)</label>
+            <div class="input-wrapper has-suffix">
+              <span class="suffix">%</span>
+              <input type="number" id="interest-rate" value="4.5" min="0" step="0.1" max="30">
+            </div>
+          </div>
+
+          <!-- Mode A: timeline given, solve for monthly -->
+          <div class="input-group" id="timeline-input">
+            <label for="timeline-months">Timeline (months)</label>
+            <div class="input-wrapper">
+              <input type="number" id="timeline-months" value="24" min="1" max="600" step="1">
+            </div>
+          </div>
+
+          <!-- Mode B: monthly given, solve for timeline -->
+          <div class="input-group" id="monthly-input" style="display:none;">
+            <label for="monthly-savings">Monthly Savings</label>
+            <div class="input-wrapper has-prefix">
+              <span class="prefix">$</span>
+              <input type="number" id="monthly-savings" value="400" min="0" step="25">
+            </div>
+          </div>
         </div>
 
-        <div class="chart-section">
-            <div class="chart-header">
-                <h2>Savings Growth Over Time</h2>
+        <!-- Results -->
+        <div class="card">
+          <h2 class="card-title">Results</h2>
+
+          <div class="result-item result-final">
+            <span class="result-label" id="primary-label">Monthly Savings Needed</span>
+            <div class="result-value">
+              <span id="primary-value">$0</span>
+              <button class="copy-btn" id="copy-primary" type="button">Copy</button>
             </div>
-            <div class="chart-container">
-                <canvas id="growthChart"></canvas>
+          </div>
+
+          <div class="results">
+            <div class="result-item">
+              <span class="result-label">Goal Amount</span>
+              <span class="result-value" id="res-goal">$0</span>
             </div>
+            <div class="result-item">
+              <span class="result-label">Total Contributions</span>
+              <span class="result-value" id="res-contributions">$0</span>
+            </div>
+            <div class="result-item">
+              <span class="result-label">Interest Earned</span>
+              <span class="result-value" id="res-interest">$0</span>
+            </div>
+            <div class="result-item">
+              <span class="result-label">Target Date</span>
+              <span class="result-value" id="res-date">&mdash;</span>
+            </div>
+          </div>
+
+          <div class="milestones">
+            <div class="milestone" id="ms-25">
+              <div class="milestone-pct">25%</div>
+              <div class="milestone-val" id="ms-25-val">&mdash;</div>
+              <div class="milestone-date" id="ms-25-date"></div>
+            </div>
+            <div class="milestone" id="ms-50">
+              <div class="milestone-pct">50%</div>
+              <div class="milestone-val" id="ms-50-val">&mdash;</div>
+              <div class="milestone-date" id="ms-50-date"></div>
+            </div>
+            <div class="milestone" id="ms-75">
+              <div class="milestone-pct">75%</div>
+              <div class="milestone-val" id="ms-75-val">&mdash;</div>
+              <div class="milestone-date" id="ms-75-date"></div>
+            </div>
+            <div class="milestone" id="ms-100">
+              <div class="milestone-pct">100%</div>
+              <div class="milestone-val" id="ms-100-val">&mdash;</div>
+              <div class="milestone-date" id="ms-100-date"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Chart -->
+      <div class="chart-section">
+        <div class="chart-header">
+          <h2>Growth Over Time</h2>
+        </div>
+        <div class="chart-legend">
+          <div class="legend-item"><span class="legend-dot" style="background:var(--clr-contrib);"></span> Contributions</div>
+          <div class="legend-item"><span class="legend-dot" style="background:var(--clr-interest);"></span> Interest Earned</div>
+        </div>
+        <div class="chart-container">
+          <canvas id="growthChart"></canvas>
+        </div>
+      </div>
+
+      <!-- SEO content -->
+      <div class="seo-content">
+        <h2>How to Use the Savings Goal Calculator</h2>
+        <p>This savings plan calculator offers two modes. In <strong>"How Much to Save Monthly"</strong> mode, enter your savings goal, timeline, and expected interest rate to find the exact monthly deposit needed. In <strong>"How Long to Save"</strong> mode, enter your goal and how much you can save each month to see when you'll reach your target.</p>
+        <p>The growth chart visualizes how your contributions and earned interest stack up over time, and milestone markers show when you'll hit 25%, 50%, 75%, and 100% of your goal.</p>
+
+        <h2>Savings Goal Presets</h2>
+        <ul>
+          <li><strong>Emergency Fund ($15,000):</strong> Financial experts recommend saving 3&ndash;6 months of living expenses. This preset uses $15,000 as a baseline for a household with $2,500&ndash;$5,000 in monthly expenses.</li>
+          <li><strong>Down Payment ($60,000):</strong> A typical 20% down payment on a $300,000 home. Adjust the amount based on home prices in your area.</li>
+          <li><strong>Vacation ($5,000):</strong> A comfortable travel budget for a week-long trip. Saving ahead avoids putting travel on credit cards.</li>
+          <li><strong>Car ($30,000):</strong> The average price of a new vehicle. Even partial cash savings can reduce your loan amount and interest paid.</li>
+          <li><strong>Wedding ($25,000):</strong> Close to the national average wedding cost. Starting early lets compound interest help cover part of the bill.</li>
+        </ul>
+
+        <h2>The Math Behind the Savings Calculator</h2>
+        <p>For the "monthly savings needed" calculation, the calculator uses the future value of an annuity formula rearranged to solve for the periodic payment. Given a goal amount <em>FV</em>, current savings <em>PV</em>, monthly interest rate <em>r</em>, and number of months <em>n</em>:</p>
+        <p><strong>Monthly Payment = (FV &minus; PV &times; (1 + r)<sup>n</sup>) &times; r / ((1 + r)<sup>n</sup> &minus; 1)</strong></p>
+        <p>For the "how long to save" calculation, the formula is rearranged to solve for <em>n</em> (number of months), using logarithms to determine how many compounding periods are needed to reach the target.</p>
+
+        <h2>Tips for Reaching Your Savings Goal</h2>
+        <ul>
+          <li><strong>Automate your savings:</strong> Set up automatic transfers on payday so saving happens before spending.</li>
+          <li><strong>Use a high-yield savings account:</strong> Earn 4&ndash;5% APY instead of the 0.01% offered by many traditional banks.</li>
+          <li><strong>Track your progress:</strong> Watching your balance grow past each milestone keeps motivation high.</li>
+          <li><strong>Adjust as needed:</strong> If you get a raise or cut expenses, increase your monthly contribution and recalculate your timeline.</li>
+          <li><strong>Separate goal accounts:</strong> Many banks offer sub-accounts or buckets &mdash; use one per goal to avoid mixing funds.</li>
+        </ul>
+      </div>
+
+      <!-- FAQ -->
+      <div class="faq-section">
+        <h2>Frequently Asked Questions</h2>
+
+        <div class="faq-item">
+          <button class="faq-question" type="button">
+            How much should I save each month?
+            <span class="faq-arrow">&#9660;</span>
+          </button>
+          <div class="faq-answer">A common guideline is the 50/30/20 rule: 50% of income for needs, 30% for wants, and 20% for savings and debt repayment. Use the calculator above to find the exact monthly amount needed to reach your specific goal based on your timeline and expected interest rate.</div>
         </div>
 
-        <div class="seo-content">
-            <h2>Understanding Your Savings Timeline</h2>
-            <p>A savings timeline calculator helps you bridge the gap between where you are today and where you want to be financially. Whether you're saving for a house down payment, a wedding, or aiming for early retirement (FIRE), knowing exactly how long to save for your target gives you a concrete roadmap.</p>
-            <p>The math is simple but powerful: it combines your current starting amount with your ongoing monthly contributions, and then applies compound interest over time. If your expected return is higher than inflation, your money works for you, dramatically shortening your savings timeline.</p>
-
-            <div class="faq-section">
-                <h2>Frequently Asked Questions</h2>
-
-                <div class="faq-item">
-                    <h3>How does a savings goal calculator work?</h3>
-                    <p>A savings goal calculator determines how long it takes to reach a specific financial target by compounding your current savings and regular monthly contributions at an expected annual return rate.</p>
-                </div>
-
-                <div class="faq-item">
-                    <h3>How long to save for a down payment or major purchase?</h3>
-                    <p>The timeline depends on your initial savings, monthly contributions, and where you invest the money. Use this savings timeline calculator to instantly see how many months or years you need to save.</p>
-                </div>
-
-                <div class="faq-item">
-                    <h3>What is the best savings timeline calculator?</h3>
-                    <p>The best calculators account for current savings, monthly contributions, compound interest, and inflation to give you an accurate real-world timeline for reaching your goals.</p>
-                </div>
-
-                <div class="faq-item">
-                    <h3>Should I adjust my savings goal calculator for inflation?</h3>
-                    <p>Yes. If your goal is years away, inflation reduces your purchasing power. Adjusting for inflation ensures that your target amount will actually buy what you need when you finally reach it.</p>
-                </div>
-
-                <div class="faq-item">
-                    <h3>How can I speed up my savings timeline?</h3>
-                    <p>You can hit your target faster by increasing your monthly contributions, starting with a larger initial amount, or investing in assets with a higher expected return rate.</p>
-                </div>
-            </div>
+        <div class="faq-item">
+          <button class="faq-question" type="button">
+            How long will it take to save $10,000?
+            <span class="faq-arrow">&#9660;</span>
+          </button>
+          <div class="faq-answer">The time depends on your monthly contribution and interest rate. For example, saving $400/month with a 4% annual return takes about 24 months. Saving $200/month at the same rate takes about 47 months. Switch to "How long to save" mode to get your exact timeline.</div>
         </div>
+
+        <div class="faq-item">
+          <button class="faq-question" type="button">
+            What interest rate should I use for my savings plan?
+            <span class="faq-arrow">&#9660;</span>
+          </button>
+          <div class="faq-answer">For a high-yield savings account, use 4&ndash;5% APY. For a regular savings account, use 0.5&ndash;1%. For investments in index funds, a historical average of 7&ndash;10% is common, though returns are not guaranteed and vary year to year.</div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-question" type="button">
+            Should I save for multiple goals at the same time?
+            <span class="faq-arrow">&#9660;</span>
+          </button>
+          <div class="faq-answer">Yes, it's generally recommended to save for multiple goals simultaneously by splitting your savings across different accounts or buckets. Prioritize your emergency fund first (3&ndash;6 months of expenses), then allocate remaining savings toward other goals based on timeline and importance.</div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-question" type="button">
+            How does compound interest help me reach my savings goal faster?
+            <span class="faq-arrow">&#9660;</span>
+          </button>
+          <div class="faq-answer">Compound interest earns interest on both your original contributions and previously earned interest. Over time this creates exponential growth. The longer your savings timeline, the more powerful compounding becomes &mdash; which is why starting early makes a significant difference.</div>
+        </div>
+      </div>
+
+      <!-- Related tools -->
+      <h2 style="font-size:1.25rem;margin-bottom:1rem;color:var(--accent-color);">Related Tools</h2>
+      <div class="related-tools">
+        <a href="/compound-interest-calculator" class="related-link">
+          <h3>Compound Interest Calculator</h3>
+          <p>Compare investment growth scenarios side by side.</p>
+        </a>
+        <a href="/investment-calculator" class="related-link">
+          <h3>Investment Calculator</h3>
+          <p>Model returns for stocks, bonds, and index funds.</p>
+        </a>
+      </div>
     </main>
+  </div>
 
-</div>
   <script is:inline>
-const formatCurrency = (value) => {
-        return new Intl.NumberFormat('en-US', {
-            style: 'currency',
-            currency: 'USD',
-            maximumFractionDigits: 0
-        }).format(value);
-    };
+    const fmt = (v) => new Intl.NumberFormat('en-US', { style:'currency', currency:'USD', maximumFractionDigits:0 }).format(v);
+    const addMo = (d, m) => { const r = new Date(d); r.setMonth(r.getMonth() + m); return r; };
+    const fmtDate = (d) => d.toLocaleDateString('en-US', { month:'short', year:'numeric' });
 
-    const formatTime = (months) => {
-        if (!isFinite(months)) return "Never";
-        const y = Math.floor(months / 12);
-        const m = Math.round(months % 12);
-        if (y === 0) return `${m} mo${m !== 1 ? 's' : ''}`;
-        if (m === 0) return `${y} yr${y !== 1 ? 's' : ''}`;
-        return `${y} yr${y !== 1 ? 's' : ''} ${m} mo${m !== 1 ? 's' : ''}`;
-    };
+    // Copy
+    document.getElementById('copy-primary').addEventListener('click', async function() {
+      const text = document.getElementById('primary-value').innerText;
+      try {
+        await navigator.clipboard.writeText(text);
+        this.innerText = 'Copied!';
+        setTimeout(() => { this.innerText = 'Copy'; }, 2000);
+      } catch(e) {}
+    });
 
-    window.copyValue = async (elementId, btn) => {
-        const text = document.getElementById(elementId).innerText;
-        try {
-            await navigator.clipboard.writeText(text);
-            const originalText = btn.innerText;
-            btn.innerText = 'Copied!';
-            setTimeout(() => {
-                btn.innerText = originalText;
-            }, 2000);
-        } catch (err) {
-            console.error('Failed to copy text: ', err);
+    // State
+    let mode = 'monthly';
+    const canvas = document.getElementById('growthChart');
+    const ctx = canvas.getContext('2d');
+
+    // Mode toggle
+    document.getElementById('mode-monthly').addEventListener('click', () => setMode('monthly'));
+    document.getElementById('mode-timeline').addEventListener('click', () => setMode('timeline'));
+
+    function setMode(m) {
+      mode = m;
+      document.getElementById('mode-monthly').classList.toggle('active', m === 'monthly');
+      document.getElementById('mode-timeline').classList.toggle('active', m === 'timeline');
+      document.getElementById('timeline-input').style.display = m === 'monthly' ? '' : 'none';
+      document.getElementById('monthly-input').style.display = m === 'timeline' ? '' : 'none';
+      document.getElementById('primary-label').textContent = m === 'monthly' ? 'Monthly Savings Needed' : 'Time to Reach Goal';
+      calculate();
+    }
+
+    // Presets
+    document.getElementById('presets').addEventListener('click', (e) => {
+      const btn = e.target.closest('.preset-btn');
+      if (!btn) return;
+      document.getElementById('goal-amount').value = btn.dataset.goal;
+      document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      calculate();
+    });
+
+    // FAQ
+    document.querySelectorAll('.faq-question').forEach(btn => {
+      btn.addEventListener('click', () => btn.parentElement.classList.toggle('open'));
+    });
+
+    // Math helpers
+    function solveMonthly(goal, current, rateAnnual, months) {
+      const r = (rateAnnual / 100) / 12;
+      if (months <= 0) return 0;
+      if (r === 0) return Math.max(0, (goal - current) / months);
+      const fvCurrent = current * Math.pow(1 + r, months);
+      const needed = goal - fvCurrent;
+      if (needed <= 0) return 0;
+      return needed * r / (Math.pow(1 + r, months) - 1);
+    }
+
+    function solveMonths(goal, current, rateAnnual, monthly) {
+      if (current >= goal) return 0;
+      if (monthly <= 0) {
+        const r = (rateAnnual / 100) / 12;
+        if (r <= 0) return Infinity;
+        return Math.ceil(Math.log(goal / current) / Math.log(1 + r));
+      }
+      const r = (rateAnnual / 100) / 12;
+      if (r === 0) return Math.ceil((goal - current) / monthly);
+      const pmtR = monthly / r;
+      const x = (goal + pmtR) / (current + pmtR);
+      if (x <= 0) return Infinity;
+      return Math.ceil(Math.log(x) / Math.log(1 + r));
+    }
+
+    function buildHistory(current, monthlySavings, rateAnnual, totalMonths) {
+      const r = (rateAnnual / 100) / 12;
+      let balance = current;
+      let totalContrib = current;
+      const data = [{ balance: current, contributions: current, interest: 0 }];
+      for (let i = 1; i <= totalMonths; i++) {
+        balance = balance * (1 + r) + monthlySavings;
+        totalContrib += monthlySavings;
+        data.push({ balance, contributions: totalContrib, interest: balance - totalContrib });
+      }
+      return data;
+    }
+
+    function calculate() {
+      const goal = parseFloat(document.getElementById('goal-amount').value) || 0;
+      const current = parseFloat(document.getElementById('current-savings').value) || 0;
+      const rate = parseFloat(document.getElementById('interest-rate').value) || 0;
+      const now = new Date();
+      let monthlySavings, totalMonths;
+
+      if (mode === 'monthly') {
+        totalMonths = parseInt(document.getElementById('timeline-months').value) || 1;
+        monthlySavings = solveMonthly(goal, current, rate, totalMonths);
+        document.getElementById('primary-value').textContent = fmt(monthlySavings) + '/mo';
+      } else {
+        monthlySavings = parseFloat(document.getElementById('monthly-savings').value) || 0;
+        totalMonths = solveMonths(goal, current, rate, monthlySavings);
+        if (!isFinite(totalMonths) || totalMonths > 1200) {
+          document.getElementById('primary-value').textContent = 'Not reachable';
+          document.getElementById('res-goal').textContent = fmt(goal);
+          document.getElementById('res-contributions').textContent = '\u2014';
+          document.getElementById('res-interest').textContent = '\u2014';
+          document.getElementById('res-date').textContent = '\u2014';
+          [25,50,75,100].forEach(p => {
+            document.getElementById('ms-' + p + '-val').textContent = '\u2014';
+            document.getElementById('ms-' + p + '-date').textContent = '';
+            document.getElementById('ms-' + p).classList.remove('reached');
+          });
+          clearCanvas();
+          return;
         }
-    };
+        const yrs = Math.floor(totalMonths / 12);
+        const mos = totalMonths % 12;
+        let str = '';
+        if (yrs > 0) str += yrs + (yrs === 1 ? ' year' : ' years');
+        if (mos > 0) str += (yrs > 0 ? ' ' : '') + mos + (mos === 1 ? ' month' : ' months');
+        document.getElementById('primary-value').textContent = str || '0 months';
+      }
 
-    const calculateTimeline = (goal, current, monthly, rate, adjustInflation) => {
-        const actualRate = adjustInflation ? Math.max(0, rate - 3) : rate;
-        const monthlyRate = (actualRate / 100) / 12;
+      const history = buildHistory(current, monthlySavings, rate, totalMonths);
+      const last = history[history.length - 1];
 
-        let balance = current;
-        let months = 0;
-        let totalContributions = current;
-        const history = [balance];
+      document.getElementById('res-goal').textContent = fmt(goal);
+      document.getElementById('res-contributions').textContent = fmt(last.contributions);
+      document.getElementById('res-interest').textContent = fmt(last.interest);
+      document.getElementById('res-date').textContent = fmtDate(addMo(now, totalMonths));
 
-        let m25 = current >= goal * 0.25 ? 0 : -1;
-        let m50 = current >= goal * 0.50 ? 0 : -1;
-        let m75 = current >= goal * 0.75 ? 0 : -1;
-
-        if (balance >= goal) {
-            return {
-                months: 0,
-                totalContributions: balance,
-                totalInterest: 0,
-                history: [balance],
-                m25: 0, m50: 0, m75: 0, finalBalance: balance
-            };
+      // Milestones
+      [25, 50, 75, 100].forEach(pct => {
+        const target = goal * pct / 100;
+        let hit = null;
+        for (let i = 0; i < history.length; i++) {
+          if (history[i].balance >= target) { hit = i; break; }
         }
-
-        if (monthlyRate === 0 && monthly === 0) {
-            return { months: Infinity, history: [balance], totalContributions: current, totalInterest: 0, m25: -1, m50: -1, m75: -1, finalBalance: balance };
+        const el = document.getElementById('ms-' + pct);
+        if (hit !== null) {
+          document.getElementById('ms-' + pct + '-val').textContent = fmt(target);
+          document.getElementById('ms-' + pct + '-date').textContent = fmtDate(addMo(now, hit));
+          el.classList.add('reached');
+        } else {
+          document.getElementById('ms-' + pct + '-val').textContent = '\u2014';
+          document.getElementById('ms-' + pct + '-date').textContent = '';
+          el.classList.remove('reached');
         }
+      });
 
-        const maxMonths = 1200; // 100 years max loop
-        while (balance < goal && months < maxMonths) {
-            months++;
-            balance = balance * (1 + monthlyRate) + monthly;
-            totalContributions += monthly;
+      drawChart(history, goal);
+    }
 
-            if (months % 12 === 0 || balance >= goal) {
-                history.push(balance);
-            }
+    function clearCanvas() {
+      const dpr = window.devicePixelRatio || 1;
+      const rect = canvas.parentElement.getBoundingClientRect();
+      canvas.width = rect.width * dpr;
+      canvas.height = rect.height * dpr;
+      ctx.setTransform(1,0,0,1,0,0);
+      ctx.scale(dpr, dpr);
+      ctx.clearRect(0, 0, rect.width, rect.height);
+    }
 
-            if (m25 === -1 && balance >= goal * 0.25) m25 = months;
-            if (m50 === -1 && balance >= goal * 0.50) m50 = months;
-            if (m75 === -1 && balance >= goal * 0.75) m75 = months;
-        }
+    function drawChart(history, goal) {
+      const dpr = window.devicePixelRatio || 1;
+      const rect = canvas.parentElement.getBoundingClientRect();
+      canvas.width = rect.width * dpr;
+      canvas.height = rect.height * dpr;
+      ctx.setTransform(1,0,0,1,0,0);
+      ctx.scale(dpr, dpr);
 
-        return {
-            months: months >= maxMonths ? Infinity : months,
-            totalContributions: totalContributions,
-            totalInterest: balance - totalContributions,
-            history: history,
-            m25: m25,
-            m50: m50,
-            m75: m75,
-            finalBalance: balance
-        };
-    };
+      const w = rect.width, h = rect.height;
+      ctx.clearRect(0, 0, w, h);
 
-    let chartCanvas = document.getElementById('growthChart');
-    let ctx = chartCanvas.getContext('2d');
+      const pad = { top: 20, right: 20, bottom: 40, left: 80 };
+      const cw = w - pad.left - pad.right;
+      const ch = h - pad.top - pad.bottom;
 
-    const drawChart = (data, years, goal) => {
-        const dpr = window.devicePixelRatio || 1;
-        const rect = chartCanvas.parentElement.getBoundingClientRect();
+      const n = history.length - 1;
+      if (n <= 0) return;
 
-        chartCanvas.width = rect.width * dpr;
-        chartCanvas.height = rect.height * dpr;
+      const maxVal = Math.max(goal, history[n].balance) * 1.05;
 
-        ctx.setTransform(1, 0, 0, 1, 0, 0);
-        ctx.scale(dpr, dpr);
+      // Y axis grid
+      ctx.strokeStyle = '#2a2010';
+      ctx.lineWidth = 1;
+      ctx.font = '12px Inter, sans-serif';
+      ctx.fillStyle = '#888';
+      ctx.textAlign = 'right';
+      ctx.textBaseline = 'middle';
+      for (let i = 0; i <= 5; i++) {
+        const val = maxVal * i / 5;
+        const y = h - pad.bottom - ch * i / 5;
+        ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(w - pad.right, y); ctx.stroke();
+        const label = val >= 1e6 ? '$' + (val/1e6).toFixed(1) + 'M' : val >= 1e3 ? '$' + (val/1e3).toFixed(0) + 'k' : '$' + val.toFixed(0);
+        ctx.fillText(label, pad.left - 10, y);
+      }
 
-        const width = rect.width;
-        const height = rect.height;
+      // X axis
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      const xTicks = Math.min(n, 10);
+      for (let i = 0; i <= xTicks; i++) {
+        const idx = Math.round(n * i / xTicks);
+        const x = pad.left + cw * idx / n;
+        ctx.beginPath(); ctx.moveTo(x, h - pad.bottom); ctx.lineTo(x, h - pad.bottom + 5); ctx.stroke();
+        const yrs = Math.floor(idx / 12);
+        const mos = idx % 12;
+        ctx.fillText(idx <= 24 ? idx + 'mo' : yrs + 'y' + (mos ? mos + 'm' : ''), x, h - pad.bottom + 10);
+      }
 
-        ctx.clearRect(0, 0, width, height);
+      // Goal line
+      const goalY = h - pad.bottom - ch * goal / maxVal;
+      ctx.setLineDash([6, 4]);
+      ctx.strokeStyle = '#888';
+      ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(pad.left, goalY); ctx.lineTo(w - pad.right, goalY); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = '#888';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'bottom';
+      ctx.fillText('Goal: ' + fmt(goal), pad.left + 5, goalY - 4);
 
-        const padding = { top: 20, right: 20, bottom: 40, left: 80 };
-        const chartWidth = width - padding.left - padding.right;
-        const chartHeight = height - padding.top - padding.bottom;
+      // Interest area (between balance and contributions)
+      ctx.beginPath();
+      for (let i = 0; i <= n; i++) {
+        const x = pad.left + cw * i / n;
+        const y = h - pad.bottom - ch * history[i].balance / maxVal;
+        i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+      }
+      for (let i = n; i >= 0; i--) {
+        const x = pad.left + cw * i / n;
+        const y = h - pad.bottom - ch * history[i].contributions / maxVal;
+        ctx.lineTo(x, y);
+      }
+      ctx.closePath();
+      const gI = ctx.createLinearGradient(0, pad.top, 0, h - pad.bottom);
+      gI.addColorStop(0, 'rgba(212,160,23,0.35)');
+      gI.addColorStop(1, 'rgba(212,160,23,0.05)');
+      ctx.fillStyle = gI;
+      ctx.fill();
 
-        if (years <= 0 || !isFinite(years)) return;
+      // Contributions area
+      ctx.beginPath();
+      for (let i = 0; i <= n; i++) {
+        const x = pad.left + cw * i / n;
+        const y = h - pad.bottom - ch * history[i].contributions / maxVal;
+        i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+      }
+      ctx.lineTo(pad.left + cw, h - pad.bottom);
+      ctx.lineTo(pad.left, h - pad.bottom);
+      ctx.closePath();
+      const gC = ctx.createLinearGradient(0, pad.top, 0, h - pad.bottom);
+      gC.addColorStop(0, 'rgba(74,144,226,0.35)');
+      gC.addColorStop(1, 'rgba(74,144,226,0.05)');
+      ctx.fillStyle = gC;
+      ctx.fill();
 
-        const maxVal = Math.max(goal, ...data) * 1.05;
+      // Balance line
+      ctx.lineWidth = 2.5;
+      ctx.lineJoin = 'round';
+      ctx.strokeStyle = '#D4A017';
+      ctx.beginPath();
+      for (let i = 0; i <= n; i++) {
+        const x = pad.left + cw * i / n;
+        const y = h - pad.bottom - ch * history[i].balance / maxVal;
+        i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+      }
+      ctx.stroke();
 
-        // Draw grid
-        ctx.strokeStyle = '#2a2010';
-        ctx.lineWidth = 1;
-        ctx.font = '12px Inter, sans-serif';
-        ctx.fillStyle = '#888888';
-        ctx.textAlign = 'right';
-        ctx.textBaseline = 'middle';
+      // Contributions line
+      ctx.strokeStyle = '#4A90E2';
+      ctx.beginPath();
+      for (let i = 0; i <= n; i++) {
+        const x = pad.left + cw * i / n;
+        const y = h - pad.bottom - ch * history[i].contributions / maxVal;
+        i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+      }
+      ctx.stroke();
 
-        // Y-axis
-        const yTicks = 5;
-        for (let i = 0; i <= yTicks; i++) {
-            const val = maxVal * (i / yTicks);
-            const y = height - padding.bottom - (chartHeight * (i / yTicks));
-
+      // Milestone dots
+      [25, 50, 75, 100].forEach(pct => {
+        const target = goal * pct / 100;
+        for (let i = 0; i <= n; i++) {
+          if (history[i].balance >= target) {
+            const x = pad.left + cw * i / n;
+            const y = h - pad.bottom - ch * history[i].balance / maxVal;
             ctx.beginPath();
-            ctx.moveTo(padding.left, y);
-            ctx.lineTo(width - padding.right, y);
+            ctx.arc(x, y, 5, 0, Math.PI * 2);
+            ctx.fillStyle = '#D4A017';
+            ctx.fill();
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 1.5;
             ctx.stroke();
-
-            let label = val >= 1000000 ? '$' + (val / 1000000).toFixed(1) + 'M' :
-                        val >= 1000 ? '$' + (val / 1000).toFixed(0) + 'k' : '$' + val.toFixed(0);
-            ctx.fillText(label, padding.left - 10, y);
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 9px Inter, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'bottom';
+            ctx.fillText(pct + '%', x, y - 8);
+            break;
+          }
         }
+      });
+    }
 
-        // X-axis
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'top';
-        const xTicks = Math.min(years, 10);
-        for (let i = 0; i <= xTicks; i++) {
-            const yearIndex = Math.round((years / xTicks) * i);
-            const x = padding.left + (chartWidth * (yearIndex / years));
+    // Event listeners
+    document.querySelectorAll('input[type="number"]').forEach(input => {
+      input.addEventListener('input', () => {
+        document.querySelectorAll('.preset-btn').forEach(b => b.classList.remove('active'));
+        calculate();
+      });
+    });
 
-            ctx.beginPath();
-            ctx.moveTo(x, height - padding.bottom);
-            ctx.lineTo(x, height - padding.bottom + 5);
-            ctx.stroke();
-
-            ctx.fillText('Yr ' + yearIndex, x, height - padding.bottom + 10);
-        }
-
-        // Draw Goal Line
-        const goalY = height - padding.bottom - (chartHeight * (goal / maxVal));
-        ctx.beginPath();
-        ctx.strokeStyle = '#888888';
-        ctx.setLineDash([5, 5]);
-        ctx.moveTo(padding.left, goalY);
-        ctx.lineTo(width - padding.right, goalY);
-        ctx.stroke();
-        ctx.setLineDash([]);
-
-        ctx.fillStyle = '#888888';
-        ctx.textAlign = 'left';
-        ctx.textBaseline = 'bottom';
-        ctx.fillText('Goal Target', padding.left + 10, goalY - 5);
-
-        // Draw trajectory
-        ctx.beginPath();
-        ctx.strokeStyle = '#D4A017';
-        ctx.lineWidth = 3;
-        ctx.lineJoin = 'round';
-
-        data.forEach((val, i) => {
-            const x = padding.left + (chartWidth * (i / years));
-            const y = height - padding.bottom - (chartHeight * (val / maxVal));
-
-            if (i === 0) ctx.moveTo(x, y);
-            else ctx.lineTo(x, y);
-        });
-        ctx.stroke();
-
-        // Fill area
-        ctx.lineTo(padding.left + chartWidth, height - padding.bottom);
-        ctx.lineTo(padding.left, height - padding.bottom);
-        ctx.closePath();
-
-        const gradient = ctx.createLinearGradient(0, padding.top, 0, height - padding.bottom);
-        gradient.addColorStop(0, `rgba(212, 160, 23, 0.2)`);
-        gradient.addColorStop(1, `rgba(212, 160, 23, 0)`);
-
-        ctx.fillStyle = gradient;
-        ctx.fill();
-    };
-
-    const syncInputs = (id) => {
-        const numInput = document.getElementById(id);
-        const sliderInput = document.getElementById(id.replace(/amount|savings|contrib|expected-return/, 'slider'));
-        const displaySpan = document.getElementById(id.replace(/amount|savings|contrib|expected-return/, 'val-display'));
-
-        if (!sliderInput) return;
-
-        numInput.addEventListener('input', () => {
-            sliderInput.value = numInput.value;
-            updateCalculator();
-        });
-
-        sliderInput.addEventListener('input', () => {
-            numInput.value = sliderInput.value;
-            updateCalculator();
-        });
-    };
-
-    const updateCalculator = () => {
-        const goal = parseFloat(document.getElementById('goal-amount').value) || 0;
-        const current = parseFloat(document.getElementById('current-savings').value) || 0;
-        const monthly = parseFloat(document.getElementById('monthly-contrib').value) || 0;
-        const rate = parseFloat(document.getElementById('expected-return').value) || 0;
-        const adjustInflation = document.getElementById('adjust-inflation').checked;
-
-        document.getElementById('goal-val-display').innerText = formatCurrency(goal);
-        document.getElementById('current-val-display').innerText = formatCurrency(current);
-        document.getElementById('monthly-val-display').innerText = formatCurrency(monthly);
-        document.getElementById('return-val-display').innerText = rate.toFixed(1) + '%';
-
-        const res = calculateTimeline(goal, current, monthly, rate, adjustInflation);
-
-        if (res.months === Infinity) {
-            document.getElementById('time-to-goal').innerText = "Never (Increase savings)";
-            document.getElementById('total-contributions').innerText = "--";
-            document.getElementById('total-interest').innerText = "--";
-            drawChart([current], 1, goal);
-            document.getElementById('time-25').innerText = "--";
-            document.getElementById('time-50').innerText = "--";
-            document.getElementById('time-75').innerText = "--";
-        } else {
-            document.getElementById('time-to-goal').innerText = formatTime(res.months);
-            document.getElementById('total-contributions').innerText = formatCurrency(res.totalContributions);
-            document.getElementById('total-interest').innerText = formatCurrency(res.totalInterest);
-
-            const years = Math.max(1, Math.ceil(res.months / 12));
-            drawChart(res.history, years, goal);
-
-            document.getElementById('time-25').innerText = res.m25 !== -1 ? (res.m25 === 0 ? "Achieved" : formatTime(res.m25)) : "--";
-            document.getElementById('time-50').innerText = res.m50 !== -1 ? (res.m50 === 0 ? "Achieved" : formatTime(res.m50)) : "--";
-            document.getElementById('time-75').innerText = res.m75 !== -1 ? (res.m75 === 0 ? "Achieved" : formatTime(res.m75)) : "--";
-        }
-
-        // What if scenarios
-        const if100 = calculateTimeline(goal, current, monthly + 100, rate, adjustInflation);
-        const ifDrop = calculateTimeline(goal, current, monthly, rate - 2, adjustInflation);
-
-        if(res.months === Infinity || if100.months === Infinity) {
-            document.getElementById('what-if-add-100').innerText = "--";
-        } else {
-            const diff = res.months - if100.months;
-            document.getElementById('what-if-add-100').innerText = `Reach goal ${formatTime(diff)} faster`;
-            document.getElementById('what-if-add-100').style.color = 'var(--accent-color)';
-        }
-
-        if(res.months === Infinity || ifDrop.months === Infinity) {
-            document.getElementById('what-if-drop-return').innerText = "--";
-        } else {
-            const diff = ifDrop.months - res.months;
-            document.getElementById('what-if-drop-return').innerText = `Takes ${formatTime(diff)} longer`;
-            document.getElementById('what-if-drop-return').style.color = '#e24a4a'; // Reddish for negative impact
-        }
-    };
-
-    ['goal-amount', 'current-savings', 'monthly-contrib', 'expected-return'].forEach(syncInputs);
-    document.getElementById('adjust-inflation').addEventListener('change', updateCalculator);
-
-    window.addEventListener('resize', updateCalculator);
-
-    setTimeout(() => {
-        updateCalculator();
-    }, 0);
+    window.addEventListener('resize', calculate);
+    setTimeout(calculate, 0);
   </script>
 
-  <!-- Pillar Guide Link -->
   <div class="max-w-3xl mx-auto px-5 pt-8 pb-12">
     <div class="border-t border-[var(--border-color)] pt-8">
-      <p class="text-xs font-bold text-[var(--accent-color)] tracking-wide uppercase mb-2">📚 Complete Guide</p>
+      <p class="text-xs font-bold text-[var(--accent-color)] tracking-wide uppercase mb-2">Complete Guide</p>
       <a href="/guide-budgeting-complete" class="block bg-[var(--card-bg)] border border-[var(--border-color)] rounded-xl p-5 hover:border-[var(--accent-color)] hover:-translate-y-0.5 transition-all">
         <h3 class="text-base font-bold text-white">Budgeting for Beginners: Build Your Financial Foundation</h3>
-        <p class="text-sm text-[var(--text-secondary)] mt-1">Read the full guide →</p>
+        <p class="text-sm text-[var(--text-secondary)] mt-1">Read the full guide &rarr;</p>
       </a>
     </div>
   </div>
