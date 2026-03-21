@@ -1,0 +1,518 @@
+---
+import SiteLayout from "../../../layouts/SiteLayout.astro";
+
+const intervalData = {
+  conventional: {
+    label: "Conventional",
+    normal: { miles: "5,000–7,500", months: "6" },
+    severe: { miles: "3,000–5,000", months: "4" },
+    extreme: { miles: "2,000–3,000", months: "3" },
+    costPerQuart: 4,
+    lifespan: "3,000–7,500 mi",
+    tempRange: "Moderate climates",
+    protection: "Standard",
+  },
+  syntheticBlend: {
+    label: "Synthetic Blend",
+    normal: { miles: "5,000–7,500", months: "6" },
+    severe: { miles: "4,000–6,000", months: "5" },
+    extreme: { miles: "3,000–4,000", months: "3–4" },
+    costPerQuart: 6,
+    lifespan: "5,000–7,500 mi",
+    tempRange: "Moderate to varied",
+    protection: "Enhanced",
+  },
+  fullSynthetic: {
+    label: "Full Synthetic",
+    normal: { miles: "7,500–10,000", months: "12" },
+    severe: { miles: "5,000–7,500", months: "6" },
+    extreme: { miles: "4,000–5,000", months: "4" },
+    costPerQuart: 10,
+    lifespan: "7,500–15,000 mi",
+    tempRange: "All climates, extreme heat/cold",
+    protection: "Maximum",
+  },
+};
+
+const viscosityGuide = [
+  { grade: "0W-20", bestFor: "Modern fuel-efficient cars, hybrids, extreme cold climates", tempRange: "-40\u00B0F to 68\u00B0F", vehicles: "Toyota, Honda, Subaru, Mazda (2012+), most hybrids", notes: "The most common factory-fill oil today. Required by many modern engines for fuel economy and emissions compliance." },
+  { grade: "0W-16", bestFor: "Ultra-fuel-efficient engines, latest Toyota/Honda models", tempRange: "-40\u00B0F to 60\u00B0F", vehicles: "Select Toyota Camry, Corolla, RAV4 (2018+)", notes: "Ultra-thin oil for maximum fuel economy. Only use if your owner's manual specifies it." },
+  { grade: "5W-20", bestFor: "Most American and Japanese cars, light trucks", tempRange: "-31\u00B0F to 68\u00B0F", vehicles: "Ford, Chrysler, Honda, many GM vehicles", notes: "Common factory specification for North American vehicles. Good cold-start protection with adequate warm-weather performance." },
+  { grade: "5W-30", bestFor: "Wide range of vehicles, moderate to cold climates", tempRange: "-31\u00B0F to 95\u00B0F", vehicles: "GM, BMW, Mercedes, Volkswagen, many older vehicles", notes: "The most versatile viscosity grade. If you're unsure, check your manual — there's a good chance it calls for 5W-30." },
+  { grade: "10W-30", bestFor: "Older vehicles, warmer climates", tempRange: "-13\u00B0F to 95\u00B0F", vehicles: "Pre-2010 trucks, classic cars, some lawn equipment", notes: "Less common in modern cars but still used in older engines designed for thicker oil at startup." },
+  { grade: "10W-40", bestFor: "High-mileage engines, hot climates, older vehicles", tempRange: "-13\u00B0F to 104\u00B0F", vehicles: "Older trucks, European vehicles, motorcycles", notes: "Thicker oil that helps reduce consumption in worn engines. Popular for high-mileage vehicles with 150K+ miles." },
+  { grade: "5W-40", bestFor: "European diesels, turbocharged engines, performance cars", tempRange: "-31\u00B0F to 104\u00B0F", vehicles: "BMW, Audi, VW TDI, Mercedes diesel, Porsche", notes: "Meets Euro spec requirements (ACEA). Required by many European automakers for their turbocharged and diesel engines." },
+];
+
+const comparisonRows = [
+  { category: "Cost per oil change", conventional: "$30–$50", syntheticBlend: "$40–$70", fullSynthetic: "$65–$100" },
+  { category: "Change interval", conventional: "3,000–5,000 mi", syntheticBlend: "5,000–7,500 mi", fullSynthetic: "7,500–15,000 mi" },
+  { category: "Annual cost (12K mi/yr)", conventional: "$90–$200", syntheticBlend: "$80–$170", fullSynthetic: "$65–$160" },
+  { category: "Engine protection", conventional: "Adequate", syntheticBlend: "Good", fullSynthetic: "Excellent" },
+  { category: "Cold-start performance", conventional: "Fair", syntheticBlend: "Good", fullSynthetic: "Excellent" },
+  { category: "High-temp stability", conventional: "Fair", syntheticBlend: "Good", fullSynthetic: "Excellent" },
+  { category: "Deposit & sludge resistance", conventional: "Moderate", syntheticBlend: "Good", fullSynthetic: "Excellent" },
+  { category: "Fuel economy benefit", conventional: "Baseline", syntheticBlend: "Slight improvement", fullSynthetic: "1–3% improvement" },
+  { category: "Best for", conventional: "Older engines, low mileage, tight budget", syntheticBlend: "Daily drivers, moderate conditions", fullSynthetic: "New cars, extreme temps, towing, turbo engines" },
+];
+
+const warningSignsList = [
+  { sign: "Oil change light or check engine light illuminated", urgency: "High", detail: "Modern cars monitor oil life electronically. When the light comes on, you're at 0-15% oil life remaining. Don't ignore it — engine damage can begin within 500 miles." },
+  { sign: "Dark, gritty, or sludgy oil on the dipstick", urgency: "High", detail: "Fresh oil is amber and translucent. If yours is black, thick, or gritty when you rub it between your fingers, the oil has broken down and is no longer protecting your engine." },
+  { sign: "Engine running louder than usual", urgency: "Medium", detail: "Oil lubricates moving parts and dampens noise. When it breaks down, you'll hear increased ticking, knocking, or rumbling — especially on cold starts." },
+  { sign: "Exhaust smoke (blue or gray)", urgency: "High", detail: "Blue or gray smoke from the tailpipe means oil is burning in the combustion chamber. This could be an oil leak, worn piston rings, or valve seal issues — get it checked immediately." },
+  { sign: "Oil level consistently dropping between changes", urgency: "Medium", detail: "Some consumption is normal (up to 1 quart per 1,000 miles on some engines), but rapid loss suggests a leak or burning. Top off and investigate." },
+  { sign: "Burning oil smell inside or outside the car", urgency: "Medium", detail: "Oil dripping onto hot exhaust components creates a distinctive acrid smell. This is usually an external leak from valve cover gaskets, oil pan gasket, or drain plug." },
+  { sign: "Reduced fuel economy", urgency: "Low", detail: "Degraded oil increases friction, making the engine work harder. If your MPG drops noticeably without other changes in driving habits, old oil could be the culprit." },
+  { sign: "Overdue by mileage or time", urgency: "Medium", detail: "Even if the car sits unused, oil degrades over time from moisture absorption and oxidation. Don't exceed 12 months between changes regardless of mileage." },
+];
+
+const diySteps = [
+  { step: "Gather supplies", detail: "You'll need: correct oil type and quantity (check owner's manual), new oil filter, drain pan, socket wrench set, oil filter wrench, funnel, jack and jack stands (or ramps), shop towels, and gloves." },
+  { step: "Warm the engine", detail: "Run the engine for 3-5 minutes. Warm oil flows faster and carries more contaminants out with it. Don't run it until it's fully hot — you'll burn yourself on the drain plug." },
+  { step: "Lift and secure the vehicle", detail: "Jack up the front of the car and place it securely on jack stands. Never work under a car supported only by a jack. Alternatively, drive onto ramps. Engage the parking brake." },
+  { step: "Drain the old oil", detail: "Place the drain pan under the oil pan. Remove the drain plug with a socket wrench (turn counterclockwise). Let it drain completely — this takes 5-10 minutes. Inspect the drain plug washer and replace if crushed or worn." },
+  { step: "Replace the oil filter", detail: "Remove the old filter with an oil filter wrench. Apply a thin coat of fresh oil to the new filter's rubber gasket. Hand-tighten the new filter — usually 3/4 turn after the gasket contacts the mounting surface. Don't over-tighten." },
+  { step: "Reinstall drain plug and add new oil", detail: "Reinstall the drain plug and tighten to spec (typically 25-30 ft-lbs — check your manual). Remove the oil fill cap on top of the engine, insert a funnel, and pour in the correct amount of new oil." },
+  { step: "Check oil level and inspect for leaks", detail: "Replace the fill cap. Start the engine and let it idle for 30 seconds. Turn it off, wait 2 minutes, then check the dipstick. The level should be between the two marks. Check under the car for leaks around the drain plug and filter." },
+  { step: "Record and recycle", detail: "Record the date, mileage, oil type, and filter used. Reset the oil life monitor if your car has one (check your manual for the procedure). Take the old oil to an auto parts store for free recycling — never dump it." },
+];
+
+const diyTools = [
+  "Socket wrench set (typically 14mm-17mm for drain plug)",
+  "Oil filter wrench (match to your filter size)",
+  "Drain pan (at least 6-quart capacity)",
+  "Funnel",
+  "Jack + jack stands or drive-on ramps",
+  "Shop towels / rags",
+  "Nitrile gloves",
+  "Torque wrench (recommended, not required)",
+];
+
+const costComparison = [
+  { method: "DIY", oilCost: "$22–$38", filterCost: "$5–$12", laborCost: "$0", totalConv: "$27–$45", totalSynth: "$40–$65", time: "30–45 min", pros: "Cheapest option, full control over oil quality, satisfying", cons: "Need tools, disposal responsibility, messy, need workspace" },
+  { method: "Quick Lube (Jiffy Lube, Valvoline, etc.)", oilCost: "Included", filterCost: "Included", laborCost: "Included", totalConv: "$40–$60", totalSynth: "$70–$100", time: "15–25 min", pros: "Fast, no appointment needed, no mess, free top-offs between visits", cons: "Upselling pressure, may use lower-quality filters, inconsistent technician quality" },
+  { method: "Independent Mechanic", oilCost: "Included", filterCost: "Included", laborCost: "Included", totalConv: "$35–$55", totalSynth: "$65–$90", time: "30–60 min", pros: "Trusted relationship, may spot other issues, fair pricing, quality parts", cons: "Appointment needed, less convenient hours, varies by shop" },
+  { method: "Dealership", oilCost: "Included", filterCost: "Included", laborCost: "Included", totalConv: "$50–$75", totalSynth: "$80–$130", time: "45–90 min", pros: "OEM parts and oil, trained technicians, warranty-safe, multi-point inspection", cons: "Most expensive, longest wait, upselling on services, inconvenient scheduling" },
+];
+
+const faqs = [
+  {
+    q: "How often should I really change my oil?",
+    a: "It depends on your oil type and driving conditions. With full synthetic oil and normal driving, most modern cars can go 7,500–10,000 miles between changes. Conventional oil should be changed every 3,000–5,000 miles. If you do a lot of stop-and-go driving, towing, or short trips, cut these intervals by 30-40%. Always check your owner's manual for the manufacturer's recommendation."
+  },
+  {
+    q: "Is the 3,000-mile oil change rule still valid?",
+    a: "For most modern cars, no. The 3,000-mile rule dates back to when conventional oil was the only option and engine tolerances were looser. Today's engines and oils are far more advanced. Most manufacturers recommend 5,000–10,000 miles depending on oil type and conditions. Following the 3,000-mile rule with synthetic oil is just wasting money."
+  },
+  {
+    q: "Can I switch between synthetic and conventional oil?",
+    a: "Yes, you can switch freely between conventional, synthetic blend, and full synthetic oil without any problems. Modern oils are fully compatible. You can even mix them in an emergency top-off. However, switching to conventional from synthetic means you'll need to change oil more frequently since conventional breaks down faster."
+  },
+  {
+    q: "What happens if I go too long without an oil change?",
+    a: "Oil gradually breaks down and loses its ability to lubricate, cool, and clean the engine. Going too long causes oil sludge buildup, increased engine wear, overheating, reduced fuel economy, and eventually catastrophic engine failure. A $65 oil change prevents a $4,000–$8,000 engine replacement."
+  },
+  {
+    q: "Does the brand of oil matter?",
+    a: "Less than you'd think. What matters most is using the correct viscosity grade (e.g., 0W-20, 5W-30) specified in your owner's manual and choosing oil that meets your manufacturer's specifications (API SN Plus, dexos1, etc.). Major brands like Mobil 1, Castrol, Pennzoil, and Valvoline all meet the same industry standards. Store brands that carry the same certifications are fine too."
+  },
+  {
+    q: "Should I use high-mileage oil?",
+    a: "If your car has over 75,000 miles, high-mileage oil can be beneficial. It contains seal conditioners that help prevent leaks by rejuvenating aging gaskets and seals, plus additional anti-wear additives. It costs $2–$4 more per quart than standard oil. If you're not seeing oil consumption or leaks, regular oil is perfectly fine for high-mileage engines."
+  },
+  {
+    q: "Is it worth doing my own oil change?",
+    a: "Financially, you save $20–$40 per change doing it yourself. Over 5 years, that's $200–$500. The bigger advantages are controlling oil and filter quality, learning about your car, and doing it on your schedule. The downsides are needing basic tools ($50–$80 initial investment), getting messy, and disposing of old oil. If you enjoy working on cars, absolutely. If not, a good independent mechanic is the best value."
+  },
+  {
+    q: "What does the 'W' in oil grades like 5W-30 mean?",
+    a: "The 'W' stands for Winter. The number before it (e.g., 5W) indicates the oil's viscosity (thickness) at cold temperatures — lower numbers flow better in cold weather. The second number (e.g., 30) indicates viscosity at operating temperature (212°F). So 5W-30 flows like a 5-weight oil when cold and a 30-weight oil when hot, providing good protection across a wide temperature range."
+  }
+];
+
+const schema = [
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": "Complete Oil Change Guide 2026 — Intervals, Oil Types & DIY Instructions",
+    "description": "Everything you need to know about oil changes: recommended intervals by oil type and driving conditions, synthetic vs conventional comparison, viscosity guide, DIY steps, and cost breakdown.",
+    "author": {
+      "@type": "Organization",
+      "name": "Please Start Please"
+    },
+    "datePublished": "2026-03-21",
+    "dateModified": "2026-03-21"
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": faqs.map(f => ({
+      "@type": "Question",
+      "name": f.q,
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": f.a
+      }
+    }))
+  }
+];
+
+export const meta = {
+  title: "Complete Oil Change Guide 2026 — Intervals, Oil Types & DIY Instructions",
+  description: "Oil change intervals by driving condition and oil type, synthetic vs conventional comparison, viscosity guide, warning signs, step-by-step DIY instructions, and cost breakdown.",
+  category: "guide",
+  published: "2026-03-21",
+};
+---
+
+<SiteLayout
+  site="pleasestartplease"
+  title="Complete Oil Change Guide 2026 — Intervals, Oil Types & DIY Instructions"
+  description="Oil change intervals by driving condition and oil type, synthetic vs conventional comparison, viscosity guide, warning signs, step-by-step DIY instructions, and cost breakdown."
+  canonical="https://pleasestartplease.com/oil-change-guide"
+  schema={schema}
+>
+  <div class="page-content">
+    <div class="hero">
+      <h1>Complete Oil Change Guide (2026)</h1>
+      <p>How often to change your oil, which type to use, and whether to DIY or pay a pro — everything you need to know in one place.</p>
+    </div>
+
+    <section class="content-section">
+      <p>Oil is the lifeblood of your engine. It lubricates moving parts, absorbs heat, prevents corrosion, and carries away contaminants. But oil breaks down over time, and neglecting changes is the single fastest way to destroy an engine. The good news: oil change schedules are simpler than the old "every 3,000 miles" rule once you understand your oil type and driving conditions.</p>
+
+      <h2>Oil Change Interval Finder</h2>
+      <p>Select your driving conditions and oil type to get a recommended oil change interval tailored to how you actually drive.</p>
+      <div class="interval-card">
+        <div class="interval-controls">
+          <div class="control-group">
+            <label for="condition-select">Driving Conditions</label>
+            <select id="condition-select">
+              <option value="normal" selected>Normal</option>
+              <option value="severe">Severe</option>
+              <option value="extreme">Extreme</option>
+            </select>
+            <span class="control-hint" id="condition-hint">Highway driving, moderate climate, no towing</span>
+          </div>
+          <div class="control-group">
+            <label for="oil-select">Oil Type</label>
+            <select id="oil-select">
+              <option value="conventional">Conventional</option>
+              <option value="syntheticBlend">Synthetic Blend</option>
+              <option value="fullSynthetic" selected>Full Synthetic</option>
+            </select>
+          </div>
+        </div>
+        <div id="interval-result" class="interval-result">
+          <div class="interval-main">
+            <span class="interval-label">Recommended Interval</span>
+            <span class="interval-miles" id="result-miles">—</span>
+            <span class="interval-or">or</span>
+            <span class="interval-months" id="result-months">— months</span>
+            <span class="interval-whichever">whichever comes first</span>
+          </div>
+        </div>
+        <div class="condition-details" id="condition-details">
+          <div class="condition-def">
+            <strong>Normal:</strong> Mostly highway driving, moderate climate (no extreme heat/cold), no towing, trips over 10 miles.
+          </div>
+          <div class="condition-def">
+            <strong>Severe:</strong> Frequent stop-and-go, short trips under 10 miles, dusty conditions, regular towing, hot or cold climate extremes.
+          </div>
+          <div class="condition-def">
+            <strong>Extreme:</strong> Heavy towing/hauling, off-road driving, extreme temperatures, commercial or fleet use, racing or high-RPM driving.
+          </div>
+        </div>
+      </div>
+
+      <h2>Oil Change Intervals by Oil Type</h2>
+      <p>This table shows recommended change intervals across driving conditions. Most modern cars use full synthetic and can go significantly longer than the old 3,000-mile rule.</p>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Oil Type</th>
+              <th>Normal Driving</th>
+              <th>Severe Conditions</th>
+              <th>Extreme Conditions</th>
+              <th>Cost per Quart</th>
+            </tr>
+          </thead>
+          <tbody>
+            {Object.values(intervalData).map(oil => (
+              <tr>
+                <td><strong>{oil.label}</strong></td>
+                <td>{oil.normal.miles} mi / {oil.normal.months} mo</td>
+                <td>{oil.severe.miles} mi / {oil.severe.months} mo</td>
+                <td>{oil.extreme.miles} mi / {oil.extreme.months} mo</td>
+                <td>${oil.costPerQuart}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <h2>Motor Oil Viscosity Guide</h2>
+      <p>The viscosity grade on the bottle (0W-20, 5W-30, etc.) tells you how the oil flows at different temperatures. Always use the grade specified in your owner's manual — using the wrong viscosity can cause engine wear, void warranties, and reduce fuel economy.</p>
+      <div class="viscosity-grid">
+        {viscosityGuide.map(v => (
+          <div class="viscosity-card">
+            <div class="viscosity-header">
+              <span class="viscosity-grade">{v.grade}</span>
+              <span class="viscosity-temp">{v.tempRange}</span>
+            </div>
+            <p class="viscosity-best"><strong>Best for:</strong> {v.bestFor}</p>
+            <p class="viscosity-vehicles"><strong>Common vehicles:</strong> {v.vehicles}</p>
+            <p class="viscosity-note">{v.notes}</p>
+          </div>
+        ))}
+      </div>
+
+      <h2>Synthetic vs Conventional Oil</h2>
+      <p>Synthetic oil costs more per quart but lasts longer and protects better. When you factor in the extended change intervals, synthetic often costs the same or less per year than conventional.</p>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Category</th>
+              <th>Conventional</th>
+              <th>Synthetic Blend</th>
+              <th>Full Synthetic</th>
+            </tr>
+          </thead>
+          <tbody>
+            {comparisonRows.map(row => (
+              <tr>
+                <td><strong>{row.category}</strong></td>
+                <td>{row.conventional}</td>
+                <td>{row.syntheticBlend}</td>
+                <td>{row.fullSynthetic}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <p><strong>Bottom line:</strong> Full synthetic is the best value for most drivers. It costs more per change but you change it less often, so the annual cost is comparable — while getting significantly better engine protection, cold-start performance, and fuel economy.</p>
+
+      <h2>Signs You Need an Oil Change</h2>
+      <p>Don't wait for the dashboard light. These warning signs indicate your oil needs attention — some of them urgently.</p>
+      <div class="signs-grid">
+        {warningSignsList.map(s => (
+          <div class="sign-card">
+            <div class="sign-header">
+              <span class={`sign-urgency urgency-${s.urgency.toLowerCase()}`}>{s.urgency}</span>
+              <h3>{s.sign}</h3>
+            </div>
+            <p>{s.detail}</p>
+          </div>
+        ))}
+      </div>
+
+      <h2>DIY Oil Change: Step-by-Step</h2>
+      <p>Changing your own oil is one of the easiest and most satisfying car maintenance tasks. Budget 30-45 minutes your first time; experienced DIYers do it in 20 minutes.</p>
+
+      <h3>Tools & Supplies Needed</h3>
+      <ul class="tools-list">
+        {diyTools.map(t => (
+          <li>{t}</li>
+        ))}
+      </ul>
+
+      <div class="steps-grid">
+        {diySteps.map((s, i) => (
+          <div class="step-card">
+            <div class="step-number">{i + 1}</div>
+            <div class="step-content">
+              <h3>{s.step}</h3>
+              <p>{s.detail}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <h2>Cost Comparison: DIY vs Quick Lube vs Dealership</h2>
+      <p>Where you get your oil changed affects price, convenience, and quality. Here's how each option stacks up.</p>
+      <div class="cost-grid">
+        {costComparison.map(c => (
+          <div class="cost-card">
+            <h3>{c.method}</h3>
+            <div class="cost-details">
+              <div class="cost-row">
+                <span class="cost-label">Conventional</span>
+                <span class="cost-value">{c.totalConv}</span>
+              </div>
+              <div class="cost-row">
+                <span class="cost-label">Full Synthetic</span>
+                <span class="cost-value">{c.totalSynth}</span>
+              </div>
+              <div class="cost-row">
+                <span class="cost-label">Time</span>
+                <span class="cost-value">{c.time}</span>
+              </div>
+            </div>
+            <div class="cost-pros-cons">
+              <p><strong>Pros:</strong> {c.pros}</p>
+              <p><strong>Cons:</strong> {c.cons}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <h2>Frequently Asked Questions</h2>
+      {faqs.map(f => (
+        <div class="faq-item">
+          <h3>{f.q}</h3>
+          <p>{f.a}</p>
+        </div>
+      ))}
+
+      <h2>Related Pages</h2>
+      <div class="related-grid">
+        <a href="/sites/pleasestartplease/car-insurance-comparison" class="related-link">
+          <strong>Car Insurance Comparison</strong>
+          <span>Compare 10 major US auto insurers on price, ratings, and coverage</span>
+        </a>
+      </div>
+    </section>
+  </div>
+
+  <script is:inline define:vars={{ intervalData }}>
+    (function() {
+      const conditionSelect = document.getElementById('condition-select');
+      const oilSelect = document.getElementById('oil-select');
+      const resultMiles = document.getElementById('result-miles');
+      const resultMonths = document.getElementById('result-months');
+      const conditionHint = document.getElementById('condition-hint');
+
+      const hints = {
+        normal: 'Highway driving, moderate climate, no towing',
+        severe: 'Stop-and-go, short trips, dusty roads, towing, temperature extremes',
+        extreme: 'Heavy towing, off-road, extreme temps, commercial use'
+      };
+
+      function updateResult() {
+        const condition = conditionSelect.value;
+        const oil = oilSelect.value;
+        const data = intervalData[oil];
+        if (data && data[condition]) {
+          resultMiles.textContent = data[condition].miles + ' miles';
+          resultMonths.textContent = data[condition].months + ' months';
+        }
+        conditionHint.textContent = hints[condition] || '';
+      }
+
+      if (conditionSelect && oilSelect) {
+        conditionSelect.addEventListener('change', updateResult);
+        oilSelect.addEventListener('change', updateResult);
+        updateResult();
+      }
+    })();
+  </script>
+
+  <style is:inline>
+    .page-content { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem; }
+    .hero { text-align: center; padding: 3rem 0 2rem; }
+    .hero h1 { font-size: 2.2rem; font-weight: 800; margin-bottom: 0.5rem; color: var(--text-primary); }
+    .hero p { color: var(--text-secondary); font-size: 1.1rem; max-width: 650px; margin: 0 auto; line-height: 1.5; }
+
+    .content-section { margin-bottom: 3rem; }
+    .content-section h2 { font-size: 1.8rem; color: var(--text-primary); margin-bottom: 1rem; margin-top: 2.5rem; }
+    .content-section h3 { font-size: 1.3rem; color: var(--text-primary); margin-bottom: 0.5rem; margin-top: 1.5rem; }
+    .content-section p { color: var(--text-secondary); line-height: 1.6; margin-bottom: 1rem; }
+    .content-section ul { color: var(--text-secondary); margin-bottom: 1rem; padding-left: 1.5rem; line-height: 1.6; }
+    .content-section li { margin-bottom: 0.5rem; }
+
+    a { color: var(--accent-color); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    strong { color: var(--text-primary); }
+
+    /* Interval Finder */
+    .interval-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem; margin: 1.5rem 0; }
+    .interval-controls { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+    .control-group { display: flex; flex-direction: column; gap: 0.4rem; }
+    .control-group label { font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--text-secondary); }
+    .control-group select { padding: 0.6rem 0.8rem; border: 1px solid var(--border-color); border-radius: 8px; background: var(--bg-primary, #fff); color: var(--text-primary); font-size: 0.95rem; cursor: pointer; }
+    .control-hint { font-size: 0.8rem; color: var(--text-secondary); font-style: italic; min-height: 1.2em; }
+    .interval-result { text-align: center; padding: 1.5rem 0; }
+    .interval-main { display: flex; flex-direction: column; align-items: center; gap: 0.25rem; }
+    .interval-label { font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--text-secondary); font-weight: 700; margin-bottom: 0.25rem; }
+    .interval-miles { font-size: 2rem; font-weight: 800; color: var(--accent-color); }
+    .interval-or { font-size: 0.85rem; color: var(--text-secondary); }
+    .interval-months { font-size: 1.3rem; font-weight: 700; color: var(--text-primary); }
+    .interval-whichever { font-size: 0.8rem; color: var(--text-secondary); font-style: italic; margin-top: 0.25rem; }
+    .condition-details { margin-top: 1rem; padding-top: 1rem; border-top: 1px solid var(--border-color); }
+    .condition-def { font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 0.5rem; line-height: 1.5; }
+    .condition-def strong { font-size: 0.85rem; }
+
+    /* Table */
+    .table-wrapper { overflow-x: auto; margin: 1.5rem 0; border: 1px solid var(--border-color); border-radius: 12px; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.9rem; min-width: 600px; }
+    th { background: var(--card-bg); padding: 0.75rem 0.6rem; text-align: left; font-weight: 700; color: var(--text-primary); border-bottom: 2px solid var(--border-color); white-space: nowrap; }
+    td { padding: 0.65rem 0.6rem; border-bottom: 1px solid var(--border-color); color: var(--text-secondary); }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: var(--card-bg); }
+
+    /* Viscosity */
+    .viscosity-grid { display: flex; flex-direction: column; gap: 1rem; margin: 1.5rem 0; }
+    .viscosity-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 10px; padding: 1.2rem 1.5rem; }
+    .viscosity-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; flex-wrap: wrap; gap: 0.5rem; }
+    .viscosity-grade { font-size: 1.3rem; font-weight: 800; color: var(--accent-color); }
+    .viscosity-temp { font-size: 0.85rem; color: var(--text-secondary); background: var(--border-color); padding: 0.2rem 0.6rem; border-radius: 4px; }
+    .viscosity-best, .viscosity-vehicles, .viscosity-note { font-size: 0.9rem; margin-bottom: 0.4rem; }
+    .viscosity-note { margin-bottom: 0; font-style: italic; }
+
+    /* Warning Signs */
+    .signs-grid { display: flex; flex-direction: column; gap: 1rem; margin: 1.5rem 0; }
+    .sign-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 10px; padding: 1.2rem 1.5rem; }
+    .sign-header { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 0.5rem; flex-wrap: wrap; }
+    .sign-header h3 { margin: 0; font-size: 1.05rem; color: var(--text-primary); }
+    .sign-urgency { font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; padding: 0.2rem 0.5rem; border-radius: 4px; white-space: nowrap; }
+    .urgency-high { background: #ef4444; color: #fff; }
+    .urgency-medium { background: #f59e0b; color: #fff; }
+    .urgency-low { background: var(--border-color); color: var(--text-secondary); }
+    .sign-card p { margin-bottom: 0; }
+
+    /* Steps */
+    .steps-grid { display: flex; flex-direction: column; gap: 1rem; margin: 1.5rem 0; }
+    .step-card { display: flex; gap: 1rem; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 10px; padding: 1.2rem 1.5rem; }
+    .step-number { flex-shrink: 0; width: 36px; height: 36px; border-radius: 50%; background: var(--accent-color); color: #fff; font-weight: 800; font-size: 1rem; display: flex; align-items: center; justify-content: center; }
+    .step-content h3 { margin: 0 0 0.3rem; font-size: 1.05rem; color: var(--text-primary); }
+    .step-content p { margin: 0; font-size: 0.9rem; }
+
+    .tools-list { columns: 2; column-gap: 2rem; }
+
+    /* Cost Comparison */
+    .cost-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; margin: 1.5rem 0; }
+    .cost-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 10px; padding: 1.2rem 1.5rem; }
+    .cost-card h3 { margin-top: 0; font-size: 1.1rem; color: var(--text-primary); margin-bottom: 0.75rem; }
+    .cost-details { margin-bottom: 0.75rem; }
+    .cost-row { display: flex; justify-content: space-between; padding: 0.4rem 0; border-bottom: 1px solid var(--border-color); }
+    .cost-row:last-child { border-bottom: none; }
+    .cost-label { font-size: 0.85rem; color: var(--text-secondary); }
+    .cost-value { font-size: 0.9rem; font-weight: 700; color: var(--text-primary); }
+    .cost-pros-cons p { font-size: 0.85rem; margin-bottom: 0.3rem; line-height: 1.5; }
+    .cost-pros-cons p:last-child { margin-bottom: 0; }
+
+    /* FAQ */
+    .faq-item { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 10px; padding: 1.2rem 1.5rem; margin: 1rem 0; }
+    .faq-item h3 { margin-top: 0; font-size: 1.1rem; color: var(--text-primary); }
+    .faq-item p { margin-bottom: 0; }
+
+    /* Related */
+    .related-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1rem; margin: 1.5rem 0; }
+    .related-link { display: flex; flex-direction: column; gap: 0.3rem; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 10px; padding: 1.2rem; text-decoration: none; transition: border-color 0.2s; }
+    .related-link:hover { border-color: var(--accent-color); text-decoration: none; }
+    .related-link strong { color: var(--text-primary); font-size: 1rem; }
+    .related-link span { color: var(--text-secondary); font-size: 0.85rem; }
+
+    @media (max-width: 600px) {
+      .hero h1 { font-size: 1.6rem; }
+      .interval-controls { grid-template-columns: 1fr; }
+      .interval-miles { font-size: 1.5rem; }
+      .tools-list { columns: 1; }
+      .cost-grid { grid-template-columns: 1fr; }
+      .viscosity-header { flex-direction: column; align-items: flex-start; }
+    }
+  </style>
+</SiteLayout>
