@@ -1,0 +1,1202 @@
+---
+import SiteLayout from "../../../layouts/SiteLayout.astro";
+
+const schema = {
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "Amortization Schedule Calculator",
+  "url": "https://firemaths.info/amortization-schedule-calculator",
+  "description": "Generate a full amortization schedule for any loan. See every payment broken down by principal, interest, and extra payments with a visual payoff chart.",
+  "applicationCategory": "FinanceApplication",
+  "operatingSystem": "All",
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "USD"
+  }
+};
+
+const faqSchema = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What is an amortization schedule?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "An amortization schedule is a complete table of periodic loan payments showing the breakdown of each payment into principal and interest. In the early years of a loan, the majority of each payment goes toward interest. Over time, the principal portion increases and the interest portion decreases until the loan is fully paid off. The schedule shows exactly how your balance decreases with each payment."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How is loan amortization calculated?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Loan amortization uses the formula M = P[r(1+r)^n]/[(1+r)^n – 1], where M is the monthly payment, P is the principal (loan amount), r is the monthly interest rate (annual rate divided by 12), and n is the total number of payments. Each month, interest is calculated on the remaining balance, and the rest of the payment reduces the principal. This creates the characteristic pattern where early payments are mostly interest and later payments are mostly principal."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How do extra payments affect my amortization schedule?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Extra payments go directly toward reducing your principal balance. This means less interest accrues in subsequent months, which accelerates your payoff timeline and reduces total interest paid. For example, adding $200/month extra to a $300,000 loan at 7% over 30 years can save over $100,000 in interest and cut roughly 7 years off your loan. Even small extra payments early in the loan have an outsized impact due to compound interest savings."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What is the difference between principal and interest in a loan payment?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Principal is the portion of your payment that reduces the outstanding loan balance — it builds your equity. Interest is the cost of borrowing money, calculated as a percentage of your remaining balance. On a 30-year mortgage, you might pay 70-80% interest in the first few years, but by the final years, nearly all of each payment goes to principal. Understanding this split helps you see the true cost of borrowing and the value of extra payments."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Why do I pay more interest at the beginning of a loan?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Interest is calculated as a percentage of your remaining loan balance. At the start, your balance is at its highest, so interest charges are at their maximum. As you make payments and reduce the balance, less interest accrues each month. With a fixed monthly payment, the portion going to interest shrinks while the portion going to principal grows. This is why paying extra early in the loan saves the most money — it reduces the balance that interest is calculated on for every future payment."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Can I use an amortization schedule for any type of loan?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes, amortization schedules work for any fixed-rate installment loan — mortgages, auto loans, personal loans, and student loans. The key requirement is a fixed interest rate and regular payment schedule. Adjustable-rate mortgages (ARMs) and interest-only loans use different calculations. This calculator works for any standard amortizing loan where you make equal monthly payments over a set term."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How can I pay off my loan faster without refinancing?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "The most effective strategies are: (1) Make extra monthly payments — even $50-100 extra makes a difference over time. (2) Make biweekly payments instead of monthly, which results in one extra full payment per year. (3) Apply windfalls like tax refunds or bonuses as lump-sum payments. (4) Round up your payment to the nearest hundred. Use our calculator's extra payment feature to see the exact impact each strategy has on your payoff date and total interest."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What does negative amortization mean?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Negative amortization occurs when your monthly payment is not enough to cover the interest due, causing your loan balance to grow instead of shrink. This can happen with certain adjustable-rate mortgages, payment-option ARMs, or income-driven student loan repayment plans. It means you end up owing more than you originally borrowed. Standard fixed-rate amortizing loans, like those calculated here, never have negative amortization because each payment covers at least the interest due."
+      }
+    }
+  ]
+};
+
+export const meta = {
+  title: "Amortization Schedule Calculator | firemaths.info",
+  description: "Generate a complete amortization schedule with payment breakdown, extra payment savings, payoff chart, and CSV export. Free loan amortization calculator.",
+  category: "tool",
+  published: "2026-03-21",
+};
+---
+
+<SiteLayout
+  site="firemaths"
+  title="Amortization Schedule Calculator | firemaths.info"
+  description="Generate a complete amortization schedule with payment breakdown, extra payment savings, payoff chart, and CSV export. Free loan amortization calculator."
+  canonical="https://firemaths.info/amortization-schedule-calculator" schema={schema}
+>
+  <style>
+:root {
+    --color-principal: #4A90E2;
+    --color-interest: #E25C5C;
+    --color-extra: #50E3C2;
+    --color-balance: #D4A017;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-primary);
+    font-family: var(--font-ui);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4 {
+    font-weight: 700;
+    line-height: 1.2;
+    color: var(--text-primary);
+}
+
+.container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem;
+}
+
+header {
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+header h1 {
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+    color: var(--accent-color);
+}
+
+header p {
+    color: var(--text-secondary);
+    font-size: 1.1rem;
+}
+
+.calculator-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 2rem;
+    margin-bottom: 3rem;
+}
+
+@media (min-width: 768px) {
+    .calculator-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+.scenario-card {
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.5rem;
+}
+
+.scenario-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.scenario-header h2 {
+    font-size: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.input-group {
+    margin-bottom: 1.25rem;
+}
+
+.input-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+
+.input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.prefix, .suffix {
+    position: absolute;
+    color: var(--text-secondary);
+    font-family: var(--font-mono);
+    font-size: 1rem;
+    pointer-events: none;
+}
+
+.prefix { left: 1rem; }
+.suffix { right: 1rem; }
+
+input[type="number"], input[type="date"], select {
+    width: 100%;
+    background-color: var(--bg-color);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    font-family: var(--font-mono);
+    font-size: 1rem;
+    padding: 0.75rem 1rem;
+    border-radius: 6px;
+    transition: border-color 0.2s;
+    -moz-appearance: textfield;
+}
+
+input[type="date"] {
+    color-scheme: dark;
+}
+
+select {
+    font-family: var(--font-ui);
+    appearance: none;
+    background-image: url("data:image/svg+xml;charset=UTF-8,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23888888' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3e%3cpolyline points='6 9 12 15 18 9'%3e%3c/polyline%3e%3c/svg%3e");
+    background-repeat: no-repeat;
+    background-position: right 1rem center;
+    background-size: 1em;
+    padding-right: 2.5rem;
+}
+
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+input[type="number"]:focus, input[type="date"]:focus, select:focus {
+    outline: none;
+    border-color: var(--accent-color);
+}
+
+.has-prefix input { padding-left: 2rem; }
+.has-suffix input { padding-right: 2.5rem; }
+
+.results {
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+}
+
+.result-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.result-label {
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+}
+
+.result-value {
+    font-family: var(--font-mono);
+    font-size: 1.125rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.result-final .result-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--accent-color);
+}
+
+.copy-btn {
+    background: none;
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-family: var(--font-ui);
+    transition: all 0.2s;
+}
+
+.copy-btn:hover {
+    border-color: var(--accent-color);
+    color: var(--text-primary);
+}
+
+.savings-highlight {
+    color: var(--color-extra);
+}
+
+.chart-section {
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.chart-section h2 {
+    text-align: center;
+    font-size: 1.25rem;
+    margin-bottom: 1.5rem;
+}
+
+.chart-container {
+    width: 100%;
+    height: 400px;
+    position: relative;
+}
+
+canvas {
+    width: 100%;
+    height: 100%;
+}
+
+.chart-legend {
+    display: flex;
+    justify-content: center;
+    gap: 1.5rem;
+    margin-top: 1rem;
+    flex-wrap: wrap;
+}
+
+.chart-legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.8125rem;
+    color: var(--text-secondary);
+}
+
+.chart-legend-color {
+    width: 12px;
+    height: 12px;
+    border-radius: 3px;
+    flex-shrink: 0;
+}
+
+.section-card {
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.section-card h2 {
+    font-size: 1.25rem;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.toggle-group {
+    display: flex;
+    gap: 0;
+    margin-bottom: 1.5rem;
+}
+
+.toggle-btn {
+    flex: 1;
+    padding: 0.6rem 1rem;
+    background: var(--bg-color);
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-family: var(--font-ui);
+    font-size: 0.875rem;
+    transition: all 0.2s;
+}
+
+.toggle-btn:first-child { border-radius: 6px 0 0 6px; }
+.toggle-btn:last-child { border-radius: 0 6px 6px 0; }
+
+.toggle-btn.active {
+    background: var(--accent-color);
+    color: #0c0a00;
+    border-color: var(--accent-color);
+    font-weight: 600;
+}
+
+.toolbar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.export-btn {
+    padding: 0.5rem 1rem;
+    background: var(--bg-color);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    cursor: pointer;
+    font-family: var(--font-ui);
+    font-size: 0.8125rem;
+    font-weight: 500;
+    border-radius: 6px;
+    transition: all 0.2s;
+}
+
+.export-btn:hover {
+    border-color: var(--accent-color);
+    color: var(--accent-color);
+}
+
+.amort-table-wrap {
+    overflow-x: auto;
+    max-height: 500px;
+    overflow-y: auto;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+}
+
+.amort-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.8125rem;
+    font-family: var(--font-mono);
+    white-space: nowrap;
+}
+
+.amort-table thead {
+    position: sticky;
+    top: 0;
+    z-index: 1;
+}
+
+.amort-table th {
+    background: var(--bg-color);
+    color: var(--text-secondary);
+    font-weight: 600;
+    text-align: right;
+    padding: 0.6rem 0.75rem;
+    border-bottom: 2px solid var(--border-color);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.amort-table th:first-child {
+    text-align: center;
+}
+
+.amort-table td {
+    padding: 0.5rem 0.75rem;
+    text-align: right;
+    border-bottom: 1px solid var(--border-color);
+    color: var(--text-secondary);
+}
+
+.amort-table td:first-child {
+    text-align: center;
+    color: var(--text-primary);
+}
+
+.amort-table tbody tr:hover {
+    background: rgba(212, 160, 23, 0.05);
+}
+
+.extra-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 1.5rem;
+}
+
+@media (min-width: 768px) {
+    .extra-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+.summary-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+}
+
+@media (min-width: 768px) {
+    .summary-grid {
+        grid-template-columns: 1fr 1fr 1fr;
+    }
+}
+
+.summary-item {
+    padding: 1rem;
+    background: var(--bg-color);
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+}
+
+.summary-item-label {
+    font-size: 0.8125rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.25rem;
+}
+
+.summary-item-value {
+    font-family: var(--font-mono);
+    font-size: 1.25rem;
+    font-weight: 600;
+    color: var(--accent-color);
+}
+
+.summary-item-value.green {
+    color: var(--color-extra);
+}
+
+.seo-content {
+    margin-bottom: 4rem;
+}
+
+.seo-content h2 {
+    font-size: 1.75rem;
+    margin-top: 2.5rem;
+    margin-bottom: 1rem;
+    color: var(--accent-color);
+}
+
+.seo-content p {
+    margin-bottom: 1rem;
+    color: var(--text-secondary);
+}
+
+.seo-content ul {
+    margin-bottom: 1.5rem;
+    padding-left: 1.5rem;
+    color: var(--text-secondary);
+}
+
+.seo-content li {
+    margin-bottom: 0.5rem;
+}
+
+.faq-section {
+    margin-bottom: 4rem;
+}
+
+.faq-section h2 {
+    font-size: 1.75rem;
+    margin-bottom: 1.5rem;
+    color: var(--accent-color);
+}
+
+.faq-item {
+    border-bottom: 1px solid var(--border-color);
+    padding: 1.25rem 0;
+}
+
+.faq-question {
+    font-weight: 600;
+    color: var(--text-primary);
+    margin-bottom: 0.5rem;
+    font-size: 1rem;
+}
+
+.faq-answer {
+    color: var(--text-secondary);
+    font-size: 0.9375rem;
+    line-height: 1.7;
+}
+
+.related-links {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 1rem;
+    margin-top: 2rem;
+    margin-bottom: 4rem;
+}
+
+.related-link {
+    display: block;
+    padding: 1.25rem;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    color: var(--text-primary);
+    text-decoration: none;
+    font-weight: 600;
+    transition: border-color 0.2s;
+}
+
+.related-link:hover {
+    border-color: var(--accent-color);
+}
+
+.related-link span {
+    display: block;
+    font-size: 0.8125rem;
+    font-weight: 400;
+    color: var(--text-secondary);
+    margin-top: 0.25rem;
+}
+
+footer {
+    text-align: center;
+    padding: 2rem 0;
+    border-top: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+}
+
+footer a {
+    color: var(--accent-color);
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+footer a:hover {
+    color: var(--text-primary);
+    text-decoration: underline;
+}
+  </style>
+
+<div class="container">
+    <h1>Amortization Schedule Calculator</h1>
+    <p style="text-align:center; color:var(--text-secondary); font-size:1.1rem; margin-bottom:3rem;">Generate a full amortization schedule, see how extra payments save you money, and export the results as CSV.</p>
+
+    <main>
+        <div class="calculator-grid">
+            <!-- Inputs -->
+            <div class="scenario-card">
+                <div class="scenario-header">
+                    <h2>Loan Details</h2>
+                </div>
+
+                <div class="input-group">
+                    <label for="loan-amount">Loan Amount</label>
+                    <div class="input-wrapper has-prefix">
+                        <span class="prefix">$</span>
+                        <input type="number" id="loan-amount" value="300000" min="0" step="5000">
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="input-group">
+                        <label for="interest-rate">Annual Interest Rate</label>
+                        <div class="input-wrapper has-suffix">
+                            <span class="suffix">%</span>
+                            <input type="number" id="interest-rate" value="6.5" min="0" max="30" step="0.125">
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label for="loan-term">Loan Term (Years)</label>
+                        <div class="input-wrapper has-suffix">
+                            <span class="suffix">yr</span>
+                            <input type="number" id="loan-term" value="30" min="1" max="50" step="1">
+                        </div>
+                    </div>
+                </div>
+
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="input-group">
+                        <label for="start-date">Start Date</label>
+                        <div class="input-wrapper">
+                            <input type="date" id="start-date">
+                        </div>
+                    </div>
+                    <div class="input-group">
+                        <label for="extra-payment">Extra Monthly Payment</label>
+                        <div class="input-wrapper has-prefix">
+                            <span class="prefix">$</span>
+                            <input type="number" id="extra-payment" value="0" min="0" step="50">
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Results Summary -->
+            <div class="scenario-card">
+                <div class="scenario-header">
+                    <h2>Loan Summary</h2>
+                </div>
+
+                <div class="results" style="margin-top: 0; border-top: none; padding-top: 0;">
+                    <div class="result-item result-final" style="margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border-color);">
+                        <span class="result-label" style="font-size: 1rem;">Monthly Payment</span>
+                        <div class="result-value">
+                            <span id="res-monthly">$0</span>
+                            <button class="copy-btn" onclick="copyValue('res-monthly', this)">Copy</button>
+                        </div>
+                    </div>
+
+                    <div class="result-item">
+                        <span class="result-label">Total of All Payments</span>
+                        <span class="result-value" id="res-total-payments" style="font-size: 0.9375rem;">$0</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label">Total Interest Paid</span>
+                        <span class="result-value" id="res-total-interest" style="font-size: 0.9375rem; color: var(--color-interest);">$0</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label">Payoff Date</span>
+                        <span class="result-value" id="res-payoff" style="font-size: 0.9375rem; font-family: var(--font-ui);">—</span>
+                    </div>
+
+                    <div id="savings-section" style="margin-top: 1rem; padding-top: 1rem; border-top: 1px dashed var(--border-color); display: none;">
+                        <div class="result-item">
+                            <span class="result-label">Interest Saved (Extra Payments)</span>
+                            <span class="result-value savings-highlight" id="res-interest-saved" style="font-size: 0.9375rem;">$0</span>
+                        </div>
+                        <div class="result-item">
+                            <span class="result-label">Time Saved</span>
+                            <span class="result-value savings-highlight" id="res-time-saved" style="font-size: 0.9375rem; font-family: var(--font-ui);">—</span>
+                        </div>
+                        <div class="result-item">
+                            <span class="result-label">New Payoff Date</span>
+                            <span class="result-value" id="res-new-payoff" style="font-size: 0.9375rem; font-family: var(--font-ui);">—</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Summary Cards -->
+        <div class="section-card">
+            <h2>Payment Breakdown</h2>
+            <div class="summary-grid">
+                <div class="summary-item">
+                    <div class="summary-item-label">Loan Amount</div>
+                    <div class="summary-item-value" id="sum-principal">$0</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-item-label">Total Interest</div>
+                    <div class="summary-item-value" id="sum-interest" style="color: var(--color-interest);">$0</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-item-label">Total Cost</div>
+                    <div class="summary-item-value" id="sum-total">$0</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-item-label">Interest-to-Principal Ratio</div>
+                    <div class="summary-item-value" id="sum-ratio">0%</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-item-label">Total Extra Payments</div>
+                    <div class="summary-item-value green" id="sum-extra">$0</div>
+                </div>
+                <div class="summary-item">
+                    <div class="summary-item-label">Number of Payments</div>
+                    <div class="summary-item-value" id="sum-payments">0</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Payoff Chart -->
+        <div class="chart-section">
+            <h2>Principal vs Interest Over Time</h2>
+            <div class="chart-container">
+                <canvas id="payoffChart"></canvas>
+            </div>
+            <div class="chart-legend">
+                <div class="chart-legend-item">
+                    <span class="chart-legend-color" style="background: var(--color-principal);"></span>
+                    Principal Portion
+                </div>
+                <div class="chart-legend-item">
+                    <span class="chart-legend-color" style="background: var(--color-interest);"></span>
+                    Interest Portion
+                </div>
+                <div class="chart-legend-item">
+                    <span class="chart-legend-color" style="background: var(--color-balance);"></span>
+                    Remaining Balance
+                </div>
+            </div>
+        </div>
+
+        <!-- Amortization Schedule -->
+        <div class="section-card">
+            <div class="toolbar">
+                <div class="toggle-group">
+                    <button class="toggle-btn active" id="btn-monthly" onclick="setAmortView('monthly')">Monthly</button>
+                    <button class="toggle-btn" id="btn-yearly" onclick="setAmortView('yearly')">Yearly Summary</button>
+                </div>
+                <button class="export-btn" onclick="exportCSV()">Export CSV</button>
+            </div>
+            <div class="amort-table-wrap">
+                <table class="amort-table" id="amort-table">
+                    <thead id="amort-thead"></thead>
+                    <tbody id="amort-tbody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- SEO Content -->
+        <div class="seo-content">
+            <h2>How to Use This Amortization Schedule Calculator</h2>
+            <p>Enter your loan amount, annual interest rate, loan term in years, and optionally a start date and extra monthly payment. The calculator instantly generates a complete amortization schedule showing exactly how each payment is split between principal and interest. The payoff chart visualizes how the principal and interest portions shift over the life of your loan.</p>
+            <p>Toggle between the monthly view to see every individual payment, or the yearly summary to get a high-level overview. Use the Export CSV button to download the full schedule for your records or to use in a spreadsheet.</p>
+
+            <h2>Understanding Your Amortization Schedule</h2>
+            <p>An amortization schedule reveals the hidden mechanics of your loan. While your total monthly payment stays the same, the allocation between principal and interest changes dramatically over time. In the first year of a typical 30-year mortgage at 6.5%, roughly 65% of each payment goes toward interest. By the final year, over 99% goes to principal.</p>
+            <ul>
+                <li><strong>Payment #:</strong> The sequential payment number from 1 to the total number of payments.</li>
+                <li><strong>Date:</strong> The expected date of each payment based on your start date.</li>
+                <li><strong>Payment:</strong> Your total payment amount for that month, including any extra payments.</li>
+                <li><strong>Principal:</strong> The portion reducing your loan balance.</li>
+                <li><strong>Interest:</strong> The cost of borrowing, calculated on the remaining balance.</li>
+                <li><strong>Extra:</strong> Any additional payment applied directly to principal.</li>
+                <li><strong>Balance:</strong> Your remaining loan balance after the payment.</li>
+            </ul>
+
+            <h2>The Impact of Extra Payments on Loan Amortization</h2>
+            <p>Extra payments are one of the most powerful tools for saving money on any loan. Because extra payments reduce your principal directly, they decrease the amount of interest charged on every subsequent payment. This creates a compounding savings effect that accelerates over time.</p>
+            <p>For a $300,000 loan at 6.5% over 30 years, adding just $200 per month in extra payments saves approximately $115,000 in total interest and pays off the loan about 8 years early. Our calculator shows you the exact savings for your specific loan, including the total interest saved and the number of months shaved off your loan term.</p>
+
+            <h2>Amortization Schedule for Different Loan Types</h2>
+            <p>While most commonly associated with mortgages, amortization schedules apply to any fixed-rate installment loan. Auto loans, typically 3-7 years, have a compressed amortization where the interest-to-principal shift happens much faster. Student loans often have 10-25 year terms with varying rates. Personal loans are usually 2-7 years. Regardless of the loan type, the fundamental principle remains the same — early payments are interest-heavy, and extra payments always save money.</p>
+        </div>
+
+        <!-- FAQ -->
+        <div class="faq-section">
+            <h2>Frequently Asked Questions</h2>
+            {faqSchema.mainEntity.map((item) => (
+                <div class="faq-item">
+                    <div class="faq-question">{item.name}</div>
+                    <div class="faq-answer">{item.acceptedAnswer.text}</div>
+                </div>
+            ))}
+        </div>
+
+        <!-- Related -->
+        <h2 style="font-size: 1.25rem; margin-bottom: 0.5rem;">Related Calculators</h2>
+        <div class="related-links">
+            <a href="/mortgage-payment-calculator" class="related-link">
+                Mortgage Payment Calculator
+                <span>Calculate your full monthly mortgage payment including taxes, insurance, and PMI</span>
+            </a>
+            <a href="/compound-interest-calculator" class="related-link">
+                Compound Interest Calculator
+                <span>See how your investments grow over time with compounding returns</span>
+            </a>
+            <a href="/credit-card-payoff-calculator" class="related-link">
+                Credit Card Payoff Calculator
+                <span>Find out how long it takes to pay off your credit card balance</span>
+            </a>
+        </div>
+    </main>
+</div>
+
+  <script is:inline type="application/ld+json" set:html={JSON.stringify(faqSchema)} />
+
+  <script is:inline>
+const fmt = (v) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(v);
+const fmt2 = (v) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(v);
+
+window.copyValue = async (id, btn) => {
+    const text = document.getElementById(id).innerText;
+    try {
+        await navigator.clipboard.writeText(text);
+        const orig = btn.innerText;
+        btn.innerText = 'Copied!';
+        setTimeout(() => btn.innerText = orig, 2000);
+    } catch(e) {}
+};
+
+let amortView = 'monthly';
+let amortData = [];
+let startDate = null;
+
+// Set default start date to next month's 1st
+(function() {
+    const now = new Date();
+    const nextMonth = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+    const dateStr = nextMonth.toISOString().split('T')[0];
+    document.getElementById('start-date').value = dateStr;
+})();
+
+function getInputs() {
+    const loanAmount = parseFloat(document.getElementById('loan-amount').value) || 0;
+    const interestRate = parseFloat(document.getElementById('interest-rate').value) || 0;
+    const loanTerm = parseInt(document.getElementById('loan-term').value) || 30;
+    const extraPayment = parseFloat(document.getElementById('extra-payment').value) || 0;
+    const dateVal = document.getElementById('start-date').value;
+    startDate = dateVal ? new Date(dateVal + 'T00:00:00') : new Date();
+    return { loanAmount, interestRate, loanTerm, extraPayment };
+}
+
+function calcMonthlyPayment(principal, annualRate, termYears) {
+    if (principal <= 0) return 0;
+    if (annualRate <= 0) return principal / (termYears * 12);
+    const r = annualRate / 100 / 12;
+    const n = termYears * 12;
+    return principal * (r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1);
+}
+
+function buildSchedule(loanAmount, annualRate, termYears, extraMonthly) {
+    const r = annualRate / 100 / 12;
+    const n = termYears * 12;
+    const basePayment = calcMonthlyPayment(loanAmount, annualRate, termYears);
+    let balance = loanAmount;
+    const schedule = [];
+    let totalInterest = 0;
+    let totalPrincipal = 0;
+    let totalExtra = 0;
+
+    for (let month = 1; month <= n && balance > 0.01; month++) {
+        const interestPayment = balance * r;
+        let principalPayment = basePayment - interestPayment;
+        let extra = extraMonthly;
+
+        if (principalPayment + extra > balance) {
+            const totalPay = balance;
+            extra = Math.max(0, totalPay - principalPayment);
+            principalPayment = totalPay - extra;
+        }
+
+        balance -= (principalPayment + extra);
+        if (balance < 0.01) balance = 0;
+
+        totalInterest += interestPayment;
+        totalPrincipal += principalPayment;
+        totalExtra += extra;
+
+        // Calculate date
+        const payDate = new Date(startDate.getFullYear(), startDate.getMonth() + month, 1);
+
+        schedule.push({
+            month,
+            date: payDate,
+            payment: interestPayment + principalPayment + extra,
+            principal: principalPayment,
+            interest: interestPayment,
+            extra,
+            balance,
+            totalInterest,
+            totalPrincipal,
+            totalExtra
+        });
+
+        if (balance <= 0) break;
+    }
+
+    return schedule;
+}
+
+function calculate() {
+    const inp = getInputs();
+    const { loanAmount, interestRate, loanTerm, extraPayment } = inp;
+
+    const basePayment = calcMonthlyPayment(loanAmount, interestRate, loanTerm);
+
+    // Base schedule (no extra)
+    const baseSchedule = buildSchedule(loanAmount, interestRate, loanTerm, 0);
+    const baseTotalInterest = baseSchedule.length > 0 ? baseSchedule[baseSchedule.length - 1].totalInterest : 0;
+
+    // Schedule with extra payments
+    const extraSchedule = buildSchedule(loanAmount, interestRate, loanTerm, extraPayment);
+    const extraTotalInterest = extraSchedule.length > 0 ? extraSchedule[extraSchedule.length - 1].totalInterest : 0;
+    const extraTotalExtra = extraSchedule.length > 0 ? extraSchedule[extraSchedule.length - 1].totalExtra : 0;
+
+    const activeSchedule = extraPayment > 0 ? extraSchedule : baseSchedule;
+    const activeTotalInterest = extraPayment > 0 ? extraTotalInterest : baseTotalInterest;
+    const totalPayments = loanAmount + activeTotalInterest + extraTotalExtra;
+
+    // Monthly payment display
+    const displayPayment = basePayment + extraPayment;
+    document.getElementById('res-monthly').innerText = fmt(displayPayment);
+    document.getElementById('res-total-payments').innerText = fmt(totalPayments);
+    document.getElementById('res-total-interest').innerText = fmt(activeTotalInterest);
+
+    // Payoff date
+    const formatDate = (d) => d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+
+    if (activeSchedule.length > 0) {
+        document.getElementById('res-payoff').innerText = formatDate(activeSchedule[activeSchedule.length - 1].date);
+    }
+
+    // Extra payment savings
+    const savingsSection = document.getElementById('savings-section');
+    if (extraPayment > 0 && baseSchedule.length > extraSchedule.length) {
+        savingsSection.style.display = 'block';
+        const monthsSaved = baseSchedule.length - extraSchedule.length;
+        const yearsSaved = Math.floor(monthsSaved / 12);
+        const remMonths = monthsSaved % 12;
+        const timeSavedStr = yearsSaved > 0 ? yearsSaved + 'yr ' + remMonths + 'mo' : monthsSaved + ' months';
+        const interestSaved = baseTotalInterest - extraTotalInterest;
+
+        document.getElementById('res-interest-saved').innerText = fmt(interestSaved);
+        document.getElementById('res-time-saved').innerText = timeSavedStr;
+        document.getElementById('res-new-payoff').innerText = extraSchedule.length > 0 ? formatDate(extraSchedule[extraSchedule.length - 1].date) : '—';
+    } else {
+        savingsSection.style.display = 'none';
+    }
+
+    // Summary cards
+    document.getElementById('sum-principal').innerText = fmt(loanAmount);
+    document.getElementById('sum-interest').innerText = fmt(activeTotalInterest);
+    document.getElementById('sum-total').innerText = fmt(totalPayments);
+    document.getElementById('sum-ratio').innerText = loanAmount > 0 ? (activeTotalInterest / loanAmount * 100).toFixed(1) + '%' : '0%';
+    document.getElementById('sum-extra').innerText = fmt(extraTotalExtra);
+    document.getElementById('sum-payments').innerText = activeSchedule.length;
+
+    amortData = activeSchedule;
+    renderAmortTable();
+    drawPayoffChart(activeSchedule);
+}
+
+function renderAmortTable() {
+    const thead = document.getElementById('amort-thead');
+    const tbody = document.getElementById('amort-tbody');
+    const formatD = (d) => d.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+
+    if (amortView === 'monthly') {
+        thead.innerHTML = '<tr><th>#</th><th>Date</th><th>Payment</th><th>Principal</th><th>Interest</th><th>Extra</th><th>Balance</th></tr>';
+        let html = '';
+        for (const row of amortData) {
+            html += `<tr><td>${row.month}</td><td style="text-align:left;font-family:var(--font-ui);">${formatD(row.date)}</td><td>${fmt2(row.payment)}</td><td>${fmt2(row.principal)}</td><td>${fmt2(row.interest)}</td><td>${row.extra > 0 ? fmt2(row.extra) : '—'}</td><td>${fmt(row.balance)}</td></tr>`;
+        }
+        tbody.innerHTML = html;
+    } else {
+        thead.innerHTML = '<tr><th>Year</th><th>Total Paid</th><th>Principal</th><th>Interest</th><th>Extra</th><th>End Balance</th></tr>';
+        const yearly = [];
+        let yPay = 0, yPrin = 0, yInt = 0, yExtra = 0, yEnd = 0;
+        for (const row of amortData) {
+            yPay += row.payment;
+            yPrin += row.principal;
+            yInt += row.interest;
+            yExtra += row.extra;
+            yEnd = row.balance;
+            if (row.month % 12 === 0 || row === amortData[amortData.length - 1]) {
+                yearly.push({ year: Math.ceil(row.month / 12), payment: yPay, principal: yPrin, interest: yInt, extra: yExtra, balance: yEnd });
+                yPay = 0; yPrin = 0; yInt = 0; yExtra = 0;
+            }
+        }
+        let html = '';
+        for (const row of yearly) {
+            html += `<tr><td>${row.year}</td><td>${fmt(row.payment)}</td><td>${fmt(row.principal)}</td><td>${fmt(row.interest)}</td><td>${row.extra > 0 ? fmt(row.extra) : '—'}</td><td>${fmt(row.balance)}</td></tr>`;
+        }
+        tbody.innerHTML = html;
+    }
+}
+
+window.setAmortView = (view) => {
+    amortView = view;
+    document.getElementById('btn-monthly').classList.toggle('active', view === 'monthly');
+    document.getElementById('btn-yearly').classList.toggle('active', view === 'yearly');
+    renderAmortTable();
+};
+
+function drawPayoffChart(schedule) {
+    const canvas = document.getElementById('payoffChart');
+    const ctx = canvas.getContext('2d');
+    const dpr = window.devicePixelRatio || 1;
+    const container = canvas.parentElement;
+    const rect = container.getBoundingClientRect();
+    const w = rect.width;
+    const h = rect.height;
+
+    canvas.width = w * dpr;
+    canvas.height = h * dpr;
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.scale(dpr, dpr);
+    ctx.clearRect(0, 0, w, h);
+
+    if (schedule.length === 0) return;
+
+    // Build yearly data for cleaner chart
+    const yearlyData = [];
+    let yPrin = 0, yInt = 0;
+    for (const row of schedule) {
+        yPrin += row.principal + row.extra;
+        yInt += row.interest;
+        if (row.month % 12 === 0 || row === schedule[schedule.length - 1]) {
+            yearlyData.push({ year: Math.ceil(row.month / 12), principal: yPrin, interest: yInt, balance: row.balance });
+            yPrin = 0; yInt = 0;
+        }
+    }
+
+    const padding = { top: 30, right: 20, bottom: 40, left: 65 };
+    const chartW = w - padding.left - padding.right;
+    const chartH = h - padding.top - padding.bottom;
+
+    // Find max values
+    const maxPayment = Math.max(...yearlyData.map(d => d.principal + d.interest));
+    const maxBalance = schedule[0].balance + schedule[0].interest;
+    const maxY = Math.max(maxPayment, maxBalance) * 1.1;
+
+    const barW = Math.max(4, (chartW / yearlyData.length) - 3);
+
+    // Grid lines
+    ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+    ctx.lineWidth = 1;
+    const gridLines = 5;
+    for (let i = 0; i <= gridLines; i++) {
+        const y = padding.top + (chartH / gridLines) * i;
+        ctx.beginPath();
+        ctx.moveTo(padding.left, y);
+        ctx.lineTo(w - padding.right, y);
+        ctx.stroke();
+
+        // Y-axis labels
+        const val = maxY - (maxY / gridLines) * i;
+        ctx.fillStyle = '#888888';
+        ctx.font = '11px Inter, sans-serif';
+        ctx.textAlign = 'right';
+        ctx.textBaseline = 'middle';
+        if (val >= 1000) {
+            ctx.fillText('$' + Math.round(val / 1000) + 'k', padding.left - 8, y);
+        } else {
+            ctx.fillText('$' + Math.round(val), padding.left - 8, y);
+        }
+    }
+
+    // Stacked bars: principal (bottom) + interest (top)
+    for (let i = 0; i < yearlyData.length; i++) {
+        const d = yearlyData[i];
+        const x = padding.left + (i / yearlyData.length) * chartW + ((chartW / yearlyData.length) - barW) / 2;
+        const prinH = (d.principal / maxY) * chartH;
+        const intH = (d.interest / maxY) * chartH;
+
+        // Principal bar
+        ctx.fillStyle = '#4A90E2';
+        ctx.fillRect(x, padding.top + chartH - prinH - intH, barW, prinH);
+
+        // Interest bar
+        ctx.fillStyle = '#E25C5C';
+        ctx.fillRect(x, padding.top + chartH - intH, barW, intH);
+
+        // X-axis labels (every few years)
+        const step = yearlyData.length > 20 ? 5 : yearlyData.length > 10 ? 2 : 1;
+        if (d.year % step === 0 || d.year === 1) {
+            ctx.fillStyle = '#888888';
+            ctx.font = '11px Inter, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'top';
+            ctx.fillText('Yr ' + d.year, x + barW / 2, padding.top + chartH + 8);
+        }
+    }
+
+    // Balance line
+    ctx.beginPath();
+    ctx.strokeStyle = '#D4A017';
+    ctx.lineWidth = 2.5;
+    for (let i = 0; i < yearlyData.length; i++) {
+        const d = yearlyData[i];
+        const x = padding.left + (i / yearlyData.length) * chartW + (chartW / yearlyData.length) / 2;
+        const y = padding.top + chartH - (d.balance / maxY) * chartH;
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+    }
+    ctx.stroke();
+}
+
+window.exportCSV = () => {
+    if (amortData.length === 0) return;
+
+    const formatD = (d) => d.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' });
+    let csv = 'Payment #,Date,Payment,Principal,Interest,Extra Payment,Remaining Balance\n';
+    for (const row of amortData) {
+        csv += `${row.month},${formatD(row.date)},${row.payment.toFixed(2)},${row.principal.toFixed(2)},${row.interest.toFixed(2)},${row.extra.toFixed(2)},${row.balance.toFixed(2)}\n`;
+    }
+
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'amortization-schedule.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+};
+
+// Attach listeners
+const allInputs = ['loan-amount', 'interest-rate', 'loan-term', 'start-date', 'extra-payment'];
+allInputs.forEach(id => {
+    document.getElementById(id).addEventListener('input', calculate);
+});
+
+window.addEventListener('resize', () => {
+    if (amortData.length > 0) drawPayoffChart(amortData);
+});
+
+setTimeout(calculate, 0);
+  </script>
+</SiteLayout>
