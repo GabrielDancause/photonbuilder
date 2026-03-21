@@ -1,0 +1,767 @@
+---
+import SiteLayout from "../../../layouts/SiteLayout.astro";
+
+export const meta = {
+  title: "Cap Rate Calculator: Analyze Investment Property Returns & NOI",
+  description: "Calculate cap rate, NOI, cash-on-cash return, GRM, and monthly cash flow for rental properties. Compare average cap rates by property type and market.",
+  category: "tool",
+  published: "2026-03-21"
+};
+
+const schema = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebApplication",
+      "name": meta.title,
+      "description": meta.description,
+      "applicationCategory": "FinanceApplication",
+      "operatingSystem": "All",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "author": {
+        "@type": "Organization",
+        "name": "Westmount Fundamentals",
+        "url": "https://westmountfundamentals.com"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "Westmount Fundamentals",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://westmountfundamentals.com/logo.png"
+        }
+      },
+      "datePublished": meta.published,
+      "mainEntityOfPage": {
+        "@type": "WebPage",
+        "@id": "https://westmountfundamentals.com/cap-rate-calculator"
+      }
+    },
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "What is a good cap rate for rental property?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "A good cap rate depends on the market and property type. Generally, 4-6% is considered acceptable in stable urban markets, 6-8% is good for most investors, and 8-12% indicates higher returns but often comes with more risk. Class A properties in prime locations typically have lower cap rates (3-5%), while Class C properties in secondary markets may have cap rates of 8-12% or higher."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How do you calculate cap rate?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Cap rate is calculated by dividing the Net Operating Income (NOI) by the property purchase price, then multiplying by 100 to get a percentage. NOI equals gross annual rental income minus vacancy losses and operating expenses (property tax, insurance, maintenance, and management fees). The formula is: Cap Rate = (NOI / Purchase Price) × 100."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What is the difference between cap rate and cash-on-cash return?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Cap rate measures the property's return based on the total purchase price and ignores financing. Cash-on-cash return measures the return on your actual cash invested (down payment plus closing costs) after accounting for mortgage payments. A property with a 7% cap rate might produce a 10-15% cash-on-cash return with leverage, or a negative return if over-leveraged."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What is Gross Rent Multiplier (GRM)?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Gross Rent Multiplier (GRM) is a quick screening metric calculated by dividing the property price by the gross annual rent. A GRM of 10 means the property costs 10 times its annual rent. Lower GRMs generally indicate better value. GRM is simpler than cap rate because it ignores expenses, making it useful for quick comparisons but less accurate for investment decisions."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Why do cap rates vary by market and property type?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Cap rates reflect risk and growth potential. Low cap rate markets (like San Francisco or New York) have higher property prices because investors expect strong appreciation and stable demand. High cap rate markets offer more income relative to price but may have slower growth, higher vacancy risk, or less liquidity. Similarly, multifamily properties typically have lower cap rates than retail or office due to more stable demand."
+          }
+        }
+      ]
+    }
+  ]
+};
+---
+
+<SiteLayout
+  site="westmount"
+  title={meta.title}
+  description={meta.description}
+  canonical="https://westmountfundamentals.com/cap-rate-calculator"
+  schema={schema}
+>
+  <div class="page-content">
+
+    <div style="text-align: center; margin-bottom: 2rem;">
+      <h1>Cap Rate Calculator</h1>
+      <p style="font-size: 1.2rem; max-width: 640px; margin: 0 auto;">Analyze investment property returns with cap rate, NOI, cash-on-cash return, and gross rent multiplier calculations.</p>
+    </div>
+
+    <!-- Property & Income Inputs -->
+    <div class="calculator-card">
+      <h3 style="margin-top: 0; margin-bottom: 1.25rem;">Property & Income</h3>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem;">
+        <div class="input-group">
+          <label for="propertyPrice">Property Purchase Price</label>
+          <div class="input-wrapper">
+            <span style="position: absolute; left: 1rem; color: var(--text-secondary); pointer-events: none;">$</span>
+            <input type="number" id="propertyPrice" value="350000" min="1000" step="1000" style="padding-left: 2rem;">
+          </div>
+        </div>
+
+        <div class="input-group">
+          <label for="grossRent">Gross Monthly Rent</label>
+          <div class="input-wrapper">
+            <span style="position: absolute; left: 1rem; color: var(--text-secondary); pointer-events: none;">$</span>
+            <input type="number" id="grossRent" value="2800" min="0" step="50" style="padding-left: 2rem;">
+          </div>
+        </div>
+
+        <div class="input-group">
+          <label for="vacancyRate">Vacancy Rate</label>
+          <div class="input-wrapper">
+            <input type="number" id="vacancyRate" value="5" min="0" max="100" step="0.5">
+            <span class="suffix">%</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Operating Expenses -->
+    <div class="calculator-card" style="margin-top: 1.5rem;">
+      <h3 style="margin-top: 0; margin-bottom: 1.25rem;">Annual Operating Expenses</h3>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem;">
+        <div class="input-group">
+          <label for="propertyTax">Property Tax (Annual)</label>
+          <div class="input-wrapper">
+            <span style="position: absolute; left: 1rem; color: var(--text-secondary); pointer-events: none;">$</span>
+            <input type="number" id="propertyTax" value="4200" min="0" step="100" style="padding-left: 2rem;">
+          </div>
+        </div>
+
+        <div class="input-group">
+          <label for="insurance">Insurance (Annual)</label>
+          <div class="input-wrapper">
+            <span style="position: absolute; left: 1rem; color: var(--text-secondary); pointer-events: none;">$</span>
+            <input type="number" id="insurance" value="1800" min="0" step="100" style="padding-left: 2rem;">
+          </div>
+        </div>
+
+        <div class="input-group">
+          <label for="maintenance">Maintenance (Annual)</label>
+          <div class="input-wrapper">
+            <span style="position: absolute; left: 1rem; color: var(--text-secondary); pointer-events: none;">$</span>
+            <input type="number" id="maintenance" value="2400" min="0" step="100" style="padding-left: 2rem;">
+          </div>
+        </div>
+
+        <div class="input-group">
+          <label for="managementFee">Management Fee</label>
+          <div class="input-wrapper">
+            <input type="number" id="managementFee" value="8" min="0" max="100" step="0.5">
+            <span class="suffix">% of rent</span>
+          </div>
+        </div>
+
+        <div class="input-group">
+          <label for="otherExpenses">Other Expenses (Annual)</label>
+          <div class="input-wrapper">
+            <span style="position: absolute; left: 1rem; color: var(--text-secondary); pointer-events: none;">$</span>
+            <input type="number" id="otherExpenses" value="600" min="0" step="100" style="padding-left: 2rem;">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Financing Inputs -->
+    <div class="calculator-card" style="margin-top: 1.5rem;">
+      <h3 style="margin-top: 0; margin-bottom: 1.25rem;">Financing (for Cash-on-Cash Return)</h3>
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem;">
+        <div class="input-group">
+          <label for="downPayment">Down Payment</label>
+          <div class="input-wrapper">
+            <input type="number" id="downPayment" value="25" min="0" max="100" step="1">
+            <span class="suffix">%</span>
+          </div>
+        </div>
+
+        <div class="input-group">
+          <label for="mortgageRate">Mortgage Interest Rate</label>
+          <div class="input-wrapper">
+            <input type="number" id="mortgageRate" value="7.0" min="0" max="30" step="0.125">
+            <span class="suffix">%</span>
+          </div>
+        </div>
+
+        <div class="input-group">
+          <label for="loanTerm">Loan Term</label>
+          <div class="input-wrapper">
+            <input type="number" id="loanTerm" value="30" min="1" max="50" step="1">
+            <span class="suffix">years</span>
+          </div>
+        </div>
+
+        <div class="input-group">
+          <label for="closingCosts">Closing Costs</label>
+          <div class="input-wrapper">
+            <input type="number" id="closingCosts" value="3" min="0" max="20" step="0.5">
+            <span class="suffix">% of price</span>
+          </div>
+        </div>
+      </div>
+
+      <div style="text-align: center; margin-top: 1.5rem;">
+        <button id="calculateBtn" style="padding: 0.75rem 2rem; background: var(--accent-color); color: #fff; border: none; border-radius: 6px; font-size: 1rem; font-weight: 600; cursor: pointer;">Calculate</button>
+      </div>
+    </div>
+
+    <!-- Results -->
+    <div id="resultsSection" style="display: none;">
+
+      <!-- Primary Metrics -->
+      <div class="stats-grid" style="margin-top: 2rem;">
+        <div class="stat-card">
+          <span class="calc-result-label">Cap Rate</span>
+          <div style="font-size: 1.5rem; font-weight: 700; color: var(--accent-color);" id="capRate">0%</div>
+        </div>
+        <div class="stat-card">
+          <span class="calc-result-label">Net Operating Income</span>
+          <div style="font-size: 1.5rem; font-weight: 700; color: var(--accent-color);" id="noi">$0</div>
+        </div>
+        <div class="stat-card">
+          <span class="calc-result-label">Cash-on-Cash Return</span>
+          <div style="font-size: 1.5rem; font-weight: 700; color: var(--accent-color);" id="cocReturn">0%</div>
+        </div>
+        <div class="stat-card">
+          <span class="calc-result-label">Gross Rent Multiplier</span>
+          <div style="font-size: 1.5rem; font-weight: 700; color: var(--text-primary);" id="grm">0</div>
+        </div>
+      </div>
+
+      <!-- Cash Flow -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <span class="calc-result-label">Monthly Cash Flow</span>
+          <div style="font-size: 1.3rem; font-weight: 700;" id="monthlyCashFlow">$0</div>
+        </div>
+        <div class="stat-card">
+          <span class="calc-result-label">Annual Cash Flow</span>
+          <div style="font-size: 1.3rem; font-weight: 700;" id="annualCashFlow">$0</div>
+        </div>
+        <div class="stat-card">
+          <span class="calc-result-label">Monthly Mortgage Payment</span>
+          <div style="font-size: 1.3rem; font-weight: 700; color: var(--text-primary);" id="mortgagePayment">$0</div>
+        </div>
+        <div class="stat-card">
+          <span class="calc-result-label">Total Cash Invested</span>
+          <div style="font-size: 1.3rem; font-weight: 700; color: var(--text-primary);" id="totalCashInvested">$0</div>
+        </div>
+      </div>
+
+      <!-- ROI Breakdown -->
+      <div class="chart-container" style="margin-top: 2rem;">
+        <h3 style="margin-top: 0; margin-bottom: 1rem;">ROI Breakdown</h3>
+        <div class="table-container">
+          <table id="roiTable">
+            <thead>
+              <tr>
+                <th style="text-align: left;">Metric</th>
+                <th>Amount</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Expense Breakdown Chart -->
+      <div class="chart-container" style="margin-top: 2rem;">
+        <h3 style="margin-top: 0; margin-bottom: 1rem;">Annual Income & Expense Breakdown</h3>
+        <canvas id="expenseChart" style="width: 100%; height: 320px;"></canvas>
+      </div>
+
+      <!-- Cap Rate Comparison Table -->
+      <div class="chart-container" style="margin-top: 2rem;">
+        <h3 style="margin-top: 0; margin-bottom: 1rem;">Average Cap Rates by Property Type & Market</h3>
+        <div class="table-container" style="max-height: 500px; overflow-y: auto;">
+          <table id="capRateCompTable">
+            <thead style="position: sticky; top: 0; z-index: 1;">
+              <tr>
+                <th style="text-align: left;">Property Type / Market</th>
+                <th>Low</th>
+                <th>Typical</th>
+                <th>High</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td colspan="4" style="text-align: left; font-weight: 700; color: var(--accent-color); padding-top: 1rem;">By Property Type</td></tr>
+              <tr><td>Single-Family Rental</td><td>4.0%</td><td>5.5–7.0%</td><td>10.0%</td></tr>
+              <tr><td>Small Multifamily (2-4 units)</td><td>4.5%</td><td>6.0–8.0%</td><td>11.0%</td></tr>
+              <tr><td>Large Multifamily (5+ units)</td><td>4.0%</td><td>5.0–7.0%</td><td>9.0%</td></tr>
+              <tr><td>Retail / Commercial</td><td>5.0%</td><td>6.5–8.5%</td><td>12.0%</td></tr>
+              <tr><td>Office</td><td>5.5%</td><td>7.0–9.0%</td><td>12.0%</td></tr>
+              <tr><td>Industrial / Warehouse</td><td>4.5%</td><td>5.5–7.5%</td><td>10.0%</td></tr>
+              <tr><td colspan="4" style="text-align: left; font-weight: 700; color: var(--accent-color); padding-top: 1rem;">By Market Tier</td></tr>
+              <tr><td>Gateway Cities (NYC, SF, LA)</td><td>3.0%</td><td>4.0–5.5%</td><td>7.0%</td></tr>
+              <tr><td>Major Metros (Denver, Austin, Nashville)</td><td>4.0%</td><td>5.0–7.0%</td><td>9.0%</td></tr>
+              <tr><td>Secondary Markets (Boise, Raleigh)</td><td>5.0%</td><td>6.0–8.0%</td><td>10.0%</td></tr>
+              <tr><td>Tertiary / Rural Markets</td><td>6.0%</td><td>8.0–12.0%</td><td>15.0%+</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="info-box" style="margin-top: 2rem; padding: 1.25rem; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px;">
+        <p style="margin: 0; color: var(--text-secondary); font-size: 0.95rem;"><strong>Disclaimer:</strong> Cap rates and market data are approximate ranges based on historical averages and may not reflect current market conditions. Actual returns depend on property condition, location, tenant quality, financing terms, and local economic factors. Always perform thorough due diligence before making investment decisions.</p>
+      </div>
+    </div>
+
+    <script is:inline>
+      const fmt = (n) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(n);
+      const fmtDec = (n, d) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: d, maximumFractionDigits: d }).format(n);
+      const fmtPct = (n) => n.toFixed(2) + '%';
+      const fmtNum = (n, d) => new Intl.NumberFormat('en-US', { minimumFractionDigits: d, maximumFractionDigits: d }).format(n);
+
+      function calculateMortgagePayment(principal, annualRate, years) {
+        if (annualRate === 0) return principal / (years * 12);
+        const r = annualRate / 100 / 12;
+        const n = years * 12;
+        return principal * (r * Math.pow(1 + r, n)) / (Math.pow(1 + r, n) - 1);
+      }
+
+      function calculate() {
+        const price = Math.max(1000, parseFloat(document.getElementById('propertyPrice').value) || 350000);
+        const monthlyRent = Math.max(0, parseFloat(document.getElementById('grossRent').value) || 0);
+        const vacancyRate = Math.max(0, Math.min(100, parseFloat(document.getElementById('vacancyRate').value) || 0));
+        const propertyTax = Math.max(0, parseFloat(document.getElementById('propertyTax').value) || 0);
+        const insurance = Math.max(0, parseFloat(document.getElementById('insurance').value) || 0);
+        const maintenance = Math.max(0, parseFloat(document.getElementById('maintenance').value) || 0);
+        const managementFee = Math.max(0, Math.min(100, parseFloat(document.getElementById('managementFee').value) || 0));
+        const otherExpenses = Math.max(0, parseFloat(document.getElementById('otherExpenses').value) || 0);
+        const downPaymentPct = Math.max(0, Math.min(100, parseFloat(document.getElementById('downPayment').value) || 0));
+        const mortgageRate = Math.max(0, parseFloat(document.getElementById('mortgageRate').value) || 0);
+        const loanTerm = Math.max(1, parseInt(document.getElementById('loanTerm').value) || 30);
+        const closingCostsPct = Math.max(0, parseFloat(document.getElementById('closingCosts').value) || 0);
+
+        // Income calculations
+        const grossAnnualRent = monthlyRent * 12;
+        const vacancyLoss = grossAnnualRent * (vacancyRate / 100);
+        const effectiveGrossIncome = grossAnnualRent - vacancyLoss;
+
+        // Expense calculations
+        const managementCost = effectiveGrossIncome * (managementFee / 100);
+        const totalExpenses = propertyTax + insurance + maintenance + managementCost + otherExpenses;
+
+        // NOI & Cap Rate
+        const noi = effectiveGrossIncome - totalExpenses;
+        const capRate = (noi / price) * 100;
+
+        // GRM
+        const grm = grossAnnualRent > 0 ? price / grossAnnualRent : 0;
+
+        // Financing calculations
+        const downPaymentAmount = price * (downPaymentPct / 100);
+        const closingCostsAmount = price * (closingCostsPct / 100);
+        const loanAmount = price - downPaymentAmount;
+        const totalCashInvested = downPaymentAmount + closingCostsAmount;
+
+        const monthlyMortgage = loanAmount > 0 ? calculateMortgagePayment(loanAmount, mortgageRate, loanTerm) : 0;
+        const annualDebtService = monthlyMortgage * 12;
+
+        // Cash flow
+        const annualCashFlow = noi - annualDebtService;
+        const monthlyCashFlow = annualCashFlow / 12;
+
+        // Cash-on-cash return
+        const cocReturn = totalCashInvested > 0 ? (annualCashFlow / totalCashInvested) * 100 : 0;
+
+        // Update UI
+        document.getElementById('resultsSection').style.display = '';
+        document.getElementById('capRate').textContent = fmtPct(capRate);
+        document.getElementById('capRate').style.color = capRate >= 6 ? '#4caf50' : capRate >= 4 ? 'var(--accent-color)' : '#e8a735';
+        document.getElementById('noi').textContent = fmt(noi);
+        document.getElementById('cocReturn').textContent = fmtPct(cocReturn);
+        document.getElementById('cocReturn').style.color = cocReturn >= 8 ? '#4caf50' : cocReturn >= 0 ? 'var(--accent-color)' : '#ef5350';
+        document.getElementById('grm').textContent = fmtNum(grm, 1);
+        document.getElementById('monthlyCashFlow').textContent = fmt(monthlyCashFlow);
+        document.getElementById('monthlyCashFlow').style.color = monthlyCashFlow >= 0 ? '#4caf50' : '#ef5350';
+        document.getElementById('annualCashFlow').textContent = fmt(annualCashFlow);
+        document.getElementById('annualCashFlow').style.color = annualCashFlow >= 0 ? '#4caf50' : '#ef5350';
+        document.getElementById('mortgagePayment').textContent = fmt(monthlyMortgage);
+        document.getElementById('totalCashInvested').textContent = fmt(totalCashInvested);
+
+        // ROI Breakdown table
+        const roiBody = document.querySelector('#roiTable tbody');
+        const rows = [
+          ['Gross Annual Rent', fmt(grossAnnualRent)],
+          ['Vacancy Loss (' + fmtPct(vacancyRate) + ')', '−' + fmt(vacancyLoss)],
+          ['Effective Gross Income', fmt(effectiveGrossIncome)],
+          ['', ''],
+          ['Property Tax', '−' + fmt(propertyTax)],
+          ['Insurance', '−' + fmt(insurance)],
+          ['Maintenance', '−' + fmt(maintenance)],
+          ['Management Fee (' + fmtPct(managementFee) + ')', '−' + fmt(managementCost)],
+          ['Other Expenses', '−' + fmt(otherExpenses)],
+          ['Total Operating Expenses', '−' + fmt(totalExpenses)],
+          ['', ''],
+          ['Net Operating Income (NOI)', fmt(noi)],
+          ['Cap Rate (NOI ÷ Price)', fmtPct(capRate)],
+          ['Gross Rent Multiplier (Price ÷ Rent)', fmtNum(grm, 1) + 'x'],
+          ['', ''],
+          ['Down Payment (' + fmtPct(downPaymentPct) + ')', fmt(downPaymentAmount)],
+          ['Closing Costs (' + fmtPct(closingCostsPct) + ')', fmt(closingCostsAmount)],
+          ['Loan Amount', fmt(loanAmount)],
+          ['Annual Debt Service', '−' + fmt(annualDebtService)],
+          ['', ''],
+          ['Annual Cash Flow (NOI − Debt Service)', fmt(annualCashFlow)],
+          ['Monthly Cash Flow', fmt(monthlyCashFlow)],
+          ['Cash-on-Cash Return', fmtPct(cocReturn)],
+        ];
+        let roiHtml = '';
+        for (var i = 0; i < rows.length; i++) {
+          var r = rows[i];
+          if (r[0] === '' && r[1] === '') {
+            roiHtml += '<tr><td colspan="2" style="padding: 0.25rem; border: none;"></td></tr>';
+          } else {
+            var bold = r[0].indexOf('Net Operating Income') >= 0 || r[0].indexOf('Cap Rate') >= 0 || r[0].indexOf('Cash-on-Cash') >= 0 || r[0].indexOf('Annual Cash Flow') >= 0;
+            roiHtml += '<tr' + (bold ? ' style="font-weight: 700;"' : '') + '><td style="text-align: left;">' + r[0] + '</td><td>' + r[1] + '</td></tr>';
+          }
+        }
+        roiBody.innerHTML = roiHtml;
+
+        // Expense chart
+        drawExpenseChart(grossAnnualRent, vacancyLoss, propertyTax, insurance, maintenance, managementCost, otherExpenses, annualDebtService, annualCashFlow);
+      }
+
+      function drawExpenseChart(grossRent, vacancy, tax, ins, maint, mgmt, other, debt, cashFlow) {
+        var canvas = document.getElementById('expenseChart');
+        var ctx = canvas.getContext('2d');
+        var dpr = window.devicePixelRatio || 1;
+        var rect = canvas.getBoundingClientRect();
+        canvas.width = rect.width * dpr;
+        canvas.height = 320 * dpr;
+        canvas.style.height = '320px';
+        ctx.scale(dpr, dpr);
+        var W = rect.width;
+        var H = 320;
+        ctx.clearRect(0, 0, W, H);
+
+        var styles = getComputedStyle(document.documentElement);
+        var textColor = styles.getPropertyValue('--text-secondary').trim() || '#888';
+        var borderColor = styles.getPropertyValue('--border-color').trim() || '#333';
+
+        var pad = { top: 20, right: 20, bottom: 30, left: 70 };
+        var barAreaW = W - pad.left - pad.right;
+        var barAreaH = H - pad.top - pad.bottom;
+
+        // Stacked bar data
+        var incomeTotal = grossRent;
+        var expenseItems = [
+          { label: 'Vacancy', value: vacancy, color: '#ef5350' },
+          { label: 'Tax', value: tax, color: '#e8a735' },
+          { label: 'Insurance', value: ins, color: '#ff9800' },
+          { label: 'Maintenance', value: maint, color: '#ab47bc' },
+          { label: 'Management', value: mgmt, color: '#7e57c2' },
+          { label: 'Other', value: other, color: '#78909c' },
+          { label: 'Debt Service', value: debt, color: '#f44336' },
+          { label: 'Cash Flow', value: Math.max(0, cashFlow), color: '#4caf50' }
+        ];
+
+        var maxVal = Math.max(incomeTotal, vacancy + tax + ins + maint + mgmt + other + debt + Math.max(0, cashFlow));
+        if (maxVal === 0) maxVal = 1;
+
+        var yScale = function(v) { return (v / maxVal) * barAreaH; };
+        var barW = Math.min(120, barAreaW * 0.3);
+        var gap = barAreaW * 0.1;
+
+        // Income bar
+        var incomeX = pad.left + (barAreaW / 2 - barW - gap / 2);
+        var incomeH = yScale(incomeTotal);
+        ctx.fillStyle = '#4a9eff';
+        ctx.fillRect(incomeX, pad.top + barAreaH - incomeH, barW, incomeH);
+
+        // Expense stacked bar
+        var expenseX = pad.left + (barAreaW / 2 + gap / 2);
+        var currentY = pad.top + barAreaH;
+        for (var i = 0; i < expenseItems.length; i++) {
+          var item = expenseItems[i];
+          if (item.value <= 0) continue;
+          var h = yScale(item.value);
+          currentY -= h;
+          ctx.fillStyle = item.color;
+          ctx.fillRect(expenseX, currentY, barW, h);
+        }
+
+        // Y axis labels
+        ctx.fillStyle = textColor;
+        ctx.font = '11px system-ui, sans-serif';
+        ctx.textAlign = 'right';
+        var gridSteps = 5;
+        for (var g = 0; g <= gridSteps; g++) {
+          var val = (g / gridSteps) * maxVal;
+          var y = pad.top + barAreaH - yScale(val);
+          ctx.strokeStyle = borderColor;
+          ctx.lineWidth = 0.5;
+          ctx.beginPath();
+          ctx.moveTo(pad.left, y);
+          ctx.lineTo(W - pad.right, y);
+          ctx.stroke();
+          ctx.fillText('$' + Math.round(val).toLocaleString(), pad.left - 8, y + 4);
+        }
+
+        // X labels
+        ctx.textAlign = 'center';
+        ctx.font = '12px system-ui, sans-serif';
+        ctx.fillStyle = textColor;
+        ctx.fillText('Gross Income', incomeX + barW / 2, H - 8);
+        ctx.fillText('Expenses + Cash Flow', expenseX + barW / 2, H - 8);
+
+        // Legend
+        var legendItems = [{ label: 'Gross Income', color: '#4a9eff' }].concat(expenseItems.filter(function(e) { return e.value > 0; }));
+        var legendX = pad.left;
+        var legendY = pad.top + 4;
+        ctx.font = '10px system-ui, sans-serif';
+        for (var j = 0; j < legendItems.length; j++) {
+          var li = legendItems[j];
+          ctx.fillStyle = li.color;
+          ctx.fillRect(legendX, legendY - 7, 10, 10);
+          ctx.fillStyle = textColor;
+          ctx.textAlign = 'left';
+          var textW = ctx.measureText(li.label).width;
+          ctx.fillText(li.label, legendX + 14, legendY + 2);
+          legendX += textW + 24;
+          if (legendX > W - pad.right - 60) {
+            legendX = pad.left;
+            legendY += 16;
+          }
+        }
+      }
+
+      document.getElementById('calculateBtn').addEventListener('click', calculate);
+      calculate();
+    </script>
+
+    <style>
+      .input-group {
+        margin-bottom: 1.5rem;
+      }
+      .input-group label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+        color: var(--text-primary);
+      }
+      .input-wrapper {
+        position: relative;
+        display: flex;
+        align-items: center;
+      }
+      .suffix {
+        position: absolute;
+        right: 0;
+        color: var(--text-secondary);
+        padding: 0 0.75rem;
+        font-size: 1rem;
+      }
+      .input-group input, .input-group select {
+        width: 100%;
+        padding: 0.75rem;
+        background: var(--bg-color);
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        color: var(--text-primary);
+        font-size: 1rem;
+      }
+      .input-group input:focus, .input-group select:focus {
+        outline: none;
+        border-color: var(--accent-color);
+        box-shadow: 0 0 0 2px rgba(var(--accent-color-rgb), 0.2);
+      }
+      .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 1rem;
+      }
+      .stat-card {
+        text-align: center;
+        padding: 1.25rem;
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        text-align: right;
+        font-size: 0.9rem;
+      }
+      th, td {
+        padding: 0.75rem;
+        border-bottom: 1px solid var(--border-color);
+      }
+      th {
+        text-align: right;
+        color: var(--text-secondary);
+        font-weight: 600;
+        background: var(--card-bg);
+      }
+      th:first-child, td:first-child {
+        text-align: left;
+      }
+      .content-section h2 {
+        color: var(--accent-color);
+        margin-top: 2.5rem;
+        margin-bottom: 1rem;
+      }
+      .content-section h3 {
+        color: var(--text-primary);
+        margin-top: 2rem;
+        margin-bottom: 1rem;
+      }
+      .content-section h4 {
+        color: var(--text-primary);
+        margin-top: 1.5rem;
+        margin-bottom: 0.5rem;
+      }
+      .content-section p {
+        margin-bottom: 1.5rem;
+        line-height: 1.7;
+        color: var(--text-secondary);
+      }
+      .content-section ul {
+        margin-bottom: 1.5rem;
+        padding-left: 1.5rem;
+        color: var(--text-secondary);
+      }
+      .content-section li {
+        margin-bottom: 0.5rem;
+      }
+      .faq-section {
+        margin-top: 4rem;
+        border-top: 1px solid var(--border-color);
+        padding-top: 2rem;
+      }
+      .faq-item {
+        margin-bottom: 2rem;
+      }
+      .faq-item h3 {
+        font-size: 1.2rem;
+        color: var(--text-primary);
+        margin-bottom: 0.5rem;
+      }
+      .faq-item p {
+        color: var(--text-secondary);
+        line-height: 1.6;
+      }
+      a {
+        color: var(--accent-color);
+        text-decoration: underline;
+      }
+      a:hover {
+        text-decoration: none;
+      }
+    </style>
+
+    <section class="content-section" style="margin-top: 3rem;">
+      <h2>Understanding Cap Rate: The Complete Guide for Real Estate Investors</h2>
+      <p>The capitalization rate — universally known as "cap rate" — is the single most important metric in commercial and residential investment real estate. It tells you, in one number, the unlevered yield a property generates relative to its purchase price. If a property has a 7% cap rate, it produces $7 of net operating income for every $100 of value, before financing costs.</p>
+
+      <p>This <strong>cap rate calculator</strong> goes beyond the basic formula. It computes your full return profile: NOI, cap rate, gross rent multiplier, cash-on-cash return with financing, and monthly cash flow — everything you need to evaluate whether a deal works before you make an offer. For a broader view of how your real estate equity grows over time, pair this with our <a href="/investment-calculator">investment calculator</a>.</p>
+
+      <h3>How Cap Rate Is Calculated</h3>
+      <p>The formula is deceptively simple:</p>
+      <p><strong>Cap Rate = Net Operating Income (NOI) ÷ Property Price × 100</strong></p>
+      <p>The complexity lies entirely in calculating NOI correctly. NOI is gross rental income minus vacancy losses and all operating expenses — but it specifically excludes mortgage payments, capital expenditures, and depreciation. This makes cap rate a property-level metric that's comparable across deals regardless of how they're financed.</p>
+
+      <h4>What Counts as an Operating Expense</h4>
+      <ul>
+        <li><strong>Property taxes</strong> — typically the largest single expense, varying from under 0.5% of property value in some states to over 2% in others.</li>
+        <li><strong>Insurance</strong> — property and liability coverage. Costs have risen sharply in disaster-prone areas.</li>
+        <li><strong>Maintenance and repairs</strong> — routine upkeep like HVAC servicing, plumbing, landscaping. A common rule of thumb is 1% of property value annually, though older properties need more.</li>
+        <li><strong>Property management</strong> — typically 8-12% of collected rent for residential, 3-6% for commercial. Even self-managed properties should include this cost for accurate analysis.</li>
+        <li><strong>Other expenses</strong> — HOA fees, utilities paid by the owner, pest control, accounting, legal, etc.</li>
+      </ul>
+
+      <h4>What Does NOT Go Into NOI</h4>
+      <ul>
+        <li>Mortgage payments (principal and interest)</li>
+        <li>Capital expenditures (roof replacement, major renovations)</li>
+        <li>Depreciation and amortization</li>
+        <li>Income taxes</li>
+      </ul>
+
+      <h3>Cap Rate vs. Cash-on-Cash Return</h3>
+      <p>These two metrics answer different questions. Cap rate asks: "What does this property yield on its total value?" Cash-on-cash return asks: "What does this property yield on my actual cash invested?"</p>
+
+      <p>The difference is leverage. If you buy a $400,000 property with 25% down ($100,000) and it generates $28,000 in NOI, the cap rate is 7%. But after paying $19,200 in annual mortgage payments on the $300,000 loan, your cash flow is $8,800 on a $100,000 investment — an 8.8% cash-on-cash return. Leverage amplifies returns when the cap rate exceeds the cost of debt, but it also amplifies losses when it doesn't.</p>
+
+      <h3>Gross Rent Multiplier: The Quick Screening Tool</h3>
+      <p>GRM is the simplest property valuation metric: <strong>GRM = Property Price ÷ Gross Annual Rent</strong>. A property listed at $300,000 that generates $36,000 in annual rent has a GRM of 8.3. Lower is generally better.</p>
+
+      <p>GRM is useful for quickly comparing similar properties in the same market before running a full cap rate analysis. Its weakness is that it ignores all expenses — a property with a GRM of 8 but astronomical taxes and insurance may be a worse deal than one with a GRM of 10 and minimal operating costs.</p>
+
+      <h3>What Drives Cap Rate Differences</h3>
+      <p>Cap rates vary enormously across markets and property types, and understanding why is essential for making sound investment decisions.</p>
+
+      <h4>Market Tier</h4>
+      <p>Gateway cities like New York, San Francisco, and Los Angeles have the lowest cap rates (often 3-5%) because investors accept lower current income in exchange for strong appreciation potential, deep tenant demand, and high liquidity. A multifamily building in Manhattan might trade at a 3.5% cap rate — an investor buying at that yield is betting heavily on rent growth and appreciation rather than current income.</p>
+
+      <p>Tertiary and rural markets have higher cap rates (8-12%+) to compensate for slower appreciation, higher vacancy risk, smaller tenant pools, and less liquidity. A duplex in a small Midwest town might offer a 10% cap rate, but selling it quickly could be difficult.</p>
+
+      <h4>Property Type</h4>
+      <p>Multifamily properties generally have the lowest cap rates because housing demand is the most stable — people always need somewhere to live. Industrial and warehouse properties have also seen cap rate compression due to e-commerce growth. Retail and office properties carry higher cap rates due to structural headwinds from online shopping and remote work trends.</p>
+
+      <h4>Property Class</h4>
+      <p>Class A properties (newer, well-located, high-quality) trade at lower cap rates than Class C properties (older, less desirable locations, deferred maintenance). The cap rate premium for lower-quality properties reflects higher maintenance costs, more tenant turnover, and greater management intensity.</p>
+
+      <h3>Common Cap Rate Mistakes</h3>
+      <ul>
+        <li><strong>Using pro forma instead of actual numbers.</strong> Sellers often present "pro forma" NOI based on projected rents and optimistic vacancy rates. Always underwrite based on actual trailing 12-month income and expenses, or at minimum verify that projected rents are supported by comparable properties.</li>
+        <li><strong>Ignoring management costs for self-managed properties.</strong> If you manage the property yourself, that's labor you're providing for free. Include a management fee in your analysis so you're measuring the property's return, not the combined return of the property plus your unpaid labor.</li>
+        <li><strong>Comparing cap rates across different markets.</strong> A 5% cap rate in San Francisco and a 5% cap rate in rural Ohio represent very different risk profiles and growth expectations. Cap rates are only directly comparable within the same market and property type.</li>
+        <li><strong>Treating cap rate as total return.</strong> Cap rate only measures current income yield. Total return includes appreciation, principal paydown on the mortgage, and tax benefits. A low cap rate property in an appreciating market may deliver a higher total return than a high cap rate property with flat or declining values.</li>
+      </ul>
+
+      <h3>The 1% Rule and the 50% Rule</h3>
+      <p>Two popular rules of thumb in real estate investing:</p>
+      <ul>
+        <li><strong>The 1% Rule:</strong> Monthly rent should be at least 1% of the purchase price. A $200,000 property should rent for at least $2,000/month. This is a rough filter — properties meeting the 1% rule in expensive markets are rare, while many cash-flowing properties in cheaper markets exceed it.</li>
+        <li><strong>The 50% Rule:</strong> Operating expenses (excluding mortgage) typically consume about 50% of gross rent. This gives you a quick way to estimate NOI: if gross rent is $30,000/year, NOI is approximately $15,000. Actual expense ratios vary widely — newer properties may run at 35-40%, while older ones can exceed 60%.</li>
+      </ul>
+
+      <p>Use these rules for initial deal screening, then run the full numbers in this <strong>cap rate calculator</strong> before making decisions. For modeling how your property's equity and cash flow compound over a longer holding period, our <a href="/compound-interest-calculator">compound interest calculator</a> can help project those returns forward.</p>
+    </section>
+
+    <section class="faq-section">
+      <h2>Frequently Asked Questions</h2>
+      <div class="faq-item">
+        <h3>What is a good cap rate for rental property?</h3>
+        <p>A good cap rate depends on the market and property type. Generally, 4-6% is considered acceptable in stable urban markets, 6-8% is good for most investors, and 8-12% indicates higher returns but often comes with more risk. Class A properties in prime locations typically have lower cap rates (3-5%), while Class C properties in secondary markets may have cap rates of 8-12% or higher.</p>
+      </div>
+      <div class="faq-item">
+        <h3>How do you calculate cap rate?</h3>
+        <p>Cap rate is calculated by dividing the Net Operating Income (NOI) by the property purchase price, then multiplying by 100 to get a percentage. NOI equals gross annual rental income minus vacancy losses and operating expenses (property tax, insurance, maintenance, and management fees). The formula is: Cap Rate = (NOI / Purchase Price) × 100.</p>
+      </div>
+      <div class="faq-item">
+        <h3>What is the difference between cap rate and cash-on-cash return?</h3>
+        <p>Cap rate measures the property's return based on the total purchase price and ignores financing. Cash-on-cash return measures the return on your actual cash invested (down payment plus closing costs) after accounting for mortgage payments. A property with a 7% cap rate might produce a 10-15% cash-on-cash return with leverage, or a negative return if over-leveraged.</p>
+      </div>
+      <div class="faq-item">
+        <h3>What is Gross Rent Multiplier (GRM)?</h3>
+        <p>Gross Rent Multiplier (GRM) is a quick screening metric calculated by dividing the property price by the gross annual rent. A GRM of 10 means the property costs 10 times its annual rent. Lower GRMs generally indicate better value. GRM is simpler than cap rate because it ignores expenses, making it useful for quick comparisons but less accurate for investment decisions.</p>
+      </div>
+      <div class="faq-item">
+        <h3>Why do cap rates vary by market and property type?</h3>
+        <p>Cap rates reflect risk and growth potential. Low cap rate markets (like San Francisco or New York) have higher property prices because investors expect strong appreciation and stable demand. High cap rate markets offer more income relative to price but may have slower growth, higher vacancy risk, or less liquidity. Similarly, multifamily properties typically have lower cap rates than retail or office due to more stable demand.</p>
+      </div>
+    </section>
+
+  </div>
+</SiteLayout>
