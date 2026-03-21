@@ -1,0 +1,600 @@
+---
+import SiteLayout from "../../../layouts/SiteLayout.astro";
+
+const faqs = [
+  {
+    q: "How much does it really cost to start a business?",
+    a: "It varies enormously by type. A freelancing or consulting business can launch for under $500, while a restaurant may require $100,000–$500,000+. Use our calculator above to get a realistic estimate based on your specific business type and customize each line item to match your local market."
+  },
+  {
+    q: "What's the difference between one-time and recurring costs?",
+    a: "One-time costs are upfront expenses you pay once to launch (like legal registration, initial equipment, and buildout). Recurring costs are ongoing monthly expenses (like rent, insurance, software subscriptions, and payroll). Both matter for planning — one-time costs determine how much capital you need to start, while recurring costs determine your monthly burn rate."
+  },
+  {
+    q: "How much runway should a new business have?",
+    a: "Most financial advisors recommend having 6–12 months of operating expenses saved before launching. This gives you enough time to build revenue without running out of cash. The runway calculator above helps you see exactly how many months your savings will cover based on your projected costs."
+  },
+  {
+    q: "What is a funding gap and how do I close it?",
+    a: "A funding gap is the difference between what you need to launch and operate your business and the savings you have available. Common ways to close the gap include small business loans (SBA), business lines of credit, angel investors, crowdfunding, grants, or starting with a leaner version of your business plan."
+  },
+  {
+    q: "Which business type has the lowest startup costs?",
+    a: "Freelancing and consulting typically have the lowest startup costs since you're selling your existing skills with minimal overhead — often under $1,000 total. Online stores and SaaS businesses are next, usually ranging from $2,000–$15,000. Brick-and-mortar businesses like restaurants and retail stores are the most capital-intensive."
+  }
+];
+
+const schema = [
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "Startup Cost Calculator",
+    "description": "Estimate startup costs by business type. Get realistic cost breakdowns for legal, equipment, inventory, marketing, rent, insurance, technology, and staffing.",
+    "applicationCategory": "BusinessApplication",
+    "operatingSystem": "Any",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD"
+    }
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": faqs.map(f => ({
+      "@type": "Question",
+      "name": f.q,
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": f.a
+      }
+    }))
+  }
+];
+
+export const meta = {
+  title: "Startup Cost Calculator — Estimate Business Launch Costs",
+  description: "Estimate startup costs by business type. Get cost breakdowns for legal, equipment, inventory, marketing, rent, insurance, technology, and staffing with runway analysis.",
+  category: "calculator",
+  published: "2026-03-21"
+};
+---
+
+<SiteLayout
+  site="getthebag"
+  title={meta.title}
+  description={meta.description}
+  canonical="https://getthebag.photonbuilder.com/startup-cost-calculator"
+  schema={schema}
+>
+  <div class="page-content">
+    <div class="hero">
+      <h1>Startup Cost Calculator</h1>
+      <p>Estimate realistic startup costs by business type. Choose a preset, customize each line item, and see your total investment, monthly burn rate, and how long your savings will last.</p>
+    </div>
+
+    <section class="content-section">
+      <div class="calc-grid">
+        <div class="calc-main">
+          <div class="card">
+            <h2>Business Type</h2>
+            <div class="preset-grid" id="preset-grid"></div>
+          </div>
+
+          <div class="card">
+            <h2>One-Time Startup Costs</h2>
+            <div id="onetime-costs"></div>
+            <button class="add-btn" id="add-onetime">+ Add Custom Item</button>
+            <div class="cost-subtotal">
+              <span>Total One-Time Costs</span>
+              <strong id="onetime-total">$0</strong>
+            </div>
+          </div>
+
+          <div class="card">
+            <h2>Monthly Recurring Costs</h2>
+            <div id="recurring-costs"></div>
+            <button class="add-btn" id="add-recurring">+ Add Custom Item</button>
+            <div class="cost-subtotal">
+              <span>Total Monthly Costs</span>
+              <strong id="recurring-total">$0</strong>
+            </div>
+          </div>
+        </div>
+
+        <div class="calc-sidebar">
+          <div class="card summary-card">
+            <h2>Cost Summary</h2>
+            <div class="summary-row">
+              <span>One-Time Costs</span>
+              <strong id="summary-onetime">$0</strong>
+            </div>
+            <div class="summary-row">
+              <span>Monthly Recurring</span>
+              <strong id="summary-recurring">$0</strong>
+            </div>
+            <div class="summary-row total-row">
+              <span>First Year Total</span>
+              <strong id="summary-first-year">$0</strong>
+            </div>
+          </div>
+
+          <div class="card">
+            <h2>Runway Calculator</h2>
+            <label class="input-label" for="savings-input">Your Available Savings</label>
+            <div class="input-prefix-wrap">
+              <span class="input-prefix">$</span>
+              <input type="number" id="savings-input" value="50000" min="0" step="1000">
+            </div>
+            <div class="runway-result" id="runway-result">
+              <div class="runway-months">
+                <span class="runway-number" id="runway-months">0</span>
+                <span class="runway-label">months of runway</span>
+              </div>
+              <div class="runway-bar-container">
+                <div class="runway-bar" id="runway-bar"></div>
+              </div>
+              <p class="runway-note" id="runway-note"></p>
+            </div>
+          </div>
+
+          <div class="card">
+            <h2>Funding Gap Analysis</h2>
+            <div id="funding-gap-content">
+              <div class="gap-row">
+                <span>Total Capital Needed (12 mo)</span>
+                <strong id="gap-needed">$0</strong>
+              </div>
+              <div class="gap-row">
+                <span>Your Savings</span>
+                <strong id="gap-savings">$0</strong>
+              </div>
+              <div class="gap-row gap-result" id="gap-result-row">
+                <span id="gap-label">Funding Gap</span>
+                <strong id="gap-amount">$0</strong>
+              </div>
+              <p class="gap-note" id="gap-note"></p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <h2>Frequently Asked Questions</h2>
+      <div class="faq-container">
+        {faqs.map(faq => (
+          <div class="faq-item">
+            <h3>{faq.q}</h3>
+            <p>{faq.a}</p>
+          </div>
+        ))}
+      </div>
+    </section>
+  </div>
+
+  <script is:inline>
+    document.addEventListener('DOMContentLoaded', function() {
+      var presets = {
+        'Online Store': {
+          onetime: [
+            { name: 'Business Registration/LLC', amount: 500 },
+            { name: 'Website/Platform Setup', amount: 2000 },
+            { name: 'Initial Inventory', amount: 3000 },
+            { name: 'Branding & Logo Design', amount: 800 },
+            { name: 'Product Photography', amount: 500 },
+            { name: 'Packaging Design', amount: 300 }
+          ],
+          recurring: [
+            { name: 'E-commerce Platform Fee', amount: 79 },
+            { name: 'Hosting & Domain', amount: 30 },
+            { name: 'Digital Marketing/Ads', amount: 500 },
+            { name: 'Payment Processing Fees', amount: 150 },
+            { name: 'Shipping Supplies', amount: 200 },
+            { name: 'Insurance', amount: 100 },
+            { name: 'Accounting Software', amount: 30 }
+          ]
+        },
+        'Restaurant': {
+          onetime: [
+            { name: 'Business Registration/Licenses', amount: 3000 },
+            { name: 'Lease Deposit (3 months)', amount: 15000 },
+            { name: 'Kitchen Equipment', amount: 50000 },
+            { name: 'Furniture & Fixtures', amount: 25000 },
+            { name: 'Interior Buildout', amount: 40000 },
+            { name: 'Initial Food Inventory', amount: 5000 },
+            { name: 'POS System', amount: 3000 },
+            { name: 'Signage', amount: 2500 }
+          ],
+          recurring: [
+            { name: 'Rent/Lease', amount: 5000 },
+            { name: 'Payroll (Staff)', amount: 15000 },
+            { name: 'Food & Beverage Costs', amount: 8000 },
+            { name: 'Utilities', amount: 1200 },
+            { name: 'Insurance', amount: 500 },
+            { name: 'Marketing', amount: 800 },
+            { name: 'Maintenance & Supplies', amount: 600 },
+            { name: 'Accounting/Bookkeeping', amount: 300 }
+          ]
+        },
+        'Food Truck': {
+          onetime: [
+            { name: 'Business Registration/Licenses', amount: 2000 },
+            { name: 'Food Truck Purchase/Lease', amount: 50000 },
+            { name: 'Kitchen Equipment', amount: 10000 },
+            { name: 'Vehicle Wrap/Branding', amount: 3500 },
+            { name: 'Initial Food Inventory', amount: 2000 },
+            { name: 'POS System', amount: 1000 },
+            { name: 'Health Permits', amount: 1000 }
+          ],
+          recurring: [
+            { name: 'Commissary Kitchen Rent', amount: 1000 },
+            { name: 'Food Costs', amount: 3000 },
+            { name: 'Fuel', amount: 400 },
+            { name: 'Payroll (1-2 Staff)', amount: 4000 },
+            { name: 'Insurance', amount: 350 },
+            { name: 'Parking/Event Fees', amount: 500 },
+            { name: 'Marketing', amount: 300 },
+            { name: 'Maintenance', amount: 200 }
+          ]
+        },
+        'Consulting': {
+          onetime: [
+            { name: 'Business Registration/LLC', amount: 500 },
+            { name: 'Professional Website', amount: 1500 },
+            { name: 'Laptop/Computer', amount: 1500 },
+            { name: 'Branding & Business Cards', amount: 300 },
+            { name: 'Professional Certifications', amount: 1000 }
+          ],
+          recurring: [
+            { name: 'Coworking Space/Office', amount: 300 },
+            { name: 'Software Subscriptions', amount: 150 },
+            { name: 'Marketing/Networking', amount: 200 },
+            { name: 'Insurance (E&O)', amount: 200 },
+            { name: 'Accounting Software', amount: 30 },
+            { name: 'Phone/Internet', amount: 100 }
+          ]
+        },
+        'SaaS': {
+          onetime: [
+            { name: 'Business Registration/LLC', amount: 500 },
+            { name: 'MVP Development', amount: 15000 },
+            { name: 'UI/UX Design', amount: 5000 },
+            { name: 'Branding & Logo', amount: 1000 },
+            { name: 'Legal (ToS, Privacy Policy)', amount: 2000 }
+          ],
+          recurring: [
+            { name: 'Cloud Hosting (AWS/GCP)', amount: 500 },
+            { name: 'Developer Salaries', amount: 8000 },
+            { name: 'Marketing/Content', amount: 1000 },
+            { name: 'Software Tools/APIs', amount: 300 },
+            { name: 'Customer Support Tools', amount: 100 },
+            { name: 'Insurance', amount: 150 },
+            { name: 'Accounting', amount: 50 }
+          ]
+        },
+        'Freelancing': {
+          onetime: [
+            { name: 'Business Registration', amount: 200 },
+            { name: 'Portfolio Website', amount: 500 },
+            { name: 'Computer/Equipment', amount: 1200 },
+            { name: 'Software Licenses', amount: 300 }
+          ],
+          recurring: [
+            { name: 'Software Subscriptions', amount: 80 },
+            { name: 'Internet', amount: 70 },
+            { name: 'Marketing/Portfolio Hosting', amount: 30 },
+            { name: 'Accounting Software', amount: 20 },
+            { name: 'Insurance', amount: 100 }
+          ]
+        },
+        'Retail Store': {
+          onetime: [
+            { name: 'Business Registration/Licenses', amount: 1500 },
+            { name: 'Lease Deposit (3 months)', amount: 9000 },
+            { name: 'Store Buildout/Renovation', amount: 20000 },
+            { name: 'Fixtures & Displays', amount: 8000 },
+            { name: 'Initial Inventory', amount: 25000 },
+            { name: 'POS System', amount: 2000 },
+            { name: 'Signage', amount: 2000 },
+            { name: 'Security System', amount: 1500 }
+          ],
+          recurring: [
+            { name: 'Rent/Lease', amount: 3000 },
+            { name: 'Payroll (Staff)', amount: 6000 },
+            { name: 'Inventory Replenishment', amount: 5000 },
+            { name: 'Utilities', amount: 500 },
+            { name: 'Insurance', amount: 300 },
+            { name: 'Marketing', amount: 500 },
+            { name: 'POS/Software Fees', amount: 100 },
+            { name: 'Maintenance', amount: 200 }
+          ]
+        },
+        'Salon / Barber': {
+          onetime: [
+            { name: 'Business Registration/Licenses', amount: 1000 },
+            { name: 'Lease Deposit (3 months)', amount: 6000 },
+            { name: 'Buildout & Plumbing', amount: 15000 },
+            { name: 'Salon Chairs & Stations', amount: 8000 },
+            { name: 'Initial Product Inventory', amount: 3000 },
+            { name: 'Signage & Branding', amount: 1500 },
+            { name: 'POS System', amount: 1000 }
+          ],
+          recurring: [
+            { name: 'Rent/Lease', amount: 2000 },
+            { name: 'Payroll (Stylists)', amount: 6000 },
+            { name: 'Product Supplies', amount: 800 },
+            { name: 'Utilities', amount: 400 },
+            { name: 'Insurance', amount: 250 },
+            { name: 'Marketing', amount: 300 },
+            { name: 'Booking Software', amount: 50 },
+            { name: 'Laundry/Cleaning', amount: 150 }
+          ]
+        }
+      };
+
+      var currentPreset = null;
+
+      function fmt(n) {
+        return '$' + Math.round(n).toLocaleString('en-US');
+      }
+
+      function renderPresets() {
+        var grid = document.getElementById('preset-grid');
+        grid.innerHTML = '';
+        var icons = {
+          'Online Store': '\uD83D\uDED2', 'Restaurant': '\uD83C\uDF7D\uFE0F', 'Food Truck': '\uD83D\uDE9A',
+          'Consulting': '\uD83D\uDCBC', 'SaaS': '\uD83D\uDCBB', 'Freelancing': '\u270D\uFE0F',
+          'Retail Store': '\uD83C\uDFEA', 'Salon / Barber': '\u2702\uFE0F'
+        };
+        Object.keys(presets).forEach(function(name) {
+          var btn = document.createElement('button');
+          btn.className = 'preset-btn' + (currentPreset === name ? ' active' : '');
+          btn.innerHTML = '<span class="preset-icon">' + (icons[name] || '') + '</span><span class="preset-name">' + name + '</span>';
+          btn.addEventListener('click', function() { selectPreset(name); });
+          grid.appendChild(btn);
+        });
+      }
+
+      function selectPreset(name) {
+        currentPreset = name;
+        var data = presets[name];
+        renderCostList('onetime-costs', data.onetime, 'onetime');
+        renderCostList('recurring-costs', data.recurring, 'recurring');
+        renderPresets();
+        recalculate();
+      }
+
+      function renderCostList(containerId, items, type) {
+        var container = document.getElementById(containerId);
+        container.innerHTML = '';
+        items.forEach(function(item, idx) {
+          var row = document.createElement('div');
+          row.className = 'cost-row';
+          row.setAttribute('data-type', type);
+          row.setAttribute('data-index', idx);
+          row.innerHTML =
+            '<input type="text" class="cost-name" value="' + item.name + '" placeholder="Item name">' +
+            '<div class="input-prefix-wrap compact"><span class="input-prefix">$</span>' +
+            '<input type="number" class="cost-amount" value="' + item.amount + '" min="0" step="50"></div>' +
+            '<button class="remove-btn" title="Remove">\u00D7</button>';
+          row.querySelector('.cost-amount').addEventListener('input', recalculate);
+          row.querySelector('.cost-name').addEventListener('input', function() { syncToPreset(); });
+          row.querySelector('.remove-btn').addEventListener('click', function() {
+            row.remove();
+            syncToPreset();
+            recalculate();
+          });
+          container.appendChild(row);
+        });
+      }
+
+      function syncToPreset() {
+        if (!currentPreset) return;
+        presets[currentPreset].onetime = getItems('onetime-costs');
+        presets[currentPreset].recurring = getItems('recurring-costs');
+      }
+
+      function getItems(containerId) {
+        var rows = document.getElementById(containerId).querySelectorAll('.cost-row');
+        var items = [];
+        rows.forEach(function(row) {
+          items.push({
+            name: row.querySelector('.cost-name').value,
+            amount: parseFloat(row.querySelector('.cost-amount').value) || 0
+          });
+        });
+        return items;
+      }
+
+      function addItem(containerId, type) {
+        var container = document.getElementById(containerId);
+        var idx = container.querySelectorAll('.cost-row').length;
+        var row = document.createElement('div');
+        row.className = 'cost-row';
+        row.setAttribute('data-type', type);
+        row.setAttribute('data-index', idx);
+        row.innerHTML =
+          '<input type="text" class="cost-name" value="" placeholder="Custom item">' +
+          '<div class="input-prefix-wrap compact"><span class="input-prefix">$</span>' +
+          '<input type="number" class="cost-amount" value="0" min="0" step="50"></div>' +
+          '<button class="remove-btn" title="Remove">\u00D7</button>';
+        row.querySelector('.cost-amount').addEventListener('input', recalculate);
+        row.querySelector('.cost-name').addEventListener('input', function() { syncToPreset(); });
+        row.querySelector('.remove-btn').addEventListener('click', function() {
+          row.remove();
+          syncToPreset();
+          recalculate();
+        });
+        container.appendChild(row);
+        row.querySelector('.cost-name').focus();
+        syncToPreset();
+      }
+
+      function recalculate() {
+        syncToPreset();
+        var onetimeItems = getItems('onetime-costs');
+        var recurringItems = getItems('recurring-costs');
+
+        var onetimeTotal = onetimeItems.reduce(function(s, i) { return s + i.amount; }, 0);
+        var recurringTotal = recurringItems.reduce(function(s, i) { return s + i.amount; }, 0);
+        var firstYear = onetimeTotal + (recurringTotal * 12);
+
+        document.getElementById('onetime-total').textContent = fmt(onetimeTotal);
+        document.getElementById('recurring-total').textContent = fmt(recurringTotal) + '/mo';
+        document.getElementById('summary-onetime').textContent = fmt(onetimeTotal);
+        document.getElementById('summary-recurring').textContent = fmt(recurringTotal) + '/mo';
+        document.getElementById('summary-first-year').textContent = fmt(firstYear);
+
+        // Runway
+        var savings = parseFloat(document.getElementById('savings-input').value) || 0;
+        var remaining = savings - onetimeTotal;
+        var months = recurringTotal > 0 ? Math.max(0, Math.floor(remaining / recurringTotal)) : (remaining >= 0 ? 99 : 0);
+        var displayMonths = Math.min(months, 99);
+
+        document.getElementById('runway-months').textContent = displayMonths >= 99 ? '99+' : displayMonths;
+        var barPct = Math.min(100, (displayMonths / 24) * 100);
+        var bar = document.getElementById('runway-bar');
+        bar.style.width = barPct + '%';
+        bar.className = 'runway-bar' + (displayMonths < 6 ? ' danger' : displayMonths < 12 ? ' warning' : ' healthy');
+
+        var note = document.getElementById('runway-note');
+        if (remaining < 0) {
+          note.textContent = 'Your savings don\u2019t cover the initial startup costs.';
+          note.className = 'runway-note danger-text';
+        } else if (displayMonths < 6) {
+          note.textContent = 'Less than 6 months of runway. Consider additional funding.';
+          note.className = 'runway-note danger-text';
+        } else if (displayMonths < 12) {
+          note.textContent = 'Moderate runway. Aim for 12+ months for safety.';
+          note.className = 'runway-note warning-text';
+        } else {
+          note.textContent = 'Healthy runway of 12+ months. You\u2019re well positioned.';
+          note.className = 'runway-note healthy-text';
+        }
+
+        // Funding gap
+        document.getElementById('gap-needed').textContent = fmt(firstYear);
+        document.getElementById('gap-savings').textContent = fmt(savings);
+        var gap = firstYear - savings;
+        var gapRow = document.getElementById('gap-result-row');
+        var gapLabel = document.getElementById('gap-label');
+        var gapAmount = document.getElementById('gap-amount');
+        var gapNote = document.getElementById('gap-note');
+
+        if (gap > 0) {
+          gapLabel.textContent = 'Funding Gap';
+          gapAmount.textContent = fmt(gap);
+          gapRow.className = 'gap-row gap-result gap-negative';
+          gapNote.textContent = 'You need ' + fmt(gap) + ' in additional funding to cover your first year.';
+          gapNote.className = 'gap-note danger-text';
+        } else {
+          gapLabel.textContent = 'Surplus';
+          gapAmount.textContent = fmt(Math.abs(gap));
+          gapRow.className = 'gap-row gap-result gap-positive';
+          gapNote.textContent = 'Your savings cover the first year with ' + fmt(Math.abs(gap)) + ' to spare.';
+          gapNote.className = 'gap-note healthy-text';
+        }
+      }
+
+      document.getElementById('add-onetime').addEventListener('click', function() { addItem('onetime-costs', 'onetime'); });
+      document.getElementById('add-recurring').addEventListener('click', function() { addItem('recurring-costs', 'recurring'); });
+      document.getElementById('savings-input').addEventListener('input', recalculate);
+
+      renderPresets();
+      selectPreset('Online Store');
+    });
+  </script>
+
+  <style is:inline>
+    .page-content { max-width: 1200px; margin: 0 auto; padding: 2rem 1.5rem; }
+    .hero { text-align: center; padding: 3rem 0 2rem; }
+    .hero h1 { font-size: 2.2rem; font-weight: 800; margin-bottom: 0.5rem; color: var(--text-primary); }
+    .hero p { color: var(--text-secondary); font-size: 1.1rem; max-width: 700px; margin: 0 auto; line-height: 1.5; }
+
+    .content-section { margin-bottom: 3rem; }
+    .content-section h2 { font-size: 1.5rem; color: var(--text-primary); margin-bottom: 1rem; margin-top: 0; }
+
+    .calc-grid { display: grid; grid-template-columns: 1fr 380px; gap: 1.5rem; margin-bottom: 2.5rem; }
+    .calc-main { display: flex; flex-direction: column; gap: 1.5rem; }
+    .calc-sidebar { display: flex; flex-direction: column; gap: 1.5rem; }
+
+    .card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem; }
+    .summary-card .summary-row { display: flex; justify-content: space-between; align-items: center; padding: 0.6rem 0; border-bottom: 1px solid var(--border-color); }
+    .summary-card .summary-row:last-of-type { border-bottom: none; }
+    .summary-card .summary-row span { color: var(--text-secondary); }
+    .summary-card .summary-row strong { color: var(--text-primary); font-size: 1.1rem; }
+    .summary-card .total-row { border-top: 2px solid var(--border-color); border-bottom: none; margin-top: 0.5rem; padding-top: 1rem; }
+    .summary-card .total-row strong { font-size: 1.3rem; color: var(--accent, #3b82f6); }
+
+    /* Presets */
+    .preset-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 0.5rem; }
+    .preset-btn { display: flex; flex-direction: column; align-items: center; gap: 0.3rem; padding: 0.75rem 0.5rem; border-radius: 10px; border: 2px solid var(--border-color); background: transparent; color: var(--text-secondary); cursor: pointer; transition: all 0.2s; font-size: 0.8rem; font-family: inherit; }
+    .preset-btn:hover { border-color: var(--accent, #3b82f6); color: var(--text-primary); }
+    .preset-btn.active { border-color: var(--accent, #3b82f6); background: rgba(59, 130, 246, 0.1); color: var(--text-primary); }
+    .preset-icon { font-size: 1.4rem; }
+    .preset-name { font-weight: 600; text-align: center; line-height: 1.2; }
+
+    /* Cost rows */
+    .cost-row { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; }
+    .cost-name { flex: 1; padding: 0.6rem 0.75rem; border: 1px solid var(--border-color); border-radius: 8px; background: var(--input-bg, rgba(0,0,0,0.1)); color: var(--text-primary); font-size: 0.9rem; font-family: inherit; }
+    .cost-name:focus, .cost-amount:focus { outline: none; border-color: var(--accent, #3b82f6); }
+
+    .input-prefix-wrap { position: relative; display: flex; align-items: center; }
+    .input-prefix-wrap.compact { width: 130px; flex-shrink: 0; }
+    .input-prefix { position: absolute; left: 0.75rem; color: var(--text-secondary); font-weight: 600; pointer-events: none; z-index: 1; }
+    .input-prefix-wrap input { width: 100%; padding: 0.6rem 0.75rem 0.6rem 1.5rem; border: 1px solid var(--border-color); border-radius: 8px; background: var(--input-bg, rgba(0,0,0,0.1)); color: var(--text-primary); font-size: 0.9rem; font-family: inherit; }
+    .input-prefix-wrap input:focus { outline: none; border-color: var(--accent, #3b82f6); }
+
+    .remove-btn { width: 32px; height: 32px; border: none; background: rgba(239, 68, 68, 0.1); color: #ef4444; border-radius: 8px; cursor: pointer; font-size: 1.2rem; display: flex; align-items: center; justify-content: center; transition: background 0.2s; flex-shrink: 0; font-family: inherit; }
+    .remove-btn:hover { background: rgba(239, 68, 68, 0.25); }
+
+    .add-btn { width: 100%; padding: 0.6rem; border: 2px dashed var(--border-color); border-radius: 8px; background: transparent; color: var(--text-secondary); cursor: pointer; font-size: 0.9rem; transition: all 0.2s; margin-top: 0.5rem; font-family: inherit; }
+    .add-btn:hover { border-color: var(--accent, #3b82f6); color: var(--accent, #3b82f6); }
+
+    .cost-subtotal { display: flex; justify-content: space-between; align-items: center; margin-top: 1rem; padding-top: 1rem; border-top: 2px solid var(--border-color); }
+    .cost-subtotal span { color: var(--text-secondary); font-weight: 600; }
+    .cost-subtotal strong { font-size: 1.2rem; color: var(--accent, #3b82f6); }
+
+    /* Runway */
+    .input-label { display: block; color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 0.4rem; font-weight: 600; }
+    .runway-result { margin-top: 1rem; }
+    .runway-months { text-align: center; margin-bottom: 0.75rem; }
+    .runway-number { font-size: 2.5rem; font-weight: 800; color: var(--text-primary); display: block; line-height: 1; }
+    .runway-label { color: var(--text-secondary); font-size: 0.9rem; }
+    .runway-bar-container { height: 10px; background: rgba(0,0,0,0.15); border-radius: 10px; overflow: hidden; }
+    .runway-bar { height: 100%; border-radius: 10px; transition: width 0.4s ease, background 0.4s ease; }
+    .runway-bar.danger { background: #ef4444; }
+    .runway-bar.warning { background: #f59e0b; }
+    .runway-bar.healthy { background: #22c55e; }
+    .runway-note { font-size: 0.85rem; margin-top: 0.5rem; line-height: 1.4; }
+    .danger-text { color: #ef4444; }
+    .warning-text { color: #f59e0b; }
+    .healthy-text { color: #22c55e; }
+
+    /* Funding gap */
+    .gap-row { display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid var(--border-color); }
+    .gap-row span { color: var(--text-secondary); font-size: 0.9rem; }
+    .gap-row strong { color: var(--text-primary); }
+    .gap-result { border-top: 2px solid var(--border-color); border-bottom: none; margin-top: 0.5rem; padding-top: 0.75rem; }
+    .gap-negative strong { color: #ef4444; font-size: 1.15rem; }
+    .gap-positive strong { color: #22c55e; font-size: 1.15rem; }
+    .gap-note { font-size: 0.85rem; margin-top: 0.75rem; line-height: 1.4; }
+
+    /* FAQ */
+    .faq-container { display: flex; flex-direction: column; gap: 1rem; margin-bottom: 2rem; }
+    .faq-item { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem; }
+    .faq-item h3 { margin: 0 0 0.5rem 0; font-size: 1.1rem; color: var(--text-primary); }
+    .faq-item p { margin: 0; color: var(--text-secondary); line-height: 1.5; }
+
+    @media (max-width: 900px) {
+      .calc-grid { grid-template-columns: 1fr; }
+      .preset-grid { grid-template-columns: repeat(4, 1fr); }
+    }
+    @media (max-width: 600px) {
+      .hero h1 { font-size: 1.8rem; }
+      .preset-grid { grid-template-columns: repeat(2, 1fr); }
+      .cost-row { flex-wrap: wrap; }
+      .cost-name { min-width: 0; }
+      .input-prefix-wrap.compact { width: 110px; }
+    }
+  </style>
+</SiteLayout>
