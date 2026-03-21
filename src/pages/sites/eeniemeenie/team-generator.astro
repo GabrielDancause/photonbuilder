@@ -1,0 +1,1067 @@
+---
+import SiteLayout from '../../../layouts/SiteLayout.astro';
+export const meta = { title: 'Random Team Generator — Split Groups Fairly Online', description: 'Generate random teams instantly. Add names, choose number of teams or team size, shuffle with animation, pick captains, and balance groups. Free online team maker.', category: 'tool', published: '2026-03-21' };
+const SITE_ID = 'eeniemeenie';
+
+const faqItems = [
+  { q: 'How does the random team generator work?', a: 'Enter your list of names (one per line or type and add individually), choose how many teams you want or set a team size, and hit Generate. The tool uses your browser\'s crypto.getRandomValues() API for cryptographically secure randomness — the same technology used by password managers — ensuring every shuffle is completely fair and unbiased.' },
+  { q: 'Can I split into teams by team size instead of number of teams?', a: 'Yes! Toggle from "Number of Teams" to "Team Size" mode. Enter how many people you want per team and the generator will automatically create as many teams as needed. If the total doesn\'t divide evenly, the last team will have the remaining members.' },
+  { q: 'What is Captain Mode?', a: 'Captain Mode randomly selects one person from each team as the captain before revealing the full teams. This is great for pickup games, classroom activities, or any scenario where you need team leaders chosen fairly. Captains are highlighted with a crown icon on their team card.' },
+  { q: 'Can I provide skill ratings for balanced teams?', a: 'Yes. Toggle on the "Skill Ratings" option and you can assign a rating (1–10) to each person. The generator will then distribute players so that each team has a roughly equal total skill rating, creating more balanced and competitive matchups.' },
+  { q: 'Are my team names and data saved?', a: 'Your generated teams are saved to your browser\'s localStorage so you can revisit them even after closing the tab. Your name list is also remembered for convenience. All data stays on your device — nothing is ever sent to a server.' },
+  { q: 'Can I copy the teams as text?', a: 'Absolutely. Click the "Copy Teams" button after generating to copy all teams in a clean text format to your clipboard. You can paste it into a chat, email, spreadsheet, or document.' },
+  { q: 'What is the maximum number of people I can add?', a: 'There is no hard limit — the generator works smoothly with hundreds of names. For the best visual experience with the shuffle animation, we recommend up to 200 names, but larger lists will still work perfectly.' },
+];
+
+const faqSchema = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": faqItems.map(item => ({
+    "@type": "Question",
+    "name": item.q,
+    "acceptedAnswer": { "@type": "Answer", "text": item.a }
+  }))
+};
+---
+<SiteLayout title={meta.title} description={meta.description} site={SITE_ID} schema={faqSchema}>
+<style is:inline>
+
+  .page-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+  }
+  .hero {
+    text-align: center;
+    padding: 4rem 1.5rem 2rem;
+    width: 100%;
+  }
+  .hero h1 {
+    font-size: 2.5rem;
+    margin-bottom: 1rem;
+    color: var(--accent-color);
+  }
+  .hero p {
+    font-size: 1.1rem;
+    color: var(--text-secondary);
+    max-width: 600px;
+    margin: 0 auto;
+  }
+
+  /* Name input area */
+  .input-section {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.5rem;
+    width: 100%;
+    max-width: 650px;
+    margin-bottom: 1.5rem;
+  }
+  .input-section h3 {
+    color: var(--accent-color);
+    margin-bottom: 0.75rem;
+    font-size: 1.1rem;
+  }
+  .name-textarea {
+    width: 100%;
+    min-height: 140px;
+    background: var(--bg-color);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    padding: 0.75rem;
+    border-radius: 8px;
+    font-size: 0.95rem;
+    font-family: var(--font-body);
+    resize: vertical;
+    box-sizing: border-box;
+  }
+  .name-textarea:focus { outline: none; border-color: var(--accent-color); }
+  .name-textarea::placeholder { color: var(--text-secondary); opacity: 0.6; }
+  .add-row {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+  }
+  .add-input {
+    flex: 1;
+    background: var(--bg-color);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    padding: 0.6rem 0.75rem;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    font-family: var(--font-body);
+  }
+  .add-input:focus { outline: none; border-color: var(--accent-color); }
+  .btn-add {
+    padding: 0.6rem 1.2rem;
+    background: var(--accent-color);
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    font-weight: 700;
+    cursor: pointer;
+    white-space: nowrap;
+  }
+  .btn-add:hover { opacity: 0.9; }
+  .name-count {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin-top: 0.5rem;
+  }
+  .skill-row {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+    align-items: center;
+  }
+  .skill-input {
+    width: 60px;
+    background: var(--bg-color);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    padding: 0.5rem;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-family: var(--font-body);
+    text-align: center;
+  }
+  .skill-input:focus { outline: none; border-color: var(--accent-color); }
+  .skill-label {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+  }
+
+  /* Settings */
+  .settings-section {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.5rem;
+    width: 100%;
+    max-width: 650px;
+    margin-bottom: 1.5rem;
+  }
+  .settings-section h3 {
+    color: var(--accent-color);
+    margin-bottom: 1rem;
+    font-size: 1.1rem;
+  }
+  .form-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1rem;
+  }
+  .form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+  }
+  .form-label {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 600;
+  }
+  .form-input {
+    background: var(--bg-color);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    padding: 0.65rem 0.75rem;
+    border-radius: 6px;
+    font-size: 1rem;
+    font-family: var(--font-body);
+    width: 100%;
+    box-sizing: border-box;
+  }
+  .form-input:focus { outline: none; border-color: var(--accent-color); }
+  .options-row {
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+  }
+  .option-toggle {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.4rem 0.8rem;
+    background: var(--bg-color);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s;
+    user-select: none;
+  }
+  .option-toggle:hover { border-color: var(--accent-color); color: var(--text-primary); }
+  .option-toggle.active { border-color: var(--accent-color); color: var(--accent-color); background: rgba(224, 64, 251, 0.08); }
+  .option-toggle input { display: none; }
+  .mode-tabs {
+    display: flex;
+    gap: 0;
+    margin-bottom: 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .mode-tab {
+    flex: 1;
+    padding: 0.6rem 1rem;
+    background: var(--bg-color);
+    border: none;
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    text-align: center;
+  }
+  .mode-tab.active {
+    background: var(--accent-color);
+    color: #fff;
+  }
+  .mode-tab:not(.active):hover { color: var(--text-primary); }
+
+  /* Generate button */
+  .generate-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 2rem;
+  }
+  .btn-primary {
+    padding: 1rem 2.5rem;
+    background-color: var(--accent-color);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-size: 1.3rem;
+    font-weight: 800;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.1s;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+  }
+  .btn-primary:hover { opacity: 0.9; }
+  .btn-primary:active { transform: scale(0.97); }
+  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+  .btn-secondary {
+    padding: 0.7rem 1.5rem;
+    background: transparent;
+    border: 2px solid var(--accent-color);
+    color: var(--accent-color);
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.2s;
+    letter-spacing: 1px;
+    text-transform: uppercase;
+  }
+  .btn-secondary:hover { background: var(--accent-color); color: #fff; }
+  .generate-hint {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-top: 0.75rem;
+  }
+
+  /* Shuffle animation overlay */
+  .shuffle-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s;
+  }
+  .shuffle-overlay.active {
+    opacity: 1;
+    pointer-events: auto;
+  }
+  .shuffle-text {
+    font-size: 3rem;
+    font-weight: 900;
+    color: var(--accent-color);
+    text-align: center;
+    animation: shufflePulse 0.5s ease-in-out infinite alternate;
+  }
+  @keyframes shufflePulse {
+    0% { transform: scale(0.95); opacity: 0.7; }
+    100% { transform: scale(1.05); opacity: 1; }
+  }
+  .shuffle-names {
+    font-size: 1.2rem;
+    color: var(--text-secondary);
+    margin-top: 1rem;
+    text-align: center;
+    max-width: 400px;
+    word-break: break-word;
+  }
+
+  /* Results */
+  .results-section {
+    width: 100%;
+    max-width: 900px;
+    margin-bottom: 2rem;
+    display: none;
+  }
+  .results-section.visible { display: block; }
+  .results-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-bottom: 1.5rem;
+  }
+  .results-header h2 {
+    color: var(--accent-color);
+    margin: 0;
+  }
+  .results-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+  .btn-action {
+    padding: 0.5rem 1rem;
+    background: var(--bg-color);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .btn-action:hover { border-color: var(--accent-color); color: var(--accent-color); }
+  .btn-action.copied { border-color: #4caf50; color: #4caf50; }
+  .teams-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 1rem;
+  }
+
+  /* Team card colors */
+  .team-card {
+    background: var(--card-bg);
+    border: 2px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.25rem;
+    animation: cardReveal 0.5s ease-out backwards;
+  }
+  .team-card.color-0 { border-color: #e040fb; }
+  .team-card.color-1 { border-color: #448aff; }
+  .team-card.color-2 { border-color: #69f0ae; }
+  .team-card.color-3 { border-color: #ffd740; }
+  .team-card.color-4 { border-color: #ff6e40; }
+  .team-card.color-5 { border-color: #ea80fc; }
+  .team-card.color-6 { border-color: #40c4ff; }
+  .team-card.color-7 { border-color: #b2ff59; }
+  .team-card.color-8 { border-color: #ffab40; }
+  .team-card.color-9 { border-color: #ff5252; }
+  .team-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+  }
+  .team-card h4 {
+    font-size: 1.05rem;
+    margin: 0;
+  }
+  .team-card.color-0 h4 { color: #e040fb; }
+  .team-card.color-1 h4 { color: #448aff; }
+  .team-card.color-2 h4 { color: #69f0ae; }
+  .team-card.color-3 h4 { color: #ffd740; }
+  .team-card.color-4 h4 { color: #ff6e40; }
+  .team-card.color-5 h4 { color: #ea80fc; }
+  .team-card.color-6 h4 { color: #40c4ff; }
+  .team-card.color-7 h4 { color: #b2ff59; }
+  .team-card.color-8 h4 { color: #ffab40; }
+  .team-card.color-9 h4 { color: #ff5252; }
+  .team-skill {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    font-weight: 600;
+  }
+  .team-member {
+    padding: 0.4rem 0;
+    border-bottom: 1px solid var(--border-color);
+    font-size: 0.9rem;
+    color: var(--text-primary);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .team-member:last-child { border-bottom: none; }
+  .team-member.captain {
+    font-weight: 700;
+  }
+  .captain-badge {
+    font-size: 0.75rem;
+    padding: 0.15rem 0.4rem;
+    border-radius: 4px;
+    font-weight: 700;
+  }
+  .team-card.color-0 .captain-badge { background: rgba(224,64,251,0.15); color: #e040fb; }
+  .team-card.color-1 .captain-badge { background: rgba(68,138,255,0.15); color: #448aff; }
+  .team-card.color-2 .captain-badge { background: rgba(105,240,174,0.15); color: #69f0ae; }
+  .team-card.color-3 .captain-badge { background: rgba(255,215,64,0.15); color: #ffd740; }
+  .team-card.color-4 .captain-badge { background: rgba(255,110,64,0.15); color: #ff6e40; }
+  .team-card.color-5 .captain-badge { background: rgba(234,128,252,0.15); color: #ea80fc; }
+  .team-card.color-6 .captain-badge { background: rgba(64,196,255,0.15); color: #40c4ff; }
+  .team-card.color-7 .captain-badge { background: rgba(178,255,89,0.15); color: #b2ff59; }
+  .team-card.color-8 .captain-badge { background: rgba(255,171,64,0.15); color: #ffab40; }
+  .team-card.color-9 .captain-badge { background: rgba(255,82,82,0.15); color: #ff5252; }
+  .member-skill {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+  }
+  @keyframes cardReveal {
+    0% { transform: translateY(20px) scale(0.95); opacity: 0; }
+    100% { transform: translateY(0) scale(1); opacity: 1; }
+  }
+
+  /* Saved groups */
+  .saved-section {
+    width: 100%;
+    max-width: 900px;
+    margin-bottom: 2rem;
+  }
+  .saved-section h3 {
+    color: var(--accent-color);
+    margin-bottom: 1rem;
+  }
+  .saved-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .saved-entry {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.75rem 1rem;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: border-color 0.2s;
+  }
+  .saved-entry:hover { border-color: var(--accent-color); }
+  .saved-info {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+  }
+  .saved-title {
+    font-weight: 600;
+    color: var(--text-primary);
+    font-size: 0.9rem;
+  }
+  .saved-meta {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+  }
+  .saved-delete {
+    padding: 0.3rem 0.6rem;
+    background: transparent;
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    border-radius: 4px;
+    font-size: 0.75rem;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .saved-delete:hover { border-color: #ff5252; color: #ff5252; }
+  .saved-empty {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    font-style: italic;
+    text-align: center;
+    padding: 1rem;
+  }
+
+  /* FAQ */
+  .faq-section {
+    margin-top: 3rem;
+    max-width: 700px;
+    width: 100%;
+  }
+  .faq-section h2 {
+    text-align: center;
+    margin-bottom: 1.5rem;
+    color: var(--accent-color);
+  }
+  .faq-item {
+    border-bottom: 1px solid var(--border-color);
+    padding: 1rem 0;
+  }
+  .faq-q {
+    font-weight: 700;
+    color: var(--text-primary);
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+  }
+  .faq-q::after {
+    content: '+';
+    font-size: 1.3rem;
+    color: var(--accent-color);
+    flex-shrink: 0;
+    transition: transform 0.2s;
+  }
+  .faq-item.open .faq-q::after { content: '\2212'; }
+  .faq-a {
+    color: var(--text-secondary);
+    line-height: 1.6;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease, padding 0.3s ease;
+    padding-top: 0;
+  }
+  .faq-item.open .faq-a {
+    max-height: 300px;
+    padding-top: 0.75rem;
+  }
+
+  /* Related */
+  .related-section {
+    margin-top: 3rem;
+    width: 100%;
+  }
+  .related-section h2 {
+    text-align: center;
+    margin-bottom: 1.5rem;
+    color: var(--accent-color);
+  }
+  .related-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+  }
+  @media (max-width: 600px) {
+    .related-grid { grid-template-columns: 1fr; }
+    .form-row { grid-template-columns: 1fr; }
+  }
+  .related-link {
+    display: block;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 1.25rem;
+    text-decoration: none;
+    color: var(--text-primary);
+    transition: border-color 0.2s, transform 0.2s;
+  }
+  .related-link:hover { border-color: var(--accent-color); transform: translateY(-2px); }
+  .related-link h4 { margin-bottom: 0.4rem; }
+  .related-link p { font-size: 0.85rem; color: var(--text-secondary); margin: 0; }
+
+</style>
+<div class="page-content">
+
+<div class="hero">
+  <h1>Random Team Generator</h1>
+  <p>Split any group into fair, random teams instantly. Add names, choose your settings, and let the shuffle decide.</p>
+</div>
+
+<div class="container">
+
+  <!-- Shuffle overlay -->
+  <div class="shuffle-overlay" id="shuffle-overlay">
+    <div>
+      <div class="shuffle-text">Shuffling...</div>
+      <div class="shuffle-names" id="shuffle-names"></div>
+    </div>
+  </div>
+
+  <!-- Name input -->
+  <div class="input-section">
+    <h3>Add Names</h3>
+    <textarea class="name-textarea" id="names-textarea" placeholder="Enter names, one per line&#10;&#10;Alice&#10;Bob&#10;Charlie&#10;Diana&#10;Eve&#10;Frank"></textarea>
+    <div class="add-row">
+      <input type="text" class="add-input" id="add-name-input" placeholder="Or type a name and press Add">
+      <button class="btn-add" id="btn-add-name">Add</button>
+    </div>
+    <div class="name-count" id="name-count">0 names added</div>
+  </div>
+
+  <!-- Settings -->
+  <div class="settings-section">
+    <h3>Settings</h3>
+    <div class="mode-tabs">
+      <button class="mode-tab active" id="tab-num-teams">Number of Teams</button>
+      <button class="mode-tab" id="tab-team-size">Team Size</button>
+    </div>
+    <div class="form-row">
+      <div class="form-group" id="group-num-teams">
+        <label class="form-label" for="input-num-teams">Teams</label>
+        <input type="number" class="form-input" id="input-num-teams" value="2" min="2" max="10">
+      </div>
+      <div class="form-group" id="group-team-size" style="display:none;">
+        <label class="form-label" for="input-team-size">Players per team</label>
+        <input type="number" class="form-input" id="input-team-size" value="3" min="1" max="50">
+      </div>
+    </div>
+    <div class="options-row">
+      <label class="option-toggle" id="opt-captain"><input type="checkbox"> Captain Mode</label>
+      <label class="option-toggle" id="opt-skill"><input type="checkbox"> Skill Ratings</label>
+    </div>
+  </div>
+
+  <!-- Generate -->
+  <div class="generate-area">
+    <button id="btn-generate" class="btn-primary">Generate Teams</button>
+    <div class="generate-hint">or press <kbd>Space</kbd></div>
+  </div>
+
+  <!-- Results -->
+  <div class="results-section" id="results-section">
+    <div class="results-header">
+      <h2>Your Teams</h2>
+      <div class="results-actions">
+        <button class="btn-action" id="btn-reshuffle">Re-shuffle</button>
+        <button class="btn-action" id="btn-copy">Copy Teams</button>
+        <button class="btn-action" id="btn-save">Save Groups</button>
+      </div>
+    </div>
+    <div class="teams-grid" id="teams-grid"></div>
+  </div>
+
+  <!-- Saved groups -->
+  <div class="saved-section" id="saved-section">
+    <h3>Saved Groups</h3>
+    <div class="saved-list" id="saved-list">
+      <div class="saved-empty">No saved groups yet.</div>
+    </div>
+  </div>
+
+  <!-- FAQ -->
+  <div class="faq-section">
+    <h2>Frequently Asked Questions</h2>
+    {faqItems.map(item => (
+      <div class="faq-item">
+        <div class="faq-q">{item.q}</div>
+        <div class="faq-a">{item.a}</div>
+      </div>
+    ))}
+  </div>
+
+  <!-- Related -->
+  <div class="related-section">
+    <h2>More Random Tools</h2>
+    <div class="related-grid">
+      <a href="/eeniemeenie/random-number-generator" class="related-link">
+        <h4>Random Number Generator</h4>
+        <p>Generate random numbers in any range with crypto-grade randomness.</p>
+      </a>
+      <a href="/eeniemeenie/coin-flip" class="related-link">
+        <h4>Coin Flip</h4>
+        <p>Heads or tails? Flip a coin with realistic animation.</p>
+      </a>
+      <a href="/eeniemeenie/name-generator" class="related-link">
+        <h4>Name Generator</h4>
+        <p>Pick a random name from your list in one click.</p>
+      </a>
+    </div>
+  </div>
+
+</div>
+</div>
+
+<script is:inline>
+document.addEventListener('DOMContentLoaded', () => {
+
+  const textarea = document.getElementById('names-textarea');
+  const addInput = document.getElementById('add-name-input');
+  const btnAdd = document.getElementById('btn-add-name');
+  const nameCountEl = document.getElementById('name-count');
+  const btnGenerate = document.getElementById('btn-generate');
+  const resultsSection = document.getElementById('results-section');
+  const teamsGrid = document.getElementById('teams-grid');
+  const shuffleOverlay = document.getElementById('shuffle-overlay');
+  const shuffleNamesEl = document.getElementById('shuffle-names');
+  const tabNumTeams = document.getElementById('tab-num-teams');
+  const tabTeamSize = document.getElementById('tab-team-size');
+  const groupNumTeams = document.getElementById('group-num-teams');
+  const groupTeamSize = document.getElementById('group-team-size');
+  const inputNumTeams = document.getElementById('input-num-teams');
+  const inputTeamSize = document.getElementById('input-team-size');
+  const optCaptain = document.getElementById('opt-captain');
+  const optSkill = document.getElementById('opt-skill');
+  const btnReshuffle = document.getElementById('btn-reshuffle');
+  const btnCopy = document.getElementById('btn-copy');
+  const btnSave = document.getElementById('btn-save');
+  const savedList = document.getElementById('saved-list');
+
+  let splitMode = 'numTeams'; // or 'teamSize'
+  let captainMode = false;
+  let skillMode = false;
+  let isGenerating = false;
+  let currentTeams = null;
+  const STORAGE_KEY = 'eenie_team_generator_saved';
+  const NAMES_KEY = 'eenie_team_generator_names';
+
+  // Crypto random integer
+  function cryptoRandInt(min, max) {
+    const range = max - min + 1;
+    if (range <= 0) return min;
+    const arr = new Uint32Array(1);
+    crypto.getRandomValues(arr);
+    return min + (arr[0] % range);
+  }
+
+  // Fisher-Yates shuffle
+  function shuffle(arr) {
+    const a = [...arr];
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = cryptoRandInt(0, i);
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  // Parse names from textarea
+  function getNames() {
+    return textarea.value
+      .split('\n')
+      .map(n => n.trim())
+      .filter(n => n.length > 0);
+  }
+
+  // Update name count
+  function updateNameCount() {
+    const count = getNames().length;
+    nameCountEl.textContent = count + ' name' + (count !== 1 ? 's' : '') + ' added';
+  }
+
+  textarea.addEventListener('input', () => {
+    updateNameCount();
+    localStorage.setItem(NAMES_KEY, textarea.value);
+  });
+
+  // Restore saved names
+  const savedNames = localStorage.getItem(NAMES_KEY);
+  if (savedNames) {
+    textarea.value = savedNames;
+    updateNameCount();
+  }
+
+  // Add single name
+  function addSingleName() {
+    const name = addInput.value.trim();
+    if (!name) return;
+    const current = textarea.value.trim();
+    textarea.value = current ? current + '\n' + name : name;
+    addInput.value = '';
+    updateNameCount();
+    localStorage.setItem(NAMES_KEY, textarea.value);
+    textarea.scrollTop = textarea.scrollHeight;
+  }
+
+  btnAdd.addEventListener('click', addSingleName);
+  addInput.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter') { e.preventDefault(); addSingleName(); }
+  });
+
+  // Mode tabs
+  tabNumTeams.addEventListener('click', () => {
+    splitMode = 'numTeams';
+    tabNumTeams.classList.add('active');
+    tabTeamSize.classList.remove('active');
+    groupNumTeams.style.display = '';
+    groupTeamSize.style.display = 'none';
+  });
+  tabTeamSize.addEventListener('click', () => {
+    splitMode = 'teamSize';
+    tabTeamSize.classList.add('active');
+    tabNumTeams.classList.remove('active');
+    groupTeamSize.style.display = '';
+    groupNumTeams.style.display = 'none';
+  });
+
+  // Option toggles
+  optCaptain.addEventListener('click', () => {
+    captainMode = !captainMode;
+    optCaptain.classList.toggle('active', captainMode);
+  });
+  optSkill.addEventListener('click', () => {
+    skillMode = !skillMode;
+    optSkill.classList.toggle('active', skillMode);
+    // Show/hide skill column hint
+    if (skillMode) {
+      textarea.placeholder = 'Enter names with optional skill (1-10), e.g.:\n\nAlice 8\nBob 5\nCharlie 7\nDiana 3';
+    } else {
+      textarea.placeholder = 'Enter names, one per line\n\nAlice\nBob\nCharlie\nDiana\nEve\nFrank';
+    }
+  });
+
+  // Parse name + optional skill
+  function parseEntries() {
+    const names = getNames();
+    return names.map(line => {
+      if (skillMode) {
+        const match = line.match(/^(.+?)\s+(\d{1,2})$/);
+        if (match) {
+          const skill = parseInt(match[2]);
+          if (skill >= 1 && skill <= 10) {
+            return { name: match[1].trim(), skill };
+          }
+        }
+      }
+      return { name: line, skill: 5 }; // default skill
+    });
+  }
+
+  // Generate teams
+  function generateTeams() {
+    if (isGenerating) return;
+    const entries = parseEntries();
+    if (entries.length < 2) return;
+
+    let numTeams;
+    if (splitMode === 'numTeams') {
+      numTeams = Math.max(2, Math.min(10, parseInt(inputNumTeams.value) || 2));
+      inputNumTeams.value = numTeams;
+      if (numTeams > entries.length) numTeams = entries.length;
+    } else {
+      const size = Math.max(1, parseInt(inputTeamSize.value) || 3);
+      inputTeamSize.value = size;
+      numTeams = Math.max(1, Math.ceil(entries.length / size));
+      if (numTeams > 10) numTeams = 10;
+    }
+
+    isGenerating = true;
+    btnGenerate.disabled = true;
+
+    // Shuffle animation
+    shuffleOverlay.classList.add('active');
+    let shuffleInterval = setInterval(() => {
+      const shuffled = shuffle(entries);
+      shuffleNamesEl.textContent = shuffled.slice(0, 6).map(e => e.name).join(' \u2022 ');
+    }, 100);
+
+    setTimeout(() => {
+      clearInterval(shuffleInterval);
+      shuffleOverlay.classList.remove('active');
+
+      let teams;
+      if (skillMode) {
+        teams = balanceBySkill(entries, numTeams);
+      } else {
+        const shuffled = shuffle(entries);
+        teams = Array.from({ length: numTeams }, () => []);
+        shuffled.forEach((entry, i) => {
+          teams[i % numTeams].push(entry);
+        });
+      }
+
+      // Captain mode: pick a random captain per team
+      if (captainMode) {
+        teams.forEach(team => {
+          if (team.length > 0) {
+            const idx = cryptoRandInt(0, team.length - 1);
+            team[idx].isCaptain = true;
+            // Move captain to top
+            const captain = team.splice(idx, 1)[0];
+            team.unshift(captain);
+          }
+        });
+      }
+
+      currentTeams = teams;
+      displayTeams(teams, numTeams);
+      isGenerating = false;
+      btnGenerate.disabled = false;
+    }, 1200);
+  }
+
+  // Balance teams by skill rating
+  function balanceBySkill(entries, numTeams) {
+    // Sort by skill descending, then distribute snake-draft style
+    const sorted = [...entries].sort((a, b) => b.skill - a.skill);
+    const teams = Array.from({ length: numTeams }, () => []);
+    const teamSkills = new Array(numTeams).fill(0);
+
+    sorted.forEach(entry => {
+      // Find team with lowest total skill
+      let minIdx = 0;
+      for (let i = 1; i < numTeams; i++) {
+        if (teamSkills[i] < teamSkills[minIdx]) minIdx = i;
+      }
+      teams[minIdx].push({ ...entry });
+      teamSkills[minIdx] += entry.skill;
+    });
+
+    return teams;
+  }
+
+  // Display teams
+  function displayTeams(teams, numTeams) {
+    resultsSection.classList.add('visible');
+    teamsGrid.innerHTML = '';
+
+    teams.forEach((team, i) => {
+      const colorClass = 'color-' + (i % 10);
+      const card = document.createElement('div');
+      card.className = 'team-card ' + colorClass;
+      card.style.animationDelay = (i * 0.1) + 's';
+
+      const totalSkill = skillMode ? team.reduce((s, e) => s + e.skill, 0) : 0;
+      const header = document.createElement('div');
+      header.className = 'team-card-header';
+      header.innerHTML = '<h4>Team ' + (i + 1) + '</h4>' +
+        (skillMode ? '<span class="team-skill">Skill: ' + totalSkill + '</span>' : '');
+      card.appendChild(header);
+
+      team.forEach(member => {
+        const row = document.createElement('div');
+        row.className = 'team-member' + (member.isCaptain ? ' captain' : '');
+        let html = '<span>' + escapeHtml(member.name) + '</span>';
+        if (member.isCaptain) {
+          html += '<span class="captain-badge">\u265A Captain</span>';
+        } else if (skillMode) {
+          html += '<span class="member-skill">' + member.skill + '/10</span>';
+        }
+        row.innerHTML = html;
+        card.appendChild(row);
+      });
+
+      teamsGrid.appendChild(card);
+    });
+
+    resultsSection.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function escapeHtml(text) {
+    const d = document.createElement('div');
+    d.textContent = text;
+    return d.innerHTML;
+  }
+
+  // Generate button
+  btnGenerate.addEventListener('click', generateTeams);
+
+  // Spacebar
+  document.addEventListener('keydown', (e) => {
+    if (e.code === 'Space' && !e.repeat && e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
+      e.preventDefault();
+      generateTeams();
+    }
+  });
+
+  // Re-shuffle
+  btnReshuffle.addEventListener('click', generateTeams);
+
+  // Copy teams
+  btnCopy.addEventListener('click', () => {
+    if (!currentTeams) return;
+    let text = '';
+    currentTeams.forEach((team, i) => {
+      text += 'Team ' + (i + 1) + '\n';
+      team.forEach(m => {
+        text += '  ' + (m.isCaptain ? '\u265A ' : '') + m.name;
+        if (skillMode) text += ' (' + m.skill + '/10)';
+        text += '\n';
+      });
+      text += '\n';
+    });
+    navigator.clipboard.writeText(text.trim()).then(() => {
+      btnCopy.textContent = 'Copied!';
+      btnCopy.classList.add('copied');
+      setTimeout(() => {
+        btnCopy.textContent = 'Copy Teams';
+        btnCopy.classList.remove('copied');
+      }, 2000);
+    });
+  });
+
+  // Save groups
+  btnSave.addEventListener('click', () => {
+    if (!currentTeams) return;
+    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+    const entry = {
+      id: Date.now(),
+      teams: currentTeams.map(t => t.map(m => ({ name: m.name, skill: m.skill, isCaptain: m.isCaptain || false }))),
+      date: new Date().toISOString(),
+      count: currentTeams.reduce((s, t) => s + t.length, 0)
+    };
+    saved.unshift(entry);
+    if (saved.length > 10) saved.pop();
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(saved));
+    renderSaved();
+    btnSave.textContent = 'Saved!';
+    setTimeout(() => { btnSave.textContent = 'Save Groups'; }, 1500);
+  });
+
+  // Render saved groups
+  function renderSaved() {
+    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY) || '[]');
+    if (saved.length === 0) {
+      savedList.innerHTML = '<div class="saved-empty">No saved groups yet.</div>';
+      return;
+    }
+    savedList.innerHTML = saved.map(entry => {
+      const d = new Date(entry.date);
+      const dateStr = d.toLocaleDateString([], { month: 'short', day: 'numeric' }) + ' ' +
+                      d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      return '<div class="saved-entry" data-id="' + entry.id + '">' +
+        '<div class="saved-info">' +
+          '<span class="saved-title">' + entry.teams.length + ' teams \u00B7 ' + entry.count + ' people</span>' +
+          '<span class="saved-meta">' + dateStr + '</span>' +
+        '</div>' +
+        '<button class="saved-delete" data-id="' + entry.id + '">Delete</button>' +
+      '</div>';
+    }).join('');
+
+    // Load saved group on click
+    savedList.querySelectorAll('.saved-entry').forEach(el => {
+      el.addEventListener('click', (e) => {
+        if (e.target.classList.contains('saved-delete')) return;
+        const id = parseInt(el.dataset.id);
+        const entry = saved.find(s => s.id === id);
+        if (entry) {
+          currentTeams = entry.teams;
+          displayTeams(entry.teams, entry.teams.length);
+        }
+      });
+    });
+
+    // Delete
+    savedList.querySelectorAll('.saved-delete').forEach(btn => {
+      btn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        const id = parseInt(btn.dataset.id);
+        const updated = saved.filter(s => s.id !== id);
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(updated));
+        renderSaved();
+      });
+    });
+  }
+
+  renderSaved();
+
+  // FAQ accordion
+  document.querySelectorAll('.faq-q').forEach(q => {
+    q.addEventListener('click', () => {
+      q.parentElement.classList.toggle('open');
+    });
+  });
+
+});
+</script>
+</SiteLayout>
