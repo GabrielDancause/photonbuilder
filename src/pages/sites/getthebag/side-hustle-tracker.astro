@@ -1,0 +1,890 @@
+---
+import SiteLayout from "../../../layouts/SiteLayout.astro";
+
+const faqs = [
+  {
+    q: "How much can you realistically make from side hustles?",
+    a: "It varies widely depending on the hustle and time invested. Freelancers on platforms like Upwork or Fiverr can earn $25–$150+/hour depending on skill level. Delivery drivers typically make $15–$25/hour. Tutors earn $20–$80/hour. Most people with 10–20 hours per week of side hustle work earn an extra $500–$2,000/month. Tracking your actual hourly rate (like this tool does) helps you focus on the most profitable hustles."
+  },
+  {
+    q: "How much should I set aside for taxes on side hustle income?",
+    a: "A safe rule of thumb is 25–30% for federal and state taxes combined. In the US, if you earn more than $400 from self-employment, you must file a Schedule SE and pay self-employment tax (15.3%) on top of your income tax bracket. Use this tracker's tax estimate feature to automatically calculate your set-aside amount each month so you're never caught off guard at tax time."
+  },
+  {
+    q: "Should I track expenses for my side hustles?",
+    a: "Absolutely. Tracking expenses is critical for two reasons: it shows your true net profit (not just gross income), and many side hustle expenses are tax-deductible — including mileage, equipment, software subscriptions, phone bills, and home office costs. Deducting legitimate business expenses can significantly reduce your tax bill."
+  },
+  {
+    q: "How do I know which side hustle is most worth my time?",
+    a: "The key metric is your effective hourly rate — total net income divided by total hours worked. A hustle that pays $500 for 10 hours of work ($50/hr) is more valuable than one paying $800 for 40 hours ($20/hr). This tracker calculates hourly rates per hustle automatically so you can compare them side by side and allocate your limited time to the highest-value activities."
+  },
+  {
+    q: "Can I export my side hustle income data for tax filing?",
+    a: "Yes. This tracker includes a CSV export feature that downloads all your income entries with dates, amounts, hours, platforms, and expense data. You can share this with your accountant or import it into tax software. Keeping organized records throughout the year makes tax season significantly easier and helps ensure you don't miss any deductions."
+  }
+];
+
+const schema = [
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "Side Hustle Income Tracker",
+    "description": "Track income from multiple side hustles and gigs. Monitor hourly rates, income trends, tax estimates, and expenses with monthly and yearly summaries.",
+    "applicationCategory": "FinanceApplication",
+    "operatingSystem": "Any",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD"
+    }
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": faqs.map(f => ({
+      "@type": "Question",
+      "name": f.q,
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": f.a
+      }
+    }))
+  }
+];
+
+export const meta = {
+  title: "Side Hustle Income Tracker — Track Gig Earnings & Hourly Rates",
+  description: "Track income from multiple side hustles and gigs. Monitor hourly rates, income trends, tax estimates, and expenses with monthly and yearly summaries. Export to CSV.",
+  category: "tracker",
+  published: "2026-03-21"
+};
+---
+
+<SiteLayout
+  site="getthebag"
+  title={meta.title}
+  description={meta.description}
+  canonical="https://getthebag.photonbuilder.com/side-hustle-tracker"
+  schema={schema}
+>
+  <div class="page-content">
+    <div class="hero">
+      <h1>Side Hustle Income Tracker</h1>
+      <p>Track income from all your side hustles in one place. See your hourly rates, income trends, tax estimates, and net profit after expenses. All data stays in your browser.</p>
+    </div>
+
+    <section class="content-section">
+      <div class="calc-grid">
+        <div class="calc-main">
+          <div class="card">
+            <h2>Your Side Hustles</h2>
+            <div class="hustle-list" id="hustle-list"></div>
+            <div class="add-hustle-row">
+              <input type="text" id="new-hustle-name" placeholder="e.g. Freelance Design, Uber, Tutoring..." class="hustle-input">
+              <button class="action-btn" id="add-hustle-btn">+ Add Hustle</button>
+            </div>
+          </div>
+
+          <div class="card">
+            <h2>Log Income Entry</h2>
+            <div class="form-grid">
+              <div class="form-group">
+                <label class="input-label" for="entry-hustle">Side Hustle</label>
+                <select id="entry-hustle" class="form-select"></select>
+              </div>
+              <div class="form-group">
+                <label class="input-label" for="entry-date">Date</label>
+                <input type="date" id="entry-date" class="form-input">
+              </div>
+              <div class="form-group">
+                <label class="input-label" for="entry-amount">Amount Earned</label>
+                <div class="input-prefix-wrap">
+                  <span class="input-prefix">$</span>
+                  <input type="number" id="entry-amount" min="0" step="0.01" placeholder="0.00">
+                </div>
+              </div>
+              <div class="form-group">
+                <label class="input-label" for="entry-hours">Hours Worked</label>
+                <input type="number" id="entry-hours" class="form-input" min="0" step="0.25" placeholder="0">
+              </div>
+              <div class="form-group">
+                <label class="input-label" for="entry-platform">Platform (optional)</label>
+                <input type="text" id="entry-platform" class="form-input" placeholder="e.g. Upwork, DoorDash...">
+              </div>
+              <div class="form-group">
+                <label class="input-label" for="entry-expense">Expenses</label>
+                <div class="input-prefix-wrap">
+                  <span class="input-prefix">$</span>
+                  <input type="number" id="entry-expense" min="0" step="0.01" placeholder="0.00">
+                </div>
+              </div>
+            </div>
+            <button class="action-btn primary" id="log-entry-btn">Log Entry</button>
+          </div>
+
+          <div class="card">
+            <div class="card-header">
+              <h2>Income History</h2>
+              <div class="filter-row">
+                <select id="filter-hustle" class="form-select compact">
+                  <option value="all">All Hustles</option>
+                </select>
+                <select id="filter-month" class="form-select compact">
+                  <option value="all">All Time</option>
+                </select>
+                <button class="action-btn small" id="export-csv-btn">Export CSV</button>
+              </div>
+            </div>
+            <div class="entries-table-wrap">
+              <table class="entries-table" id="entries-table">
+                <thead>
+                  <tr>
+                    <th>Date</th>
+                    <th>Hustle</th>
+                    <th>Amount</th>
+                    <th>Hours</th>
+                    <th>$/hr</th>
+                    <th>Expenses</th>
+                    <th></th>
+                  </tr>
+                </thead>
+                <tbody id="entries-body"></tbody>
+              </table>
+              <p class="empty-state" id="empty-state">No entries yet. Add a side hustle above and start logging your income.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="calc-sidebar">
+          <div class="card summary-card">
+            <h2>Monthly Summary</h2>
+            <div class="summary-row">
+              <span>Gross Income</span>
+              <strong id="summary-gross">$0</strong>
+            </div>
+            <div class="summary-row">
+              <span>Total Expenses</span>
+              <strong id="summary-expenses">$0</strong>
+            </div>
+            <div class="summary-row">
+              <span>Net Income</span>
+              <strong id="summary-net">$0</strong>
+            </div>
+            <div class="summary-row">
+              <span>Hours Worked</span>
+              <strong id="summary-hours">0</strong>
+            </div>
+            <div class="summary-row">
+              <span>Avg Hourly Rate</span>
+              <strong id="summary-hourly">$0</strong>
+            </div>
+            <div class="summary-row total-row">
+              <span>Entries This Month</span>
+              <strong id="summary-entries">0</strong>
+            </div>
+          </div>
+
+          <div class="card">
+            <h2>Tax Estimate</h2>
+            <label class="input-label" for="tax-rate">Set-Aside Rate</label>
+            <div class="tax-rate-row">
+              <input type="range" id="tax-rate" min="0" max="50" value="25" class="range-input">
+              <span class="tax-rate-display" id="tax-rate-display">25%</span>
+            </div>
+            <div class="tax-results">
+              <div class="tax-row">
+                <span>Monthly Set-Aside</span>
+                <strong id="tax-monthly">$0</strong>
+              </div>
+              <div class="tax-row">
+                <span>Yearly Estimate</span>
+                <strong id="tax-yearly">$0</strong>
+              </div>
+              <div class="tax-row highlight-row">
+                <span>After-Tax Take-Home (mo)</span>
+                <strong id="tax-takehome">$0</strong>
+              </div>
+            </div>
+          </div>
+
+          <div class="card">
+            <h2>Hourly Rate by Hustle</h2>
+            <div id="hourly-breakdown"></div>
+            <p class="empty-state small" id="hourly-empty">Add entries to see hourly rates.</p>
+          </div>
+
+          <div class="card">
+            <h2>Income by Source</h2>
+            <canvas id="pie-chart" width="300" height="300"></canvas>
+            <div id="pie-legend"></div>
+            <p class="empty-state small" id="pie-empty">Add entries to see breakdown.</p>
+          </div>
+
+          <div class="card">
+            <h2>Income Trend (6 Months)</h2>
+            <canvas id="trend-chart" width="400" height="200"></canvas>
+            <p class="empty-state small" id="trend-empty">Add entries to see trends.</p>
+          </div>
+
+          <div class="card summary-card">
+            <h2>Yearly Summary</h2>
+            <div class="summary-row">
+              <span>Total Gross</span>
+              <strong id="yearly-gross">$0</strong>
+            </div>
+            <div class="summary-row">
+              <span>Total Expenses</span>
+              <strong id="yearly-expenses">$0</strong>
+            </div>
+            <div class="summary-row">
+              <span>Total Net</span>
+              <strong id="yearly-net">$0</strong>
+            </div>
+            <div class="summary-row">
+              <span>Total Hours</span>
+              <strong id="yearly-hours">0</strong>
+            </div>
+            <div class="summary-row total-row">
+              <span>Avg Monthly Net</span>
+              <strong id="yearly-avg">$0</strong>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <h2>Frequently Asked Questions</h2>
+      <div class="faq-container">
+        {faqs.map(faq => (
+          <div class="faq-item">
+            <h3>{faq.q}</h3>
+            <p>{faq.a}</p>
+          </div>
+        ))}
+      </div>
+    </section>
+  </div>
+
+  <script is:inline>
+    document.addEventListener('DOMContentLoaded', function() {
+      var STORAGE_KEY = 'sht_data';
+      var COLORS = ['#3b82f6','#22c55e','#f59e0b','#ef4444','#8b5cf6','#ec4899','#06b6d4','#f97316','#14b8a6','#6366f1'];
+
+      function loadData() {
+        try { return JSON.parse(localStorage.getItem(STORAGE_KEY)) || { hustles: [], entries: [] }; }
+        catch(e) { return { hustles: [], entries: [] }; }
+      }
+      function saveData(data) { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)); }
+      function fmt(n) { return '$' + Math.abs(n).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }); }
+      function fmtInt(n) { return '$' + Math.round(Math.abs(n)).toLocaleString('en-US'); }
+
+      var data = loadData();
+
+      // Set default date to today
+      var today = new Date();
+      var dateStr = today.getFullYear() + '-' + String(today.getMonth() + 1).padStart(2, '0') + '-' + String(today.getDate()).padStart(2, '0');
+      document.getElementById('entry-date').value = dateStr;
+
+      function getCurrentMonth() {
+        var d = new Date();
+        return d.getFullYear() + '-' + String(d.getMonth() + 1).padStart(2, '0');
+      }
+
+      function getEntryMonth(entry) {
+        return entry.date.substring(0, 7);
+      }
+
+      function renderHustles() {
+        var list = document.getElementById('hustle-list');
+        var select = document.getElementById('entry-hustle');
+        var filterSelect = document.getElementById('filter-hustle');
+        list.innerHTML = '';
+        select.innerHTML = '';
+        var currentFilterVal = filterSelect.value;
+        filterSelect.innerHTML = '<option value="all">All Hustles</option>';
+
+        data.hustles.forEach(function(h, i) {
+          var tag = document.createElement('div');
+          tag.className = 'hustle-tag';
+          tag.style.borderColor = COLORS[i % COLORS.length];
+          tag.innerHTML = '<span class="hustle-dot" style="background:' + COLORS[i % COLORS.length] + '"></span>' +
+            '<span>' + h + '</span>' +
+            '<button class="tag-remove" data-idx="' + i + '">\u00D7</button>';
+          list.appendChild(tag);
+
+          var opt = document.createElement('option');
+          opt.value = h; opt.textContent = h;
+          select.appendChild(opt);
+
+          var fopt = document.createElement('option');
+          fopt.value = h; fopt.textContent = h;
+          filterSelect.appendChild(fopt);
+        });
+
+        filterSelect.value = currentFilterVal;
+        if (!filterSelect.value) filterSelect.value = 'all';
+
+        list.querySelectorAll('.tag-remove').forEach(function(btn) {
+          btn.addEventListener('click', function() {
+            var idx = parseInt(this.getAttribute('data-idx'));
+            var name = data.hustles[idx];
+            data.entries = data.entries.filter(function(e) { return e.hustle !== name; });
+            data.hustles.splice(idx, 1);
+            saveData(data);
+            renderAll();
+          });
+        });
+      }
+
+      function renderEntries() {
+        var tbody = document.getElementById('entries-body');
+        var emptyEl = document.getElementById('empty-state');
+        var filterHustle = document.getElementById('filter-hustle').value;
+        var filterMonth = document.getElementById('filter-month').value;
+
+        var filtered = data.entries.filter(function(e) {
+          if (filterHustle !== 'all' && e.hustle !== filterHustle) return false;
+          if (filterMonth !== 'all' && getEntryMonth(e) !== filterMonth) return false;
+          return true;
+        });
+
+        filtered.sort(function(a, b) { return b.date.localeCompare(a.date); });
+
+        tbody.innerHTML = '';
+        if (filtered.length === 0) {
+          emptyEl.style.display = 'block';
+          return;
+        }
+        emptyEl.style.display = 'none';
+
+        filtered.forEach(function(entry) {
+          var hr = entry.hours > 0 ? fmt(entry.amount / entry.hours) : '\u2014';
+          var tr = document.createElement('tr');
+          tr.innerHTML =
+            '<td>' + entry.date + '</td>' +
+            '<td><span class="hustle-badge" style="background:' + getHustleColor(entry.hustle) + '">' + entry.hustle + '</span></td>' +
+            '<td>' + fmt(entry.amount) + '</td>' +
+            '<td>' + (entry.hours || '\u2014') + '</td>' +
+            '<td>' + hr + '</td>' +
+            '<td>' + (entry.expense ? fmt(entry.expense) : '\u2014') + '</td>' +
+            '<td><button class="remove-btn small" data-id="' + entry.id + '">\u00D7</button></td>';
+          tbody.appendChild(tr);
+        });
+
+        tbody.querySelectorAll('.remove-btn').forEach(function(btn) {
+          btn.addEventListener('click', function() {
+            var id = this.getAttribute('data-id');
+            data.entries = data.entries.filter(function(e) { return e.id !== id; });
+            saveData(data);
+            renderAll();
+          });
+        });
+      }
+
+      function getHustleColor(name) {
+        var idx = data.hustles.indexOf(name);
+        return idx >= 0 ? COLORS[idx % COLORS.length] : '#666';
+      }
+
+      function updateMonthFilter() {
+        var select = document.getElementById('filter-month');
+        var current = select.value;
+        var months = {};
+        data.entries.forEach(function(e) { months[getEntryMonth(e)] = true; });
+        var sorted = Object.keys(months).sort().reverse();
+        select.innerHTML = '<option value="all">All Time</option>';
+        sorted.forEach(function(m) {
+          var opt = document.createElement('option');
+          opt.value = m;
+          var parts = m.split('-');
+          var monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+          opt.textContent = monthNames[parseInt(parts[1]) - 1] + ' ' + parts[0];
+          select.appendChild(opt);
+        });
+        select.value = current;
+        if (!select.value) select.value = 'all';
+      }
+
+      function updateSummary() {
+        var cm = getCurrentMonth();
+        var monthEntries = data.entries.filter(function(e) { return getEntryMonth(e) === cm; });
+
+        var gross = 0, expenses = 0, hours = 0;
+        monthEntries.forEach(function(e) {
+          gross += e.amount;
+          expenses += e.expense || 0;
+          hours += e.hours || 0;
+        });
+        var net = gross - expenses;
+        var hourly = hours > 0 ? net / hours : 0;
+
+        document.getElementById('summary-gross').textContent = fmt(gross);
+        document.getElementById('summary-expenses').textContent = fmt(expenses);
+        document.getElementById('summary-net').textContent = fmt(net);
+        document.getElementById('summary-hours').textContent = hours.toFixed(1);
+        document.getElementById('summary-hourly').textContent = hours > 0 ? fmt(hourly) + '/hr' : '$0/hr';
+        document.getElementById('summary-entries').textContent = monthEntries.length;
+
+        // Tax
+        var rate = parseInt(document.getElementById('tax-rate').value) || 25;
+        document.getElementById('tax-rate-display').textContent = rate + '%';
+        var taxMonthly = net * (rate / 100);
+        var taxYearly = taxMonthly * 12;
+        var takeHome = net - taxMonthly;
+        document.getElementById('tax-monthly').textContent = fmt(taxMonthly);
+        document.getElementById('tax-yearly').textContent = fmt(taxYearly);
+        document.getElementById('tax-takehome').textContent = fmt(takeHome);
+
+        // Yearly
+        var year = String(today.getFullYear());
+        var yearEntries = data.entries.filter(function(e) { return e.date.substring(0, 4) === year; });
+        var yGross = 0, yExp = 0, yHours = 0;
+        yearEntries.forEach(function(e) {
+          yGross += e.amount;
+          yExp += e.expense || 0;
+          yHours += e.hours || 0;
+        });
+        var yNet = yGross - yExp;
+        var monthsActive = {};
+        yearEntries.forEach(function(e) { monthsActive[getEntryMonth(e)] = true; });
+        var numMonths = Math.max(1, Object.keys(monthsActive).length);
+
+        document.getElementById('yearly-gross').textContent = fmt(yGross);
+        document.getElementById('yearly-expenses').textContent = fmt(yExp);
+        document.getElementById('yearly-net').textContent = fmt(yNet);
+        document.getElementById('yearly-hours').textContent = yHours.toFixed(1);
+        document.getElementById('yearly-avg').textContent = fmt(yNet / numMonths) + '/mo';
+      }
+
+      function updateHourlyBreakdown() {
+        var container = document.getElementById('hourly-breakdown');
+        var emptyEl = document.getElementById('hourly-empty');
+        container.innerHTML = '';
+
+        if (data.entries.length === 0) { emptyEl.style.display = 'block'; return; }
+        emptyEl.style.display = 'none';
+
+        var byHustle = {};
+        data.entries.forEach(function(e) {
+          if (!byHustle[e.hustle]) byHustle[e.hustle] = { income: 0, expense: 0, hours: 0 };
+          byHustle[e.hustle].income += e.amount;
+          byHustle[e.hustle].expense += e.expense || 0;
+          byHustle[e.hustle].hours += e.hours || 0;
+        });
+
+        var items = Object.keys(byHustle).map(function(name) {
+          var d = byHustle[name];
+          var net = d.income - d.expense;
+          return { name: name, rate: d.hours > 0 ? net / d.hours : 0, hours: d.hours, net: net };
+        }).sort(function(a, b) { return b.rate - a.rate; });
+
+        var maxRate = Math.max.apply(null, items.map(function(i) { return i.rate; })) || 1;
+
+        items.forEach(function(item) {
+          var row = document.createElement('div');
+          row.className = 'hourly-row';
+          var pct = (item.rate / maxRate) * 100;
+          row.innerHTML =
+            '<div class="hourly-row-header">' +
+              '<span class="hustle-badge" style="background:' + getHustleColor(item.name) + '">' + item.name + '</span>' +
+              '<strong>' + (item.hours > 0 ? fmt(item.rate) + '/hr' : 'N/A') + '</strong>' +
+            '</div>' +
+            '<div class="hourly-bar-container">' +
+              '<div class="hourly-bar" style="width:' + pct + '%;background:' + getHustleColor(item.name) + '"></div>' +
+            '</div>' +
+            '<div class="hourly-meta">' + item.hours.toFixed(1) + ' hrs \u00B7 ' + fmt(item.net) + ' net</div>';
+          container.appendChild(row);
+        });
+      }
+
+      function drawPieChart() {
+        var canvas = document.getElementById('pie-chart');
+        var legend = document.getElementById('pie-legend');
+        var emptyEl = document.getElementById('pie-empty');
+
+        if (data.entries.length === 0) {
+          canvas.style.display = 'none';
+          legend.innerHTML = '';
+          emptyEl.style.display = 'block';
+          return;
+        }
+        canvas.style.display = 'block';
+        emptyEl.style.display = 'none';
+
+        var byHustle = {};
+        data.entries.forEach(function(e) {
+          byHustle[e.hustle] = (byHustle[e.hustle] || 0) + e.amount;
+        });
+
+        var items = Object.keys(byHustle).map(function(name) {
+          return { name: name, amount: byHustle[name] };
+        }).sort(function(a, b) { return b.amount - a.amount; });
+
+        var total = items.reduce(function(s, i) { return s + i.amount; }, 0);
+        if (total === 0) { canvas.style.display = 'none'; return; }
+
+        var ctx = canvas.getContext('2d');
+        var size = Math.min(canvas.width, canvas.height);
+        var cx = size / 2, cy = size / 2, radius = size / 2 - 10;
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+
+        var startAngle = -Math.PI / 2;
+        items.forEach(function(item) {
+          var slice = (item.amount / total) * Math.PI * 2;
+          ctx.beginPath();
+          ctx.moveTo(cx, cy);
+          ctx.arc(cx, cy, radius, startAngle, startAngle + slice);
+          ctx.closePath();
+          ctx.fillStyle = getHustleColor(item.name);
+          ctx.fill();
+          startAngle += slice;
+        });
+
+        // Center hole
+        ctx.beginPath();
+        ctx.arc(cx, cy, radius * 0.55, 0, Math.PI * 2);
+        var style = getComputedStyle(document.documentElement);
+        ctx.fillStyle = style.getPropertyValue('--card-bg').trim() || '#1a1a2e';
+        ctx.fill();
+
+        // Center text
+        ctx.fillStyle = style.getPropertyValue('--text-primary').trim() || '#fff';
+        ctx.font = 'bold 18px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(fmtInt(total), cx, cy);
+
+        legend.innerHTML = '';
+        items.forEach(function(item) {
+          var pct = ((item.amount / total) * 100).toFixed(1);
+          var el = document.createElement('div');
+          el.className = 'legend-item';
+          el.innerHTML = '<span class="legend-dot" style="background:' + getHustleColor(item.name) + '"></span>' +
+            '<span>' + item.name + '</span><strong>' + pct + '%</strong>';
+          legend.appendChild(el);
+        });
+      }
+
+      function drawTrendChart() {
+        var canvas = document.getElementById('trend-chart');
+        var emptyEl = document.getElementById('trend-empty');
+
+        if (data.entries.length === 0) {
+          canvas.style.display = 'none';
+          emptyEl.style.display = 'block';
+          return;
+        }
+        canvas.style.display = 'block';
+        emptyEl.style.display = 'none';
+
+        // Get last 6 months
+        var months = [];
+        var d = new Date();
+        for (var i = 5; i >= 0; i--) {
+          var md = new Date(d.getFullYear(), d.getMonth() - i, 1);
+          months.push(md.getFullYear() + '-' + String(md.getMonth() + 1).padStart(2, '0'));
+        }
+
+        var monthlyIncome = months.map(function(m) {
+          return data.entries.filter(function(e) { return getEntryMonth(e) === m; })
+            .reduce(function(s, e) { return s + e.amount; }, 0);
+        });
+        var monthlyNet = months.map(function(m) {
+          var entries = data.entries.filter(function(e) { return getEntryMonth(e) === m; });
+          var inc = entries.reduce(function(s, e) { return s + e.amount; }, 0);
+          var exp = entries.reduce(function(s, e) { return s + (e.expense || 0); }, 0);
+          return inc - exp;
+        });
+
+        var maxVal = Math.max.apply(null, monthlyIncome.concat([100]));
+
+        var ctx = canvas.getContext('2d');
+        var w = canvas.width, h = canvas.height;
+        var padding = { top: 20, right: 15, bottom: 30, left: 50 };
+        var chartW = w - padding.left - padding.right;
+        var chartH = h - padding.top - padding.bottom;
+        ctx.clearRect(0, 0, w, h);
+
+        var style = getComputedStyle(document.documentElement);
+        var textColor = style.getPropertyValue('--text-secondary').trim() || '#aaa';
+
+        // Grid lines
+        ctx.strokeStyle = 'rgba(128,128,128,0.15)';
+        ctx.lineWidth = 1;
+        for (var g = 0; g <= 4; g++) {
+          var gy = padding.top + chartH - (g / 4) * chartH;
+          ctx.beginPath(); ctx.moveTo(padding.left, gy); ctx.lineTo(w - padding.right, gy); ctx.stroke();
+          ctx.fillStyle = textColor; ctx.font = '11px sans-serif'; ctx.textAlign = 'right'; ctx.textBaseline = 'middle';
+          ctx.fillText(fmtInt((g / 4) * maxVal), padding.left - 6, gy);
+        }
+
+        // Month labels
+        ctx.fillStyle = textColor; ctx.font = '11px sans-serif'; ctx.textAlign = 'center'; ctx.textBaseline = 'top';
+        var monthNames = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+        var barW = chartW / months.length;
+
+        months.forEach(function(m, i) {
+          var parts = m.split('-');
+          var label = monthNames[parseInt(parts[1]) - 1];
+          var x = padding.left + i * barW + barW / 2;
+          ctx.fillText(label, x, h - padding.bottom + 8);
+        });
+
+        // Bars (gross)
+        monthlyIncome.forEach(function(val, i) {
+          var barH = (val / maxVal) * chartH;
+          var x = padding.left + i * barW + barW * 0.15;
+          var bw = barW * 0.35;
+          var y = padding.top + chartH - barH;
+          ctx.fillStyle = 'rgba(59,130,246,0.3)';
+          ctx.beginPath();
+          roundRect(ctx, x, y, bw, barH, 3);
+          ctx.fill();
+        });
+
+        // Bars (net)
+        monthlyNet.forEach(function(val, i) {
+          var barH = Math.max(0, (val / maxVal) * chartH);
+          var x = padding.left + i * barW + barW * 0.5;
+          var bw = barW * 0.35;
+          var y = padding.top + chartH - barH;
+          ctx.fillStyle = 'rgba(34,197,94,0.5)';
+          ctx.beginPath();
+          roundRect(ctx, x, y, bw, barH, 3);
+          ctx.fill();
+        });
+
+        // Legend
+        ctx.fillStyle = 'rgba(59,130,246,0.3)';
+        ctx.fillRect(padding.left, 4, 10, 10);
+        ctx.fillStyle = textColor; ctx.font = '10px sans-serif'; ctx.textAlign = 'left'; ctx.textBaseline = 'middle';
+        ctx.fillText('Gross', padding.left + 14, 9);
+        ctx.fillStyle = 'rgba(34,197,94,0.5)';
+        ctx.fillRect(padding.left + 55, 4, 10, 10);
+        ctx.fillStyle = textColor;
+        ctx.fillText('Net', padding.left + 69, 9);
+      }
+
+      function roundRect(ctx, x, y, w, h, r) {
+        if (h <= 0) return;
+        r = Math.min(r, h / 2, w / 2);
+        ctx.moveTo(x + r, y);
+        ctx.lineTo(x + w - r, y);
+        ctx.quadraticCurveTo(x + w, y, x + w, y + r);
+        ctx.lineTo(x + w, y + h);
+        ctx.lineTo(x, y + h);
+        ctx.lineTo(x, y + r);
+        ctx.quadraticCurveTo(x, y, x + r, y);
+      }
+
+      function renderAll() {
+        renderHustles();
+        updateMonthFilter();
+        renderEntries();
+        updateSummary();
+        updateHourlyBreakdown();
+        drawPieChart();
+        drawTrendChart();
+      }
+
+      // Add hustle
+      function addHustle() {
+        var input = document.getElementById('new-hustle-name');
+        var name = input.value.trim();
+        if (!name) return;
+        if (data.hustles.indexOf(name) >= 0) { input.value = ''; return; }
+        data.hustles.push(name);
+        saveData(data);
+        input.value = '';
+        renderAll();
+      }
+
+      document.getElementById('add-hustle-btn').addEventListener('click', addHustle);
+      document.getElementById('new-hustle-name').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') addHustle();
+      });
+
+      // Log entry
+      document.getElementById('log-entry-btn').addEventListener('click', function() {
+        var hustle = document.getElementById('entry-hustle').value;
+        var date = document.getElementById('entry-date').value;
+        var amount = parseFloat(document.getElementById('entry-amount').value) || 0;
+        var hours = parseFloat(document.getElementById('entry-hours').value) || 0;
+        var platform = document.getElementById('entry-platform').value.trim();
+        var expense = parseFloat(document.getElementById('entry-expense').value) || 0;
+
+        if (!hustle || !date || amount <= 0) return;
+
+        data.entries.push({
+          id: Date.now().toString(36) + Math.random().toString(36).substring(2, 6),
+          hustle: hustle,
+          date: date,
+          amount: amount,
+          hours: hours,
+          platform: platform,
+          expense: expense
+        });
+        saveData(data);
+
+        // Reset form
+        document.getElementById('entry-amount').value = '';
+        document.getElementById('entry-hours').value = '';
+        document.getElementById('entry-platform').value = '';
+        document.getElementById('entry-expense').value = '';
+        renderAll();
+      });
+
+      // Filters
+      document.getElementById('filter-hustle').addEventListener('change', renderEntries);
+      document.getElementById('filter-month').addEventListener('change', renderEntries);
+      document.getElementById('tax-rate').addEventListener('input', updateSummary);
+
+      // Export CSV
+      document.getElementById('export-csv-btn').addEventListener('click', function() {
+        if (data.entries.length === 0) return;
+        var rows = [['Date','Hustle','Amount','Hours','Hourly Rate','Platform','Expenses','Net']];
+        data.entries.sort(function(a, b) { return a.date.localeCompare(b.date); }).forEach(function(e) {
+          var hr = e.hours > 0 ? (e.amount / e.hours).toFixed(2) : '';
+          var net = (e.amount - (e.expense || 0)).toFixed(2);
+          rows.push([e.date, e.hustle, e.amount.toFixed(2), e.hours || '', hr, e.platform || '', (e.expense || 0).toFixed(2), net]);
+        });
+        var csv = rows.map(function(r) {
+          return r.map(function(c) { return '"' + String(c).replace(/"/g, '""') + '"'; }).join(',');
+        }).join('\n');
+        var blob = new Blob([csv], { type: 'text/csv' });
+        var a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        a.download = 'side-hustle-income-' + dateStr + '.csv';
+        a.click();
+        URL.revokeObjectURL(a.href);
+      });
+
+      renderAll();
+    });
+  </script>
+
+  <style is:inline>
+    .page-content { max-width: 1200px; margin: 0 auto; padding: 2rem 1.5rem; }
+    .hero { text-align: center; padding: 3rem 0 2rem; }
+    .hero h1 { font-size: 2.2rem; font-weight: 800; margin-bottom: 0.5rem; color: var(--text-primary); }
+    .hero p { color: var(--text-secondary); font-size: 1.1rem; max-width: 700px; margin: 0 auto; line-height: 1.5; }
+
+    .content-section { margin-bottom: 3rem; }
+    .content-section h2 { font-size: 1.5rem; color: var(--text-primary); margin-bottom: 1rem; margin-top: 0; }
+
+    .calc-grid { display: grid; grid-template-columns: 1fr 380px; gap: 1.5rem; margin-bottom: 2.5rem; }
+    .calc-main { display: flex; flex-direction: column; gap: 1.5rem; }
+    .calc-sidebar { display: flex; flex-direction: column; gap: 1.5rem; }
+
+    .card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem; }
+    .card-header { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 0.5rem; }
+    .card-header h2 { margin-bottom: 0; }
+
+    .summary-card .summary-row { display: flex; justify-content: space-between; align-items: center; padding: 0.6rem 0; border-bottom: 1px solid var(--border-color); }
+    .summary-card .summary-row:last-of-type { border-bottom: none; }
+    .summary-card .summary-row span { color: var(--text-secondary); }
+    .summary-card .summary-row strong { color: var(--text-primary); font-size: 1.1rem; }
+    .summary-card .total-row { border-top: 2px solid var(--border-color); border-bottom: none; margin-top: 0.5rem; padding-top: 1rem; }
+    .summary-card .total-row strong { font-size: 1.3rem; color: var(--accent, #3b82f6); }
+
+    /* Hustle tags */
+    .hustle-list { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1rem; }
+    .hustle-tag { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.4rem 0.75rem; border-radius: 20px; border: 2px solid; background: transparent; font-size: 0.85rem; color: var(--text-primary); }
+    .hustle-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+    .tag-remove { background: none; border: none; color: var(--text-secondary); cursor: pointer; font-size: 1rem; padding: 0 0 0 0.3rem; line-height: 1; font-family: inherit; }
+    .tag-remove:hover { color: #ef4444; }
+
+    .add-hustle-row { display: flex; gap: 0.5rem; }
+    .hustle-input { flex: 1; padding: 0.6rem 0.75rem; border: 1px solid var(--border-color); border-radius: 8px; background: var(--input-bg, rgba(0,0,0,0.1)); color: var(--text-primary); font-size: 0.9rem; font-family: inherit; }
+    .hustle-input:focus { outline: none; border-color: var(--accent, #3b82f6); }
+
+    /* Buttons */
+    .action-btn { padding: 0.6rem 1.2rem; border: 2px solid var(--accent, #3b82f6); border-radius: 8px; background: transparent; color: var(--accent, #3b82f6); cursor: pointer; font-size: 0.9rem; font-weight: 600; transition: all 0.2s; white-space: nowrap; font-family: inherit; }
+    .action-btn:hover { background: var(--accent, #3b82f6); color: #fff; }
+    .action-btn.primary { background: var(--accent, #3b82f6); color: #fff; border-color: var(--accent, #3b82f6); width: 100%; margin-top: 0.75rem; }
+    .action-btn.primary:hover { opacity: 0.9; }
+    .action-btn.small { padding: 0.35rem 0.75rem; font-size: 0.8rem; }
+
+    /* Form */
+    .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.75rem; }
+    .form-group { display: flex; flex-direction: column; }
+    .input-label { display: block; color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 0.3rem; font-weight: 600; }
+    .form-input { padding: 0.6rem 0.75rem; border: 1px solid var(--border-color); border-radius: 8px; background: var(--input-bg, rgba(0,0,0,0.1)); color: var(--text-primary); font-size: 0.9rem; font-family: inherit; }
+    .form-input:focus { outline: none; border-color: var(--accent, #3b82f6); }
+    .form-select { padding: 0.6rem 0.75rem; border: 1px solid var(--border-color); border-radius: 8px; background: var(--input-bg, rgba(0,0,0,0.1)); color: var(--text-primary); font-size: 0.9rem; font-family: inherit; }
+    .form-select:focus { outline: none; border-color: var(--accent, #3b82f6); }
+    .form-select.compact { padding: 0.35rem 0.5rem; font-size: 0.8rem; }
+
+    .input-prefix-wrap { position: relative; display: flex; align-items: center; }
+    .input-prefix { position: absolute; left: 0.75rem; color: var(--text-secondary); font-weight: 600; pointer-events: none; z-index: 1; }
+    .input-prefix-wrap input { width: 100%; padding: 0.6rem 0.75rem 0.6rem 1.5rem; border: 1px solid var(--border-color); border-radius: 8px; background: var(--input-bg, rgba(0,0,0,0.1)); color: var(--text-primary); font-size: 0.9rem; font-family: inherit; }
+    .input-prefix-wrap input:focus { outline: none; border-color: var(--accent, #3b82f6); }
+
+    .filter-row { display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap; }
+
+    /* Table */
+    .entries-table-wrap { overflow-x: auto; }
+    .entries-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+    .entries-table th { text-align: left; padding: 0.5rem; color: var(--text-secondary); font-weight: 600; border-bottom: 2px solid var(--border-color); white-space: nowrap; }
+    .entries-table td { padding: 0.5rem; border-bottom: 1px solid var(--border-color); color: var(--text-primary); white-space: nowrap; }
+    .entries-table tr:last-child td { border-bottom: none; }
+
+    .hustle-badge { display: inline-block; padding: 0.15rem 0.5rem; border-radius: 10px; color: #fff; font-size: 0.75rem; font-weight: 600; }
+
+    .remove-btn { width: 28px; height: 28px; border: none; background: rgba(239, 68, 68, 0.1); color: #ef4444; border-radius: 6px; cursor: pointer; font-size: 1rem; display: flex; align-items: center; justify-content: center; transition: background 0.2s; flex-shrink: 0; font-family: inherit; }
+    .remove-btn:hover { background: rgba(239, 68, 68, 0.25); }
+    .remove-btn.small { width: 24px; height: 24px; font-size: 0.9rem; }
+
+    .empty-state { color: var(--text-secondary); text-align: center; padding: 1.5rem; font-size: 0.9rem; }
+    .empty-state.small { padding: 0.75rem; font-size: 0.85rem; }
+
+    /* Tax */
+    .tax-rate-row { display: flex; align-items: center; gap: 0.75rem; margin-bottom: 1rem; }
+    .range-input { flex: 1; accent-color: var(--accent, #3b82f6); }
+    .tax-rate-display { font-weight: 700; color: var(--text-primary); font-size: 1.1rem; min-width: 3rem; text-align: right; }
+    .tax-results { margin-top: 0.25rem; }
+    .tax-row { display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid var(--border-color); }
+    .tax-row:last-child { border-bottom: none; }
+    .tax-row span { color: var(--text-secondary); font-size: 0.9rem; }
+    .tax-row strong { color: var(--text-primary); }
+    .highlight-row { border-top: 2px solid var(--border-color); margin-top: 0.25rem; padding-top: 0.75rem; }
+    .highlight-row strong { color: #22c55e; font-size: 1.1rem; }
+
+    /* Hourly breakdown */
+    .hourly-row { margin-bottom: 0.75rem; }
+    .hourly-row:last-child { margin-bottom: 0; }
+    .hourly-row-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.25rem; }
+    .hourly-row-header strong { color: var(--text-primary); font-size: 0.9rem; }
+    .hourly-bar-container { height: 8px; background: rgba(0,0,0,0.15); border-radius: 8px; overflow: hidden; }
+    .hourly-bar { height: 100%; border-radius: 8px; transition: width 0.3s ease; }
+    .hourly-meta { font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.2rem; }
+
+    /* Pie chart */
+    #pie-chart { display: block; margin: 0 auto; max-width: 100%; }
+    .legend-item { display: flex; align-items: center; gap: 0.5rem; padding: 0.3rem 0; font-size: 0.85rem; }
+    .legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+    .legend-item span { color: var(--text-secondary); flex: 1; }
+    .legend-item strong { color: var(--text-primary); }
+    #pie-legend { margin-top: 0.75rem; }
+
+    /* Trend chart */
+    #trend-chart { display: block; max-width: 100%; }
+
+    /* FAQ */
+    .faq-container { display: flex; flex-direction: column; gap: 1rem; margin-bottom: 2rem; }
+    .faq-item { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem; }
+    .faq-item h3 { margin: 0 0 0.5rem 0; font-size: 1.1rem; color: var(--text-primary); }
+    .faq-item p { margin: 0; color: var(--text-secondary); line-height: 1.5; }
+
+    @media (max-width: 900px) {
+      .calc-grid { grid-template-columns: 1fr; }
+    }
+    @media (max-width: 600px) {
+      .hero h1 { font-size: 1.8rem; }
+      .form-grid { grid-template-columns: 1fr; }
+      .add-hustle-row { flex-direction: column; }
+      .card-header { flex-direction: column; align-items: flex-start; }
+      .filter-row { width: 100%; }
+      .entries-table { font-size: 0.75rem; }
+    }
+  </style>
+</SiteLayout>
