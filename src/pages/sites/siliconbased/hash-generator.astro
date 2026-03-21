@@ -108,13 +108,23 @@ const htmlBody = `<div class="page-content">
 
 <div class="main">
 
+  <!-- Options Bar -->
+  <div class="options-bar">
+    <div class="options-left">
+      <label class="toggle-label">
+        <input type="checkbox" id="uppercaseToggle" />
+        <span class="toggle-text">Uppercase output</span>
+      </label>
+    </div>
+    <div class="options-right">
+      <button class="action-btn" id="clearBtn">Clear</button>
+    </div>
+  </div>
+
   <!-- Text Hash Section -->
   <div class="section-card">
     <div class="section-header">
       <div class="header-title">Text Input</div>
-      <div class="header-actions">
-        <button class="action-btn" id="clearBtn">Clear</button>
-      </div>
     </div>
     <textarea id="inputArea" class="code-area" spellcheck="false" placeholder="Type or paste text here to generate hashes..."></textarea>
     <div class="char-count" id="inputCount">0 characters</div>
@@ -357,8 +367,8 @@ function renderHashes(container, hashes) {
         (info.warn ? '<span class="hash-warn">deprecated</span>' : '') +
       '</div>' +
       '<div class="hash-row-value">' +
-        '<code class="hash-hex">' + val + '</code>' +
-        '<button class="copy-btn hash-copy-btn" data-hash="' + val + '">Copy</button>' +
+        '<code class="hash-hex">' + applyCase(val) + '</code>' +
+        '<button class="copy-btn hash-copy-btn" data-hash="' + applyCase(val) + '">Copy</button>' +
       '</div>';
     container.appendChild(row);
   }
@@ -376,10 +386,17 @@ function renderHashes(container, hashes) {
   });
 }
 
+// --- Uppercase toggle ---
+var useUppercase = false;
+function applyCase(hex) {
+  return useUppercase ? hex.toUpperCase() : hex.toLowerCase();
+}
+
 // --- DOM refs ---
 var inputArea = document.getElementById('inputArea');
 var inputCount = document.getElementById('inputCount');
 var clearBtn = document.getElementById('clearBtn');
+var uppercaseToggle = document.getElementById('uppercaseToggle');
 var hashResults = document.getElementById('hashResults');
 var hashResultsList = document.getElementById('hashResultsList');
 var fileInput = document.getElementById('fileInput');
@@ -418,6 +435,27 @@ clearBtn.addEventListener('click', function() {
   inputCount.textContent = '0 characters';
   hashResults.style.display = 'none';
   inputArea.focus();
+});
+
+// --- Uppercase toggle ---
+uppercaseToggle.addEventListener('change', function() {
+  useUppercase = uppercaseToggle.checked;
+  // Re-render text hashes if present
+  if (inputArea.value) {
+    hashText(inputArea.value).then(function(hashes) {
+      hashResults.style.display = 'block';
+      renderHashes(hashResultsList, hashes);
+    });
+  }
+  // Re-apply case to file hash results if visible
+  var fileHexEls = fileHashResults.querySelectorAll('.hash-hex');
+  fileHexEls.forEach(function(el) {
+    el.textContent = useUppercase ? el.textContent.toUpperCase() : el.textContent.toLowerCase();
+  });
+  fileHashResults.querySelectorAll('.hash-copy-btn').forEach(function(btn) {
+    var h = btn.getAttribute('data-hash');
+    btn.setAttribute('data-hash', useUppercase ? h.toUpperCase() : h.toLowerCase());
+  });
 });
 
 // --- File handling ---
@@ -506,6 +544,14 @@ code, pre, .mono { font-family: 'JetBrains Mono', monospace; }
 .hero h1 { font-size: 2.4rem; font-weight: 900; color: #fff; margin-bottom: 6px; }
 .hero p { color: #888; font-size: 0.95rem; max-width: 640px; margin: 0 auto; }
 .main { max-width: 900px; margin: 0 auto; padding: 24px 20px 80px; flex: 1; width: 100%; }
+
+/* Options Bar */
+.options-bar { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 16px; margin-bottom: 20px; padding: 14px 18px; background: #0a1020; border: 2px solid #152040; border-radius: 12px; }
+.options-left { display: flex; flex-wrap: wrap; gap: 18px; }
+.options-right { display: flex; gap: 8px; }
+.toggle-label { display: flex; align-items: center; gap: 8px; cursor: pointer; user-select: none; }
+.toggle-label input[type="checkbox"] { width: 16px; height: 16px; accent-color: #818cf8; cursor: pointer; }
+.toggle-text { font-size: 0.82rem; color: #aaa; font-weight: 500; }
 
 /* Section cards */
 .section-card { background: #0a1020; border: 2px solid #152040; border-radius: 12px; padding: 20px; margin-bottom: 24px; }

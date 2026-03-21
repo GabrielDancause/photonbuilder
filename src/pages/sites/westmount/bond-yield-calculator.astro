@@ -87,6 +87,16 @@ h1{font-size:clamp(28px,4vw,42px);font-weight:800;line-height:1.15;margin-bottom
 .comp-table .better{color:#22c55e;font-weight:600}
 .comp-table .worse{color:#ef4444}
 
+/* Bond Pricing */
+.pricing-section{margin:32px 0}
+.pricing-section h2{font-size:22px;margin-bottom:16px}
+.pricing-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+.price-sensitivity{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;text-align:center;margin-top:12px}
+.price-cell{padding:8px 2px;border-radius:6px;background:rgba(255,255,255,.02);border:1px solid var(--border-color)}
+.price-cell.current{background:rgba(74,143,231,.1);border:1px solid var(--accent-color)}
+.price-cell .pc-yield{color:var(--text-secondary);font-size:10px;font-family:'JetBrains Mono',monospace}
+.price-cell .pc-price{font-weight:700;font-family:'JetBrains Mono',monospace;font-size:12px;margin-top:2px}
+
 /* Ratings Table */
 .ratings-section{margin:32px 0}
 .ratings-section h2{font-size:22px;margin-bottom:16px}
@@ -139,7 +149,7 @@ tr:hover{background:rgba(74,143,231,.06)}
 footer{border-top:1px solid var(--border-color);padding:24px 0;text-align:center;color:var(--text-secondary);font-size:13px;margin-top:40px}
 
 @media(max-width:768px){
-  .calc-grid,.comp-container{grid-template-columns:1fr}
+  .calc-grid,.comp-container,.pricing-grid{grid-template-columns:1fr}
   .result-grid-4{grid-template-columns:1fr 1fr}
   .result-grid{grid-template-columns:1fr 1fr 1fr}
   .input-row-3{grid-template-columns:1fr}
@@ -282,6 +292,49 @@ footer{border-top:1px solid var(--border-color);padding:24px 0;text-align:center
       <div id="compResults"></div>
     </div>
 
+    <!-- Bond Pricing: Given YTM → Fair Price -->
+    <div class="pricing-section">
+      <h2>Bond Pricing: Calculate Fair Price from YTM</h2>
+      <p style="color:var(--text-secondary);font-size:14px;margin-bottom:16px">Given a target yield to maturity, calculate the fair price you should pay for a bond.</p>
+      <div class="pricing-grid">
+        <div class="calc-inputs">
+          <div class="input-row">
+            <div class="input-group">
+              <label>Face Value ($)</label>
+              <input type="number" id="pFaceValue" value="1000" step="100" min="0">
+            </div>
+            <div class="input-group">
+              <label>Coupon Rate (%)</label>
+              <input type="number" id="pCouponRate" placeholder="e.g. 5.0" step="0.01" min="0">
+            </div>
+          </div>
+          <div class="input-row">
+            <div class="input-group">
+              <label>Target YTM (%)</label>
+              <input type="number" id="pTargetYtm" placeholder="e.g. 6.0" step="0.01" min="0">
+              <div class="input-hint">Your required yield to maturity</div>
+            </div>
+            <div class="input-group">
+              <label>Years to Maturity</label>
+              <input type="number" id="pYears" placeholder="e.g. 10" step="0.5" min="0.5">
+            </div>
+          </div>
+          <div class="input-group">
+            <label>Payment Frequency</label>
+            <select id="pFreq">
+              <option value="2">Semi-Annual</option>
+              <option value="1">Annual</option>
+              <option value="4">Quarterly</option>
+            </select>
+          </div>
+          <button class="calc-btn" id="priceBtn">Calculate Fair Price</button>
+        </div>
+        <div class="calc-results" id="priceResults">
+          <div class="result-placeholder">Enter a target YTM and bond details to calculate the fair price you should pay.</div>
+        </div>
+      </div>
+    </div>
+
     <div class="ratings-section">
       <h2>Bond Credit Ratings — Reference Table</h2>
       <p style="color:var(--text-secondary);font-size:14px;margin-bottom:16px">Credit ratings assess default risk and directly impact the yield investors demand. Higher risk = higher yield.</p>
@@ -327,13 +380,13 @@ footer{border-top:1px solid var(--border-color);padding:24px 0;text-align:center
     <div class="related-section">
       <h2>Related Tools &amp; Research</h2>
       <div class="related-grid">
-        <a class="related-card" href="/sites/westmount/investment-calculator">
-          <h3>Investment Calculator</h3>
-          <p>Model compound growth, compare investment scenarios, and project portfolio returns over time.</p>
+        <a class="related-card" href="/sites/westmount/etf-screener">
+          <h3>ETF Screener</h3>
+          <p>Screen bond ETFs and equity ETFs by expense ratio, yield, performance, and category to find the right fund.</p>
         </a>
         <a class="related-card" href="/sites/westmount/best-index-funds">
           <h3>Best Index Funds</h3>
-          <p>Compare top index funds by expense ratio, tracking error, and historical performance across asset classes.</p>
+          <p>Compare top index funds including bond index funds by returns, expense ratios, and tracking error.</p>
         </a>
       </div>
     </div>
@@ -696,6 +749,58 @@ function compareBonds() {
   </div>`;
 
   document.getElementById('compResults').innerHTML = html;
+}
+
+// ===== Bond Pricing (YTM → Fair Price) =====
+document.getElementById('priceBtn').addEventListener('click', calculateFairPrice);
+document.querySelectorAll('.pricing-section input').forEach(input => {
+  input.addEventListener('keydown', e => { if (e.key === 'Enter') calculateFairPrice(); });
+});
+
+function calculateFairPrice() {
+  const fv = parseFloat(document.getElementById('pFaceValue').value);
+  const coupon = parseFloat(document.getElementById('pCouponRate').value);
+  const targetYtm = parseFloat(document.getElementById('pTargetYtm').value);
+  const years = parseFloat(document.getElementById('pYears').value);
+  const freq = parseInt(document.getElementById('pFreq').value);
+
+  if (!fv || fv <= 0 || isNaN(coupon) || coupon < 0 || !targetYtm || targetYtm <= 0 || !years || years <= 0) {
+    document.getElementById('priceResults').innerHTML = '<div class="result-placeholder" style="color:#ef4444">Please fill in all fields with valid values.</div>';
+    return;
+  }
+
+  const fairPrice = calcBondPrice(fv, coupon, targetYtm / 100, years, freq);
+  const annualCoupon = (coupon / 100) * fv;
+  const currentYieldAtFair = (annualCoupon / fairPrice) * 100;
+  const premDisc = fairPrice > fv ? 'Premium' : fairPrice < fv ? 'Discount' : 'Par';
+  const premDiscPct = ((fairPrice / fv - 1) * 100).toFixed(2);
+  const premDiscColor = fairPrice > fv ? '#ef4444' : fairPrice < fv ? '#22c55e' : 'var(--text-secondary)';
+
+  let html = '<div class="result-grid" style="grid-template-columns:1fr 1fr">';
+  html += `<div class="result-box highlight"><div class="val">$${fairPrice.toFixed(2)}</div><div class="label">Fair Price</div></div>`;
+  html += `<div class="result-box"><div class="val">${currentYieldAtFair.toFixed(3)}%</div><div class="label">Current Yield at Fair Price</div></div>`;
+  html += '</div>';
+  html += `<div style="text-align:center;font-size:13px;color:var(--text-secondary);margin:8px 0">`;
+  html += `Bond trades at a <strong style="color:${premDiscColor}">${premDisc}</strong> (${premDiscPct > 0 ? '+' : ''}${premDiscPct}% vs face value)`;
+  html += `</div>`;
+
+  // Price sensitivity table
+  const steps = [-2, -1, -0.5, 0, 0.5, 1, 2];
+  html += '<div style="font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-secondary);margin:16px 0 8px;font-size:11px">Price at Different Yields</div>';
+  html += '<div class="price-sensitivity">';
+  steps.forEach(s => {
+    const y = targetYtm + s;
+    if (y <= 0) { html += '<div class="price-cell"><div class="pc-yield">—</div><div class="pc-price">—</div></div>'; return; }
+    const p = calcBondPrice(fv, coupon, y / 100, years, freq);
+    const isCurrent = s === 0;
+    html += `<div class="price-cell${isCurrent ? ' current' : ''}">`;
+    html += `<div class="pc-yield">${y.toFixed(1)}%</div>`;
+    html += `<div class="pc-price" style="color:${isCurrent ? 'var(--accent-color)' : 'var(--text-primary)'}">$${p.toFixed(0)}</div>`;
+    html += '</div>';
+  });
+  html += '</div>';
+
+  document.getElementById('priceResults').innerHTML = html;
 }
 
 // ===== FAQ =====
