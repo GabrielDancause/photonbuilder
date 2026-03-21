@@ -1,0 +1,1145 @@
+---
+import SiteLayout from "../../../layouts/SiteLayout.astro";
+
+const schema = {
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "House Down Payment Savings Tracker",
+  "url": "https://firemaths.info/down-payment-tracker",
+  "description": "Track your progress toward a house down payment. See how different down payment percentages affect mortgage payments, PMI costs, and total interest.",
+  "applicationCategory": "FinanceApplication",
+  "operatingSystem": "All",
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "USD"
+  }
+};
+
+const faqSchema = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "How much do I need for a down payment on a house?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Down payments typically range from 3% to 20% of the home price. A 20% down payment avoids private mortgage insurance (PMI), but many buyers put down 5-10%. On a $400,000 home, that's $20,000 to $80,000. Use the tracker above to set your target and see how long it will take to save."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What is PMI and how can I avoid it?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Private Mortgage Insurance (PMI) is required when your down payment is less than 20%. It typically costs 0.5% to 1.5% of the loan amount per year. You can avoid PMI by saving a 20% down payment, or remove it later once you reach 20% equity in your home."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Does a larger down payment lower my monthly mortgage payment?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. A larger down payment reduces the loan amount, which lowers your monthly payment and the total interest paid over the life of the loan. Going from 5% to 20% down on a $400,000 home can save hundreds per month and tens of thousands in total interest."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How long does it take to save for a down payment?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "It depends on your target amount, current savings, and monthly contribution. Saving $1,000/month for a $60,000 down payment (20% of $300,000) takes about 5 years without interest. A high-yield savings account earning 4-5% can shorten that timeline. Use the tracker above to calculate your specific timeline."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Should I put 20% down or buy sooner with less?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "It depends on your market and financial situation. Putting 20% down avoids PMI and gives you lower payments, but waiting years to save may mean higher home prices. Compare the cost of PMI and higher payments against potential home price appreciation in your area. The comparison table in the tracker above can help you weigh these trade-offs."
+      }
+    }
+  ]
+};
+
+export const meta = {
+  title: "House Down Payment Savings Tracker | firemaths.info",
+  description: "Track your progress toward a house down payment. Compare how 5%, 10%, 15%, and 20% down affects mortgage payments, PMI, and total interest.",
+  category: "tool",
+  published: "2026-03-21",
+};
+---
+
+<SiteLayout
+  site="firemaths"
+  title="House Down Payment Savings Tracker | firemaths.info"
+  description="Track your progress toward a house down payment. Compare how 5%, 10%, 15%, and 20% down affects mortgage payments, PMI, and total interest."
+  canonical="https://firemaths.info/down-payment-tracker" schema={schema}
+>
+  <style>
+    :root {
+      --clr-savings: #4A90E2;
+      --clr-goal: #D4A017;
+      --clr-increase: #50C878;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      background-color: var(--bg-color);
+      color: var(--text-primary);
+      font-family: var(--font-ui);
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+    }
+    h1, h2, h3, h4 { font-weight: 700; line-height: 1.2; color: var(--text-primary); }
+    .container { max-width: 1000px; margin: 0 auto; padding: 2rem 1.5rem; }
+
+    header { text-align: center; margin-bottom: 2rem; }
+    header h1 { font-size: 2.5rem; margin-bottom: 0.5rem; color: var(--accent-color); }
+    header p { color: var(--text-secondary); font-size: 1.1rem; }
+
+    /* Layout */
+    .calc-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 2rem;
+      margin-bottom: 2rem;
+    }
+    @media (min-width: 768px) {
+      .calc-grid { grid-template-columns: 1fr 1fr; }
+    }
+
+    .card {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 1.5rem;
+    }
+    .card-title {
+      font-size: 1.25rem;
+      margin-bottom: 1.5rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    /* Inputs */
+    .input-group { margin-bottom: 1.25rem; }
+    .input-group label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: var(--text-secondary);
+    }
+    .input-wrapper {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+    .prefix, .suffix {
+      position: absolute;
+      color: var(--text-secondary);
+      font-family: var(--font-mono);
+      font-size: 1rem;
+      pointer-events: none;
+    }
+    .prefix { left: 1rem; }
+    .suffix { right: 1rem; }
+    input[type="number"], select {
+      width: 100%;
+      background-color: var(--bg-color);
+      border: 1px solid var(--border-color);
+      color: var(--text-primary);
+      font-family: var(--font-mono);
+      font-size: 1rem;
+      padding: 0.75rem 1rem;
+      border-radius: 6px;
+      transition: border-color 0.2s;
+      -moz-appearance: textfield;
+    }
+    input[type="number"]::-webkit-outer-spin-button,
+    input[type="number"]::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+    input[type="number"]:focus, select:focus { outline: none; border-color: var(--accent-color); }
+    .has-prefix input { padding-left: 2rem; }
+    .has-suffix input { padding-right: 2.5rem; }
+
+    /* Down payment % buttons */
+    .dp-options {
+      display: flex;
+      gap: 0.5rem;
+      margin-bottom: 1.5rem;
+    }
+    .dp-btn {
+      flex: 1;
+      padding: 0.6rem 0.5rem;
+      background-color: var(--bg-color);
+      border: 1px solid var(--border-color);
+      color: var(--text-secondary);
+      font-family: var(--font-ui);
+      font-size: 0.85rem;
+      font-weight: 600;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.2s;
+      text-align: center;
+    }
+    .dp-btn:hover {
+      border-color: var(--accent-color);
+      color: var(--text-primary);
+    }
+    .dp-btn.active {
+      border-color: var(--accent-color);
+      background-color: rgba(212,160,23,0.1);
+      color: var(--accent-color);
+    }
+
+    /* Results */
+    .results {
+      padding-top: 1.5rem;
+      border-top: 1px solid var(--border-color);
+    }
+    .result-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1rem;
+    }
+    .result-label {
+      color: var(--text-secondary);
+      font-size: 0.875rem;
+    }
+    .result-value {
+      font-family: var(--font-mono);
+      font-size: 1.125rem;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .result-final .result-value {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--accent-color);
+    }
+
+    /* Progress bar */
+    .progress-section { margin-bottom: 1.5rem; }
+    .progress-label {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 0.5rem;
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+    }
+    .progress-pct {
+      font-weight: 700;
+      color: var(--accent-color);
+      font-family: var(--font-mono);
+    }
+    .progress-track {
+      position: relative;
+      height: 28px;
+      background-color: var(--bg-color);
+      border: 1px solid var(--border-color);
+      border-radius: 14px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      background: linear-gradient(90deg, var(--clr-savings), var(--clr-goal));
+      border-radius: 14px;
+      transition: width 0.4s ease;
+      min-width: 0;
+    }
+    .progress-markers {
+      position: relative;
+      height: 20px;
+      margin-top: 4px;
+    }
+    .progress-marker {
+      position: absolute;
+      transform: translateX(-50%);
+      font-size: 0.7rem;
+      color: var(--text-secondary);
+      font-family: var(--font-mono);
+    }
+
+    /* Milestones */
+    .milestones {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.75rem;
+      margin-top: 1.5rem;
+    }
+    .milestone {
+      text-align: center;
+      padding: 0.75rem 0.5rem;
+      background-color: var(--bg-color);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      transition: border-color 0.3s;
+    }
+    .milestone.reached { border-color: var(--accent-color); }
+    .milestone-pct {
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--accent-color);
+      margin-bottom: 0.25rem;
+    }
+    .milestone-val {
+      font-family: var(--font-mono);
+      font-size: 0.8rem;
+      color: var(--text-primary);
+    }
+    .milestone-date {
+      font-size: 0.7rem;
+      color: var(--text-secondary);
+      margin-top: 0.15rem;
+    }
+    @media (max-width: 500px) {
+      .milestones { grid-template-columns: repeat(2, 1fr); }
+    }
+
+    /* What-if scenarios */
+    .whatif-section {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+    }
+    .whatif-section h2 { font-size: 1.25rem; margin-bottom: 1rem; }
+    .whatif-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+    }
+    @media (max-width: 600px) {
+      .whatif-grid { grid-template-columns: 1fr; }
+    }
+    .whatif-card {
+      background-color: var(--bg-color);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 1rem;
+      text-align: center;
+    }
+    .whatif-card h3 {
+      font-size: 0.85rem;
+      color: var(--clr-increase);
+      margin-bottom: 0.5rem;
+    }
+    .whatif-amount {
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+      margin-bottom: 0.5rem;
+    }
+    .whatif-result {
+      font-family: var(--font-mono);
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+    .whatif-saved {
+      font-size: 0.75rem;
+      color: var(--clr-increase);
+      margin-top: 0.25rem;
+    }
+
+    /* Comparison table */
+    .comparison-section {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+      overflow-x: auto;
+    }
+    .comparison-section h2 { font-size: 1.25rem; margin-bottom: 1rem; }
+    .comp-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.875rem;
+    }
+    .comp-table th, .comp-table td {
+      padding: 0.75rem 1rem;
+      text-align: right;
+      border-bottom: 1px solid var(--border-color);
+    }
+    .comp-table th {
+      text-align: right;
+      font-weight: 600;
+      color: var(--text-secondary);
+      font-size: 0.8rem;
+      text-transform: uppercase;
+      letter-spacing: 0.03em;
+    }
+    .comp-table th:first-child, .comp-table td:first-child { text-align: left; }
+    .comp-table td {
+      font-family: var(--font-mono);
+      color: var(--text-primary);
+    }
+    .comp-table tr.active-row td {
+      color: var(--accent-color);
+      font-weight: 600;
+    }
+    .comp-table .pmi-badge {
+      display: inline-block;
+      font-size: 0.7rem;
+      padding: 0.15rem 0.4rem;
+      border-radius: 4px;
+      background-color: rgba(255,100,100,0.15);
+      color: #ff6464;
+      font-family: var(--font-ui);
+      font-weight: 600;
+    }
+    .comp-table .no-pmi {
+      background-color: rgba(80,200,120,0.15);
+      color: var(--clr-increase);
+    }
+
+    /* Chart */
+    .chart-section {
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 2rem;
+    }
+    .chart-header { margin-bottom: 1rem; text-align: center; }
+    .chart-header h2 { font-size: 1.25rem; }
+    .chart-legend {
+      display: flex;
+      justify-content: center;
+      gap: 1.5rem;
+      margin-bottom: 1rem;
+    }
+    .legend-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+    }
+    .legend-dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+    }
+    .chart-container { width: 100%; height: 400px; position: relative; }
+    canvas { width: 100%; height: 100%; }
+
+    /* SEO content */
+    .seo-content { margin-bottom: 4rem; }
+    .seo-content h2 {
+      font-size: 1.75rem;
+      margin-top: 2.5rem;
+      margin-bottom: 1rem;
+      color: var(--accent-color);
+    }
+    .seo-content p { margin-bottom: 1rem; color: var(--text-secondary); }
+    .seo-content ul { margin-bottom: 1.5rem; padding-left: 1.5rem; color: var(--text-secondary); }
+    .seo-content li { margin-bottom: 0.5rem; }
+
+    /* FAQ */
+    .faq-section { margin-bottom: 4rem; }
+    .faq-section h2 {
+      font-size: 1.75rem;
+      margin-bottom: 1.5rem;
+      color: var(--accent-color);
+    }
+    .faq-item {
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      margin-bottom: 0.75rem;
+      overflow: hidden;
+    }
+    .faq-question {
+      width: 100%;
+      background-color: var(--card-bg);
+      border: none;
+      color: var(--text-primary);
+      font-family: var(--font-ui);
+      font-size: 1rem;
+      font-weight: 600;
+      padding: 1rem 1.25rem;
+      text-align: left;
+      cursor: pointer;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      transition: background-color 0.2s;
+    }
+    .faq-question:hover { background-color: var(--bg-color); }
+    .faq-arrow {
+      transition: transform 0.2s;
+      font-size: 0.8rem;
+      color: var(--text-secondary);
+    }
+    .faq-item.open .faq-arrow { transform: rotate(180deg); }
+    .faq-answer {
+      display: none;
+      padding: 0 1.25rem 1rem;
+      color: var(--text-secondary);
+      line-height: 1.7;
+      background-color: var(--card-bg);
+    }
+    .faq-item.open .faq-answer { display: block; }
+
+    /* Related */
+    .related-tools {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+    @media (max-width: 500px) {
+      .related-tools { grid-template-columns: 1fr; }
+    }
+    .related-link {
+      display: block;
+      background-color: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 1rem;
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+    .related-link:hover {
+      border-color: var(--accent-color);
+      transform: translateY(-2px);
+    }
+    .related-link h3 { font-size: 0.9rem; color: var(--text-primary); margin-bottom: 0.25rem; }
+    .related-link p { font-size: 0.8rem; color: var(--text-secondary); }
+  </style>
+
+  <script type="application/ld+json" set:html={JSON.stringify(faqSchema)} />
+
+  <div class="container">
+    <header>
+      <h1>Down Payment Savings Tracker</h1>
+      <p>Track your progress toward a house down payment and see how different amounts affect your mortgage.</p>
+    </header>
+
+    <main>
+      <div class="calc-grid">
+        <!-- Inputs -->
+        <div class="card">
+          <h2 class="card-title">Your Down Payment Goal</h2>
+
+          <div class="input-group">
+            <label for="home-price">Target Home Price</label>
+            <div class="input-wrapper has-prefix">
+              <span class="prefix">$</span>
+              <input type="number" id="home-price" value="400000" min="0" step="10000">
+            </div>
+          </div>
+
+          <div class="input-group">
+            <label>Down Payment Percentage</label>
+            <div class="dp-options">
+              <button class="dp-btn" type="button" data-dp="5">5%</button>
+              <button class="dp-btn" type="button" data-dp="10">10%</button>
+              <button class="dp-btn" type="button" data-dp="15">15%</button>
+              <button class="dp-btn active" type="button" data-dp="20">20%</button>
+            </div>
+          </div>
+
+          <div class="input-group">
+            <label for="current-savings">Current Savings</label>
+            <div class="input-wrapper has-prefix">
+              <span class="prefix">$</span>
+              <input type="number" id="current-savings" value="15000" min="0" step="500">
+            </div>
+          </div>
+
+          <div class="input-group">
+            <label for="monthly-contribution">Monthly Contribution</label>
+            <div class="input-wrapper has-prefix">
+              <span class="prefix">$</span>
+              <input type="number" id="monthly-contribution" value="1500" min="0" step="100">
+            </div>
+          </div>
+
+          <div class="input-group">
+            <label for="savings-rate">Savings Account APY</label>
+            <div class="input-wrapper has-suffix">
+              <span class="suffix">%</span>
+              <input type="number" id="savings-rate" value="4.5" min="0" step="0.1" max="15">
+            </div>
+          </div>
+        </div>
+
+        <!-- Results -->
+        <div class="card">
+          <h2 class="card-title">Your Progress</h2>
+
+          <div class="result-item result-final">
+            <span class="result-label">Down Payment Target</span>
+            <div class="result-value">
+              <span id="target-amount">$80,000</span>
+            </div>
+          </div>
+
+          <div class="progress-section">
+            <div class="progress-label">
+              <span id="progress-saved">$15,000 saved</span>
+              <span class="progress-pct" id="progress-pct">18.8%</span>
+            </div>
+            <div class="progress-track">
+              <div class="progress-fill" id="progress-fill" style="width:18.8%"></div>
+            </div>
+            <div class="progress-markers">
+              <span class="progress-marker" style="left:25%">25%</span>
+              <span class="progress-marker" style="left:50%">50%</span>
+              <span class="progress-marker" style="left:75%">75%</span>
+              <span class="progress-marker" style="left:100%">100%</span>
+            </div>
+          </div>
+
+          <div class="results">
+            <div class="result-item">
+              <span class="result-label">Remaining to Save</span>
+              <span class="result-value" id="res-remaining">$0</span>
+            </div>
+            <div class="result-item">
+              <span class="result-label">Interest Earned</span>
+              <span class="result-value" id="res-interest">$0</span>
+            </div>
+            <div class="result-item">
+              <span class="result-label">Estimated Date</span>
+              <span class="result-value" id="res-date">&mdash;</span>
+            </div>
+          </div>
+
+          <div class="milestones">
+            <div class="milestone" id="ms-25">
+              <div class="milestone-pct">25%</div>
+              <div class="milestone-val" id="ms-25-val">&mdash;</div>
+              <div class="milestone-date" id="ms-25-date"></div>
+            </div>
+            <div class="milestone" id="ms-50">
+              <div class="milestone-pct">50%</div>
+              <div class="milestone-val" id="ms-50-val">&mdash;</div>
+              <div class="milestone-date" id="ms-50-date"></div>
+            </div>
+            <div class="milestone" id="ms-75">
+              <div class="milestone-pct">75%</div>
+              <div class="milestone-val" id="ms-75-val">&mdash;</div>
+              <div class="milestone-date" id="ms-75-date"></div>
+            </div>
+            <div class="milestone" id="ms-100">
+              <div class="milestone-pct">100%</div>
+              <div class="milestone-val" id="ms-100-val">&mdash;</div>
+              <div class="milestone-date" id="ms-100-date"></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- What-if scenarios -->
+      <div class="whatif-section">
+        <h2>What If You Saved More?</h2>
+        <div class="whatif-grid">
+          <div class="whatif-card">
+            <h3>+$200/mo</h3>
+            <div class="whatif-amount" id="wi-200-amount"></div>
+            <div class="whatif-result" id="wi-200-time"></div>
+            <div class="whatif-saved" id="wi-200-saved"></div>
+          </div>
+          <div class="whatif-card">
+            <h3>+$500/mo</h3>
+            <div class="whatif-amount" id="wi-500-amount"></div>
+            <div class="whatif-result" id="wi-500-time"></div>
+            <div class="whatif-saved" id="wi-500-saved"></div>
+          </div>
+          <div class="whatif-card">
+            <h3>+$1,000/mo</h3>
+            <div class="whatif-amount" id="wi-1000-amount"></div>
+            <div class="whatif-result" id="wi-1000-time"></div>
+            <div class="whatif-saved" id="wi-1000-saved"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Down payment comparison -->
+      <div class="comparison-section">
+        <h2>Down Payment Comparison</h2>
+        <table class="comp-table">
+          <thead>
+            <tr>
+              <th>Down Payment</th>
+              <th>Amount</th>
+              <th>Loan</th>
+              <th>Monthly Payment</th>
+              <th>PMI/mo</th>
+              <th>Total Interest</th>
+            </tr>
+          </thead>
+          <tbody id="comp-body"></tbody>
+        </table>
+      </div>
+
+      <!-- Chart -->
+      <div class="chart-section">
+        <div class="chart-header">
+          <h2>Savings Growth Trajectory</h2>
+        </div>
+        <div class="chart-legend">
+          <div class="legend-item"><span class="legend-dot" style="background:var(--clr-savings);"></span> Contributions</div>
+          <div class="legend-item"><span class="legend-dot" style="background:var(--clr-goal);"></span> Total Balance</div>
+        </div>
+        <div class="chart-container">
+          <canvas id="growthChart"></canvas>
+        </div>
+      </div>
+
+      <!-- SEO content -->
+      <div class="seo-content">
+        <h2>How to Use the Down Payment Tracker</h2>
+        <p>Enter your target home price and select a down payment percentage (5%, 10%, 15%, or 20%). Then input your current savings and how much you can contribute each month. The tracker instantly shows your progress bar, estimated completion date, and milestone markers at 25%, 50%, 75%, and 100% of your goal.</p>
+        <p>The <strong>what-if scenarios</strong> show how increasing your monthly contribution by $200, $500, or $1,000 would accelerate your timeline. The <strong>comparison table</strong> breaks down how each down payment percentage affects your mortgage payment, PMI costs, and total interest paid over a 30-year loan.</p>
+
+        <h2>Understanding Down Payment Percentages</h2>
+        <ul>
+          <li><strong>5% Down:</strong> The minimum for conventional loans. You&rsquo;ll pay PMI and have higher monthly payments, but you can buy sooner. Best if home prices are rising fast in your area.</li>
+          <li><strong>10% Down:</strong> A middle ground that reduces PMI costs while keeping the savings timeline reasonable. Many first-time buyers aim for this target.</li>
+          <li><strong>15% Down:</strong> Significantly lower PMI rates and monthly payments. A strong option if you can wait a bit longer to save.</li>
+          <li><strong>20% Down:</strong> The gold standard &mdash; eliminates PMI entirely, gives you the lowest monthly payment, and provides immediate equity cushion.</li>
+        </ul>
+
+        <h2>What Is PMI and Why Does It Matter?</h2>
+        <p>Private Mortgage Insurance (PMI) protects the lender if you default on your loan. It&rsquo;s required when your down payment is less than 20% on a conventional loan. PMI typically costs between 0.5% and 1.5% of the loan amount per year, added to your monthly mortgage payment.</p>
+        <p>On a $380,000 loan (5% down on a $400,000 home), PMI at 0.8% adds about $253/month to your payment. Over the years it takes to reach 20% equity, that can add up to thousands of dollars. The comparison table above shows the exact PMI cost for each down payment level.</p>
+
+        <h2>Tips for Saving Your Down Payment Faster</h2>
+        <ul>
+          <li><strong>Use a high-yield savings account:</strong> Earn 4&ndash;5% APY on your down payment fund instead of the 0.01% most checking accounts offer.</li>
+          <li><strong>Automate your savings:</strong> Set up automatic transfers on payday so the money is saved before you can spend it.</li>
+          <li><strong>Save windfalls:</strong> Tax refunds, bonuses, and gifts can accelerate your timeline significantly. A $5,000 tax refund could cut months off your goal.</li>
+          <li><strong>Reduce expenses temporarily:</strong> Even small cuts add up. Reducing spending by $300/month saves an extra $3,600/year toward your down payment.</li>
+          <li><strong>Consider down payment assistance:</strong> Many states and municipalities offer grants or low-interest loans for first-time homebuyers.</li>
+        </ul>
+      </div>
+
+      <!-- FAQ -->
+      <div class="faq-section">
+        <h2>Frequently Asked Questions</h2>
+
+        <div class="faq-item">
+          <button class="faq-question" type="button">
+            How much do I need for a down payment on a house?
+            <span class="faq-arrow">&#9660;</span>
+          </button>
+          <div class="faq-answer">Down payments typically range from 3% to 20% of the home price. A 20% down payment avoids private mortgage insurance (PMI), but many buyers put down 5&ndash;10%. On a $400,000 home, that&rsquo;s $20,000 to $80,000. Use the tracker above to set your target and see how long it will take to save.</div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-question" type="button">
+            What is PMI and how can I avoid it?
+            <span class="faq-arrow">&#9660;</span>
+          </button>
+          <div class="faq-answer">Private Mortgage Insurance (PMI) is required when your down payment is less than 20%. It typically costs 0.5% to 1.5% of the loan amount per year. You can avoid PMI by saving a 20% down payment, or remove it later once you reach 20% equity in your home.</div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-question" type="button">
+            Does a larger down payment lower my monthly mortgage payment?
+            <span class="faq-arrow">&#9660;</span>
+          </button>
+          <div class="faq-answer">Yes. A larger down payment reduces the loan amount, which lowers your monthly payment and the total interest paid over the life of the loan. Going from 5% to 20% down on a $400,000 home can save hundreds per month and tens of thousands in total interest.</div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-question" type="button">
+            How long does it take to save for a down payment?
+            <span class="faq-arrow">&#9660;</span>
+          </button>
+          <div class="faq-answer">It depends on your target amount, current savings, and monthly contribution. Saving $1,000/month for a $60,000 down payment (20% of $300,000) takes about 5 years without interest. A high-yield savings account earning 4&ndash;5% can shorten that timeline. Use the tracker above to calculate your specific timeline.</div>
+        </div>
+
+        <div class="faq-item">
+          <button class="faq-question" type="button">
+            Should I put 20% down or buy sooner with less?
+            <span class="faq-arrow">&#9660;</span>
+          </button>
+          <div class="faq-answer">It depends on your market and financial situation. Putting 20% down avoids PMI and gives you lower payments, but waiting years to save may mean higher home prices. Compare the cost of PMI and higher payments against potential home price appreciation in your area. The comparison table in the tracker above can help you weigh these trade-offs.</div>
+        </div>
+      </div>
+
+      <!-- Related tools -->
+      <h2 style="font-size:1.25rem;margin-bottom:1rem;color:var(--accent-color);">Related Tools</h2>
+      <div class="related-tools">
+        <a href="/savings-goal-calculator" class="related-link">
+          <h3>Savings Goal Calculator</h3>
+          <p>Calculate how much to save monthly for any financial goal.</p>
+        </a>
+        <a href="/compound-interest-calculator" class="related-link">
+          <h3>Compound Interest Calculator</h3>
+          <p>Compare investment growth scenarios side by side.</p>
+        </a>
+      </div>
+    </main>
+  </div>
+
+  <script is:inline>
+    const fmt = (v) => new Intl.NumberFormat('en-US', { style:'currency', currency:'USD', maximumFractionDigits:0 }).format(v);
+    const fmt2 = (v) => new Intl.NumberFormat('en-US', { style:'currency', currency:'USD', maximumFractionDigits:2 }).format(v);
+    const addMo = (d, m) => { const r = new Date(d); r.setMonth(r.getMonth() + m); return r; };
+    const fmtDate = (d) => d.toLocaleDateString('en-US', { month:'short', year:'numeric' });
+
+    const canvas = document.getElementById('growthChart');
+    const ctx = canvas.getContext('2d');
+    let dpPct = 20;
+
+    // Down payment buttons
+    document.querySelectorAll('.dp-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.dp-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        dpPct = parseInt(btn.dataset.dp);
+        calculate();
+      });
+    });
+
+    // FAQ
+    document.querySelectorAll('.faq-question').forEach(btn => {
+      btn.addEventListener('click', () => btn.parentElement.classList.toggle('open'));
+    });
+
+    function solveMonths(goal, current, rateAnnual, monthly) {
+      if (current >= goal) return 0;
+      const r = (rateAnnual / 100) / 12;
+      if (monthly <= 0 && r <= 0) return Infinity;
+      if (monthly <= 0) return Math.ceil(Math.log(goal / current) / Math.log(1 + r));
+      if (r === 0) return Math.ceil((goal - current) / monthly);
+      const pmtR = monthly / r;
+      const x = (goal + pmtR) / (current + pmtR);
+      if (x <= 0) return Infinity;
+      return Math.ceil(Math.log(x) / Math.log(1 + r));
+    }
+
+    function buildHistory(current, monthly, rateAnnual, totalMonths) {
+      const r = (rateAnnual / 100) / 12;
+      let balance = current;
+      let totalContrib = current;
+      const data = [{ balance: current, contributions: current, interest: 0 }];
+      for (let i = 1; i <= totalMonths; i++) {
+        balance = balance * (1 + r) + monthly;
+        totalContrib += monthly;
+        data.push({ balance, contributions: totalContrib, interest: balance - totalContrib });
+      }
+      return data;
+    }
+
+    function fmtTime(months) {
+      if (!isFinite(months) || months > 1200) return 'Not reachable';
+      const yrs = Math.floor(months / 12);
+      const mos = months % 12;
+      let str = '';
+      if (yrs > 0) str += yrs + (yrs === 1 ? ' year' : ' years');
+      if (mos > 0) str += (yrs > 0 ? ' ' : '') + mos + (mos === 1 ? ' month' : ' months');
+      return str || '0 months';
+    }
+
+    // Mortgage math
+    function mortgagePayment(principal, annualRate, years) {
+      const r = annualRate / 100 / 12;
+      const n = years * 12;
+      if (r === 0) return principal / n;
+      return principal * r * Math.pow(1 + r, n) / (Math.pow(1 + r, n) - 1);
+    }
+
+    function pmiMonthly(loanAmount, dpPercent) {
+      if (dpPercent >= 20) return 0;
+      // PMI rate decreases with higher down payment
+      let rate;
+      if (dpPercent <= 5) rate = 0.011;
+      else if (dpPercent <= 10) rate = 0.008;
+      else rate = 0.005;
+      return loanAmount * rate / 12;
+    }
+
+    function calculate() {
+      const homePrice = parseFloat(document.getElementById('home-price').value) || 0;
+      const current = parseFloat(document.getElementById('current-savings').value) || 0;
+      const monthly = parseFloat(document.getElementById('monthly-contribution').value) || 0;
+      const savingsRate = parseFloat(document.getElementById('savings-rate').value) || 0;
+      const now = new Date();
+
+      const goal = homePrice * dpPct / 100;
+      const mortgageRate = 6.5; // assumption for comparison
+
+      // Target
+      document.getElementById('target-amount').textContent = fmt(goal);
+
+      // Progress
+      const pct = goal > 0 ? Math.min(100, current / goal * 100) : 0;
+      document.getElementById('progress-saved').textContent = fmt(current) + ' saved';
+      document.getElementById('progress-pct').textContent = pct.toFixed(1) + '%';
+      document.getElementById('progress-fill').style.width = pct + '%';
+
+      // Months to goal
+      const totalMonths = solveMonths(goal, current, savingsRate, monthly);
+      const remaining = Math.max(0, goal - current);
+      document.getElementById('res-remaining').textContent = fmt(remaining);
+
+      if (!isFinite(totalMonths) || totalMonths > 1200) {
+        document.getElementById('res-date').textContent = '\u2014';
+        document.getElementById('res-interest').textContent = '\u2014';
+        [25,50,75,100].forEach(p => {
+          document.getElementById('ms-' + p + '-val').textContent = '\u2014';
+          document.getElementById('ms-' + p + '-date').textContent = '';
+          document.getElementById('ms-' + p).classList.remove('reached');
+        });
+        updateWhatIf(goal, current, savingsRate, monthly, Infinity);
+        updateComparison(homePrice, mortgageRate);
+        clearCanvas();
+        return;
+      }
+
+      const history = buildHistory(current, monthly, savingsRate, totalMonths);
+      const last = history[history.length - 1];
+
+      document.getElementById('res-interest').textContent = fmt(last.interest);
+      document.getElementById('res-date').textContent = fmtDate(addMo(now, totalMonths));
+
+      // Milestones
+      [25, 50, 75, 100].forEach(p => {
+        const target = goal * p / 100;
+        let hit = null;
+        for (let i = 0; i < history.length; i++) {
+          if (history[i].balance >= target) { hit = i; break; }
+        }
+        const el = document.getElementById('ms-' + p);
+        if (hit !== null) {
+          document.getElementById('ms-' + p + '-val').textContent = fmt(target);
+          document.getElementById('ms-' + p + '-date').textContent = fmtDate(addMo(now, hit));
+          el.classList.add('reached');
+        } else {
+          document.getElementById('ms-' + p + '-val').textContent = '\u2014';
+          document.getElementById('ms-' + p + '-date').textContent = '';
+          el.classList.remove('reached');
+        }
+      });
+
+      updateWhatIf(goal, current, savingsRate, monthly, totalMonths);
+      updateComparison(homePrice, mortgageRate);
+      drawChart(history, goal);
+    }
+
+    function updateWhatIf(goal, current, savingsRate, monthly, baseMonths) {
+      [200, 500, 1000].forEach(extra => {
+        const newMonthly = monthly + extra;
+        const months = solveMonths(goal, current, savingsRate, newMonthly);
+        document.getElementById('wi-' + extra + '-amount').textContent = fmt(newMonthly) + '/mo total';
+        document.getElementById('wi-' + extra + '-time').textContent = fmtTime(months);
+        if (isFinite(baseMonths) && isFinite(months) && baseMonths > months) {
+          const saved = baseMonths - months;
+          document.getElementById('wi-' + extra + '-saved').textContent = saved + (saved === 1 ? ' month' : ' months') + ' sooner';
+        } else {
+          document.getElementById('wi-' + extra + '-saved').textContent = '';
+        }
+      });
+    }
+
+    function updateComparison(homePrice, mortgageRate) {
+      const tbody = document.getElementById('comp-body');
+      tbody.innerHTML = '';
+      [5, 10, 15, 20].forEach(dp => {
+        const downAmt = homePrice * dp / 100;
+        const loan = homePrice - downAmt;
+        const payment = mortgagePayment(loan, mortgageRate, 30);
+        const pmi = pmiMonthly(loan, dp);
+        const totalInterest = payment * 360 - loan;
+        const tr = document.createElement('tr');
+        if (dp === dpPct) tr.className = 'active-row';
+        const pmiBadge = dp < 20
+          ? '<span class="pmi-badge">' + fmt2(pmi) + '</span>'
+          : '<span class="pmi-badge no-pmi">None</span>';
+        tr.innerHTML =
+          '<td>' + dp + '% down</td>' +
+          '<td>' + fmt(downAmt) + '</td>' +
+          '<td>' + fmt(loan) + '</td>' +
+          '<td>' + fmt2(payment) + '</td>' +
+          '<td>' + pmiBadge + '</td>' +
+          '<td>' + fmt(totalInterest) + '</td>';
+        tbody.appendChild(tr);
+      });
+    }
+
+    function clearCanvas() {
+      const dpr = window.devicePixelRatio || 1;
+      const rect = canvas.parentElement.getBoundingClientRect();
+      canvas.width = rect.width * dpr;
+      canvas.height = rect.height * dpr;
+      ctx.setTransform(1,0,0,1,0,0);
+      ctx.scale(dpr, dpr);
+      ctx.clearRect(0, 0, rect.width, rect.height);
+    }
+
+    function drawChart(history, goal) {
+      const dpr = window.devicePixelRatio || 1;
+      const rect = canvas.parentElement.getBoundingClientRect();
+      canvas.width = rect.width * dpr;
+      canvas.height = rect.height * dpr;
+      ctx.setTransform(1,0,0,1,0,0);
+      ctx.scale(dpr, dpr);
+
+      const w = rect.width, h = rect.height;
+      ctx.clearRect(0, 0, w, h);
+
+      const pad = { top: 20, right: 20, bottom: 40, left: 80 };
+      const cw = w - pad.left - pad.right;
+      const ch = h - pad.top - pad.bottom;
+
+      const n = history.length - 1;
+      if (n <= 0) return;
+
+      const maxVal = Math.max(goal, history[n].balance) * 1.05;
+
+      // Y axis grid
+      ctx.strokeStyle = '#2a2010';
+      ctx.lineWidth = 1;
+      ctx.font = '12px Inter, sans-serif';
+      ctx.fillStyle = '#888';
+      ctx.textAlign = 'right';
+      ctx.textBaseline = 'middle';
+      for (let i = 0; i <= 5; i++) {
+        const val = maxVal * i / 5;
+        const y = h - pad.bottom - ch * i / 5;
+        ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(w - pad.right, y); ctx.stroke();
+        const label = val >= 1e6 ? '$' + (val/1e6).toFixed(1) + 'M' : val >= 1e3 ? '$' + (val/1e3).toFixed(0) + 'k' : '$' + val.toFixed(0);
+        ctx.fillText(label, pad.left - 10, y);
+      }
+
+      // X axis
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'top';
+      const xTicks = Math.min(n, 10);
+      for (let i = 0; i <= xTicks; i++) {
+        const idx = Math.round(n * i / xTicks);
+        const x = pad.left + cw * idx / n;
+        ctx.beginPath(); ctx.moveTo(x, h - pad.bottom); ctx.lineTo(x, h - pad.bottom + 5); ctx.stroke();
+        const yrs = Math.floor(idx / 12);
+        const mos = idx % 12;
+        ctx.fillText(idx <= 24 ? idx + 'mo' : yrs + 'y' + (mos ? mos + 'm' : ''), x, h - pad.bottom + 10);
+      }
+
+      // Goal line
+      const goalY = h - pad.bottom - ch * goal / maxVal;
+      ctx.setLineDash([6, 4]);
+      ctx.strokeStyle = '#888';
+      ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.moveTo(pad.left, goalY); ctx.lineTo(w - pad.right, goalY); ctx.stroke();
+      ctx.setLineDash([]);
+      ctx.fillStyle = '#888';
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'bottom';
+      ctx.fillText('Goal: ' + fmt(goal), pad.left + 5, goalY - 4);
+
+      // Interest area (between balance and contributions)
+      ctx.beginPath();
+      for (let i = 0; i <= n; i++) {
+        const x = pad.left + cw * i / n;
+        const y = h - pad.bottom - ch * history[i].balance / maxVal;
+        i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+      }
+      for (let i = n; i >= 0; i--) {
+        const x = pad.left + cw * i / n;
+        const y = h - pad.bottom - ch * history[i].contributions / maxVal;
+        ctx.lineTo(x, y);
+      }
+      ctx.closePath();
+      const gI = ctx.createLinearGradient(0, pad.top, 0, h - pad.bottom);
+      gI.addColorStop(0, 'rgba(212,160,23,0.35)');
+      gI.addColorStop(1, 'rgba(212,160,23,0.05)');
+      ctx.fillStyle = gI;
+      ctx.fill();
+
+      // Contributions area
+      ctx.beginPath();
+      for (let i = 0; i <= n; i++) {
+        const x = pad.left + cw * i / n;
+        const y = h - pad.bottom - ch * history[i].contributions / maxVal;
+        i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+      }
+      ctx.lineTo(pad.left + cw, h - pad.bottom);
+      ctx.lineTo(pad.left, h - pad.bottom);
+      ctx.closePath();
+      const gC = ctx.createLinearGradient(0, pad.top, 0, h - pad.bottom);
+      gC.addColorStop(0, 'rgba(74,144,226,0.35)');
+      gC.addColorStop(1, 'rgba(74,144,226,0.05)');
+      ctx.fillStyle = gC;
+      ctx.fill();
+
+      // Balance line
+      ctx.lineWidth = 2.5;
+      ctx.lineJoin = 'round';
+      ctx.strokeStyle = '#D4A017';
+      ctx.beginPath();
+      for (let i = 0; i <= n; i++) {
+        const x = pad.left + cw * i / n;
+        const y = h - pad.bottom - ch * history[i].balance / maxVal;
+        i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+
+      // Contributions line
+      ctx.strokeStyle = '#4A90E2';
+      ctx.beginPath();
+      for (let i = 0; i <= n; i++) {
+        const x = pad.left + cw * i / n;
+        const y = h - pad.bottom - ch * history[i].contributions / maxVal;
+        i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+      }
+      ctx.stroke();
+
+      // Milestone dots
+      [25, 50, 75, 100].forEach(pct => {
+        const target = goal * pct / 100;
+        for (let i = 0; i <= n; i++) {
+          if (history[i].balance >= target) {
+            const x = pad.left + cw * i / n;
+            const y = h - pad.bottom - ch * history[i].balance / maxVal;
+            ctx.beginPath();
+            ctx.arc(x, y, 5, 0, Math.PI * 2);
+            ctx.fillStyle = '#D4A017';
+            ctx.fill();
+            ctx.strokeStyle = '#000';
+            ctx.lineWidth = 1.5;
+            ctx.stroke();
+            ctx.fillStyle = '#fff';
+            ctx.font = 'bold 9px Inter, sans-serif';
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'bottom';
+            ctx.fillText(pct + '%', x, y - 8);
+            break;
+          }
+        }
+      });
+    }
+
+    // Event listeners
+    document.querySelectorAll('input[type="number"]').forEach(input => {
+      input.addEventListener('input', calculate);
+    });
+
+    window.addEventListener('resize', calculate);
+    setTimeout(calculate, 0);
+  </script>
+
+  <div class="max-w-3xl mx-auto px-5 pt-8 pb-12">
+    <div class="border-t border-[var(--border-color)] pt-8">
+      <p class="text-xs font-bold text-[var(--accent-color)] tracking-wide uppercase mb-2">Complete Guide</p>
+      <a href="/guide-budgeting-complete" class="block bg-[var(--card-bg)] border border-[var(--border-color)] rounded-xl p-5 hover:border-[var(--accent-color)] hover:-translate-y-0.5 transition-all">
+        <h3 class="text-base font-bold text-white">Budgeting for Beginners: Build Your Financial Foundation</h3>
+        <p class="text-sm text-[var(--text-secondary)] mt-1">Read the full guide &rarr;</p>
+      </a>
+    </div>
+  </div>
+</SiteLayout>
