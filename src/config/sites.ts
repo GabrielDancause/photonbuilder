@@ -19,6 +19,8 @@ export interface SiteConfig {
   accent: string;
   theme: SiteTheme;
   gaId: string;
+  tagline?: string;
+  description?: string;
   nav: { label: string; href: string }[];
   footer: { text: string; gabVentures?: boolean };
   newsletter?: NewsletterConfig;
@@ -32,6 +34,8 @@ export const sites: Record<string, SiteConfig> = {
     accent: '#D4A017',
     theme: { bg: '#0c0a00', cardBg: '#141008', border: '#2a2010', textPrimary: '#e0d8c8', textSecondary: '#888888' },
     gaId: 'G-ZSXFV0VP4L',
+  tagline: 'Free Finance & Money Calculators',
+  description: 'Mortgage, tax, retirement, investment, and budgeting calculators. Make smarter money decisions with real math.',
     nav: [
       { label: 'Tools', href: '/#tools' },
       { label: 'Studies', href: '/#studies' },
@@ -47,6 +51,8 @@ export const sites: Record<string, SiteConfig> = {
     accent: '#4a8fe7',
     theme: { bg: '#060a12', cardBg: '#0a1020', border: '#152040', textPrimary: '#c8d0de', textSecondary: '#94a3b8' },
     gaId: 'G-VYF72NSC1Q',
+  tagline: 'Free Equity Research & Investing Tools',
+  description: 'Short interest rankings, dividend data, ETF comparisons, intrinsic value calculators, and 380+ financial tools.',
     nav: [
       { label: 'Tools', href: '/#tools' },
       { label: 'Guides', href: '/#guides' },
@@ -63,6 +69,8 @@ export const sites: Record<string, SiteConfig> = {
     accent: '#818cf8',
     theme: { bg: '#060a12', cardBg: '#0a1020', border: '#152040', textPrimary: '#e2e8f0', textSecondary: '#94a3b8' },
     gaId: 'G-T4PEJFWXCY',
+  tagline: 'Free Developer Tools & Utilities',
+  description: 'CSS frameworks, code generators, API tools, and developer utilities. Built by developers, for developers.',
     nav: [
       { label: 'Tools', href: '/#tools' },
       { label: 'Studies', href: '/#studies' },
@@ -78,6 +86,8 @@ export const sites: Record<string, SiteConfig> = {
     accent: '#C2185B',
     theme: { bg: '#0a0b10', cardBg: '#111318', border: '#1e2030', textPrimary: '#e0e0e0', textSecondary: '#888888' },
     gaId: 'G-WGF4XXH1SP',
+  tagline: 'Cooking Tools, Recipes & Kitchen Science',
+  description: 'Baking calculators, recipe converters, smoke points, and nutrition tools. Cook smarter with data.',
     nav: [
       { label: 'Tools', href: '/#tools' },
       { label: 'Guides', href: '/#guides' },
@@ -93,6 +103,8 @@ export const sites: Record<string, SiteConfig> = {
     accent: '#C4956A',
     theme: { bg: '#0a0806', cardBg: '#12100c', border: '#2a2418', textPrimary: '#e0d5c8', textSecondary: '#888888' },
     gaId: 'G-PGRXS7TCZV',
+  tagline: 'Digital Nomad & Travel Tools',
+  description: 'Cost of living comparisons, visa guides, travel calculators, and nomad city rankings. Travel smarter.',
     nav: [
       { label: 'Tools', href: '/#tools' },
       { label: 'Guides', href: '/#guides' },
@@ -108,6 +120,8 @@ export const sites: Record<string, SiteConfig> = {
     accent: '#9333EA',
     theme: { bg: '#08060e', cardBg: '#100e18', border: '#221e30', textPrimary: '#d8d0e8', textSecondary: '#888888' },
     gaId: 'G-W1KVQZVVWE',
+  tagline: 'Gaming Gear Reviews & Performance Tools',
+  description: 'Headset comparisons, mouse guides, monitor breakdowns, and FPS optimization tools. Gear up smarter.',
     nav: [
       { label: 'Tools', href: '/#tools' },
       { label: 'Guides', href: '/#guides' },
@@ -123,6 +137,8 @@ export const sites: Record<string, SiteConfig> = {
     accent: '#2DB89A',
     theme: { bg: '#060c0a', cardBg: '#0c1410', border: '#1a2a24', textPrimary: '#c8e0d8', textSecondary: '#888888' },
     gaId: 'G-PRHBMYEWQC',
+  tagline: 'Practical Home & DIY Calculators',
+  description: 'Concrete, paint, flooring, BTU, and renovation calculators. Get the numbers right before you build.',
     nav: [
       { label: 'Tools', href: '/#tools' },
       { label: 'Guides', href: '/#guides' },
@@ -140,6 +156,8 @@ sites['bodycount'] = {
   accent: '#E05A5A',
   theme: { bg: '#060a12', cardBg: '#0a1020', border: '#152040', textPrimary: '#e2e8f0', textSecondary: '#94a3b8' },
   gaId: 'G-S2NRZFV4BW',
+  tagline: 'Free Health & Body Calculators',
+  description: 'BMI, BMR, body fat, calorie, heart rate, and macro calculators. Track your health with accurate tools.',
   nav: [
     { label: 'Calculators', href: '/#tools' },
     { label: 'Studies', href: '/#studies' },
@@ -157,6 +175,8 @@ sites['nookienook'] = {
   accent: '#E84393',
   theme: { bg: '#0c0610', cardBg: '#140e1a', border: '#2a1e34', textPrimary: '#e8ddf0', textSecondary: '#a090b0' },
   gaId: 'G-LQFGTRMFYR',
+  tagline: 'Sexual Health Guides & Tools',
+  description: 'Birth control comparisons, STI guides, fertility tools, and wellness resources. Informed choices, no judgment.',
   nav: [
     { label: 'Guides', href: '/#guides' },
     { label: 'Tools', href: '/#tools' },
@@ -173,6 +193,8 @@ sites['getthebag'] = {
   accent: '#3B82F6',
   theme: { bg: '#060a12', cardBg: '#0a1020', border: '#152040', textPrimary: '#e2e8f0', textSecondary: '#94a3b8' },
   gaId: 'G-52ZPK1JZ45',
+  tagline: 'Career Tools & Job Resources',
+  description: 'Salary calculators, resume tips, interview prep, and job search tools. Level up your career.',
   nav: [
     { label: 'Tools', href: '/#tools' },
     { label: 'Guides', href: '/#guides' },
@@ -187,6 +209,8 @@ sites['sendnerds'] = {
   accent: '#3B82F6',
   theme: { bg: '#060812', cardBg: '#0a1020', border: '#152040', textPrimary: '#e2e8f0', textSecondary: '#94a3b8' },
   gaId: 'G-Z7NENQMJQP',
+  tagline: 'Free Education & Academic Calculators',
+  description: 'GPA calculators, test score tools, citation generators, and study aids. Ace your academics.',
   nav: [
     { label: 'Calculators', href: '/#tools' },
     { label: 'Guides', href: '/#guides' },
@@ -201,6 +225,8 @@ sites['justonemoment'] = {
   accent: '#F59E0B',
   theme: { bg: '#060812', cardBg: '#0a1020', border: '#152040', textPrimary: '#e2e8f0', textSecondary: '#94a3b8' },
   gaId: 'G-PNBZ1VJM9R',
+  tagline: 'Free Online Timers & Countdowns',
+  description: 'Pomodoro, meditation, workout, and custom timers. Simple, fast, no distractions.',
   nav: [
     { label: 'Timers', href: '/#tools' },
     { label: 'Calculators', href: '/#calculators' },
@@ -215,6 +241,8 @@ sites['fixitwithducttape'] = {
   accent: '#A0A0A0',
   theme: { bg: '#0a0a0a', cardBg: '#141414', border: '#252525', textPrimary: '#e2e8f0', textSecondary: '#94a3b8' },
   gaId: 'G-3Y23ZLX5C3',
+  tagline: 'AI & SaaS Tool Reviews',
+  description: 'Honest reviews and comparisons of AI tools, productivity software, and SaaS platforms. Find what actually works.',
   nav: [
     { label: 'Reviews', href: '/#tools' },
     { label: 'Comparisons', href: '/#guides' },
@@ -229,6 +257,8 @@ sites['papyruspeople'] = {
   accent: '#D4A574',
   theme: { bg: '#0a0806', cardBg: '#12100c', border: '#2a2418', textPrimary: '#e8e0d0', textSecondary: '#a09880' },
   gaId: 'G-26Z3FPWKM6',
+  tagline: 'Text Tools & Character Generators',
+  description: 'Font generators, binary translators, morse code, and text formatters. Transform text instantly.',
   nav: [
     { label: 'Translators', href: '/#tools' },
     { label: 'Fonts', href: '/#guides' },
@@ -243,6 +273,8 @@ sites['eeniemeenie'] = {
   accent: '#E040FB',
   theme: { bg: '#0a060c', cardBg: '#140e18', border: '#2a1e34', textPrimary: '#e8e0f0', textSecondary: '#a090b8' },
   gaId: 'G-CS7D4WKPVP',
+  tagline: 'Random Generators & Decision Tools',
+  description: 'Wheel spinners, name pickers, dice rollers, and randomizers. Let chance decide.',
   nav: [
     { label: 'Generators', href: '/#tools' },
     { label: 'Spinners', href: '/#guides' },
@@ -257,6 +289,8 @@ sites['pleasestartplease'] = {
   accent: '#EF4444',
   theme: { bg: '#0a0606', cardBg: '#141010', border: '#2a1a1a', textPrimary: '#e8e0e0', textSecondary: '#a09090' },
   gaId: 'G-DVC7TK5BHV',
+  tagline: 'Car Tools, Guides & Automotive Data',
+  description: 'Maintenance schedules, insurance comparisons, fuel economy tools, and OBD code lookups. Keep your car running.',
   nav: [
     { label: 'Calculators', href: '/#tools' },
     { label: 'Guides', href: '/#guides' },
