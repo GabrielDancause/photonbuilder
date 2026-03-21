@@ -1,0 +1,1264 @@
+---
+import SiteLayout from "../../../layouts/SiteLayout.astro";
+
+const schema = {
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "Tax Bracket Visualizer",
+  "url": "https://firemaths.info/tax-bracket-visualizer",
+  "description": "Free tax bracket visualizer — see exactly how progressive federal tax brackets work, compare filing statuses, and understand your effective vs marginal tax rate.",
+  "applicationCategory": "FinanceApplication",
+  "operatingSystem": "All",
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "USD"
+  }
+};
+
+const faqSchema = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "Does moving into a higher tax bracket mean all my income is taxed at the higher rate?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "No — this is the most common tax myth. The US uses a progressive tax system where only the income within each bracket is taxed at that bracket's rate. For example, if you're a single filer earning $50,000 in 2026, you pay 10% on the first $11,925, 12% on $11,926–$48,475, and 22% only on the remaining $1,525. Your effective rate is about 11.5%, not 22%."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What is the difference between marginal and effective tax rate?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Your marginal tax rate is the rate applied to your last (highest) dollar of taxable income — it's the bracket you're currently in. Your effective tax rate is the average rate across all your income, calculated as total federal tax owed divided by total taxable income. The effective rate is always lower than the marginal rate because your first dollars are taxed at lower brackets. For example, a single filer earning $100,000 in 2026 has a 22% marginal rate but roughly a 15% effective rate."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What are the 2026 federal income tax brackets?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "For 2026, single filers face seven brackets: 10% on income up to $11,925, 12% on $11,926–$48,475, 22% on $48,476–$103,350, 24% on $103,351–$197,300, 32% on $197,301–$250,525, 35% on $250,526–$626,350, and 37% on income above $626,350. Married filing jointly brackets are roughly double these thresholds. These apply to taxable income after the standard deduction."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How does filing status affect my tax brackets?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Filing status changes both bracket thresholds and the standard deduction. Married filing jointly has the widest brackets (roughly double single), meaning more income is taxed at lower rates. Head of household falls between single and married. Married filing separately uses the narrowest brackets and loses some deductions. For the same income, married filing jointly typically results in the lowest tax, followed by head of household, then single, then married filing separately."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Should I try to stay in a lower tax bracket?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Earning more money always leaves you with more after-tax income — you should never turn down a raise to 'stay in a lower bracket.' However, strategically reducing taxable income through 401(k) contributions, HSA contributions, or other pre-tax deductions can lower the rate on your last dollars of income. For example, if you're just over the 22% bracket threshold, a 401(k) contribution could bring that income back into the 12% bracket, saving 10 cents on every dollar contributed."
+      }
+    }
+  ]
+};
+
+export const meta = {
+  title: "Tax Bracket Visualizer — See How Progressive Taxes Work | firemaths.info",
+  description: "Free tax bracket visualizer — see exactly how each dollar is taxed across 2026 federal brackets, compare filing statuses, and understand effective vs marginal tax rates.",
+  category: "tool",
+  published: "2026-03-21",
+};
+---
+
+<SiteLayout
+  site="firemaths"
+  title="Tax Bracket Visualizer — See How Progressive Taxes Work | firemaths.info"
+  description="Free tax bracket visualizer — see exactly how each dollar is taxed across 2026 federal brackets, compare filing statuses, and understand effective vs marginal tax rates."
+  canonical="https://firemaths.info/tax-bracket-visualizer" schema={schema}
+>
+  <style>
+:root {
+    --bracket-10: #4A90E2;
+    --bracket-12: #50E3C2;
+    --bracket-22: #D4A017;
+    --bracket-24: #F39C12;
+    --bracket-32: #E85D75;
+    --bracket-35: #9B59B6;
+    --bracket-37: #E74C3C;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-primary);
+    font-family: var(--font-ui);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4 {
+    font-weight: 700;
+    line-height: 1.2;
+    color: var(--text-primary);
+}
+
+.container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem;
+}
+
+header {
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+header h1 {
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+    color: var(--accent-color);
+}
+
+header p {
+    color: var(--text-secondary);
+    font-size: 1.1rem;
+}
+
+.calculator-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 2rem;
+    margin-bottom: 3rem;
+}
+
+@media (min-width: 768px) {
+    .calculator-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+.scenario-card {
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.5rem;
+}
+
+.scenario-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.scenario-header h2 {
+    font-size: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.input-group {
+    margin-bottom: 1.25rem;
+}
+
+.input-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+
+.input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.prefix, .suffix {
+    position: absolute;
+    color: var(--text-secondary);
+    font-family: var(--font-mono);
+    font-size: 1rem;
+    pointer-events: none;
+}
+
+.prefix { left: 1rem; }
+.suffix { right: 1rem; }
+
+input[type="number"], select {
+    width: 100%;
+    background-color: var(--bg-color);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    font-family: var(--font-mono);
+    font-size: 1rem;
+    padding: 0.75rem 1rem;
+    border-radius: 6px;
+    transition: border-color 0.2s;
+    -moz-appearance: textfield;
+}
+
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+input[type="number"]:focus, select:focus {
+    outline: none;
+    border-color: var(--accent-color);
+}
+
+.has-prefix input { padding-left: 2rem; }
+.has-suffix input { padding-right: 2.5rem; }
+
+.results {
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+}
+
+.result-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.result-label {
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+}
+
+.result-value {
+    font-family: var(--font-mono);
+    font-size: 1.125rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.result-final .result-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--accent-color);
+}
+
+.result-deduction .result-value {
+    color: var(--chart-color-b, #E85D75);
+}
+
+.copy-btn {
+    background: none;
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-family: var(--font-ui);
+    transition: all 0.2s;
+}
+
+.copy-btn:hover {
+    border-color: var(--accent-color);
+    color: var(--text-primary);
+}
+
+/* Stacked bar chart */
+.bar-chart-section {
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 3rem;
+}
+
+.bar-chart-header {
+    margin-bottom: 1.5rem;
+    text-align: center;
+}
+
+.bar-chart-legend {
+    display: flex;
+    justify-content: center;
+    gap: 1rem;
+    margin-top: 1rem;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    flex-wrap: wrap;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.indicator {
+    width: 12px;
+    height: 12px;
+    border-radius: 3px;
+    display: inline-block;
+}
+
+.stacked-bar-container {
+    margin-top: 1.5rem;
+}
+
+.stacked-bar-row {
+    margin-bottom: 1.5rem;
+}
+
+.stacked-bar-label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 0.4rem;
+    color: var(--text-primary);
+}
+
+.stacked-bar {
+    display: flex;
+    width: 100%;
+    height: 40px;
+    border-radius: 6px;
+    overflow: hidden;
+    background: var(--bg-color);
+}
+
+.stacked-bar .segment {
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: #000;
+    overflow: hidden;
+    white-space: nowrap;
+    transition: width 0.4s ease;
+    min-width: 0;
+}
+
+.stacked-bar-amounts {
+    display: flex;
+    width: 100%;
+    margin-top: 0.25rem;
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+    font-family: var(--font-mono);
+}
+
+.stacked-bar-amounts span {
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+    text-align: center;
+    transition: width 0.4s ease;
+}
+
+/* Bracket breakdown table */
+.bracket-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 2rem;
+}
+
+.bracket-table th, .bracket-table td {
+    padding: 0.75rem 1rem;
+    text-align: right;
+    font-size: 0.9rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.bracket-table th {
+    background-color: var(--bg-color);
+    color: var(--text-secondary);
+    font-weight: 600;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.bracket-table th:first-child, .bracket-table td:first-child {
+    text-align: left;
+}
+
+.bracket-table tr:last-child td {
+    border-bottom: none;
+}
+
+.bracket-table .total-row td {
+    font-weight: 700;
+    color: var(--accent-color);
+    background-color: var(--bg-color);
+    border-top: 2px solid var(--border-color);
+}
+
+.bracket-color-cell {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.bracket-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 3px;
+    flex-shrink: 0;
+}
+
+/* Comparison */
+.comparison-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 3rem;
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.comparison-table th, .comparison-table td {
+    padding: 1rem 1.25rem;
+    text-align: right;
+    font-size: 0.9rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.comparison-table th {
+    background-color: var(--bg-color);
+    color: var(--text-secondary);
+    font-weight: 600;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+}
+
+.comparison-table th:first-child, .comparison-table td:first-child {
+    text-align: left;
+}
+
+.comparison-table tr:last-child td {
+    border-bottom: none;
+}
+
+.comparison-table .highlight-row td {
+    font-weight: 700;
+    color: var(--accent-color);
+    background-color: var(--bg-color);
+}
+
+/* Myth buster */
+.myth-card {
+    background-color: var(--card-bg);
+    border: 2px solid var(--accent-color);
+    border-radius: 12px;
+    padding: 2rem;
+    margin-bottom: 3rem;
+}
+
+.myth-card h2 {
+    color: var(--accent-color);
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.myth-card .myth-label {
+    display: inline-block;
+    padding: 0.25rem 0.75rem;
+    border-radius: 4px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-bottom: 0.75rem;
+}
+
+.myth-label.wrong {
+    background: rgba(232, 93, 117, 0.15);
+    color: #E85D75;
+}
+
+.myth-label.right {
+    background: rgba(80, 227, 194, 0.15);
+    color: #50E3C2;
+}
+
+.myth-card p {
+    color: var(--text-secondary);
+    margin-bottom: 1rem;
+    line-height: 1.7;
+}
+
+.myth-card .example-box {
+    background-color: var(--bg-color);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 1.25rem;
+    margin: 1rem 0;
+    font-family: var(--font-mono);
+    font-size: 0.9rem;
+    line-height: 1.8;
+    color: var(--text-primary);
+}
+
+/* Tips */
+.tips-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    margin-bottom: 3rem;
+}
+
+@media (max-width: 640px) {
+    .tips-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.tip-card {
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.5rem;
+}
+
+.tip-card h3 {
+    font-size: 1.1rem;
+    margin-bottom: 1rem;
+    color: var(--accent-color);
+}
+
+.tip-card ul {
+    list-style: none;
+    padding: 0;
+}
+
+.tip-card li {
+    color: var(--text-secondary);
+    margin-bottom: 0.75rem;
+    padding-left: 1.25rem;
+    position: relative;
+    font-size: 0.9rem;
+}
+
+.tip-card li::before {
+    content: "\203A";
+    position: absolute;
+    left: 0;
+    color: var(--accent-color);
+    font-weight: bold;
+}
+
+/* SEO content */
+.seo-content {
+    margin-bottom: 4rem;
+}
+
+.seo-content h2 {
+    font-size: 1.75rem;
+    margin-top: 2.5rem;
+    margin-bottom: 1rem;
+    color: var(--accent-color);
+}
+
+.seo-content p {
+    margin-bottom: 1rem;
+    color: var(--text-secondary);
+}
+
+.seo-content ul {
+    margin-bottom: 1.5rem;
+    padding-left: 1.5rem;
+    color: var(--text-secondary);
+}
+
+.seo-content li {
+    margin-bottom: 0.5rem;
+}
+
+/* FAQ */
+.faq-section {
+    margin-bottom: 4rem;
+}
+
+.faq-section h2 {
+    font-size: 1.75rem;
+    margin-bottom: 1.5rem;
+    color: var(--accent-color);
+}
+
+.faq-item {
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    margin-bottom: 0.75rem;
+    overflow: hidden;
+}
+
+.faq-question {
+    width: 100%;
+    background: none;
+    border: none;
+    color: var(--text-primary);
+    font-family: var(--font-ui);
+    font-size: 1rem;
+    font-weight: 600;
+    padding: 1.25rem 1.5rem;
+    text-align: left;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: color 0.2s;
+}
+
+.faq-question:hover {
+    color: var(--accent-color);
+}
+
+.faq-question::after {
+    content: "+";
+    font-size: 1.25rem;
+    font-weight: 300;
+    color: var(--text-secondary);
+    transition: transform 0.2s;
+    flex-shrink: 0;
+    margin-left: 1rem;
+}
+
+.faq-item.open .faq-question::after {
+    content: "\2212";
+}
+
+.faq-answer {
+    display: none;
+    padding: 0 1.5rem 1.25rem;
+    color: var(--text-secondary);
+    line-height: 1.7;
+    font-size: 0.95rem;
+}
+
+.faq-item.open .faq-answer {
+    display: block;
+}
+
+/* Related */
+.related-links {
+    margin-bottom: 3rem;
+}
+
+.related-links h2 {
+    font-size: 1.25rem;
+    margin-bottom: 1rem;
+}
+
+.related-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+}
+
+@media (max-width: 640px) {
+    .related-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.related-grid a {
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 1rem 1.25rem;
+    color: var(--text-primary);
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 0.95rem;
+    transition: border-color 0.2s, color 0.2s;
+}
+
+.related-grid a:hover {
+    border-color: var(--accent-color);
+    color: var(--accent-color);
+}
+
+footer {
+    text-align: center;
+    padding: 2rem 0;
+    border-top: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+}
+
+footer a {
+    color: var(--accent-color);
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+footer a:hover {
+    color: var(--text-primary);
+    text-decoration: underline;
+}
+
+@media (max-width: 640px) {
+    .comparison-table {
+        font-size: 0.8rem;
+    }
+    .comparison-table th, .comparison-table td {
+        padding: 0.65rem 0.5rem;
+    }
+    .bracket-table th, .bracket-table td {
+        padding: 0.5rem 0.4rem;
+        font-size: 0.8rem;
+    }
+}
+  </style>
+
+<div class="container">
+    <h1>Tax Bracket Visualizer</h1>
+    <p style="text-align:center; color:var(--text-secondary); font-size:1.1rem; margin-bottom:2rem;">See exactly how progressive federal tax brackets work — 2026 data</p>
+
+    <main>
+        <div class="calculator-grid">
+            <!-- Inputs -->
+            <div class="scenario-card">
+                <div class="scenario-header">
+                    <h2>Your Income</h2>
+                </div>
+
+                <div class="inputs">
+                    <div class="input-group">
+                        <label for="gross-income">Annual Gross Income</label>
+                        <div class="input-wrapper has-prefix">
+                            <span class="prefix">$</span>
+                            <input type="number" id="gross-income" value="85000" min="0" step="1000">
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="filing-status">Filing Status</label>
+                        <select id="filing-status">
+                            <option value="single" selected>Single</option>
+                            <option value="married">Married Filing Jointly</option>
+                            <option value="married_sep">Married Filing Separately</option>
+                            <option value="hoh">Head of Household</option>
+                        </select>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="deduction-type">Deduction</label>
+                        <select id="deduction-type">
+                            <option value="standard" selected>Standard Deduction</option>
+                            <option value="custom">Custom / Itemized</option>
+                        </select>
+                    </div>
+
+                    <div class="input-group" id="custom-deduction-group" style="display:none;">
+                        <label for="custom-deduction">Deduction Amount</label>
+                        <div class="input-wrapper has-prefix">
+                            <span class="prefix">$</span>
+                            <input type="number" id="custom-deduction" value="15000" min="0" step="500">
+                        </div>
+                    </div>
+
+                    <div class="result-item" style="margin-top: 1rem; padding-top: 1rem; border-top: 1px dashed var(--border-color);">
+                        <span class="result-label">Standard Deduction</span>
+                        <span class="result-value" id="std-deduction-display" style="font-size: 0.95rem;">$15,000</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label">Taxable Income</span>
+                        <span class="result-value" id="taxable-income-display" style="font-size: 1.1rem; font-weight: 700; color: var(--accent-color);">$0</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Results -->
+            <div class="scenario-card">
+                <div class="scenario-header">
+                    <h2>Tax Summary</h2>
+                </div>
+
+                <div class="results" style="margin-top: 0; border-top: none; padding-top: 0;">
+                    <div class="result-item result-final" style="margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border-color);">
+                        <span class="result-label" style="font-size: 1rem;">Total Federal Tax</span>
+                        <div class="result-value">
+                            <span id="total-tax">$0</span>
+                            <button class="copy-btn" onclick="copyValue('total-tax', this)">Copy</button>
+                        </div>
+                    </div>
+
+                    <div class="result-item">
+                        <span class="result-label">Effective Tax Rate</span>
+                        <span class="result-value" id="effective-rate" style="font-size: 1.15rem; font-weight: 700; color: var(--accent-color);">0%</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label">Marginal Tax Rate</span>
+                        <span class="result-value" id="marginal-rate" style="font-size: 1.15rem; font-weight: 600;">0%</span>
+                    </div>
+
+                    <div style="flex-grow: 1;"></div>
+
+                    <div class="result-item" style="padding-top: 1rem; border-top: 1px dashed var(--border-color);">
+                        <span class="result-label">After-Tax Income</span>
+                        <span class="result-value" id="after-tax-income" style="font-size: 1.25rem; font-weight: 700; color: var(--accent-color);">$0</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label">Monthly After-Tax</span>
+                        <span class="result-value" id="monthly-after-tax" style="font-size: 0.95rem;">$0</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label">Tax Saved vs Flat Marginal Rate</span>
+                        <span class="result-value" id="tax-saved" style="font-size: 0.95rem; color: #50E3C2;">$0</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Stacked Bar Chart -->
+        <div class="bar-chart-section">
+            <div class="bar-chart-header">
+                <h2>Income by Tax Bracket</h2>
+                <div class="bar-chart-legend">
+                    <div class="legend-item"><span class="indicator" style="background:var(--bracket-10)"></span> 10%</div>
+                    <div class="legend-item"><span class="indicator" style="background:var(--bracket-12)"></span> 12%</div>
+                    <div class="legend-item"><span class="indicator" style="background:var(--bracket-22)"></span> 22%</div>
+                    <div class="legend-item"><span class="indicator" style="background:var(--bracket-24)"></span> 24%</div>
+                    <div class="legend-item"><span class="indicator" style="background:var(--bracket-32)"></span> 32%</div>
+                    <div class="legend-item"><span class="indicator" style="background:var(--bracket-35)"></span> 35%</div>
+                    <div class="legend-item"><span class="indicator" style="background:var(--bracket-37)"></span> 37%</div>
+                </div>
+            </div>
+            <div class="stacked-bar-container" id="bar-chart-container">
+                <!-- Bars rendered by JS -->
+            </div>
+        </div>
+
+        <!-- Bracket Breakdown Table -->
+        <h2 style="font-size: 1.75rem; margin-bottom: 1.5rem; color: var(--accent-color);">Bracket-by-Bracket Breakdown</h2>
+        <div class="scenario-card" style="margin-bottom: 3rem; padding: 0; overflow: hidden;">
+            <table class="bracket-table" id="bracket-table">
+                <thead>
+                    <tr>
+                        <th>Bracket</th>
+                        <th>Rate</th>
+                        <th>Taxable Range</th>
+                        <th>Income in Bracket</th>
+                        <th>Tax from Bracket</th>
+                    </tr>
+                </thead>
+                <tbody id="bracket-tbody">
+                    <!-- Rendered by JS -->
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Filing Status Comparison -->
+        <h2 style="font-size: 1.75rem; margin-bottom: 1.5rem; color: var(--accent-color);">Filing Status Comparison</h2>
+        <table class="comparison-table" id="comparison-table">
+            <thead>
+                <tr>
+                    <th></th>
+                    <th>Single</th>
+                    <th>Married Jointly</th>
+                    <th>Married Separately</th>
+                    <th>Head of Household</th>
+                </tr>
+            </thead>
+            <tbody id="comparison-tbody">
+                <!-- Rendered by JS -->
+            </tbody>
+        </table>
+
+        <!-- Myth Buster -->
+        <div class="myth-card">
+            <h2>Tax Bracket Myth: Busted</h2>
+            <div class="myth-label wrong">Common Myth</div>
+            <p>"If I earn more and move into the 22% bracket, I'll pay 22% on ALL my income and actually take home less money."</p>
+
+            <div class="myth-label right">Reality</div>
+            <p>The US uses a <strong>progressive</strong> (or "graduated") tax system. Only the income <em>within</em> each bracket is taxed at that rate. Your first dollars are always taxed at 10%, no matter how much you earn. Moving into a higher bracket only affects the dollars above the previous bracket's threshold.</p>
+
+            <div class="example-box" id="myth-example">
+                <!-- Filled by JS -->
+            </div>
+
+            <p><strong>You will never take home less money by earning more.</strong> Every additional dollar you earn is taxed at your marginal rate, but all your previous income stays taxed at the lower rates. A raise from $48,000 to $52,000 doesn't suddenly cost you thousands — only the extra $4,000 is taxed at the higher rate.</p>
+        </div>
+
+        <!-- Tips -->
+        <h2 style="font-size: 1.75rem; margin-bottom: 1.5rem; color: var(--accent-color);">Tax Bracket Strategies</h2>
+        <div class="tips-grid">
+            <div class="tip-card">
+                <h3>Lower Your Taxable Income</h3>
+                <ul>
+                    <li>Max out 401(k) contributions ($23,500 in 2026, $31,000 if 50+) to reduce taxable income dollar-for-dollar</li>
+                    <li>Contribute to a traditional IRA ($7,000 limit, $8,000 if 50+) if you qualify for the deduction</li>
+                    <li>Use an HSA if eligible: $4,300 individual / $8,550 family limit for 2026, fully deductible</li>
+                    <li>Itemize deductions if they exceed the standard deduction — mortgage interest, state taxes (up to $10,000), and charitable donations</li>
+                    <li>Consider charitable bunching: combine two years of donations into one to exceed the standard deduction threshold</li>
+                </ul>
+            </div>
+            <div class="tip-card">
+                <h3>Bracket-Aware Moves</h3>
+                <ul>
+                    <li>Roth conversions: in low-income years, convert traditional IRA to Roth up to the top of your current bracket</li>
+                    <li>Capital gains harvesting: if you're in the 0% long-term capital gains bracket (taxable income under $48,475 single), sell appreciated assets tax-free</li>
+                    <li>Time income and deductions: defer a bonus to January or accelerate deductions into December to shift income between brackets</li>
+                    <li>Your effective rate matters more than your marginal rate — use it for budgeting and financial planning</li>
+                    <li>Consider filing status carefully: Head of Household offers wider brackets and a larger deduction than Single for qualifying taxpayers</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- SEO Content -->
+        <div class="seo-content">
+            <h2>How Progressive Tax Brackets Work</h2>
+            <p>The United States federal income tax system is <strong>progressive</strong>, meaning it uses graduated tax brackets where higher portions of your income are taxed at incrementally higher rates. This system ensures that people who earn more pay a higher percentage of their income in taxes, but it does so gradually — not all at once.</p>
+            <p>When you hear that someone is "in the 22% tax bracket," it means only their income above the 12% bracket threshold (and below the 24% threshold) is taxed at 22%. All of their income below that point is taxed at the lower 10% and 12% rates. This is why understanding your <strong>effective tax rate</strong> — the average rate across all your income — is far more useful than knowing your marginal bracket alone.</p>
+
+            <h2>2026 Federal Income Tax Brackets</h2>
+            <p>For the 2026 tax year, the IRS has set seven federal income tax brackets: 10%, 12%, 22%, 24%, 32%, 35%, and 37%. The income thresholds for each bracket depend on your filing status. Single filers start paying 22% on income above $48,475 (after the standard deduction), while married couples filing jointly don't hit 22% until $96,950. These thresholds are adjusted annually for inflation.</p>
+            <p>Before these brackets apply, your gross income is reduced by the <strong>standard deduction</strong> — $15,000 for single filers, $30,000 for married filing jointly, $15,000 for married filing separately, and $22,500 for head of household in 2026. Only the resulting <strong>taxable income</strong> flows through the brackets.</p>
+
+            <h2>Effective vs Marginal Tax Rate</h2>
+            <p>Your <strong>marginal tax rate</strong> is the rate applied to your last dollar of income. Your <strong>effective tax rate</strong> is total taxes divided by total taxable income — it represents the blended average across all brackets. For example, a single filer with $85,000 of gross income (about $70,000 taxable after the standard deduction) pays roughly $10,600 in federal tax — an effective rate of about 12.5%, despite being in the 22% marginal bracket.</p>
+
+            <h2>Why Filing Status Matters</h2>
+            <p>Your filing status determines both your standard deduction and your bracket thresholds. Married filing jointly doubles most bracket widths compared to single, meaning more income is taxed at lower rates. Head of household offers a larger standard deduction and wider lower brackets than single filing, benefiting single parents and qualifying individuals. Married filing separately generally offers the least favorable brackets and loses access to several tax credits.</p>
+        </div>
+
+        <!-- FAQ -->
+        <div class="faq-section">
+            <h2>Frequently Asked Questions</h2>
+            <div class="faq-item">
+                <button class="faq-question" onclick="toggleFaq(this)">Does moving into a higher tax bracket mean all my income is taxed at the higher rate?</button>
+                <div class="faq-answer">No — this is the most common tax myth. The US uses a progressive tax system where only the income within each bracket is taxed at that bracket's rate. For example, if you're a single filer earning $50,000 in 2026, you pay 10% on the first $11,925, 12% on $11,926-$48,475, and 22% only on the remaining $1,525. Your effective rate is about 11.5%, not 22%.</div>
+            </div>
+            <div class="faq-item">
+                <button class="faq-question" onclick="toggleFaq(this)">What is the difference between marginal and effective tax rate?</button>
+                <div class="faq-answer">Your marginal tax rate is the rate applied to your last (highest) dollar of taxable income — it's the bracket you're currently in. Your effective tax rate is the average rate across all your income, calculated as total federal tax owed divided by total taxable income. The effective rate is always lower than the marginal rate because your first dollars are taxed at lower brackets.</div>
+            </div>
+            <div class="faq-item">
+                <button class="faq-question" onclick="toggleFaq(this)">What are the 2026 federal income tax brackets?</button>
+                <div class="faq-answer">For 2026, single filers face seven brackets: 10% on income up to $11,925, 12% on $11,926-$48,475, 22% on $48,476-$103,350, 24% on $103,351-$197,300, 32% on $197,301-$250,525, 35% on $250,526-$626,350, and 37% on income above $626,350. Married filing jointly brackets are roughly double these thresholds. These apply to taxable income after the standard deduction.</div>
+            </div>
+            <div class="faq-item">
+                <button class="faq-question" onclick="toggleFaq(this)">How does filing status affect my tax brackets?</button>
+                <div class="faq-answer">Filing status changes both bracket thresholds and the standard deduction. Married filing jointly has the widest brackets (roughly double single), meaning more income is taxed at lower rates. Head of household falls between single and married. Married filing separately uses the narrowest brackets and loses some deductions. For the same income, married filing jointly typically results in the lowest tax.</div>
+            </div>
+            <div class="faq-item">
+                <button class="faq-question" onclick="toggleFaq(this)">Should I try to stay in a lower tax bracket?</button>
+                <div class="faq-answer">Earning more money always leaves you with more after-tax income — you should never turn down a raise to "stay in a lower bracket." However, strategically reducing taxable income through 401(k) contributions, HSA contributions, or other pre-tax deductions can lower the rate on your last dollars of income.</div>
+            </div>
+        </div>
+
+        <!-- Related -->
+        <div class="related-links">
+            <h2>Related Calculators</h2>
+            <div class="related-grid">
+                <a href="/sites/firemaths/paycheck-calculator">Paycheck Calculator</a>
+                <a href="/sites/firemaths/investment-calculator">Investment Calculator</a>
+                <a href="/sites/firemaths/retirement-savings-calculator">Retirement Savings Calculator</a>
+            </div>
+        </div>
+    </main>
+</div>
+
+  <script is:inline type="application/ld+json" set:html={JSON.stringify(faqSchema)} />
+
+  <script is:inline>
+const fmt = (v) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(v);
+const fmt2 = (v) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(v);
+
+window.copyValue = async (elementId, btn) => {
+    const text = document.getElementById(elementId).innerText;
+    try {
+        await navigator.clipboard.writeText(text);
+        const orig = btn.innerText;
+        btn.innerText = 'Copied!';
+        setTimeout(() => { btn.innerText = orig; }, 2000);
+    } catch (err) { /* noop */ }
+};
+
+window.toggleFaq = (btn) => {
+    btn.parentElement.classList.toggle('open');
+};
+
+// 2026 federal tax brackets
+const brackets = {
+    single: [
+        [11925, 0.10],
+        [48475, 0.12],
+        [103350, 0.22],
+        [197300, 0.24],
+        [250525, 0.32],
+        [626350, 0.35],
+        [Infinity, 0.37]
+    ],
+    married: [
+        [23850, 0.10],
+        [96950, 0.12],
+        [206700, 0.22],
+        [394600, 0.24],
+        [501050, 0.32],
+        [751600, 0.35],
+        [Infinity, 0.37]
+    ],
+    married_sep: [
+        [11925, 0.10],
+        [48475, 0.12],
+        [103350, 0.22],
+        [197300, 0.24],
+        [250525, 0.32],
+        [375800, 0.35],
+        [Infinity, 0.37]
+    ],
+    hoh: [
+        [17000, 0.10],
+        [64850, 0.12],
+        [103350, 0.22],
+        [197300, 0.24],
+        [250500, 0.32],
+        [626350, 0.35],
+        [Infinity, 0.37]
+    ]
+};
+
+const standardDeduction = { single: 15000, married: 30000, married_sep: 15000, hoh: 22500 };
+
+const bracketColors = ['var(--bracket-10)', 'var(--bracket-12)', 'var(--bracket-22)', 'var(--bracket-24)', 'var(--bracket-32)', 'var(--bracket-35)', 'var(--bracket-37)'];
+const bracketRawColors = ['#4A90E2', '#50E3C2', '#D4A017', '#F39C12', '#E85D75', '#9B59B6', '#E74C3C'];
+const rateLabels = ['10%', '12%', '22%', '24%', '32%', '35%', '37%'];
+
+const filingLabels = {
+    single: 'Single',
+    married: 'Married Jointly',
+    married_sep: 'Married Separately',
+    hoh: 'Head of Household'
+};
+
+function calcBracketBreakdown(taxableIncome, filingStatus) {
+    const brkts = brackets[filingStatus];
+    const breakdown = [];
+    let prev = 0;
+    let totalTax = 0;
+    let marginalRate = 0.10;
+
+    for (let i = 0; i < brkts.length; i++) {
+        const [limit, rate] = brkts[i];
+        if (taxableIncome <= prev) {
+            breakdown.push({ rate, lower: prev, upper: limit, incomeInBracket: 0, taxFromBracket: 0 });
+        } else {
+            const incomeInBracket = Math.min(taxableIncome, limit) - prev;
+            const taxFromBracket = incomeInBracket * rate;
+            totalTax += taxFromBracket;
+            marginalRate = rate;
+            breakdown.push({ rate, lower: prev, upper: limit, incomeInBracket, taxFromBracket });
+        }
+        prev = limit;
+    }
+
+    return { breakdown, totalTax, marginalRate };
+}
+
+function getDeduction(filingStatus) {
+    const dedType = document.getElementById('deduction-type').value;
+    if (dedType === 'custom') {
+        return parseFloat(document.getElementById('custom-deduction').value) || 0;
+    }
+    return standardDeduction[filingStatus];
+}
+
+function updateAll() {
+    const grossIncome = parseFloat(document.getElementById('gross-income').value) || 0;
+    const filingStatus = document.getElementById('filing-status').value;
+    const deduction = getDeduction(filingStatus);
+    const taxableIncome = Math.max(0, grossIncome - deduction);
+
+    // Show/hide custom deduction
+    const dedType = document.getElementById('deduction-type').value;
+    document.getElementById('custom-deduction-group').style.display = dedType === 'custom' ? 'block' : 'none';
+    document.getElementById('std-deduction-display').innerText = fmt(deduction);
+    document.getElementById('taxable-income-display').innerText = fmt(taxableIncome);
+
+    // Calculate for current filing status
+    const { breakdown, totalTax, marginalRate } = calcBracketBreakdown(taxableIncome, filingStatus);
+
+    const effectiveRate = taxableIncome > 0 ? (totalTax / taxableIncome * 100) : 0;
+    const afterTax = grossIncome - totalTax;
+    const flatTax = taxableIncome * marginalRate;
+    const taxSaved = flatTax - totalTax;
+
+    // Update summary
+    document.getElementById('total-tax').innerText = fmt(totalTax);
+    document.getElementById('effective-rate').innerText = effectiveRate.toFixed(1) + '%';
+    document.getElementById('marginal-rate').innerText = (marginalRate * 100).toFixed(0) + '%';
+    document.getElementById('after-tax-income').innerText = fmt(afterTax);
+    document.getElementById('monthly-after-tax').innerText = fmt2(afterTax / 12);
+    document.getElementById('tax-saved').innerText = fmt(taxSaved);
+
+    // Bracket breakdown table
+    renderBracketTable(breakdown, totalTax);
+
+    // Stacked bar chart
+    renderBarChart(grossIncome);
+
+    // Filing status comparison
+    renderComparison(grossIncome);
+
+    // Myth example
+    renderMythExample(grossIncome, filingStatus, deduction, taxableIncome, breakdown, totalTax, effectiveRate, marginalRate);
+}
+
+function renderBracketTable(breakdown, totalTax) {
+    const tbody = document.getElementById('bracket-tbody');
+    let html = '';
+
+    breakdown.forEach((b, i) => {
+        const rangeStr = b.upper === Infinity
+            ? fmt(b.lower) + '+'
+            : fmt(b.lower) + ' \u2013 ' + fmt(b.upper);
+        const active = b.incomeInBracket > 0;
+
+        html += '<tr style="' + (active ? '' : 'opacity:0.4;') + '">';
+        html += '<td><div class="bracket-color-cell"><span class="bracket-dot" style="background:' + bracketRawColors[i] + '"></span>' + rateLabels[i] + '</div></td>';
+        html += '<td>' + (b.rate * 100) + '%</td>';
+        html += '<td>' + rangeStr + '</td>';
+        html += '<td>' + fmt(b.incomeInBracket) + '</td>';
+        html += '<td>' + fmt(b.taxFromBracket) + '</td>';
+        html += '</tr>';
+    });
+
+    html += '<tr class="total-row">';
+    html += '<td colspan="3">Total Federal Tax</td>';
+    html += '<td>' + fmt(breakdown.reduce((s, b) => s + b.incomeInBracket, 0)) + '</td>';
+    html += '<td>' + fmt(totalTax) + '</td>';
+    html += '</tr>';
+
+    tbody.innerHTML = html;
+}
+
+function renderBarChart(grossIncome) {
+    const container = document.getElementById('bar-chart-container');
+    const statuses = ['single', 'married', 'married_sep', 'hoh'];
+    let html = '';
+
+    statuses.forEach(status => {
+        const ded = standardDeduction[status];
+        const taxable = Math.max(0, grossIncome - ded);
+        const { breakdown } = calcBracketBreakdown(taxable, status);
+
+        html += '<div class="stacked-bar-row">';
+        html += '<div class="stacked-bar-label">' + filingLabels[status] + '</div>';
+        html += '<div class="stacked-bar">';
+
+        if (taxable > 0) {
+            breakdown.forEach((b, i) => {
+                if (b.incomeInBracket > 0) {
+                    const pct = (b.incomeInBracket / taxable * 100);
+                    const label = pct > 8 ? rateLabels[i] : '';
+                    html += '<div class="segment" style="width:' + pct.toFixed(2) + '%; background:' + bracketRawColors[i] + ';">' + label + '</div>';
+                }
+            });
+        }
+
+        html += '</div>';
+        html += '<div class="stacked-bar-amounts">';
+
+        if (taxable > 0) {
+            breakdown.forEach((b, i) => {
+                if (b.incomeInBracket > 0) {
+                    const pct = (b.incomeInBracket / taxable * 100);
+                    html += '<span style="width:' + pct.toFixed(2) + '%;">' + fmt(b.incomeInBracket) + '</span>';
+                }
+            });
+        }
+
+        html += '</div>';
+        html += '</div>';
+    });
+
+    container.innerHTML = html;
+}
+
+function renderComparison(grossIncome) {
+    const statuses = ['single', 'married', 'married_sep', 'hoh'];
+    const results = {};
+
+    statuses.forEach(status => {
+        const ded = standardDeduction[status];
+        const taxable = Math.max(0, grossIncome - ded);
+        const { totalTax, marginalRate } = calcBracketBreakdown(taxable, status);
+        const effectiveRate = taxable > 0 ? (totalTax / taxable * 100) : 0;
+        results[status] = { ded, taxable, totalTax, marginalRate, effectiveRate, afterTax: grossIncome - totalTax };
+    });
+
+    const tbody = document.getElementById('comparison-tbody');
+    let html = '';
+
+    const rows = [
+        { label: 'Standard Deduction', key: 'ded', format: fmt },
+        { label: 'Taxable Income', key: 'taxable', format: fmt },
+        { label: 'Federal Tax', key: 'totalTax', format: fmt },
+        { label: 'Effective Rate', key: 'effectiveRate', format: (v) => v.toFixed(1) + '%' },
+        { label: 'Marginal Rate', key: 'marginalRate', format: (v) => (v * 100).toFixed(0) + '%' },
+        { label: 'After-Tax Income', key: 'afterTax', format: fmt, highlight: true },
+    ];
+
+    rows.forEach(row => {
+        const cls = row.highlight ? ' class="highlight-row"' : '';
+        html += '<tr' + cls + '><td>' + row.label + '</td>';
+        statuses.forEach(s => {
+            html += '<td>' + row.format(results[s][row.key]) + '</td>';
+        });
+        html += '</tr>';
+    });
+
+    tbody.innerHTML = html;
+}
+
+function renderMythExample(grossIncome, filingStatus, deduction, taxableIncome, breakdown, totalTax, effectiveRate, marginalRate) {
+    const el = document.getElementById('myth-example');
+    const label = filingLabels[filingStatus];
+
+    let lines = '<strong>Your breakdown (' + label + ', ' + fmt(grossIncome) + ' income):</strong><br>';
+    lines += 'Standard deduction: -' + fmt(deduction) + '<br>';
+    lines += 'Taxable income: ' + fmt(taxableIncome) + '<br><br>';
+
+    breakdown.forEach((b, i) => {
+        if (b.incomeInBracket > 0) {
+            lines += fmt(b.incomeInBracket) + ' taxed at ' + rateLabels[i] + ' = ' + fmt(b.taxFromBracket) + '<br>';
+        }
+    });
+
+    lines += '<br><strong>Total tax: ' + fmt(totalTax) + '</strong><br>';
+    lines += 'Effective rate: ' + effectiveRate.toFixed(1) + '% (not ' + (marginalRate * 100).toFixed(0) + '%!)';
+
+    el.innerHTML = lines;
+}
+
+// Event listeners
+document.getElementById('gross-income').addEventListener('input', updateAll);
+document.getElementById('filing-status').addEventListener('change', updateAll);
+document.getElementById('deduction-type').addEventListener('change', updateAll);
+document.getElementById('custom-deduction').addEventListener('input', updateAll);
+
+// Init
+updateAll();
+  </script>
+</SiteLayout>
