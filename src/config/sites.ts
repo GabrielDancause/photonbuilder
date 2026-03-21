@@ -6,6 +6,12 @@ export interface SiteTheme {
   textSecondary: string;
 }
 
+export interface NewsletterConfig {
+  emoji: string;
+  title: string;
+  subtitle: string;
+}
+
 export interface SiteConfig {
   id: string;
   name: string;
@@ -15,6 +21,7 @@ export interface SiteConfig {
   gaId: string;
   nav: { label: string; href: string }[];
   footer: { text: string; gabVentures?: boolean };
+  newsletter?: NewsletterConfig;
 }
 
 export const sites: Record<string, SiteConfig> = {
@@ -31,6 +38,7 @@ export const sites: Record<string, SiteConfig> = {
       { label: 'Guides', href: '/#guides' },
     ],
     footer: { text: '© 2026 Fire Maths', gabVentures: true },
+    newsletter: { emoji: '🔥', title: 'Weekly FIRE Brief', subtitle: 'Free calculators & strategies for financial independence. No spam.' },
   },
   westmount: {
     id: 'westmount',
@@ -46,6 +54,7 @@ export const sites: Record<string, SiteConfig> = {
       { label: 'IV Dashboard', href: '/intrinsic-value-dashboard/' },
     ],
     footer: { text: '© 2026 Westmount Fundamentals', gabVentures: true },
+    newsletter: { emoji: '📬', title: 'Weekly Market Brief', subtitle: 'Free data-driven insights. No spam. Unsubscribe anytime.' },
   },
   siliconbased: {
     id: 'siliconbased',
@@ -60,6 +69,7 @@ export const sites: Record<string, SiteConfig> = {
       { label: 'Guides', href: '/#guides' },
     ],
     footer: { text: '© 2026 Silicon Based', gabVentures: true },
+    newsletter: { emoji: '🤖', title: 'Weekly Dev Brief', subtitle: 'Tools, benchmarks & dev insights. No spam.' },
   },
   '28grams': {
     id: '28grams',
@@ -74,6 +84,7 @@ export const sites: Record<string, SiteConfig> = {
       { label: 'Lists', href: '/#lists' },
     ],
     footer: { text: '© 2026 28 Grams', gabVentures: true },
+    newsletter: { emoji: '🍳', title: 'Weekly Kitchen Brief', subtitle: 'Recipes, techniques & food science. No spam.' },
   },
   migratingmammals: {
     id: 'migratingmammals',
@@ -88,6 +99,7 @@ export const sites: Record<string, SiteConfig> = {
       { label: 'Lists', href: '/#lists' },
     ],
     footer: { text: '© 2026 Migrating Mammals', gabVentures: true },
+    newsletter: { emoji: '✈️', title: 'Weekly Nomad Brief', subtitle: 'Travel tools, visa guides & cost-of-living data. No spam.' },
   },
   leeroyjenkins: {
     id: 'leeroyjenkins',
@@ -102,6 +114,7 @@ export const sites: Record<string, SiteConfig> = {
       { label: 'Lists', href: '/#lists' },
     ],
     footer: { text: '© 2026 Leeroy Jenkins', gabVentures: true },
+    newsletter: { emoji: '🎮', title: 'Weekly Gaming Brief', subtitle: 'Builds, tier lists & gaming tools. No spam.' },
   },
   ijustwantto: {
     id: 'ijustwantto',
@@ -116,6 +129,7 @@ export const sites: Record<string, SiteConfig> = {
       { label: 'Lists', href: '/#lists' },
     ],
     footer: { text: '© 2026 I Just Want To', gabVentures: true },
+    newsletter: { emoji: '✅', title: 'Weekly Life Hacks', subtitle: 'Practical tools & how-to guides. No spam.' },
   },
 };
 
@@ -133,6 +147,7 @@ sites['bodycount'] = {
     { label: 'Lists', href: '/bodycount/#lists' },
   ],
   footer: { text: '© 2026 Body Count', gabVentures: true },
+  newsletter: { emoji: '🔍', title: 'Weekly True Crime Brief', subtitle: 'Data, stats & analysis. No spam.' },
 };
 
 sites['nookienook'] = {
@@ -148,6 +163,7 @@ sites['nookienook'] = {
     { label: 'Studies', href: '/#studies' },
   ],
   footer: { text: '© 2026 The Nookie Nook · Educational content only. Not medical advice.', gabVentures: true },
+  newsletter: { emoji: '💕', title: 'Weekly Intimacy Brief', subtitle: 'Guides, tips & research-backed insights. No spam.' },
 };
 
 sites['getthebag'] = {
