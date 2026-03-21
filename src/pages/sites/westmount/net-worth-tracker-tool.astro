@@ -1,0 +1,688 @@
+---
+import SiteLayout from "../../../layouts/SiteLayout.astro";
+
+const schema = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebApplication",
+      "name": "Net Worth Tracker — Free Calculator & Historical Tracker",
+      "url": "https://westmountfundamentals.com/net-worth-tracker-tool",
+      "applicationCategory": "FinanceApplication",
+      "operatingSystem": "Any",
+      "offers": {"@type": "Offer", "price": "0", "priceCurrency": "USD"},
+      "description": "Free net worth calculator with asset allocation charts, debt-to-asset ratio, and historical tracking via localStorage snapshots."
+    },
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        {"@type":"Question","name":"What is net worth and how do you calculate it?","acceptedAnswer":{"@type":"Answer","text":"Net worth is the difference between what you own (assets) and what you owe (liabilities). To calculate it, add up all your assets — cash, investments, real estate, retirement accounts, vehicles, and other valuables — then subtract all debts including mortgage, auto loans, student loans, credit cards, and personal loans. A positive net worth means your assets exceed your debts; a negative net worth means you owe more than you own. Tracking net worth over time is the single best measure of financial progress."}},
+        {"@type":"Question","name":"What is a good net worth by age?","acceptedAnswer":{"@type":"Answer","text":"A common benchmark is the 'wealth formula' from The Millionaire Next Door: your expected net worth should equal your age × pre-tax income ÷ 10. For example, a 35-year-old earning $80,000 should target $280,000. The Federal Reserve's Survey of Consumer Finances shows median net worth by age: under 35 ($39,000), 35–44 ($135,600), 45–54 ($247,200), 55–64 ($364,500), 65–74 ($409,900). These are medians — averages are 3–5x higher due to wealth concentration at the top."}},
+        {"@type":"Question","name":"Should I include my home in net worth calculations?","acceptedAnswer":{"@type":"Answer","text":"Yes, include your home's current market value as an asset and your remaining mortgage balance as a liability. Your home equity (value minus mortgage) contributes to net worth. However, many financial planners also track 'investable net worth' which excludes your primary residence since you can't easily liquidate it. Our tracker includes real estate as a separate category so you can see both figures — total net worth and liquid net worth (excluding real estate)."}},
+        {"@type":"Question","name":"How often should I track my net worth?","acceptedAnswer":{"@type":"Answer","text":"Monthly tracking is ideal for most people — frequent enough to spot trends but not so often that daily market fluctuations cause anxiety. Our tool lets you save snapshots to track your progress over time. Quarterly updates work well if monthly feels excessive. The key is consistency: pick a schedule and stick to it. Many people track on the 1st of each month. Avoid checking daily — short-term investment fluctuations can be misleading and emotionally draining."}},
+        {"@type":"Question","name":"What is a good debt-to-asset ratio?","acceptedAnswer":{"@type":"Answer","text":"A debt-to-asset ratio below 0.5 (50%) is generally considered healthy, meaning you own more than you owe. Below 0.3 (30%) is strong, and below 0.1 (10%) indicates very low leverage. Young adults often have ratios above 1.0 due to student loans and mortgages with little accumulated savings — this is normal and improves over time as you pay down debt and grow assets. The ratio matters more as a trend: it should decrease steadily year over year as you build wealth."}}
+      ]
+    }
+  ]
+};
+
+export const meta = {
+  title: "Free Net Worth Tracker — Calculator & Historical Tracker",
+  description: "Calculate your net worth with our free interactive tool. Track assets, liabilities, asset allocation, debt-to-asset ratio, and save snapshots to see your net worth trend over time.",
+  category: "tool",
+  published: "2026-03-21",
+};
+---
+
+<SiteLayout
+  site="westmount"
+  title="Free Net Worth Tracker: Calculator, Asset Allocation & Historical Tracking"
+  description="Calculate your net worth instantly. Track cash, investments, real estate, retirement accounts vs. mortgage, loans & credit cards. Save snapshots and visualize your net worth trend over time."
+  canonical="https://westmountfundamentals.com/net-worth-tracker-tool" schema={schema}
+>
+  <style is:inline>
+.container{max-width:1200px;margin:0 auto;padding:0 20px}
+a{color:var(--accent-color);text-decoration:none}
+a:hover{text-decoration:underline}
+
+header{padding:40px 0 20px;border-bottom:1px solid var(--border-color)}
+.badge{display:inline-block;background:var(--accent-color);color:#fff;font-size:11px;font-weight:700;letter-spacing:1.5px;padding:4px 12px;border-radius:3px;text-transform:uppercase;margin-bottom:12px}
+header h1{font-size:clamp(28px,4vw,42px);font-weight:800;line-height:1.15;margin-bottom:8px}
+header p.subtitle{color:var(--text-secondary);font-size:18px;max-width:700px}
+.meta{color:var(--text-secondary);font-size:13px;margin-top:12px;font-family:'JetBrains Mono',monospace}
+
+.summary-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px;margin:32px 0}
+.summary-card{background:var(--card-bg);border:1px solid var(--border-color);border-radius:8px;padding:20px;text-align:center}
+.summary-card .val{font-size:28px;font-weight:800;font-family:'JetBrains Mono',monospace}
+.summary-card .val.positive{color:#22c55e}
+.summary-card .val.negative{color:#ef4444}
+.summary-card .val.neutral{color:var(--accent-color)}
+.summary-card .label{font-size:13px;color:var(--text-secondary);margin-top:4px}
+
+/* Input sections */
+.input-section{margin:32px 0}
+.input-section h2{font-size:22px;margin-bottom:16px}
+.category-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:16px}
+.category-card{background:var(--card-bg);border:1px solid var(--border-color);border-radius:8px;padding:20px}
+.category-card h3{font-size:15px;margin-bottom:12px;color:var(--accent-color);display:flex;justify-content:space-between;align-items:center}
+.category-card h3 .cat-total{font-family:'JetBrains Mono',monospace;font-size:14px;color:var(--text-primary)}
+.field-row{display:flex;align-items:center;gap:8px;margin-bottom:8px}
+.field-row label{font-size:13px;color:var(--text-secondary);min-width:120px;flex-shrink:0}
+.field-row input{flex:1;background:var(--card-bg);border:1px solid var(--border-color);color:var(--text-primary);padding:8px 10px;border-radius:6px;font-size:14px;font-family:'JetBrains Mono',monospace;text-align:right;box-sizing:border-box;min-width:0}
+.field-row input:focus{outline:none;border-color:var(--accent-color)}
+
+/* Buttons */
+.actions{display:flex;gap:12px;margin:24px 0;flex-wrap:wrap}
+.actions button{padding:10px 20px;border-radius:6px;font-size:14px;cursor:pointer;font-weight:600;border:none}
+.btn-primary{background:var(--accent-color);color:#fff}
+.btn-primary:hover{opacity:.9}
+.btn-secondary{background:var(--card-bg);color:var(--text-primary);border:1px solid var(--border-color) !important}
+.btn-secondary:hover{border-color:var(--accent-color) !important}
+.btn-danger{background:#ef4444;color:#fff}
+.btn-danger:hover{opacity:.9}
+
+/* Pie chart CSS-only */
+.chart-section{margin:32px 0}
+.chart-section h2{font-size:22px;margin-bottom:16px}
+.chart-row{display:grid;grid-template-columns:1fr 1fr;gap:32px;align-items:start}
+.pie-wrap{position:relative;width:260px;height:260px;margin:0 auto}
+.pie-chart{width:260px;height:260px;border-radius:50%;position:relative;overflow:hidden}
+.pie-center{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:120px;height:120px;border-radius:50%;background:var(--card-bg);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:2}
+.pie-center .pie-label{font-size:11px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.5px}
+.pie-center .pie-val{font-size:18px;font-weight:800;font-family:'JetBrains Mono',monospace;color:var(--text-primary)}
+.legend{margin-top:16px}
+.legend-item{display:flex;align-items:center;gap:8px;margin-bottom:6px;font-size:13px}
+.legend-dot{width:12px;height:12px;border-radius:3px;flex-shrink:0}
+.legend-label{color:var(--text-secondary);flex:1}
+.legend-val{font-family:'JetBrains Mono',monospace;font-weight:600;color:var(--text-primary)}
+
+/* Line chart CSS */
+.trend-section{margin:32px 0}
+.trend-section h2{font-size:22px;margin-bottom:16px}
+.chart-container{background:var(--card-bg);border:1px solid var(--border-color);border-radius:8px;padding:20px;position:relative;height:280px}
+.chart-canvas{width:100%;height:220px;position:relative}
+.chart-line{position:absolute;bottom:0;left:0;right:0;height:100%}
+.chart-y-labels{position:absolute;left:0;top:0;bottom:0;width:70px;display:flex;flex-direction:column;justify-content:space-between;font-size:11px;color:var(--text-secondary);font-family:'JetBrains Mono',monospace}
+.chart-area{position:absolute;left:80px;top:0;bottom:20px;right:10px}
+.chart-gridline{position:absolute;left:0;right:0;border-top:1px dashed var(--border-color)}
+.chart-point{position:absolute;width:10px;height:10px;border-radius:50%;background:var(--accent-color);border:2px solid var(--card-bg);transform:translate(-50%,-50%);z-index:2;cursor:pointer}
+.chart-point:hover{background:#fff;box-shadow:0 0 0 3px var(--accent-color)}
+.chart-point-label{position:absolute;top:-24px;left:50%;transform:translateX(-50%);font-size:10px;color:var(--text-secondary);font-family:'JetBrains Mono',monospace;white-space:nowrap}
+.chart-svg{position:absolute;left:0;top:0;width:100%;height:100%;overflow:visible}
+.chart-x-labels{display:flex;justify-content:space-between;font-size:10px;color:var(--text-secondary);font-family:'JetBrains Mono',monospace;margin-top:4px;padding-left:80px;padding-right:10px}
+.no-data{display:flex;align-items:center;justify-content:center;height:100%;color:var(--text-secondary);font-size:14px;flex-direction:column;gap:8px}
+
+/* Snapshot table */
+.snapshot-section{margin:32px 0}
+.snapshot-section h2{font-size:22px;margin-bottom:16px}
+.table-wrap{overflow-x:auto;border-radius:8px;border:1px solid var(--border-color)}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{background:#0c1428;color:var(--text-secondary);font-weight:600;text-transform:uppercase;font-size:11px;letter-spacing:.5px;padding:12px 14px;text-align:left;white-space:nowrap;border-bottom:1px solid var(--border-color)}
+td{padding:10px 14px;border-bottom:1px solid var(--border-color);white-space:nowrap}
+tr:hover{background:rgba(74,143,231,.06)}
+.num{font-family:'JetBrains Mono',monospace;text-align:right}
+.pos{color:#22c55e}
+.neg{color:#ef4444}
+.del-btn{background:none;border:none;color:#ef4444;cursor:pointer;font-size:16px;padding:2px 6px}
+.del-btn:hover{opacity:.7}
+
+/* FAQ */
+.faq-section{margin:32px 0}
+.faq-section h2{font-size:22px;margin-bottom:16px}
+.faq-item{background:var(--card-bg);border:1px solid var(--border-color);border-radius:8px;margin-bottom:10px;overflow:hidden}
+.faq-q{padding:16px 20px;font-weight:600;cursor:pointer;display:flex;justify-content:space-between;align-items:center}
+.faq-q:hover{color:var(--accent-color)}
+.faq-q::after{content:'+';font-size:20px;color:var(--text-secondary);transition:transform .2s}
+.faq-item.open .faq-q::after{transform:rotate(45deg);color:var(--accent-color)}
+.faq-a{padding:0 20px 16px;color:var(--text-secondary);font-size:14px;line-height:1.7;display:none}
+.faq-item.open .faq-a{display:block}
+
+/* Findings */
+.findings{margin:32px 0}
+.findings h2{font-size:22px;margin-bottom:16px}
+.finding-card{background:var(--card-bg);border:1px solid var(--border-color);border-radius:8px;padding:20px;margin-bottom:12px}
+.finding-card h3{font-size:16px;margin-bottom:6px;color:var(--accent-color)}
+.finding-card p{color:var(--text-secondary);font-size:14px;line-height:1.7}
+
+/* Related */
+.related-section{margin:32px 0}
+.related-section h2{font-size:22px;margin-bottom:16px}
+.related-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+.related-card{background:var(--card-bg);border:1px solid var(--border-color);border-radius:8px;padding:16px;text-decoration:none;transition:border-color .2s}
+.related-card:hover{border-color:var(--accent-color);text-decoration:none}
+.related-card h3{font-size:15px;margin-bottom:4px;color:var(--text-primary)}
+.related-card p{font-size:13px;color:var(--text-secondary)}
+
+.methodology{margin:32px 0;background:var(--card-bg);border:1px solid var(--border-color);border-radius:8px;padding:24px}
+.methodology h2{font-size:18px;margin-bottom:12px}
+.methodology p{color:var(--text-secondary);font-size:14px;margin-bottom:10px;line-height:1.7}
+
+.disclaimer{margin:20px 0;padding:16px;border:1px solid var(--border-color);border-radius:8px;font-size:12px;color:var(--text-secondary);text-align:center;font-style:italic}
+.updated-badge{display:inline-block;background:var(--card-bg);border:1px solid var(--border-color);color:var(--text-secondary);font-size:12px;padding:4px 10px;border-radius:4px;margin-top:8px;font-family:'JetBrains Mono',monospace}
+
+footer{border-top:1px solid var(--border-color);padding:24px 0;text-align:center;color:var(--text-secondary);font-size:13px;margin-top:40px}
+
+@media(max-width:640px){
+  .summary-cards{grid-template-columns:repeat(2,1fr)}
+  .category-grid{grid-template-columns:1fr}
+  .chart-row{grid-template-columns:1fr}
+  .related-grid{grid-template-columns:1fr}
+  .field-row label{min-width:90px}
+}
+  </style>
+
+<div class="container">
+    <h1>Net Worth Tracker: Calculate &amp; Track Your Wealth Over Time</h1>
+    <div class="updated-badge">Last Updated: March 2026</div>
+
+    <div class="summary-cards" id="summary"></div>
+
+    <!-- Assets -->
+    <div class="input-section">
+      <h2>Assets — What You Own</h2>
+      <div class="category-grid">
+        <div class="category-card">
+          <h3>Cash &amp; Savings <span class="cat-total" id="catCash">$0</span></h3>
+          <div class="field-row"><label>Checking</label><input type="number" data-cat="asset" data-group="cash" placeholder="0" min="0"></div>
+          <div class="field-row"><label>Savings</label><input type="number" data-cat="asset" data-group="cash" placeholder="0" min="0"></div>
+          <div class="field-row"><label>Money Market</label><input type="number" data-cat="asset" data-group="cash" placeholder="0" min="0"></div>
+          <div class="field-row"><label>CDs</label><input type="number" data-cat="asset" data-group="cash" placeholder="0" min="0"></div>
+        </div>
+        <div class="category-card">
+          <h3>Investments <span class="cat-total" id="catInvest">$0</span></h3>
+          <div class="field-row"><label>Stocks</label><input type="number" data-cat="asset" data-group="investments" placeholder="0" min="0"></div>
+          <div class="field-row"><label>Bonds</label><input type="number" data-cat="asset" data-group="investments" placeholder="0" min="0"></div>
+          <div class="field-row"><label>Mutual Funds</label><input type="number" data-cat="asset" data-group="investments" placeholder="0" min="0"></div>
+          <div class="field-row"><label>Crypto</label><input type="number" data-cat="asset" data-group="investments" placeholder="0" min="0"></div>
+        </div>
+        <div class="category-card">
+          <h3>Real Estate <span class="cat-total" id="catRealEstate">$0</span></h3>
+          <div class="field-row"><label>Primary Home</label><input type="number" data-cat="asset" data-group="realEstate" placeholder="0" min="0"></div>
+          <div class="field-row"><label>Investment Property</label><input type="number" data-cat="asset" data-group="realEstate" placeholder="0" min="0"></div>
+          <div class="field-row"><label>Land</label><input type="number" data-cat="asset" data-group="realEstate" placeholder="0" min="0"></div>
+        </div>
+        <div class="category-card">
+          <h3>Retirement Accounts <span class="cat-total" id="catRetirement">$0</span></h3>
+          <div class="field-row"><label>401(k)</label><input type="number" data-cat="asset" data-group="retirement" placeholder="0" min="0"></div>
+          <div class="field-row"><label>Traditional IRA</label><input type="number" data-cat="asset" data-group="retirement" placeholder="0" min="0"></div>
+          <div class="field-row"><label>Roth IRA</label><input type="number" data-cat="asset" data-group="retirement" placeholder="0" min="0"></div>
+          <div class="field-row"><label>Pension</label><input type="number" data-cat="asset" data-group="retirement" placeholder="0" min="0"></div>
+        </div>
+        <div class="category-card">
+          <h3>Vehicles <span class="cat-total" id="catVehicles">$0</span></h3>
+          <div class="field-row"><label>Vehicle 1</label><input type="number" data-cat="asset" data-group="vehicles" placeholder="0" min="0"></div>
+          <div class="field-row"><label>Vehicle 2</label><input type="number" data-cat="asset" data-group="vehicles" placeholder="0" min="0"></div>
+        </div>
+        <div class="category-card">
+          <h3>Other Assets <span class="cat-total" id="catOtherAssets">$0</span></h3>
+          <div class="field-row"><label>Jewelry / Art</label><input type="number" data-cat="asset" data-group="otherAssets" placeholder="0" min="0"></div>
+          <div class="field-row"><label>Business Equity</label><input type="number" data-cat="asset" data-group="otherAssets" placeholder="0" min="0"></div>
+          <div class="field-row"><label>Other</label><input type="number" data-cat="asset" data-group="otherAssets" placeholder="0" min="0"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Liabilities -->
+    <div class="input-section">
+      <h2>Liabilities — What You Owe</h2>
+      <div class="category-grid">
+        <div class="category-card">
+          <h3>Mortgage <span class="cat-total" id="catMortgage">$0</span></h3>
+          <div class="field-row"><label>Primary Mortgage</label><input type="number" data-cat="liability" data-group="mortgage" placeholder="0" min="0"></div>
+          <div class="field-row"><label>2nd Mortgage / HELOC</label><input type="number" data-cat="liability" data-group="mortgage" placeholder="0" min="0"></div>
+          <div class="field-row"><label>Investment Property</label><input type="number" data-cat="liability" data-group="mortgage" placeholder="0" min="0"></div>
+        </div>
+        <div class="category-card">
+          <h3>Auto Loans <span class="cat-total" id="catAutoLoans">$0</span></h3>
+          <div class="field-row"><label>Auto Loan 1</label><input type="number" data-cat="liability" data-group="autoLoans" placeholder="0" min="0"></div>
+          <div class="field-row"><label>Auto Loan 2</label><input type="number" data-cat="liability" data-group="autoLoans" placeholder="0" min="0"></div>
+        </div>
+        <div class="category-card">
+          <h3>Student Loans <span class="cat-total" id="catStudentLoans">$0</span></h3>
+          <div class="field-row"><label>Federal Loans</label><input type="number" data-cat="liability" data-group="studentLoans" placeholder="0" min="0"></div>
+          <div class="field-row"><label>Private Loans</label><input type="number" data-cat="liability" data-group="studentLoans" placeholder="0" min="0"></div>
+        </div>
+        <div class="category-card">
+          <h3>Credit Cards <span class="cat-total" id="catCreditCards">$0</span></h3>
+          <div class="field-row"><label>Card 1</label><input type="number" data-cat="liability" data-group="creditCards" placeholder="0" min="0"></div>
+          <div class="field-row"><label>Card 2</label><input type="number" data-cat="liability" data-group="creditCards" placeholder="0" min="0"></div>
+          <div class="field-row"><label>Card 3</label><input type="number" data-cat="liability" data-group="creditCards" placeholder="0" min="0"></div>
+        </div>
+        <div class="category-card">
+          <h3>Personal Loans <span class="cat-total" id="catPersonalLoans">$0</span></h3>
+          <div class="field-row"><label>Personal Loan</label><input type="number" data-cat="liability" data-group="personalLoans" placeholder="0" min="0"></div>
+          <div class="field-row"><label>Family Loan</label><input type="number" data-cat="liability" data-group="personalLoans" placeholder="0" min="0"></div>
+        </div>
+        <div class="category-card">
+          <h3>Other Liabilities <span class="cat-total" id="catOtherLiabilities">$0</span></h3>
+          <div class="field-row"><label>Medical Debt</label><input type="number" data-cat="liability" data-group="otherLiabilities" placeholder="0" min="0"></div>
+          <div class="field-row"><label>Tax Owed</label><input type="number" data-cat="liability" data-group="otherLiabilities" placeholder="0" min="0"></div>
+          <div class="field-row"><label>Other</label><input type="number" data-cat="liability" data-group="otherLiabilities" placeholder="0" min="0"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="actions">
+      <button class="btn-primary" id="saveSnapshot">Save Snapshot</button>
+      <button class="btn-secondary" id="clearForm">Clear Form</button>
+      <button class="btn-danger" id="clearHistory">Clear All History</button>
+    </div>
+
+    <!-- Asset allocation pie chart -->
+    <div class="chart-section">
+      <h2>Asset Allocation</h2>
+      <div class="chart-row">
+        <div>
+          <div class="pie-wrap">
+            <div class="pie-chart" id="pieChart"></div>
+            <div class="pie-center">
+              <div class="pie-label">Total Assets</div>
+              <div class="pie-val" id="pieCenterVal">$0</div>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="legend" id="pieLegend"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Net Worth Trend -->
+    <div class="trend-section">
+      <h2>Net Worth Trend</h2>
+      <div class="chart-container" id="trendChart">
+        <div class="no-data" id="noTrendData">
+          <span>No snapshots yet</span>
+          <span style="font-size:12px">Save your first snapshot to start tracking your net worth over time</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Snapshot History -->
+    <div class="snapshot-section">
+      <h2>Snapshot History</h2>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Date</th>
+              <th>Total Assets</th>
+              <th>Total Liabilities</th>
+              <th>Net Worth</th>
+              <th>Change</th>
+              <th>Debt/Asset</th>
+              <th></th>
+            </tr>
+          </thead>
+          <tbody id="snapshotBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="findings">
+      <h2>Key Insights for Building Net Worth</h2>
+      <div class="finding-card">
+        <h3>The 50/30/20 Rule Accelerates Wealth Building</h3>
+        <p>Allocating 50% of after-tax income to needs, 30% to wants, and 20% to savings/debt repayment is the simplest framework for growing net worth. If you earn $75,000 after tax, that's $15,000/year into wealth building. At 7% average market returns, this grows to $612,000 in 20 years — enough to reach median net worth for most age groups well ahead of schedule.</p>
+      </div>
+      <div class="finding-card">
+        <h3>Eliminating High-Interest Debt Is the Highest-Return Investment</h3>
+        <p>Credit card debt at 22% APR means paying it off delivers a guaranteed 22% return — better than any stock market average. Prioritize credit cards first, then personal loans, then student loans (which may have tax-deductible interest). Only after high-interest debt is cleared should you aggressively invest beyond employer 401(k) match contributions.</p>
+      </div>
+      <div class="finding-card">
+        <h3>Real Estate Equity Is the Largest Asset for Most Americans</h3>
+        <p>For the median American household, home equity represents 55–65% of total net worth. While this builds wealth through forced savings (mortgage payments) and appreciation (historically 3–4% annually), it creates concentration risk. Financial planners recommend keeping real estate below 40% of total assets and building liquid investments for flexibility and diversification.</p>
+      </div>
+    </div>
+
+    <div class="faq-section">
+      <h2>Frequently Asked Questions</h2>
+      <div id="faq"></div>
+    </div>
+
+    <div class="related-section">
+      <h2>Related Tools &amp; Research</h2>
+      <div class="related-grid">
+        <a class="related-card" href="/sites/westmount/stock-screener">
+          <h3>Stock Screener</h3>
+          <p>Screen S&amp;P 500 stocks by market cap, PE ratio, dividend yield, sector &amp; 52-week performance.</p>
+        </a>
+        <a class="related-card" href="/sites/westmount/intrinsic-value-dashboard">
+          <h3>Intrinsic Value Dashboard</h3>
+          <p>Calculate fair value for any stock using DCF, Graham, and comparable analysis models.</p>
+        </a>
+        <a class="related-card" href="/sites/westmount/dividend-etf-comparison">
+          <h3>Dividend ETF Comparison</h3>
+          <p>Compare 21 dividend ETFs side-by-side: SCHD, VYM, JEPI, QYLD &amp; more ranked by yield and returns.</p>
+        </a>
+      </div>
+    </div>
+
+    <div class="methodology">
+      <h2>Methodology</h2>
+      <p>This net worth tracker calculates your total assets minus total liabilities in real time as you enter values. Asset allocation percentages are derived from the six asset categories (cash, investments, real estate, retirement, vehicles, other). The debt-to-asset ratio divides total liabilities by total assets — lower is better.</p>
+      <p>Snapshots are saved to your browser's localStorage, meaning your data stays on your device and is never sent to any server. Historical tracking shows your net worth trend over time with change amounts between snapshots. Clear your browser data to remove all stored snapshots.</p>
+    </div>
+
+    <div class="disclaimer">This tool is for informational and educational purposes only. It does not constitute financial advice. All data is stored locally in your browser — we never collect or transmit your financial information. Consult a certified financial planner for personalized advice.</div>
+</div>
+
+  <script is:inline>
+// Asset groups and colors
+const ASSET_GROUPS = {
+  cash: {label:'Cash & Savings', color:'#4a8fe7'},
+  investments: {label:'Investments', color:'#22c55e'},
+  realEstate: {label:'Real Estate', color:'#f59e0b'},
+  retirement: {label:'Retirement', color:'#8b5cf6'},
+  vehicles: {label:'Vehicles', color:'#ec4899'},
+  otherAssets: {label:'Other Assets', color:'#6b7280'}
+};
+
+const LIABILITY_GROUPS = {
+  mortgage:'Mortgage', autoLoans:'Auto Loans', studentLoans:'Student Loans',
+  creditCards:'Credit Cards', personalLoans:'Personal Loans', otherLiabilities:'Other'
+};
+
+const LS_KEY = 'westmount_nw_snapshots';
+
+function getSnapshots() {
+  try { return JSON.parse(localStorage.getItem(LS_KEY)) || []; }
+  catch { return []; }
+}
+
+function saveSnapshots(data) {
+  localStorage.setItem(LS_KEY, JSON.stringify(data));
+}
+
+function fmtMoney(v) {
+  const abs = Math.abs(v);
+  const sign = v < 0 ? '-' : '';
+  if (abs >= 1e6) return sign + '$' + (abs/1e6).toFixed(1) + 'M';
+  if (abs >= 1e3) return sign + '$' + (abs/1e3).toFixed(1) + 'K';
+  return sign + '$' + abs.toLocaleString('en-US', {maximumFractionDigits:0});
+}
+
+function getGroupTotal(group) {
+  let total = 0;
+  document.querySelectorAll(`input[data-group="${group}"]`).forEach(inp => {
+    total += parseFloat(inp.value) || 0;
+  });
+  return total;
+}
+
+function getAllTotals() {
+  let totalAssets = 0, totalLiabilities = 0;
+  const assetBreakdown = {};
+  const liabilityBreakdown = {};
+
+  for (const g in ASSET_GROUPS) {
+    const t = getGroupTotal(g);
+    assetBreakdown[g] = t;
+    totalAssets += t;
+  }
+  for (const g in LIABILITY_GROUPS) {
+    const t = getGroupTotal(g);
+    liabilityBreakdown[g] = t;
+    totalLiabilities += t;
+  }
+
+  return {
+    totalAssets, totalLiabilities,
+    netWorth: totalAssets - totalLiabilities,
+    debtToAsset: totalAssets > 0 ? totalLiabilities / totalAssets : 0,
+    assetBreakdown, liabilityBreakdown
+  };
+}
+
+function updateSummary() {
+  const t = getAllTotals();
+  const nwClass = t.netWorth >= 0 ? 'positive' : 'negative';
+  document.getElementById('summary').innerHTML = `
+    <div class="summary-card"><div class="val neutral">${fmtMoney(t.totalAssets)}</div><div class="label">Total Assets</div></div>
+    <div class="summary-card"><div class="val negative">${fmtMoney(t.totalLiabilities)}</div><div class="label">Total Liabilities</div></div>
+    <div class="summary-card"><div class="val ${nwClass}">${fmtMoney(t.netWorth)}</div><div class="label">Net Worth</div></div>
+    <div class="summary-card"><div class="val neutral">${(t.debtToAsset * 100).toFixed(1)}%</div><div class="label">Debt-to-Asset Ratio</div></div>
+  `;
+
+  // Category totals
+  for (const g in ASSET_GROUPS) {
+    const el = document.getElementById('cat' + g.charAt(0).toUpperCase() + g.slice(1));
+    if (el) el.textContent = fmtMoney(t.assetBreakdown[g]);
+  }
+  // Map group names to element IDs for liabilities
+  const liabIdMap = {mortgage:'Mortgage',autoLoans:'AutoLoans',studentLoans:'StudentLoans',creditCards:'CreditCards',personalLoans:'PersonalLoans',otherLiabilities:'OtherLiabilities'};
+  for (const g in LIABILITY_GROUPS) {
+    const el = document.getElementById('cat' + liabIdMap[g]);
+    if (el) el.textContent = fmtMoney(t.liabilityBreakdown[g]);
+  }
+
+  updatePieChart(t);
+}
+
+function updatePieChart(t) {
+  const pieEl = document.getElementById('pieChart');
+  const legendEl = document.getElementById('pieLegend');
+  document.getElementById('pieCenterVal').textContent = fmtMoney(t.totalAssets);
+
+  if (t.totalAssets === 0) {
+    pieEl.style.background = 'var(--border-color)';
+    legendEl.innerHTML = '<div style="color:var(--text-secondary);font-size:13px">Enter asset values to see allocation</div>';
+    return;
+  }
+
+  // Build conic gradient
+  const segments = [];
+  let cumPct = 0;
+  const legendItems = [];
+
+  for (const g in ASSET_GROUPS) {
+    const pct = (t.assetBreakdown[g] / t.totalAssets) * 100;
+    if (pct > 0) {
+      segments.push(`${ASSET_GROUPS[g].color} ${cumPct}% ${cumPct + pct}%`);
+      legendItems.push({label: ASSET_GROUPS[g].label, color: ASSET_GROUPS[g].color, pct, val: t.assetBreakdown[g]});
+      cumPct += pct;
+    }
+  }
+
+  pieEl.style.background = `conic-gradient(${segments.join(', ')})`;
+
+  legendEl.innerHTML = legendItems.map(li =>
+    `<div class="legend-item">
+      <div class="legend-dot" style="background:${li.color}"></div>
+      <span class="legend-label">${li.label} (${li.pct.toFixed(1)}%)</span>
+      <span class="legend-val">${fmtMoney(li.val)}</span>
+    </div>`
+  ).join('');
+}
+
+function renderTrendChart() {
+  const snapshots = getSnapshots();
+  const container = document.getElementById('trendChart');
+  const noData = document.getElementById('noTrendData');
+
+  if (snapshots.length === 0) {
+    container.innerHTML = '';
+    container.appendChild(noData || Object.assign(document.createElement('div'), {
+      className:'no-data',
+      innerHTML:'<span>No snapshots yet</span><span style="font-size:12px">Save your first snapshot to start tracking</span>'
+    }));
+    return;
+  }
+
+  const values = snapshots.map(s => s.netWorth);
+  const maxVal = Math.max(...values, 0);
+  const minVal = Math.min(...values, 0);
+  const range = maxVal - minVal || 1;
+  const padding = range * 0.1;
+  const chartMin = minVal - padding;
+  const chartMax = maxVal + padding;
+  const chartRange = chartMax - chartMin;
+
+  // Y-axis labels
+  const ySteps = 5;
+  let yLabelsHtml = '';
+  for (let i = ySteps; i >= 0; i--) {
+    const val = chartMin + (chartRange * i / ySteps);
+    yLabelsHtml += `<div>${fmtMoney(val)}</div>`;
+  }
+
+  // Gridlines
+  let gridHtml = '';
+  for (let i = 0; i <= ySteps; i++) {
+    const top = (i / ySteps) * 100;
+    gridHtml += `<div class="chart-gridline" style="top:${top}%"></div>`;
+  }
+
+  // Points and line
+  let pointsHtml = '';
+  let svgPath = '';
+  const n = snapshots.length;
+
+  snapshots.forEach((s, i) => {
+    const x = n === 1 ? 50 : (i / (n - 1)) * 100;
+    const y = 100 - ((s.netWorth - chartMin) / chartRange) * 100;
+    pointsHtml += `<div class="chart-point" style="left:${x}%;top:${y}%"><div class="chart-point-label">${fmtMoney(s.netWorth)}</div></div>`;
+    if (i === 0) svgPath += `M ${x} ${y}`;
+    else svgPath += ` L ${x} ${y}`;
+  });
+
+  // X labels
+  let xLabelsHtml = '';
+  const maxXLabels = 8;
+  const step = Math.max(1, Math.ceil(n / maxXLabels));
+  snapshots.forEach((s, i) => {
+    if (i % step === 0 || i === n - 1) {
+      xLabelsHtml += `<div>${s.date}</div>`;
+    }
+  });
+
+  container.innerHTML = `
+    <div class="chart-canvas">
+      <div class="chart-y-labels">${yLabelsHtml}</div>
+      <div class="chart-area">
+        ${gridHtml}
+        <svg class="chart-svg" viewBox="0 0 100 100" preserveAspectRatio="none">
+          <polyline points="${snapshots.map((s, i) => {
+            const x = n === 1 ? 50 : (i / (n - 1)) * 100;
+            const y = 100 - ((s.netWorth - chartMin) / chartRange) * 100;
+            return `${x},${y}`;
+          }).join(' ')}" fill="none" stroke="var(--accent-color)" stroke-width="1.5" vector-effect="non-scaling-stroke"/>
+        </svg>
+        ${pointsHtml}
+      </div>
+    </div>
+    <div class="chart-x-labels">${xLabelsHtml}</div>
+  `;
+}
+
+function renderSnapshotTable() {
+  const snapshots = getSnapshots();
+  const tbody = document.getElementById('snapshotBody');
+
+  if (snapshots.length === 0) {
+    tbody.innerHTML = '<tr><td colspan="7" style="text-align:center;color:var(--text-secondary);padding:20px">No snapshots saved yet. Enter your values and click "Save Snapshot" to begin tracking.</td></tr>';
+    return;
+  }
+
+  tbody.innerHTML = snapshots.map((s, i) => {
+    const prev = i > 0 ? snapshots[i - 1].netWorth : null;
+    const change = prev !== null ? s.netWorth - prev : null;
+    const changeStr = change !== null
+      ? `<span class="${change >= 0 ? 'pos' : 'neg'}">${change >= 0 ? '+' : ''}${fmtMoney(change)}</span>`
+      : '—';
+    const ratio = s.totalAssets > 0 ? ((s.totalLiabilities / s.totalAssets) * 100).toFixed(1) + '%' : '0%';
+    return `<tr>
+      <td>${s.date}</td>
+      <td class="num">${fmtMoney(s.totalAssets)}</td>
+      <td class="num">${fmtMoney(s.totalLiabilities)}</td>
+      <td class="num" style="font-weight:700;color:${s.netWorth >= 0 ? '#22c55e' : '#ef4444'}">${fmtMoney(s.netWorth)}</td>
+      <td class="num">${changeStr}</td>
+      <td class="num">${ratio}</td>
+      <td><button class="del-btn" data-idx="${i}" title="Delete snapshot">×</button></td>
+    </tr>`;
+  }).join('');
+
+  // Delete handlers
+  tbody.querySelectorAll('.del-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const idx = parseInt(btn.dataset.idx);
+      const snaps = getSnapshots();
+      snaps.splice(idx, 1);
+      saveSnapshots(snaps);
+      renderSnapshotTable();
+      renderTrendChart();
+    });
+  });
+}
+
+// Save snapshot
+document.getElementById('saveSnapshot').addEventListener('click', () => {
+  const t = getAllTotals();
+  if (t.totalAssets === 0 && t.totalLiabilities === 0) {
+    alert('Please enter at least one asset or liability value before saving a snapshot.');
+    return;
+  }
+
+  const now = new Date();
+  const date = now.toLocaleDateString('en-US', {month:'short', day:'numeric', year:'numeric'});
+  const snapshot = {
+    date,
+    timestamp: now.getTime(),
+    totalAssets: t.totalAssets,
+    totalLiabilities: t.totalLiabilities,
+    netWorth: t.netWorth,
+    assetBreakdown: t.assetBreakdown,
+    liabilityBreakdown: t.liabilityBreakdown
+  };
+
+  const snaps = getSnapshots();
+  snaps.push(snapshot);
+  saveSnapshots(snaps);
+  renderSnapshotTable();
+  renderTrendChart();
+  alert('Snapshot saved! Your net worth has been recorded.');
+});
+
+// Clear form
+document.getElementById('clearForm').addEventListener('click', () => {
+  document.querySelectorAll('input[type="number"]').forEach(inp => { inp.value = ''; });
+  updateSummary();
+});
+
+// Clear history
+document.getElementById('clearHistory').addEventListener('click', () => {
+  if (confirm('Are you sure? This will permanently delete all saved snapshots.')) {
+    localStorage.removeItem(LS_KEY);
+    renderSnapshotTable();
+    renderTrendChart();
+  }
+});
+
+// Live calculation on input
+document.querySelectorAll('input[type="number"]').forEach(inp => {
+  inp.addEventListener('input', updateSummary);
+});
+
+// FAQ
+const faqs = [
+  {q:"What is net worth and how do you calculate it?",a:"Net worth is the difference between what you own (assets) and what you owe (liabilities). Add up all your assets — cash, investments, real estate, retirement accounts, vehicles, and other valuables — then subtract all debts including mortgage, auto loans, student loans, credit cards, and personal loans. A positive net worth means your assets exceed your debts. Tracking net worth over time is the single best measure of financial progress."},
+  {q:"What is a good net worth by age?",a:"A common benchmark from The Millionaire Next Door: expected net worth = age × pre-tax income ÷ 10. The Federal Reserve's Survey of Consumer Finances shows median net worth by age: under 35 ($39,000), 35–44 ($135,600), 45–54 ($247,200), 55–64 ($364,500), 65–74 ($409,900). These are medians — averages are 3–5x higher due to wealth concentration."},
+  {q:"Should I include my home in net worth calculations?",a:"Yes — include your home's market value as an asset and mortgage balance as a liability. Your home equity (value minus mortgage) contributes to net worth. Many planners also track 'investable net worth' excluding your primary residence since you can't easily liquidate it. This tracker separates real estate so you can see both figures."},
+  {q:"How often should I track my net worth?",a:"Monthly tracking is ideal — frequent enough to spot trends but not so often that daily market fluctuations cause anxiety. Quarterly works if monthly feels excessive. The key is consistency: pick a schedule and stick to it. Many people track on the 1st of each month. Avoid daily checking — short-term investment fluctuations can be misleading."},
+  {q:"What is a good debt-to-asset ratio?",a:"Below 0.5 (50%) is generally healthy, meaning you own more than you owe. Below 0.3 (30%) is strong, below 0.1 (10%) indicates very low leverage. Young adults often have ratios above 1.0 due to student loans and mortgages — this is normal and improves over time as you pay down debt and grow assets. The ratio should decrease steadily year over year."}
+];
+
+const faqEl = document.getElementById('faq');
+faqs.forEach(f => {
+  faqEl.innerHTML += `<div class="faq-item"><div class="faq-q">${f.q}</div><div class="faq-a">${f.a}</div></div>`;
+});
+document.querySelectorAll('.faq-item').forEach(item => {
+  item.querySelector('.faq-q').addEventListener('click', () => item.classList.toggle('open'));
+});
+
+// Initial render
+updateSummary();
+renderSnapshotTable();
+renderTrendChart();
+  </script>
+</SiteLayout>
