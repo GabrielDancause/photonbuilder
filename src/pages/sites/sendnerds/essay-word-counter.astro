@@ -1,0 +1,830 @@
+---
+import SiteLayout from "../../../layouts/SiteLayout.astro";
+
+export const meta = {
+  title: "Free Essay Word Counter — Words, Characters & Readability",
+  description: "Count words, characters, sentences, paragraphs, and pages in your essay instantly. Get Flesch-Kincaid readability scores, keyword density analysis, and track progress toward your target word count.",
+  category: "tool",
+  published: "2026-03-21",
+};
+
+const schema = [
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": meta.title,
+    "description": meta.description,
+    "author": {
+      "@type": "Organization",
+      "name": "SendNerds"
+    },
+    "datePublished": meta.published
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "How does the word counter calculate words?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "The word counter splits your text by whitespace and counts each distinct group of characters as one word. Hyphenated words like 'well-known' count as one word. Numbers, abbreviations, and contractions each count as one word. This matches how most teachers, professors, and publishers count words."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "What is the Flesch-Kincaid readability score?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "The Flesch-Kincaid Grade Level estimates the U.S. school grade needed to understand your text. It uses average sentence length and average syllables per word. A score of 8.0 means an eighth-grader can understand it. Most general-audience writing should target grades 7–9. Academic papers typically score 12–16. Lower scores mean your writing is clearer and more accessible."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How many words is a standard essay?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Essay length varies by type: a short essay or blog post is typically 500 words (about 2 pages), a standard college essay is 1,000–1,500 words (4–6 pages), a long essay or research paper is 2,500–5,000 words (10–20 pages), and a thesis or dissertation chapter is 10,000+ words. A page is roughly 250 words when double-spaced with a 12pt font."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "What is keyword density and why does it matter?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Keyword density is the percentage of times a word or phrase appears relative to the total word count. For SEO, a keyword density of 1–2% is generally recommended — high enough to signal relevance to search engines, but low enough to avoid keyword stuffing. For essays, keyword density helps you spot overused words and improve variety in your writing."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How is reading time calculated?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Reading time is calculated at 238 words per minute, which is the average adult silent reading speed according to research. Speaking time uses 150 words per minute, the average pace for presentations and speeches. Both are estimates — actual times vary based on text complexity, reader experience, and speaking style."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How many pages is 1,000 words?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "1,000 words is approximately 4 pages double-spaced or 2 pages single-spaced, using a standard 12-point font like Times New Roman with 1-inch margins. This word counter uses the standard estimate of 250 words per page (double-spaced). Actual page count may vary slightly based on formatting, paragraph breaks, and headings."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Does this word counter work offline?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes. All text processing happens entirely in your browser — nothing is sent to a server. Your essay text stays private on your device. Once the page loads, you can disconnect from the internet and the counter will continue to work. No data is stored or transmitted."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How can I improve my essay's readability score?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "To improve readability: use shorter sentences (aim for 15–20 words on average), choose simpler words over complex ones ('use' instead of 'utilize'), break long paragraphs into smaller ones, use active voice instead of passive voice, and avoid unnecessary jargon. The Flesch-Kincaid score rewards clear, concise writing — which is almost always better writing."
+        }
+      }
+    ]
+  }
+];
+---
+
+<SiteLayout
+  site="sendnerds"
+  title={meta.title}
+  description={meta.description}
+  canonical="https://photonbuilder.com/sendnerds/essay-word-counter"
+  schema={schema}
+>
+  <div class="page-content">
+    <div class="hero">
+      <h1>Essay Word Counter</h1>
+      <p class="subtitle">Paste or type your essay to get live word count, character count, readability analysis, and keyword density. Track your progress toward any target length.</p>
+    </div>
+
+    <div class="tool-container">
+      <!-- Textarea -->
+      <textarea id="essay-input" class="essay-input" placeholder="Paste or type your essay here..." rows="12" spellcheck="false"></textarea>
+
+      <!-- Live Stats Grid -->
+      <div class="stats-grid" id="stats-grid">
+        <div class="stat-card">
+          <span class="stat-value" id="stat-words">0</span>
+          <span class="stat-label">Words</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-value" id="stat-chars">0</span>
+          <span class="stat-label">Characters</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-value" id="stat-chars-no-space">0</span>
+          <span class="stat-label">Chars (no spaces)</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-value" id="stat-sentences">0</span>
+          <span class="stat-label">Sentences</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-value" id="stat-paragraphs">0</span>
+          <span class="stat-label">Paragraphs</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-value" id="stat-pages">0</span>
+          <span class="stat-label">Pages</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-value" id="stat-reading">0s</span>
+          <span class="stat-label">Reading Time</span>
+        </div>
+        <div class="stat-card">
+          <span class="stat-value" id="stat-speaking">0s</span>
+          <span class="stat-label">Speaking Time</span>
+        </div>
+      </div>
+
+      <!-- Target Word Count -->
+      <div class="target-section">
+        <div class="target-header">
+          <h2>Essay Length Tracker</h2>
+          <div class="target-input-wrap">
+            <label for="target-count">Target words:</label>
+            <input type="number" id="target-count" class="target-input" value="1000" min="1" max="100000">
+          </div>
+        </div>
+        <div class="progress-bar-wrap">
+          <div class="progress-bar" id="progress-bar"></div>
+        </div>
+        <div class="progress-info">
+          <span id="progress-text">0 / 1,000 words (0%)</span>
+          <span id="progress-remaining">1,000 words remaining</span>
+        </div>
+      </div>
+
+      <!-- Common Essay Lengths -->
+      <div class="lengths-section">
+        <h3>Common Lengths — Quick Set</h3>
+        <div class="length-chips" id="length-chips">
+          <button data-chars="280" data-type="chars">Tweet (280 chars)</button>
+          <button data-words="250">Abstract (250 words)</button>
+          <button data-words="500">Short Essay (500)</button>
+          <button data-words="1000" class="active">Standard Essay (1,000)</button>
+          <button data-words="2500">Long Essay (2,500)</button>
+          <button data-words="5000">Research Paper (5,000)</button>
+          <button data-words="10000">Thesis Chapter (10,000)</button>
+        </div>
+      </div>
+
+      <!-- Readability -->
+      <div class="readability-section" id="readability-section">
+        <h2>Readability Analysis</h2>
+        <div class="readability-grid">
+          <div class="readability-card main-readability">
+            <span class="r-value" id="fk-grade">—</span>
+            <span class="r-label">Flesch-Kincaid Grade</span>
+          </div>
+          <div class="readability-card">
+            <span class="r-value" id="fk-ease">—</span>
+            <span class="r-label">Reading Ease (0–100)</span>
+          </div>
+          <div class="readability-card">
+            <span class="r-value" id="avg-sentence">—</span>
+            <span class="r-label">Avg Words/Sentence</span>
+          </div>
+          <div class="readability-card">
+            <span class="r-value" id="avg-syllables">—</span>
+            <span class="r-label">Avg Syllables/Word</span>
+          </div>
+        </div>
+        <div class="readability-desc" id="readability-desc"></div>
+      </div>
+
+      <!-- Keyword Density -->
+      <div class="keyword-section" id="keyword-section">
+        <h2>Keyword Density</h2>
+        <p class="keyword-hint">Top words by frequency (common stop words excluded).</p>
+        <div class="keyword-table-wrap">
+          <table class="keyword-table" id="keyword-table">
+            <thead>
+              <tr>
+                <th>Keyword</th>
+                <th>Count</th>
+                <th>Density</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody id="keyword-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Explainer -->
+    <div class="explainer">
+      <h2>The Complete Guide to Word Counting for Essays</h2>
+      <p>Whether you are writing a college application essay with a strict 650-word limit, a research paper with a 5,000-word requirement, or a blog post optimized for search engines, knowing your exact word count matters. This tool gives you far more than a simple number — it provides the full statistical picture of your writing.</p>
+
+      <h3>Why Word Count Matters</h3>
+      <p>Most academic assignments specify a word count range. Going under signals insufficient analysis; going over suggests poor editing. Admissions essays have hard limits — the Common App cuts off at 650 words. Journals and conferences enforce strict page or word limits for submissions. Even blog posts and web content benefit from targeting specific lengths: SEO research shows that comprehensive articles of 1,500–2,500 words tend to rank higher in search results because they thoroughly cover a topic.</p>
+
+      <h3>Understanding Readability Scores</h3>
+      <p>The Flesch-Kincaid Grade Level formula uses two factors: average sentence length and average syllables per word. Shorter sentences and simpler words produce lower (more readable) scores. Most newspapers write at a 6th–8th grade level. Academic papers typically score at grade 12 or higher. The Flesch Reading Ease score (0–100) flips the scale: higher is easier. Scores of 60–70 are considered ideal for general audiences. Neither score measures the quality of your ideas — only how accessible your language is.</p>
+
+      <h3>Using Keyword Density Effectively</h3>
+      <p>Keyword density analysis reveals your most-used meaningful words. For SEO content, this helps ensure your target keywords appear naturally throughout the text without overuse. For essays, it helps spot repetitive language. If one word dominates your density table, consider using synonyms or restructuring sentences for variety. A density above 3% for any single word often signals overuse.</p>
+
+      <h3>Related Tools</h3>
+      <p>Test how fast you can type your next essay with our <a href="/sendnerds/typing-speed-test">Typing Speed Test</a>. Need to format your bibliography? Use our <a href="/sendnerds/citation-generator">Citation Generator</a> for APA, MLA, and Chicago styles.</p>
+    </div>
+
+    <section class="faq-section">
+      <h2>Frequently Asked Questions</h2>
+      {schema[1].mainEntity.map(faq => (
+        <details>
+          <summary>{faq.name}</summary>
+          <p>{faq.acceptedAnswer.text}</p>
+        </details>
+      ))}
+    </section>
+  </div>
+
+  <script is:inline>
+    document.addEventListener('DOMContentLoaded', () => {
+      // ---- DOM ----
+      const input = document.getElementById('essay-input');
+      const targetInput = document.getElementById('target-count');
+      const progressBar = document.getElementById('progress-bar');
+      const progressText = document.getElementById('progress-text');
+      const progressRemaining = document.getElementById('progress-remaining');
+      const keywordTbody = document.getElementById('keyword-tbody');
+
+      // ---- Stop words for keyword density ----
+      const stopWords = new Set([
+        'the','be','to','of','and','a','in','that','have','i','it','for','not','on',
+        'with','he','as','you','do','at','this','but','his','by','from','they','we',
+        'say','her','she','or','an','will','my','one','all','would','there','their',
+        'what','so','up','out','if','about','who','get','which','go','me','when',
+        'make','can','like','time','no','just','him','know','take','people','into',
+        'year','your','good','some','could','them','see','other','than','then','now',
+        'look','only','come','its','over','think','also','back','after','use','two',
+        'how','our','work','first','well','way','even','new','want','because','any',
+        'these','give','day','most','us','is','are','was','were','been','being','has',
+        'had','did','does','am','been','doing','a','an','the','and','but','if','or',
+        'nor','not','so','yet','both','each','few','more','most','own','same','than',
+        'too','very','can','will','just','should','now','also','may','must','shall',
+        'could','would','might','need','used','such','many','much','still','while',
+        'here','where','why','how','when','who','whom','whose','which','what','that',
+        'those','this','these','it','its','he','she','they','them','we','us','you',
+        'me','him','her','his','my','mine','your','yours','our','ours','their','theirs',
+        'was','were','been','has','had','have','having','do','does','did','done',
+        'being','am','is','are','s','t','re','ve','ll','d','m','don','doesn','didn',
+        'won','wouldn','couldn','shouldn','isn','aren','wasn','weren','hasn','hadn',
+        'haven','about','above','after','again','against','before','below','between',
+        'during','from','into','through','under','until','upon','within','without',
+        'down','off','out','over','then','once','than','too','very','per','via','vs',
+        'etc','ie','eg','de','la','le','el','en','un','una','del'
+      ]);
+
+      // ---- Syllable counter ----
+      function countSyllables(word) {
+        word = word.toLowerCase().replace(/[^a-z]/g, '');
+        if (!word) return 0;
+        if (word.length <= 3) return 1;
+        word = word.replace(/(?:[^laeiouy]es|ed|[^laeiouy]e)$/, '');
+        word = word.replace(/^y/, '');
+        const matches = word.match(/[aeiouy]{1,2}/g);
+        return matches ? Math.max(1, matches.length) : 1;
+      }
+
+      // ---- Format time ----
+      function formatTime(minutes) {
+        if (minutes < 1) return Math.round(minutes * 60) + 's';
+        if (minutes < 60) {
+          const m = Math.floor(minutes);
+          const s = Math.round((minutes - m) * 60);
+          return s > 0 ? m + 'm ' + s + 's' : m + 'm';
+        }
+        const h = Math.floor(minutes / 60);
+        const m = Math.round(minutes % 60);
+        return m > 0 ? h + 'h ' + m + 'm' : h + 'h';
+      }
+
+      // ---- Format number with commas ----
+      function fmt(n) {
+        return n.toLocaleString();
+      }
+
+      // ---- Analyze text ----
+      function analyze() {
+        const text = input.value;
+
+        // Words
+        const words = text.trim() ? text.trim().split(/\s+/) : [];
+        const wordCount = words.length;
+
+        // Characters
+        const charCount = text.length;
+        const charNoSpace = text.replace(/\s/g, '').length;
+
+        // Sentences
+        const sentences = text.split(/[.!?]+/).filter(s => s.trim().length > 0);
+        const sentenceCount = sentences.length;
+
+        // Paragraphs
+        const paragraphs = text.split(/\n\s*\n/).filter(p => p.trim().length > 0);
+        const paragraphCount = text.trim() ? paragraphs.length : 0;
+
+        // Pages (250 words/page)
+        const pages = (wordCount / 250).toFixed(1);
+
+        // Reading time (238 wpm) and speaking time (150 wpm)
+        const readingMin = wordCount / 238;
+        const speakingMin = wordCount / 150;
+
+        // Update stats
+        document.getElementById('stat-words').textContent = fmt(wordCount);
+        document.getElementById('stat-chars').textContent = fmt(charCount);
+        document.getElementById('stat-chars-no-space').textContent = fmt(charNoSpace);
+        document.getElementById('stat-sentences').textContent = fmt(sentenceCount);
+        document.getElementById('stat-paragraphs').textContent = fmt(paragraphCount);
+        document.getElementById('stat-pages').textContent = pages;
+        document.getElementById('stat-reading').textContent = formatTime(readingMin);
+        document.getElementById('stat-speaking').textContent = formatTime(speakingMin);
+
+        // Target progress
+        updateProgress(wordCount);
+
+        // Readability
+        updateReadability(words, sentences);
+
+        // Keyword density
+        updateKeywords(words, wordCount);
+      }
+
+      // ---- Progress bar ----
+      function updateProgress(wordCount) {
+        const target = parseInt(targetInput.value) || 1000;
+        const pct = Math.min(100, (wordCount / target) * 100);
+        const pctRound = Math.round(pct * 10) / 10;
+
+        progressBar.style.width = pct + '%';
+
+        // Color: red < 50%, yellow 50-90%, green >= 90%
+        if (pct < 50) {
+          progressBar.className = 'progress-bar progress-red';
+        } else if (pct < 90) {
+          progressBar.className = 'progress-bar progress-yellow';
+        } else {
+          progressBar.className = 'progress-bar progress-green';
+        }
+
+        progressText.textContent = fmt(wordCount) + ' / ' + fmt(target) + ' words (' + pctRound + '%)';
+        const remaining = Math.max(0, target - wordCount);
+        if (remaining > 0) {
+          progressRemaining.textContent = fmt(remaining) + ' words remaining';
+        } else {
+          const over = wordCount - target;
+          progressRemaining.textContent = over > 0 ? fmt(over) + ' words over target' : 'Target reached!';
+        }
+      }
+
+      // ---- Readability ----
+      function updateReadability(words, sentences) {
+        const gradeEl = document.getElementById('fk-grade');
+        const easeEl = document.getElementById('fk-ease');
+        const avgSentEl = document.getElementById('avg-sentence');
+        const avgSylEl = document.getElementById('avg-syllables');
+        const descEl = document.getElementById('readability-desc');
+
+        if (words.length < 10 || sentences.length < 1) {
+          gradeEl.textContent = '—';
+          easeEl.textContent = '—';
+          avgSentEl.textContent = '—';
+          avgSylEl.textContent = '—';
+          descEl.innerHTML = '<p>Enter at least 10 words to see readability analysis.</p>';
+          return;
+        }
+
+        const totalSyllables = words.reduce((sum, w) => sum + countSyllables(w), 0);
+        const avgWordsPerSentence = words.length / sentences.length;
+        const avgSyllablesPerWord = totalSyllables / words.length;
+
+        // Flesch-Kincaid Grade Level
+        const grade = (0.39 * avgWordsPerSentence) + (11.8 * avgSyllablesPerWord) - 15.59;
+        const gradeRound = Math.max(0, Math.round(grade * 10) / 10);
+
+        // Flesch Reading Ease
+        const ease = 206.835 - (1.015 * avgWordsPerSentence) - (84.6 * avgSyllablesPerWord);
+        const easeRound = Math.max(0, Math.min(100, Math.round(ease * 10) / 10));
+
+        gradeEl.textContent = gradeRound;
+        easeEl.textContent = easeRound;
+        avgSentEl.textContent = Math.round(avgWordsPerSentence * 10) / 10;
+        avgSylEl.textContent = Math.round(avgSyllablesPerWord * 100) / 100;
+
+        // Description
+        let level, desc;
+        if (gradeRound <= 5) { level = 'Very Easy'; desc = 'Readable by a 5th grader. Very clear and simple language.'; }
+        else if (gradeRound <= 8) { level = 'Easy'; desc = 'Suitable for a general audience. Clear, accessible writing.'; }
+        else if (gradeRound <= 12) { level = 'Standard'; desc = 'High school level. Appropriate for most essays and articles.'; }
+        else if (gradeRound <= 16) { level = 'Advanced'; desc = 'College level. Common in academic papers and professional writing.'; }
+        else { level = 'Graduate'; desc = 'Graduate-level complexity. Consider simplifying for broader audiences.'; }
+
+        descEl.innerHTML = '<span class="readability-badge">' + level + '</span> ' + desc;
+      }
+
+      // ---- Keyword Density ----
+      function updateKeywords(words, totalWords) {
+        if (totalWords < 5) {
+          keywordTbody.innerHTML = '<tr><td colspan="4" style="text-align:center;opacity:0.5;padding:1rem">Enter text to see keyword density</td></tr>';
+          return;
+        }
+
+        const freq = {};
+        words.forEach(w => {
+          const clean = w.toLowerCase().replace(/[^a-z0-9'-]/g, '').replace(/^['"-]+|['"-]+$/g, '');
+          if (clean.length < 2 || stopWords.has(clean)) return;
+          freq[clean] = (freq[clean] || 0) + 1;
+        });
+
+        const sorted = Object.entries(freq).sort((a, b) => b[1] - a[1]).slice(0, 15);
+
+        if (sorted.length === 0) {
+          keywordTbody.innerHTML = '<tr><td colspan="4" style="text-align:center;opacity:0.5;padding:1rem">No significant keywords found</td></tr>';
+          return;
+        }
+
+        const maxCount = sorted[0][1];
+        keywordTbody.innerHTML = sorted.map(([word, count]) => {
+          const density = ((count / totalWords) * 100).toFixed(1);
+          const barWidth = (count / maxCount) * 100;
+          return '<tr>' +
+            '<td><strong>' + word + '</strong></td>' +
+            '<td>' + count + '</td>' +
+            '<td>' + density + '%</td>' +
+            '<td><div class="density-bar-wrap"><div class="density-bar" style="width:' + barWidth + '%"></div></div></td>' +
+            '</tr>';
+        }).join('');
+      }
+
+      // ---- Length chips ----
+      document.querySelectorAll('#length-chips button').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('#length-chips button').forEach(b => b.classList.remove('active'));
+          btn.classList.add('active');
+          if (btn.dataset.words) {
+            targetInput.value = btn.dataset.words;
+          } else if (btn.dataset.chars) {
+            // For tweet: set target to char count equivalent in words (~56 words for 280 chars)
+            targetInput.value = Math.round(parseInt(btn.dataset.chars) / 5);
+          }
+          analyze();
+        });
+      });
+
+      // ---- Event listeners ----
+      input.addEventListener('input', analyze);
+      targetInput.addEventListener('input', analyze);
+
+      // ---- Init ----
+      analyze();
+    });
+  </script>
+
+  <style is:inline>
+    .page-content {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 2rem 1rem 4rem;
+    }
+    .hero {
+      text-align: center;
+      margin-bottom: 2rem;
+    }
+    .hero h1 {
+      font-size: 2.2rem;
+      margin-bottom: 0.5rem;
+    }
+    .subtitle {
+      font-size: 1.1rem;
+      opacity: 0.85;
+      max-width: 640px;
+      margin: 0 auto;
+    }
+
+    /* Tool Container */
+    .tool-container {
+      background: var(--card-bg, #fff);
+      border: 1px solid var(--border, #e2e2e2);
+      border-radius: 12px;
+      padding: 1.5rem;
+      margin-bottom: 2.5rem;
+    }
+
+    /* Textarea */
+    .essay-input {
+      width: 100%;
+      min-height: 220px;
+      padding: 1rem;
+      border: 2px solid var(--border, #e2e2e2);
+      border-radius: 8px;
+      font-size: 1rem;
+      font-family: system-ui, -apple-system, sans-serif;
+      line-height: 1.7;
+      resize: vertical;
+      background: var(--input-bg, #fff);
+      color: inherit;
+      box-sizing: border-box;
+      outline: none;
+      margin-bottom: 1.25rem;
+      transition: border-color 0.15s;
+    }
+    .essay-input:focus {
+      border-color: var(--accent, #2563eb);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.12);
+    }
+
+    /* Stats Grid */
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.6rem;
+      margin-bottom: 1.5rem;
+    }
+    @media (max-width: 600px) {
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    .stat-card {
+      text-align: center;
+      background: var(--hover-bg, #f5f5f5);
+      border-radius: 8px;
+      padding: 0.85rem 0.5rem;
+    }
+    .stat-value {
+      display: block;
+      font-size: 1.6rem;
+      font-weight: 700;
+      line-height: 1.2;
+    }
+    .stat-label {
+      display: block;
+      font-size: 0.72rem;
+      text-transform: uppercase;
+      opacity: 0.55;
+      font-weight: 600;
+      margin-top: 0.15rem;
+    }
+
+    /* Target Section */
+    .target-section {
+      margin-bottom: 1.5rem;
+      padding: 1.25rem;
+      background: var(--hover-bg, #f8f8f8);
+      border-radius: 10px;
+    }
+    .target-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 0.75rem;
+      margin-bottom: 0.85rem;
+    }
+    .target-header h2 {
+      font-size: 1.1rem;
+      margin: 0;
+    }
+    .target-input-wrap {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.9rem;
+    }
+    .target-input-wrap label {
+      opacity: 0.7;
+      white-space: nowrap;
+    }
+    .target-input {
+      width: 90px;
+      padding: 0.35rem 0.5rem;
+      border: 1px solid var(--border, #d0d0d0);
+      border-radius: 6px;
+      font-size: 0.9rem;
+      background: var(--card-bg, #fff);
+      color: inherit;
+      text-align: center;
+    }
+
+    /* Progress Bar */
+    .progress-bar-wrap {
+      height: 14px;
+      background: var(--border, #e2e2e2);
+      border-radius: 7px;
+      overflow: hidden;
+      margin-bottom: 0.5rem;
+    }
+    .progress-bar {
+      height: 100%;
+      border-radius: 7px;
+      width: 0%;
+      transition: width 0.3s, background 0.3s;
+    }
+    .progress-red { background: #ef4444; }
+    .progress-yellow { background: #eab308; }
+    .progress-green { background: #22c55e; }
+
+    .progress-info {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.82rem;
+      opacity: 0.7;
+      flex-wrap: wrap;
+      gap: 0.5rem;
+    }
+
+    /* Length Chips */
+    .lengths-section {
+      margin-bottom: 1.5rem;
+    }
+    .lengths-section h3 {
+      font-size: 0.95rem;
+      margin-bottom: 0.6rem;
+    }
+    .length-chips {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0.35rem;
+    }
+    .length-chips button {
+      padding: 0.38rem 0.75rem;
+      border: 1px solid var(--border, #d0d0d0);
+      border-radius: 6px;
+      background: transparent;
+      cursor: pointer;
+      font-size: 0.82rem;
+      color: inherit;
+      transition: all 0.15s;
+    }
+    .length-chips button:hover { background: var(--hover-bg, #f5f5f5); }
+    .length-chips button.active {
+      background: var(--accent, #2563eb);
+      color: #fff;
+      border-color: var(--accent, #2563eb);
+    }
+
+    /* Readability */
+    .readability-section {
+      margin-bottom: 1.5rem;
+      padding-top: 1.25rem;
+      border-top: 1px solid var(--border, #e2e2e2);
+    }
+    .readability-section h2 {
+      font-size: 1.15rem;
+      margin-bottom: 0.85rem;
+    }
+    .readability-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 0.6rem;
+      margin-bottom: 0.75rem;
+    }
+    @media (max-width: 600px) {
+      .readability-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+    .readability-card {
+      text-align: center;
+      background: var(--hover-bg, #f5f5f5);
+      border-radius: 8px;
+      padding: 0.85rem 0.5rem;
+    }
+    .readability-card.main-readability {
+      background: var(--accent, #2563eb);
+      color: #fff;
+    }
+    .r-value {
+      display: block;
+      font-size: 1.5rem;
+      font-weight: 700;
+      line-height: 1.2;
+    }
+    .r-label {
+      display: block;
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      opacity: 0.6;
+      font-weight: 600;
+      margin-top: 0.15rem;
+    }
+    .main-readability .r-label { opacity: 0.85; }
+    .readability-desc {
+      font-size: 0.9rem;
+      opacity: 0.8;
+      line-height: 1.5;
+    }
+    .readability-badge {
+      display: inline-block;
+      padding: 0.2rem 0.65rem;
+      border-radius: 14px;
+      font-weight: 700;
+      font-size: 0.82rem;
+      color: #fff;
+      background: var(--accent, #2563eb);
+      margin-right: 0.35rem;
+      vertical-align: middle;
+    }
+
+    /* Keyword Density */
+    .keyword-section {
+      padding-top: 1.25rem;
+      border-top: 1px solid var(--border, #e2e2e2);
+    }
+    .keyword-section h2 {
+      font-size: 1.15rem;
+      margin-bottom: 0.25rem;
+    }
+    .keyword-hint {
+      font-size: 0.85rem;
+      opacity: 0.6;
+      margin-bottom: 0.75rem;
+    }
+    .keyword-table-wrap {
+      overflow-x: auto;
+    }
+    .keyword-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.9rem;
+    }
+    .keyword-table th {
+      text-align: left;
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      opacity: 0.5;
+      font-weight: 600;
+      padding: 0.5rem 0.75rem;
+      border-bottom: 1px solid var(--border, #e2e2e2);
+    }
+    .keyword-table td {
+      padding: 0.45rem 0.75rem;
+      border-bottom: 1px solid var(--border, #e8e8e8);
+    }
+    .keyword-table tr:last-child td { border-bottom: none; }
+    .density-bar-wrap {
+      width: 80px;
+      height: 8px;
+      background: var(--border, #e2e2e2);
+      border-radius: 4px;
+      overflow: hidden;
+    }
+    .density-bar {
+      height: 100%;
+      background: var(--accent, #2563eb);
+      border-radius: 4px;
+      transition: width 0.2s;
+    }
+
+    /* Explainer */
+    .explainer {
+      margin-bottom: 2.5rem;
+      line-height: 1.7;
+    }
+    .explainer h2 { font-size: 1.6rem; margin-bottom: 0.75rem; }
+    .explainer h3 { font-size: 1.15rem; margin-top: 1.5rem; margin-bottom: 0.5rem; }
+    .explainer p { margin-bottom: 0.85rem; opacity: 0.88; }
+    .explainer a {
+      color: var(--accent, #2563eb);
+      text-decoration: underline;
+      text-underline-offset: 2px;
+    }
+
+    /* FAQ */
+    .faq-section { margin-bottom: 3rem; }
+    .faq-section h2 { font-size: 1.5rem; margin-bottom: 1rem; }
+    .faq-section details {
+      border-bottom: 1px solid var(--border, #e2e2e2);
+      padding: 0.85rem 0;
+    }
+    .faq-section summary {
+      font-weight: 600;
+      cursor: pointer;
+      font-size: 1rem;
+      list-style: none;
+    }
+    .faq-section summary::-webkit-details-marker { display: none; }
+    .faq-section summary::before {
+      content: '+ ';
+      font-weight: 700;
+      margin-right: 0.35rem;
+    }
+    .faq-section details[open] summary::before { content: '\2212 '; }
+    .faq-section details p {
+      margin-top: 0.5rem;
+      opacity: 0.8;
+      line-height: 1.65;
+      font-size: 0.95rem;
+    }
+  </style>
+</SiteLayout>
