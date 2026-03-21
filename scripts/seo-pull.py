@@ -80,45 +80,44 @@ SITES = {
         "ga": "properties/528386310",
         "domain": "photonbuilder.com",
     },
-    # Subsites — GA/GSC properties TBD after setup
     "bodycount": {
         "gsc": "sc-domain:bodycount.photonbuilder.com",
-        "ga": None,
+        "ga": "properties/529363724",
         "domain": "bodycount.photonbuilder.com",
     },
     "sendnerds": {
         "gsc": "sc-domain:sendnerds.photonbuilder.com",
-        "ga": None,
+        "ga": "properties/529337618",
         "domain": "sendnerds.photonbuilder.com",
     },
     "justonemoment": {
         "gsc": "sc-domain:justonemoment.photonbuilder.com",
-        "ga": None,
+        "ga": "properties/529323503",
         "domain": "justonemoment.photonbuilder.com",
     },
     "getthebag": {
         "gsc": "sc-domain:getthebag.photonbuilder.com",
-        "ga": None,
+        "ga": "properties/529340038",
         "domain": "getthebag.photonbuilder.com",
     },
     "fixitwithducttape": {
         "gsc": "sc-domain:fixitwithducttape.photonbuilder.com",
-        "ga": None,
+        "ga": "properties/529347118",
         "domain": "fixitwithducttape.photonbuilder.com",
     },
     "papyruspeople": {
         "gsc": "sc-domain:papyruspeople.photonbuilder.com",
-        "ga": None,
+        "ga": "properties/529345473",
         "domain": "papyruspeople.photonbuilder.com",
     },
     "eeniemeenie": {
         "gsc": "sc-domain:eeniemeenie.photonbuilder.com",
-        "ga": None,
+        "ga": "properties/529374256",
         "domain": "eeniemeenie.photonbuilder.com",
     },
     "pleasestartplease": {
         "gsc": "sc-domain:pleasestartplease.photonbuilder.com",
-        "ga": None,
+        "ga": "properties/529324505",
         "domain": "pleasestartplease.photonbuilder.com",
     },
 }

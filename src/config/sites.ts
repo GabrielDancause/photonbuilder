@@ -139,7 +139,7 @@ sites['bodycount'] = {
   domain: 'bodycount.photonbuilder.com',
   accent: '#E05A5A',
   theme: { bg: '#060a12', cardBg: '#0a1020', border: '#152040', textPrimary: '#e2e8f0', textSecondary: '#94a3b8' },
-  gaId: 'G-CYV604162T',
+  gaId: 'G-S2NRZFV4BW',
   nav: [
     { label: 'Calculators', href: '/#tools' },
     { label: 'Studies', href: '/#studies' },
@@ -172,7 +172,7 @@ sites['getthebag'] = {
   domain: 'getthebag.photonbuilder.com',
   accent: '#3B82F6',
   theme: { bg: '#060a12', cardBg: '#0a1020', border: '#152040', textPrimary: '#e2e8f0', textSecondary: '#94a3b8' },
-  gaId: 'G-CYV604162T',
+  gaId: 'G-52ZPK1JZ45',
   nav: [
     { label: 'Tools', href: '/#tools' },
     { label: 'Guides', href: '/#guides' },
@@ -186,7 +186,7 @@ sites['sendnerds'] = {
   domain: 'sendnerds.photonbuilder.com',
   accent: '#3B82F6',
   theme: { bg: '#060812', cardBg: '#0a1020', border: '#152040', textPrimary: '#e2e8f0', textSecondary: '#94a3b8' },
-  gaId: 'G-CYV604162T',
+  gaId: 'G-Z7NENQMJQP',
   nav: [
     { label: 'Calculators', href: '/#tools' },
     { label: 'Guides', href: '/#guides' },
@@ -200,7 +200,7 @@ sites['justonemoment'] = {
   domain: 'justonemoment.photonbuilder.com',
   accent: '#F59E0B',
   theme: { bg: '#060812', cardBg: '#0a1020', border: '#152040', textPrimary: '#e2e8f0', textSecondary: '#94a3b8' },
-  gaId: 'G-CYV604162T',
+  gaId: 'G-PNBZ1VJM9R',
   nav: [
     { label: 'Timers', href: '/#tools' },
     { label: 'Calculators', href: '/#calculators' },
@@ -214,7 +214,7 @@ sites['fixitwithducttape'] = {
   domain: 'fixitwithducttape.photonbuilder.com',
   accent: '#A0A0A0',
   theme: { bg: '#0a0a0a', cardBg: '#141414', border: '#252525', textPrimary: '#e2e8f0', textSecondary: '#94a3b8' },
-  gaId: 'G-CYV604162T',
+  gaId: 'G-3Y23ZLX5C3',
   nav: [
     { label: 'Reviews', href: '/#tools' },
     { label: 'Comparisons', href: '/#guides' },
@@ -228,7 +228,7 @@ sites['papyruspeople'] = {
   domain: 'papyruspeople.photonbuilder.com',
   accent: '#D4A574',
   theme: { bg: '#0a0806', cardBg: '#12100c', border: '#2a2418', textPrimary: '#e8e0d0', textSecondary: '#a09880' },
-  gaId: 'G-CYV604162T',
+  gaId: 'G-26Z3FPWKM6',
   nav: [
     { label: 'Translators', href: '/#tools' },
     { label: 'Fonts', href: '/#guides' },
@@ -242,7 +242,7 @@ sites['eeniemeenie'] = {
   domain: 'eeniemeenie.photonbuilder.com',
   accent: '#E040FB',
   theme: { bg: '#0a060c', cardBg: '#140e18', border: '#2a1e34', textPrimary: '#e8e0f0', textSecondary: '#a090b8' },
-  gaId: 'G-CYV604162T',
+  gaId: 'G-CS7D4WKPVP',
   nav: [
     { label: 'Generators', href: '/#tools' },
     { label: 'Spinners', href: '/#guides' },
@@ -256,7 +256,7 @@ sites['pleasestartplease'] = {
   domain: 'pleasestartplease.photonbuilder.com',
   accent: '#EF4444',
   theme: { bg: '#0a0606', cardBg: '#141010', border: '#2a1a1a', textPrimary: '#e8e0e0', textSecondary: '#a09090' },
-  gaId: 'G-CYV604162T',
+  gaId: 'G-DVC7TK5BHV',
   nav: [
     { label: 'Calculators', href: '/#tools' },
     { label: 'Guides', href: '/#guides' },
