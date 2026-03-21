@@ -1,0 +1,989 @@
+---
+import SiteLayout from '../../../layouts/SiteLayout.astro';
+
+const schema = {
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "Caffeine Calculator",
+  "url": "https://28grams.vip/caffeine-calculator",
+  "description": "Calculate your daily caffeine intake from coffee, tea, energy drinks, soda, and chocolate. Track your total caffeine with a progress bar, compare beverages, and see how long caffeine stays in your system.",
+  "applicationCategory": "UtilitiesApplication",
+  "operatingSystem": "Any",
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "USD"
+  },
+  "author": {
+    "@type": "Organization",
+    "name": "GAB Ventures",
+    "url": "https://gab.ae"
+  }
+};
+
+const faqSchema = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "How much caffeine is safe per day?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "The FDA recommends a maximum of 400mg of caffeine per day for healthy adults. That's roughly four 8oz cups of drip coffee, or about ten cans of cola. Pregnant women are advised to limit intake to 200mg per day. Individual tolerance varies based on genetics, body weight, and how regularly you consume caffeine."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How long does caffeine stay in your system?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Caffeine has an average half-life of about 5.7 hours in healthy adults, meaning half the caffeine is eliminated every 5.7 hours. After consuming 200mg of caffeine at noon, you'd still have about 100mg in your system around 5:45 PM. It takes approximately 5–6 half-lives (28–34 hours) to fully clear caffeine from your body."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Which drink has the most caffeine?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Per serving, Bang Energy (300mg per 16oz) and cold brew concentrate have the most caffeine among common beverages. Per fluid ounce, espresso leads at about 63mg per ounce, but it's typically consumed in small 1oz shots. Drip coffee averages about 12mg per ounce, while tea ranges from 3–8mg per ounce depending on type."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Does caffeine content change with serving size?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Yes. Caffeine content scales linearly with serving size for most beverages. A 16oz drip coffee has roughly double the caffeine of an 8oz cup. Espresso-based drinks like lattes depend on the number of shots rather than total drink volume — a 12oz latte and a 16oz latte with the same number of shots have the same caffeine content."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How does caffeine affect sleep?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Caffeine blocks adenosine receptors in the brain, which suppresses sleepiness. Because of its 5.7-hour half-life, drinking a large coffee at 3 PM means roughly half the caffeine is still active at 8:45 PM. Sleep experts recommend cutting off caffeine at least 6–8 hours before bedtime to minimize its impact on sleep quality and duration."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Is caffeine in tea different from caffeine in coffee?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "The caffeine molecule is chemically identical in all sources. However, tea contains L-theanine, an amino acid that modulates caffeine's effects — producing a calmer, more sustained alertness compared to coffee. Tea also has less caffeine per serving: a cup of green tea has about 28mg versus 95mg for drip coffee."
+      }
+    }
+  ]
+};
+
+export const meta = {
+  title: "Caffeine Calculator — Track Daily Intake & Compare Beverages | 28grams",
+  description: "Calculate your caffeine intake from coffee, tea, energy drinks, soda, and chocolate. Track daily total vs. the 400mg limit, compare caffeine content, and see how long caffeine stays in your system.",
+  category: "tool",
+  published: "2026-03-21",
+};
+---
+
+<SiteLayout
+  site="28grams"
+  title="Caffeine Calculator — Track Daily Intake & Compare Beverages | 28grams"
+  description="Calculate your caffeine intake from coffee, tea, energy drinks, soda, and chocolate. Track daily total vs. the 400mg limit, compare caffeine content, and see how long caffeine stays in your system."
+  canonical="https://28grams.vip/caffeine-calculator"
+  schema={schema}
+>
+  <script type="application/ld+json" set:html={JSON.stringify(faqSchema)} />
+
+  <style>
+* { margin: 0; padding: 0; box-sizing: border-box; }
+body { font-family: 'Inter', sans-serif; background: #0a0b10; color: #e0d0d8; min-height: 100vh; }
+code, .mono { font-family: 'JetBrains Mono', monospace; }
+.hero { text-align: center; padding: 48px 24px 24px; background: linear-gradient(180deg, #111318 0%, #0a0b10 100%); }
+.hero h1 { font-size: 2.4rem; font-weight: 900; color: #fff; margin-bottom: 6px; }
+.hero h1 span { background: linear-gradient(135deg, #C2185B, #ff6b9d); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+.hero p { color: #8892b0; font-size: 0.95rem; max-width: 520px; margin: 0 auto; }
+.main { max-width: 860px; margin: 0 auto; padding: 32px 20px 40px; }
+
+.converter-card {
+  background: #111318;
+  border: 2px solid #1e2030;
+  border-radius: 16px;
+  overflow: hidden;
+  margin-bottom: 24px;
+}
+.card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 16px 20px;
+  background: #151820;
+  border-bottom: 1px solid #1e2030;
+}
+.card-header h2 { font-size: 0.95rem; font-weight: 700; color: #ccc; }
+.card-body { padding: 24px 20px; display: flex; flex-direction: column; gap: 16px; }
+
+/* Beverage Selector */
+.bev-categories { display: flex; gap: 8px; flex-wrap: wrap; margin-bottom: 8px; }
+.cat-btn {
+  background: #151820;
+  border: 2px solid #1e2030;
+  color: #8892b0;
+  padding: 8px 14px;
+  border-radius: 10px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+  transition: all 0.15s;
+}
+.cat-btn:hover { border-color: #2a2e40; color: #ccc; }
+.cat-btn.active { border-color: #C2185B; color: #C2185B; background: rgba(194,24,91,0.1); }
+
+.bev-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+  gap: 8px;
+}
+.bev-btn {
+  background: #151820;
+  border: 2px solid #1e2030;
+  color: #ccc;
+  padding: 12px 10px;
+  border-radius: 10px;
+  font-size: 0.8rem;
+  font-weight: 500;
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+  transition: all 0.15s;
+  text-align: left;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.bev-btn:hover { border-color: #2a2e40; background: #1a1e28; }
+.bev-btn.selected { border-color: #C2185B; background: rgba(194,24,91,0.08); }
+.bev-btn .bev-name { font-weight: 600; }
+.bev-btn .bev-info { font-size: 0.7rem; color: #666; font-family: 'JetBrains Mono', monospace; }
+
+/* Serving Input */
+.serving-row {
+  display: flex;
+  gap: 10px;
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+.srv-field { display: flex; flex-direction: column; gap: 4px; }
+.srv-field label { font-size: 0.7rem; font-weight: 600; color: #8892b0; text-transform: uppercase; letter-spacing: 0.5px; }
+.srv-field input, .srv-field select {
+  background: #0a0b10;
+  border: 2px solid #1e2030;
+  border-radius: 10px;
+  padding: 10px 12px;
+  color: #fff;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.88rem;
+  outline: none;
+}
+.srv-field input:focus, .srv-field select:focus { border-color: #C2185B; }
+.srv-field select {
+  appearance: none;
+  cursor: pointer;
+  background-image: url('data:image/svg+xml;charset=US-ASCII,%3Csvg width="10" height="6" viewBox="0 0 12 8" fill="none" xmlns="http://www.w3.org/2000/svg"%3E%3Cpath d="M1 1.5L6 6.5L11 1.5" stroke="%23888888" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/%3E%3C/svg%3E');
+  background-repeat: no-repeat;
+  background-position: right 10px center;
+  padding-right: 28px;
+}
+.srv-field.size-field { width: 100px; }
+.srv-field.count-field { width: 80px; }
+
+.add-btn {
+  background: rgba(194,24,91,0.15);
+  border: 2px solid #C2185B;
+  color: #C2185B;
+  padding: 10px 18px;
+  border-radius: 10px;
+  font-size: 0.85rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+  transition: background 0.15s;
+  white-space: nowrap;
+}
+.add-btn:hover { background: rgba(194,24,91,0.3); }
+.add-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+/* Caffeine Result */
+.caff-result {
+  background: #151820;
+  border: 1px solid #1e2030;
+  border-radius: 12px;
+  padding: 16px;
+  display: none;
+  gap: 8px;
+  flex-direction: column;
+}
+.caff-result.show { display: flex; }
+.caff-result .cr-line { display: flex; justify-content: space-between; align-items: center; }
+.caff-result .cr-label { font-size: 0.82rem; color: #8892b0; }
+.caff-result .cr-val { font-family: 'JetBrains Mono', monospace; font-size: 1.1rem; font-weight: 700; color: #C2185B; }
+
+/* Daily Tracker */
+.tracker-header { display: flex; justify-content: space-between; align-items: center; }
+.tracker-header .daily-total { font-family: 'JetBrains Mono', monospace; font-size: 1.4rem; font-weight: 800; color: #fff; }
+.tracker-header .daily-limit { font-size: 0.8rem; color: #666; }
+
+.progress-wrap { margin: 8px 0; }
+.progress-bar-bg {
+  width: 100%;
+  height: 24px;
+  background: #0a0b10;
+  border-radius: 12px;
+  border: 1px solid #1e2030;
+  overflow: hidden;
+  position: relative;
+}
+.progress-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #C2185B, #ff6b9d);
+  border-radius: 12px;
+  transition: width 0.4s ease;
+  min-width: 0;
+}
+.progress-bar-fill.over { background: linear-gradient(90deg, #f44336, #ff6659); }
+.progress-label {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: #fff;
+  text-shadow: 0 1px 3px rgba(0,0,0,0.6);
+}
+
+.tracked-list { display: flex; flex-direction: column; gap: 6px; margin-top: 8px; }
+.tracked-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 14px;
+  background: #151820;
+  border: 1px solid #1e2030;
+  border-radius: 10px;
+  transition: background 0.15s;
+}
+.tracked-row:hover { background: #1a1e28; }
+.tracked-row .tr-name { flex: 1; font-size: 0.85rem; color: #ccc; font-weight: 500; }
+.tracked-row .tr-size { font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; color: #666; min-width: 80px; text-align: right; }
+.tracked-row .tr-caff { font-family: 'JetBrains Mono', monospace; font-size: 0.82rem; color: #C2185B; font-weight: 600; min-width: 70px; text-align: right; }
+.tracked-row .remove-btn {
+  background: none;
+  border: none;
+  color: #555;
+  cursor: pointer;
+  font-size: 1rem;
+  padding: 2px 6px;
+  border-radius: 6px;
+  transition: all 0.15s;
+}
+.tracked-row .remove-btn:hover { background: rgba(255,0,0,0.1); color: #f44; }
+
+.empty-state { text-align: center; padding: 30px; color: #444; font-size: 0.85rem; }
+
+.clear-all-btn {
+  background: none;
+  border: 1px solid #333;
+  color: #666;
+  padding: 6px 14px;
+  border-radius: 8px;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  font-family: 'Inter', sans-serif;
+  transition: all 0.15s;
+}
+.clear-all-btn:hover { border-color: #f44; color: #f44; }
+
+/* Half-life Calculator */
+.hl-inputs {
+  display: flex;
+  gap: 12px;
+  align-items: flex-end;
+  flex-wrap: wrap;
+}
+.hl-field { display: flex; flex-direction: column; gap: 4px; }
+.hl-field label { font-size: 0.7rem; font-weight: 600; color: #8892b0; text-transform: uppercase; letter-spacing: 0.5px; }
+.hl-field input {
+  background: #0a0b10;
+  border: 2px solid #1e2030;
+  border-radius: 10px;
+  padding: 10px 12px;
+  color: #fff;
+  font-family: 'Inter', sans-serif;
+  font-size: 0.88rem;
+  outline: none;
+  width: 130px;
+}
+.hl-field input:focus { border-color: #C2185B; }
+
+.hl-result {
+  background: #151820;
+  border: 1px solid #1e2030;
+  border-radius: 12px;
+  padding: 16px;
+  display: none;
+}
+.hl-result.show { display: block; }
+.hl-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 10px;
+}
+.hl-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.82rem;
+}
+.hl-row .hl-time { font-family: 'JetBrains Mono', monospace; color: #8892b0; min-width: 70px; font-weight: 600; }
+.hl-row .hl-bar-bg {
+  flex: 1;
+  height: 10px;
+  background: #0a0b10;
+  border-radius: 5px;
+  overflow: hidden;
+}
+.hl-row .hl-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, #C2185B, #ff6b9d);
+  border-radius: 5px;
+  transition: width 0.3s;
+}
+.hl-row .hl-mg { font-family: 'JetBrains Mono', monospace; color: #ccc; font-weight: 600; min-width: 60px; text-align: right; font-size: 0.78rem; }
+.hl-bedtime-note { font-size: 0.8rem; color: #C2185B; font-weight: 600; margin-top: 10px; padding: 10px; background: rgba(194,24,91,0.08); border-radius: 8px; }
+
+/* Comparison Table */
+.comp-table-wrap { overflow-x: auto; }
+.comp-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.82rem;
+}
+.comp-table th {
+  text-align: left;
+  padding: 10px 12px;
+  border-bottom: 2px solid #1e2030;
+  color: #8892b0;
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+}
+.comp-table th:hover { color: #C2185B; }
+.comp-table th.sorted { color: #C2185B; }
+.comp-table td {
+  padding: 9px 12px;
+  border-bottom: 1px solid #1a1e28;
+  color: #ccc;
+}
+.comp-table tr:hover td { background: #151820; }
+.comp-table .cat-tag {
+  font-size: 0.68rem;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+}
+.cat-coffee { background: rgba(111,78,55,0.25); color: #c49a6c; }
+.cat-tea { background: rgba(76,175,80,0.15); color: #81c784; }
+.cat-energy { background: rgba(255,152,0,0.15); color: #ffb74d; }
+.cat-soda { background: rgba(33,150,243,0.15); color: #64b5f6; }
+.cat-chocolate { background: rgba(161,136,127,0.15); color: #bcaaa4; }
+.comp-table .mg-val { font-family: 'JetBrains Mono', monospace; font-weight: 600; color: #C2185B; }
+.comp-table .size-val { font-family: 'JetBrains Mono', monospace; color: #666; }
+
+/* FAQ */
+.faq-list { display: flex; flex-direction: column; gap: 8px; }
+.faq-item { border: 1px solid #1e2030; border-radius: 12px; overflow: hidden; }
+.faq-q {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 14px 16px;
+  background: #151820;
+  cursor: pointer;
+  font-size: 0.88rem;
+  font-weight: 600;
+  color: #ccc;
+  user-select: none;
+  gap: 12px;
+}
+.faq-q:hover { background: #1a1e28; }
+.faq-q .arrow { color: #555; transition: transform 0.2s; flex-shrink: 0; }
+.faq-item.open .faq-q .arrow { transform: rotate(180deg); }
+.faq-a {
+  max-height: 0;
+  overflow: hidden;
+  transition: max-height 0.3s ease;
+  background: #111318;
+}
+.faq-item.open .faq-a { max-height: 400px; }
+.faq-a-inner { padding: 14px 16px; font-size: 0.84rem; color: #8892b0; line-height: 1.7; }
+
+/* Related */
+.related-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 12px;
+}
+.related-card {
+  display: block;
+  background: #111318;
+  border: 2px solid #1e2030;
+  border-radius: 14px;
+  padding: 20px;
+  text-decoration: none;
+  transition: all 0.2s;
+}
+.related-card:hover { border-color: #C2185B; transform: translateY(-2px); }
+.related-card h3 { font-size: 0.95rem; color: #fff; font-weight: 700; margin-bottom: 6px; }
+.related-card p { font-size: 0.8rem; color: #666; line-height: 1.5; }
+
+@media (max-width: 600px) {
+  .hero h1 { font-size: 1.6rem; }
+  .bev-grid { grid-template-columns: repeat(auto-fill, minmax(130px, 1fr)); }
+  .serving-row { flex-direction: column; align-items: stretch; }
+  .srv-field.size-field, .srv-field.count-field { width: 100%; }
+  .srv-field input, .srv-field select { width: 100%; }
+  .hl-inputs { flex-direction: column; }
+  .hl-field input { width: 100%; }
+  .comp-table { font-size: 0.75rem; }
+}
+  </style>
+
+  <main>
+    <section class="hero">
+      <h1>Caffeine <span>Calculator</span></h1>
+      <p>Track how much caffeine you consume, compare beverages, and see how long it stays in your system.</p>
+    </section>
+
+    <div class="main">
+      <!-- Beverage Selector -->
+      <div class="converter-card">
+        <div class="card-header">
+          <h2>Select a Beverage</h2>
+        </div>
+        <div class="card-body">
+          <div class="bev-categories" id="catBtns">
+            <button class="cat-btn active" data-cat="all">All</button>
+            <button class="cat-btn" data-cat="coffee">Coffee</button>
+            <button class="cat-btn" data-cat="tea">Tea</button>
+            <button class="cat-btn" data-cat="energy">Energy Drinks</button>
+            <button class="cat-btn" data-cat="soda">Soda</button>
+            <button class="cat-btn" data-cat="chocolate">Chocolate</button>
+          </div>
+          <div class="bev-grid" id="bevGrid"></div>
+          <div class="serving-row" id="servingRow" style="display:none;">
+            <div class="srv-field size-field">
+              <label>Serving Size</label>
+              <input type="number" id="servingSize" min="1" step="1" placeholder="oz">
+            </div>
+            <div class="srv-field">
+              <label>Unit</label>
+              <select id="servingUnit">
+                <option value="oz">fl oz</option>
+                <option value="ml">ml</option>
+                <option value="shot">shot(s)</option>
+                <option value="g">grams</option>
+              </select>
+            </div>
+            <div class="srv-field count-field">
+              <label>Quantity</label>
+              <input type="number" id="bevQty" min="1" value="1" step="1">
+            </div>
+            <button class="add-btn" id="addBevBtn" disabled>+ Add to Tracker</button>
+          </div>
+          <div class="caff-result" id="caffResult">
+            <div class="cr-line">
+              <span class="cr-label">Caffeine per serving</span>
+              <span class="cr-val" id="caffPerServing">—</span>
+            </div>
+            <div class="cr-line">
+              <span class="cr-label">% of daily limit (400mg)</span>
+              <span class="cr-val" id="caffPct">—</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Daily Tracker -->
+      <div class="converter-card">
+        <div class="card-header">
+          <h2>Daily Caffeine Tracker</h2>
+          <button class="clear-all-btn" id="clearAllBtn">Clear All</button>
+        </div>
+        <div class="card-body">
+          <div class="tracker-header">
+            <div>
+              <span class="daily-total" id="dailyTotal">0mg</span>
+              <span class="daily-limit"> / 400mg daily limit</span>
+            </div>
+          </div>
+          <div class="progress-wrap">
+            <div class="progress-bar-bg">
+              <div class="progress-bar-fill" id="progressFill" style="width:0%"></div>
+              <span class="progress-label" id="progressLabel">0%</span>
+            </div>
+          </div>
+          <div class="tracked-list" id="trackedList">
+            <div class="empty-state">No beverages added yet. Select a drink above to start tracking.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Half-life Calculator -->
+      <div class="converter-card">
+        <div class="card-header">
+          <h2>Caffeine Half-Life Calculator</h2>
+        </div>
+        <div class="card-body">
+          <p style="font-size:0.84rem;color:#8892b0;line-height:1.6;">Caffeine has an average half-life of <strong style="color:#ccc;">5.7 hours</strong>. Enter when you had your last caffeine and your bedtime to see how much remains in your system.</p>
+          <div class="hl-inputs">
+            <div class="hl-field">
+              <label>Caffeine Amount (mg)</label>
+              <input type="number" id="hlAmount" min="1" placeholder="e.g. 200">
+            </div>
+            <div class="hl-field">
+              <label>Time Consumed</label>
+              <input type="time" id="hlTime" value="08:00">
+            </div>
+            <div class="hl-field">
+              <label>Bedtime</label>
+              <input type="time" id="hlBedtime" value="22:00">
+            </div>
+            <button class="add-btn" id="hlCalcBtn">Calculate</button>
+          </div>
+          <div class="hl-result" id="hlResult">
+            <div style="font-size:0.82rem;color:#8892b0;margin-bottom:6px;">Caffeine remaining over time:</div>
+            <div class="hl-timeline" id="hlTimeline"></div>
+            <div class="hl-bedtime-note" id="hlBedNote"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Comparison Table -->
+      <div class="converter-card">
+        <div class="card-header">
+          <h2>Caffeine Content Comparison</h2>
+        </div>
+        <div class="card-body">
+          <div class="comp-table-wrap">
+            <table class="comp-table" id="compTable">
+              <thead>
+                <tr>
+                  <th data-col="name">Beverage &#x25B4;</th>
+                  <th data-col="category">Category</th>
+                  <th data-col="serving">Serving</th>
+                  <th data-col="caffeine" class="sorted">Caffeine &#x25BE;</th>
+                  <th data-col="perOz">Per fl oz</th>
+                </tr>
+              </thead>
+              <tbody id="compBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- FAQ -->
+      <div class="converter-card">
+        <div class="card-header">
+          <h2>Frequently Asked Questions</h2>
+        </div>
+        <div class="card-body">
+          <div class="faq-list" id="faqList"></div>
+        </div>
+      </div>
+
+      <!-- Related -->
+      <div class="converter-card">
+        <div class="card-header">
+          <h2>Related Tools</h2>
+        </div>
+        <div class="card-body">
+          <div class="related-grid">
+            <a href="/recipe-calorie-calculator" class="related-card">
+              <h3>Recipe Calorie Calculator</h3>
+              <p>Calculate calories, macros, and full nutrition for any recipe with a complete ingredient database.</p>
+            </a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </main>
+
+  <script type="text/javascript">
+  (function(){
+    // ========== BEVERAGE DATABASE ==========
+    const beverages = [
+      // Coffee
+      { name: 'Drip Coffee', cat: 'coffee', caffPerOz: 11.88, defaultOz: 8, unit: 'oz' },
+      { name: 'Espresso', cat: 'coffee', caffPerOz: 63.6, defaultOz: 1, unit: 'shot' },
+      { name: 'Latte', cat: 'coffee', caffPerOz: 9.53, defaultOz: 16, unit: 'oz' },
+      { name: 'Cold Brew', cat: 'coffee', caffPerOz: 12.5, defaultOz: 16, unit: 'oz' },
+      { name: 'Americano', cat: 'coffee', caffPerOz: 9.53, defaultOz: 12, unit: 'oz' },
+      { name: 'Cappuccino', cat: 'coffee', caffPerOz: 9.53, defaultOz: 8, unit: 'oz' },
+      { name: 'Instant Coffee', cat: 'coffee', caffPerOz: 7.13, defaultOz: 8, unit: 'oz' },
+      { name: 'Decaf Coffee', cat: 'coffee', caffPerOz: 0.88, defaultOz: 8, unit: 'oz' },
+      // Tea
+      { name: 'Black Tea', cat: 'tea', caffPerOz: 5.88, defaultOz: 8, unit: 'oz' },
+      { name: 'Green Tea', cat: 'tea', caffPerOz: 3.5, defaultOz: 8, unit: 'oz' },
+      { name: 'Matcha', cat: 'tea', caffPerOz: 8.88, defaultOz: 8, unit: 'oz' },
+      { name: 'White Tea', cat: 'tea', caffPerOz: 3.75, defaultOz: 8, unit: 'oz' },
+      { name: 'Oolong Tea', cat: 'tea', caffPerOz: 4.5, defaultOz: 8, unit: 'oz' },
+      { name: 'Chai Tea Latte', cat: 'tea', caffPerOz: 3.17, defaultOz: 12, unit: 'oz' },
+      { name: 'Herbal Tea', cat: 'tea', caffPerOz: 0, defaultOz: 8, unit: 'oz' },
+      // Energy Drinks
+      { name: 'Red Bull', cat: 'energy', caffPerOz: 9.46, defaultOz: 8.4, unit: 'oz' },
+      { name: 'Monster Energy', cat: 'energy', caffPerOz: 10, defaultOz: 16, unit: 'oz' },
+      { name: 'Bang Energy', cat: 'energy', caffPerOz: 18.75, defaultOz: 16, unit: 'oz' },
+      { name: 'Celsius', cat: 'energy', caffPerOz: 16.67, defaultOz: 12, unit: 'oz' },
+      { name: 'Reign', cat: 'energy', caffPerOz: 18.75, defaultOz: 16, unit: 'oz' },
+      { name: '5-Hour Energy', cat: 'energy', caffPerOz: 103, defaultOz: 1.93, unit: 'oz' },
+      { name: 'Rockstar', cat: 'energy', caffPerOz: 10, defaultOz: 16, unit: 'oz' },
+      // Soda
+      { name: 'Coca-Cola', cat: 'soda', caffPerOz: 2.83, defaultOz: 12, unit: 'oz' },
+      { name: 'Diet Coke', cat: 'soda', caffPerOz: 3.83, defaultOz: 12, unit: 'oz' },
+      { name: 'Dr Pepper', cat: 'soda', caffPerOz: 3.42, defaultOz: 12, unit: 'oz' },
+      { name: 'Mountain Dew', cat: 'soda', caffPerOz: 4.5, defaultOz: 12, unit: 'oz' },
+      { name: 'Pepsi', cat: 'soda', caffPerOz: 3.17, defaultOz: 12, unit: 'oz' },
+      { name: 'Sprite', cat: 'soda', caffPerOz: 0, defaultOz: 12, unit: 'oz' },
+      // Chocolate
+      { name: 'Dark Chocolate (70-85%)', cat: 'chocolate', caffPerOz: 22.7, defaultOz: 1, unit: 'g_oz' },
+      { name: 'Milk Chocolate', cat: 'chocolate', caffPerOz: 5.7, defaultOz: 1.5, unit: 'g_oz' },
+      { name: 'Hot Chocolate', cat: 'chocolate', caffPerOz: 0.63, defaultOz: 8, unit: 'oz' },
+      { name: 'Chocolate Milk', cat: 'chocolate', caffPerOz: 0.31, defaultOz: 8, unit: 'oz' },
+    ];
+
+    const DAILY_LIMIT = 400;
+    const HALF_LIFE = 5.7;
+    let selectedBev = null;
+    let trackedItems = [];
+
+    const catBtns = document.getElementById('catBtns');
+    const bevGrid = document.getElementById('bevGrid');
+    const servingRow = document.getElementById('servingRow');
+    const servingSizeInput = document.getElementById('servingSize');
+    const servingUnitSelect = document.getElementById('servingUnit');
+    const bevQtyInput = document.getElementById('bevQty');
+    const addBevBtn = document.getElementById('addBevBtn');
+    const caffResult = document.getElementById('caffResult');
+    const caffPerServing = document.getElementById('caffPerServing');
+    const caffPct = document.getElementById('caffPct');
+    const dailyTotal = document.getElementById('dailyTotal');
+    const progressFill = document.getElementById('progressFill');
+    const progressLabel = document.getElementById('progressLabel');
+    const trackedList = document.getElementById('trackedList');
+    const clearAllBtn = document.getElementById('clearAllBtn');
+
+    // ========== RENDER BEVERAGE GRID ==========
+    function renderBevGrid(filter) {
+      const filtered = filter === 'all' ? beverages : beverages.filter(b => b.cat === filter);
+      bevGrid.innerHTML = filtered.map((b, i) => {
+        const idx = beverages.indexOf(b);
+        const totalCaff = Math.round(b.caffPerOz * b.defaultOz);
+        return `<button class="bev-btn" data-idx="${idx}">
+          <span class="bev-name">${b.name}</span>
+          <span class="bev-info">${totalCaff}mg / ${b.defaultOz}${b.unit === 'shot' ? ' shot' : b.unit === 'g_oz' ? 'oz' : 'oz'}</span>
+        </button>`;
+      }).join('');
+    }
+
+    // ========== CATEGORY BUTTONS ==========
+    catBtns.addEventListener('click', (e) => {
+      const btn = e.target.closest('.cat-btn');
+      if (!btn) return;
+      catBtns.querySelectorAll('.cat-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      renderBevGrid(btn.dataset.cat);
+      selectedBev = null;
+      servingRow.style.display = 'none';
+      caffResult.classList.remove('show');
+    });
+
+    // ========== SELECT BEVERAGE ==========
+    bevGrid.addEventListener('click', (e) => {
+      const btn = e.target.closest('.bev-btn');
+      if (!btn) return;
+      bevGrid.querySelectorAll('.bev-btn').forEach(b => b.classList.remove('selected'));
+      btn.classList.add('selected');
+      const idx = parseInt(btn.dataset.idx);
+      selectedBev = beverages[idx];
+      servingRow.style.display = 'flex';
+      servingSizeInput.value = selectedBev.defaultOz;
+      if (selectedBev.unit === 'shot') {
+        servingUnitSelect.value = 'shot';
+      } else if (selectedBev.unit === 'g_oz') {
+        servingUnitSelect.value = 'oz';
+      } else {
+        servingUnitSelect.value = 'oz';
+      }
+      bevQtyInput.value = 1;
+      addBevBtn.disabled = false;
+      updateCaffPreview();
+    });
+
+    // ========== CAFFEINE PREVIEW ==========
+    function getOzMultiplier(unit) {
+      if (unit === 'ml') return 1 / 29.5735;
+      if (unit === 'shot') return 1;
+      if (unit === 'g') return 1 / 28.35;
+      return 1;
+    }
+
+    function calcCaffeine() {
+      if (!selectedBev) return 0;
+      const size = parseFloat(servingSizeInput.value) || 0;
+      const unit = servingUnitSelect.value;
+      const qty = parseInt(bevQtyInput.value) || 1;
+      let oz = size * getOzMultiplier(unit);
+      if (unit === 'shot') oz = size; // shots: use caffPerOz * shot count
+      return Math.round(selectedBev.caffPerOz * oz * qty);
+    }
+
+    function updateCaffPreview() {
+      const mg = calcCaffeine();
+      caffPerServing.textContent = mg + 'mg';
+      caffPct.textContent = Math.round((mg / DAILY_LIMIT) * 100) + '%';
+      caffResult.classList.add('show');
+    }
+
+    servingSizeInput.addEventListener('input', updateCaffPreview);
+    servingUnitSelect.addEventListener('change', updateCaffPreview);
+    bevQtyInput.addEventListener('input', updateCaffPreview);
+
+    // ========== ADD TO TRACKER ==========
+    addBevBtn.addEventListener('click', () => {
+      if (!selectedBev) return;
+      const mg = calcCaffeine();
+      const size = parseFloat(servingSizeInput.value) || 0;
+      const unit = servingUnitSelect.value;
+      const qty = parseInt(bevQtyInput.value) || 1;
+      const unitLabel = unit === 'shot' ? 'shot' : unit === 'ml' ? 'ml' : unit === 'g' ? 'g' : 'oz';
+      trackedItems.push({
+        name: selectedBev.name,
+        size: size,
+        unit: unitLabel,
+        qty: qty,
+        caffeine: mg,
+        id: Date.now()
+      });
+      updateTracker();
+    });
+
+    // ========== UPDATE TRACKER ==========
+    function updateTracker() {
+      const total = trackedItems.reduce((s, i) => s + i.caffeine, 0);
+      dailyTotal.textContent = total + 'mg';
+      const pct = Math.min(Math.round((total / DAILY_LIMIT) * 100), 100);
+      const actualPct = Math.round((total / DAILY_LIMIT) * 100);
+      progressFill.style.width = Math.min(actualPct, 100) + '%';
+      progressFill.className = 'progress-bar-fill' + (total > DAILY_LIMIT ? ' over' : '');
+      progressLabel.textContent = actualPct + '% of 400mg';
+
+      if (trackedItems.length === 0) {
+        trackedList.innerHTML = '<div class="empty-state">No beverages added yet. Select a drink above to start tracking.</div>';
+        return;
+      }
+
+      trackedList.innerHTML = trackedItems.map(item => `
+        <div class="tracked-row" data-id="${item.id}">
+          <span class="tr-name">${item.name}${item.qty > 1 ? ' x' + item.qty : ''}</span>
+          <span class="tr-size">${item.size}${item.unit}</span>
+          <span class="tr-caff">${item.caffeine}mg</span>
+          <button class="remove-btn" data-id="${item.id}">&#x2715;</button>
+        </div>
+      `).join('');
+    }
+
+    trackedList.addEventListener('click', (e) => {
+      const btn = e.target.closest('.remove-btn');
+      if (!btn) return;
+      const id = parseInt(btn.dataset.id);
+      trackedItems = trackedItems.filter(i => i.id !== id);
+      updateTracker();
+    });
+
+    clearAllBtn.addEventListener('click', () => {
+      trackedItems = [];
+      updateTracker();
+    });
+
+    // ========== HALF-LIFE CALCULATOR ==========
+    const hlAmount = document.getElementById('hlAmount');
+    const hlTime = document.getElementById('hlTime');
+    const hlBedtime = document.getElementById('hlBedtime');
+    const hlCalcBtn = document.getElementById('hlCalcBtn');
+    const hlResult = document.getElementById('hlResult');
+    const hlTimeline = document.getElementById('hlTimeline');
+    const hlBedNote = document.getElementById('hlBedNote');
+
+    function parseTime(str) {
+      const [h, m] = str.split(':').map(Number);
+      return h * 60 + m;
+    }
+
+    function formatTime(mins) {
+      let m = ((mins % 1440) + 1440) % 1440;
+      const h = Math.floor(m / 60);
+      const mm = m % 60;
+      const ampm = h >= 12 ? 'PM' : 'AM';
+      const hh = h === 0 ? 12 : h > 12 ? h - 12 : h;
+      return hh + ':' + String(mm).padStart(2, '0') + ' ' + ampm;
+    }
+
+    function calcRemaining(initialMg, hoursElapsed) {
+      return initialMg * Math.pow(0.5, hoursElapsed / HALF_LIFE);
+    }
+
+    hlCalcBtn.addEventListener('click', () => {
+      const amount = parseFloat(hlAmount.value);
+      if (!amount || amount <= 0) return;
+
+      const consumedMin = parseTime(hlTime.value);
+      const bedMin = parseTime(hlBedtime.value);
+      let bedDiff = bedMin - consumedMin;
+      if (bedDiff <= 0) bedDiff += 1440;
+
+      const steps = [];
+      for (let h = 0; h <= Math.ceil(bedDiff / 60); h++) {
+        const mins = consumedMin + h * 60;
+        const remaining = calcRemaining(amount, h);
+        steps.push({ time: mins, mg: remaining, hours: h });
+      }
+      // Add exact bedtime
+      const bedHours = bedDiff / 60;
+      const bedRemaining = calcRemaining(amount, bedHours);
+      steps.push({ time: bedMin, mg: bedRemaining, hours: bedHours, isBed: true });
+      // Deduplicate close times
+      const unique = [];
+      steps.forEach(s => {
+        if (!unique.some(u => Math.abs(u.time % 1440 - s.time % 1440) < 5 && !s.isBed)) {
+          unique.push(s);
+        }
+      });
+
+      hlTimeline.innerHTML = unique.map(s => {
+        const pct = (s.mg / amount) * 100;
+        const label = s.isBed ? '🛏 ' + formatTime(s.time) : formatTime(s.time);
+        return `<div class="hl-row">
+          <span class="hl-time">${label}</span>
+          <div class="hl-bar-bg"><div class="hl-bar-fill" style="width:${pct}%"></div></div>
+          <span class="hl-mg">${Math.round(s.mg)}mg</span>
+        </div>`;
+      }).join('');
+
+      const bedNote = Math.round(bedRemaining) > 100
+        ? `At bedtime (${formatTime(bedMin)}), you'll still have <strong>${Math.round(bedRemaining)}mg</strong> of caffeine in your system — this may affect sleep quality.`
+        : Math.round(bedRemaining) > 0
+        ? `At bedtime (${formatTime(bedMin)}), you'll have <strong>${Math.round(bedRemaining)}mg</strong> remaining — likely manageable for most people.`
+        : `By bedtime (${formatTime(bedMin)}), caffeine will be virtually cleared from your system.`;
+      hlBedNote.innerHTML = bedNote;
+
+      hlResult.classList.add('show');
+    });
+
+    // ========== COMPARISON TABLE ==========
+    const compBody = document.getElementById('compBody');
+    const compTable = document.getElementById('compTable');
+    let sortCol = 'caffeine';
+    let sortDir = -1;
+
+    const catLabels = { coffee: 'Coffee', tea: 'Tea', energy: 'Energy', soda: 'Soda', chocolate: 'Chocolate' };
+    const catClasses = { coffee: 'cat-coffee', tea: 'cat-tea', energy: 'cat-energy', soda: 'cat-soda', chocolate: 'cat-chocolate' };
+
+    function renderCompTable() {
+      const rows = beverages.map(b => ({
+        name: b.name,
+        category: b.cat,
+        serving: b.defaultOz,
+        caffeine: Math.round(b.caffPerOz * b.defaultOz),
+        perOz: b.caffPerOz
+      }));
+
+      rows.sort((a, b) => {
+        let av = a[sortCol], bv = b[sortCol];
+        if (typeof av === 'string') av = av.toLowerCase();
+        if (typeof bv === 'string') bv = bv.toLowerCase();
+        if (av < bv) return -1 * sortDir;
+        if (av > bv) return 1 * sortDir;
+        return 0;
+      });
+
+      compBody.innerHTML = rows.map(r => `
+        <tr>
+          <td>${r.name}</td>
+          <td><span class="cat-tag ${catClasses[r.category]}">${catLabels[r.category]}</span></td>
+          <td class="size-val">${r.serving}oz</td>
+          <td class="mg-val">${r.caffeine}mg</td>
+          <td class="size-val">${r.perOz.toFixed(1)}mg</td>
+        </tr>
+      `).join('');
+    }
+
+    compTable.querySelector('thead').addEventListener('click', (e) => {
+      const th = e.target.closest('th');
+      if (!th) return;
+      const col = th.dataset.col;
+      if (sortCol === col) {
+        sortDir *= -1;
+      } else {
+        sortCol = col;
+        sortDir = col === 'name' || col === 'category' ? 1 : -1;
+      }
+      compTable.querySelectorAll('th').forEach(t => {
+        t.classList.remove('sorted');
+        t.textContent = t.textContent.replace(/ [▴▾]/, '');
+      });
+      th.classList.add('sorted');
+      th.textContent = th.textContent + (sortDir === 1 ? ' ▴' : ' ▾');
+      renderCompTable();
+    });
+
+    // ========== FAQ ==========
+    const faqData = [
+      { q: 'How much caffeine is safe per day?', a: 'The FDA recommends a maximum of 400mg of caffeine per day for healthy adults. That\'s roughly four 8oz cups of drip coffee, or about ten cans of cola. Pregnant women are advised to limit intake to 200mg per day. Individual tolerance varies based on genetics, body weight, and how regularly you consume caffeine.' },
+      { q: 'How long does caffeine stay in your system?', a: 'Caffeine has an average half-life of about 5.7 hours in healthy adults, meaning half the caffeine is eliminated every 5.7 hours. After consuming 200mg of caffeine at noon, you\'d still have about 100mg in your system around 5:45 PM. It takes approximately 5–6 half-lives (28–34 hours) to fully clear caffeine from your body.' },
+      { q: 'Which drink has the most caffeine?', a: 'Per serving, Bang Energy (300mg per 16oz) and cold brew concentrate have the most caffeine among common beverages. Per fluid ounce, espresso leads at about 63mg per ounce, but it\'s typically consumed in small 1oz shots. Drip coffee averages about 12mg per ounce, while tea ranges from 3–8mg per ounce depending on type.' },
+      { q: 'Does caffeine content change with serving size?', a: 'Yes. Caffeine content scales linearly with serving size for most beverages. A 16oz drip coffee has roughly double the caffeine of an 8oz cup. Espresso-based drinks like lattes depend on the number of shots rather than total drink volume — a 12oz latte and a 16oz latte with the same number of shots have the same caffeine content.' },
+      { q: 'How does caffeine affect sleep?', a: 'Caffeine blocks adenosine receptors in the brain, which suppresses sleepiness. Because of its 5.7-hour half-life, drinking a large coffee at 3 PM means roughly half the caffeine is still active at 8:45 PM. Sleep experts recommend cutting off caffeine at least 6–8 hours before bedtime to minimize its impact on sleep quality and duration.' },
+      { q: 'Is caffeine in tea different from caffeine in coffee?', a: 'The caffeine molecule is chemically identical in all sources. However, tea contains L-theanine, an amino acid that modulates caffeine\'s effects — producing a calmer, more sustained alertness compared to coffee. Tea also has less caffeine per serving: a cup of green tea has about 28mg versus 95mg for drip coffee.' },
+    ];
+
+    const faqList = document.getElementById('faqList');
+    faqList.innerHTML = faqData.map((f, i) => `
+      <div class="faq-item">
+        <div class="faq-q" data-idx="${i}">
+          <span>${f.q}</span>
+          <span class="arrow">&#x25BE;</span>
+        </div>
+        <div class="faq-a"><div class="faq-a-inner">${f.a}</div></div>
+      </div>
+    `).join('');
+
+    faqList.addEventListener('click', (e) => {
+      const q = e.target.closest('.faq-q');
+      if (!q) return;
+      q.parentElement.classList.toggle('open');
+    });
+
+    // ========== INIT ==========
+    renderBevGrid('all');
+    renderCompTable();
+  })();
+  </script>
+</SiteLayout>

@@ -1,0 +1,612 @@
+---
+import SiteLayout from "../../../layouts/SiteLayout.astro";
+
+const schema = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {"@type":"Question","name":"What is a break-even point?","acceptedAnswer":{"@type":"Answer","text":"The break-even point is the number of units you must sell (or total revenue you must earn) to cover all your costs — both fixed and variable. At break-even, total revenue equals total costs and profit is exactly zero. Below break-even you operate at a loss; above it every additional unit sold generates pure profit equal to the contribution margin. The formula is: Break-Even Units = Fixed Costs ÷ (Selling Price per Unit − Variable Cost per Unit). For example, if fixed costs are $10,000/month, selling price is $50, and variable cost is $30, break-even is 500 units ($10,000 ÷ $20)."}},
+    {"@type":"Question","name":"How do you calculate the break-even point in dollars?","acceptedAnswer":{"@type":"Answer","text":"Break-even revenue (in dollars) is calculated as: Fixed Costs ÷ Contribution Margin Ratio, where Contribution Margin Ratio = (Selling Price − Variable Cost) ÷ Selling Price. For example, if fixed costs are $10,000, selling price is $50, and variable cost is $30, the contribution margin ratio is 0.40 (40%). Break-even revenue = $10,000 ÷ 0.40 = $25,000. This means the business must generate $25,000 in revenue each period to cover all fixed and variable costs before earning any profit."}},
+    {"@type":"Question","name":"What is a contribution margin?","acceptedAnswer":{"@type":"Answer","text":"Contribution margin is the selling price minus variable costs per unit. It represents how much each unit sold contributes toward covering fixed costs and then generating profit. If you sell a widget for $50 and it costs $30 in variable costs, the contribution margin is $20 per unit. The contribution margin ratio is $20 ÷ $50 = 40%, meaning 40 cents of every revenue dollar goes toward fixed costs and profit. Higher contribution margins mean fewer units needed to break even and faster profit growth after break-even."}},
+    {"@type":"Question","name":"What are fixed costs vs variable costs?","acceptedAnswer":{"@type":"Answer","text":"Fixed costs remain constant regardless of how many units you produce or sell — rent, salaries, insurance, loan payments, and software subscriptions are typical fixed costs. Variable costs change in direct proportion to production volume — raw materials, packaging, shipping per unit, sales commissions, and payment processing fees. Some costs are semi-variable (a base amount plus a per-unit component). Accurately separating fixed from variable costs is essential for break-even analysis because it determines the contribution margin and ultimately the break-even point."}},
+    {"@type":"Question","name":"How do I lower my break-even point?","acceptedAnswer":{"@type":"Answer","text":"There are three ways to lower the break-even point: (1) Reduce fixed costs — negotiate lower rent, cut unnecessary subscriptions, or reduce headcount. This directly reduces the numerator in the break-even formula. (2) Reduce variable costs per unit — find cheaper suppliers, improve production efficiency, or reduce packaging costs. This increases contribution margin. (3) Increase selling price — if the market supports it, higher prices increase contribution margin without affecting fixed costs. A 10% price increase often has a bigger impact on break-even than a 10% reduction in variable costs because it also improves the contribution margin ratio."}},
+    {"@type":"Question","name":"What is break-even analysis used for?","acceptedAnswer":{"@type":"Answer","text":"Break-even analysis helps businesses make critical decisions: pricing strategy (what price covers costs and generates target profit), cost management (which costs to cut for profitability), new product launches (minimum sales volume needed), investment decisions (how much additional fixed cost a new machine or hire requires in extra sales), and risk assessment (how close current sales are to break-even). It is one of the most fundamental tools in management accounting and is routinely required in business plans and investor presentations."}},
+    {"@type":"Question","name":"What is the margin of safety in break-even analysis?","acceptedAnswer":{"@type":"Answer","text":"Margin of safety measures how far current sales are above the break-even point, expressed as a percentage: (Current Sales − Break-Even Sales) ÷ Current Sales × 100. If break-even is 500 units and you sell 700, the margin of safety is 28.6% — sales could drop nearly 29% before you start losing money. A margin of safety above 30% is generally considered healthy. Below 15% signals vulnerability to any sales downturn. Businesses with high fixed costs (manufacturing, airlines) need larger margins of safety than those with low fixed costs (consulting, freelancing)."}},
+    {"@type":"Question","name":"Can break-even analysis account for multiple products?","acceptedAnswer":{"@type":"Answer","text":"Yes, but it requires a weighted-average approach. Calculate each product's contribution margin, then weight them by their share of total sales (the sales mix). The weighted-average contribution margin is used in the break-even formula. For example, if Product A ($20 CM) is 60% of sales and Product B ($10 CM) is 40%, the weighted CM is $16. Break-even = Fixed Costs ÷ $16. The limitation is that break-even shifts if the sales mix changes — selling more of the low-margin product increases the overall break-even point."}}
+  ]
+};
+
+export const meta = {
+  title: "Break Even Calculator — Break Even Point & Analysis Tool",
+  description: "Calculate your break-even point in units and revenue. Visualize cost vs revenue with an interactive chart, contribution margin analysis, profit zone table, and what-if scenarios.",
+  category: "tool",
+  published: "2026-03-21",
+};
+---
+
+<SiteLayout
+  site="firemaths"
+  title="Break Even Calculator: Break Even Point & Analysis"
+  description="Calculate break-even point in units and dollars. Interactive cost vs revenue chart, contribution margin analysis, profit zone table, and what-if scenarios for pricing decisions."
+  canonical="https://firemaths.com/break-even-calculator" schema={schema}
+>
+  <style is:inline>
+.container{max-width:1200px;margin:0 auto;padding:0 20px}
+a{color:var(--accent-color);text-decoration:none}
+a:hover{text-decoration:underline}
+
+header{padding:40px 0 20px;border-bottom:1px solid var(--border-color)}
+.badge{display:inline-block;background:var(--accent-color);color:#fff;font-size:11px;font-weight:700;letter-spacing:1.5px;padding:4px 12px;border-radius:3px;text-transform:uppercase;margin-bottom:12px}
+h1{font-size:clamp(28px,4vw,42px);font-weight:800;line-height:1.15;margin-bottom:8px}
+.subtitle{color:var(--text-secondary);font-size:18px;max-width:700px}
+.updated-badge{display:inline-block;background:var(--card-bg);border:1px solid var(--border-color);color:var(--text-secondary);font-size:12px;padding:4px 10px;border-radius:4px;margin-top:8px;font-family:'JetBrains Mono',monospace}
+
+/* Calculator */
+.calc-section{margin:32px 0}
+.calc-section h2{font-size:22px;margin-bottom:16px}
+.calc-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+.calc-inputs{background:var(--card-bg);border:1px solid var(--border-color);border-radius:8px;padding:24px}
+.calc-results{background:var(--card-bg);border:1px solid var(--border-color);border-radius:8px;padding:24px}
+.input-group{margin-bottom:16px}
+.input-group label{display:block;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-secondary);margin-bottom:6px}
+.input-group input{width:100%;background:var(--card-bg);border:1px solid var(--border-color);color:var(--text-primary);padding:10px 12px;border-radius:6px;font-size:14px;font-family:'Inter',sans-serif;box-sizing:border-box}
+.input-group input:focus{outline:none;border-color:var(--accent-color)}
+.input-hint{font-size:11px;color:var(--text-secondary);margin-top:4px}
+.calc-btn{width:100%;padding:12px;background:var(--accent-color);color:#fff;border:none;border-radius:6px;font-size:15px;font-weight:600;cursor:pointer;margin-top:8px}
+.calc-btn:hover{opacity:.9}
+
+/* Results */
+.result-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:20px}
+.result-box{text-align:center;padding:16px 8px;background:rgba(74,143,231,.04);border-radius:8px;border:1px solid var(--border-color)}
+.result-box .val{font-size:28px;font-weight:800;font-family:'JetBrains Mono',monospace;color:var(--accent-color)}
+.result-box .label{font-size:11px;color:var(--text-secondary);margin-top:4px;text-transform:uppercase;letter-spacing:.5px}
+.result-box.highlight{border-color:var(--accent-color);background:rgba(74,143,231,.08)}
+.result-placeholder{text-align:center;padding:40px 20px;color:var(--text-secondary);font-size:14px}
+
+/* Chart */
+.chart-section{margin:32px 0}
+.chart-section h2{font-size:22px;margin-bottom:16px}
+.chart-wrap{background:var(--card-bg);border:1px solid var(--border-color);border-radius:8px;padding:24px}
+.chart-container{position:relative;width:100%;height:350px}
+.chart-container canvas{width:100%!important;height:100%!important}
+.chart-legend{display:flex;gap:16px;justify-content:center;margin-top:12px;font-size:12px;color:var(--text-secondary)}
+.chart-legend span{display:flex;align-items:center;gap:4px}
+.chart-legend .dot{width:10px;height:10px;border-radius:2px;display:inline-block}
+.chart-placeholder{text-align:center;padding:60px 20px;color:var(--text-secondary);font-size:14px}
+
+/* Profit Zone Table */
+.profit-section{margin:32px 0}
+.profit-section h2{font-size:22px;margin-bottom:16px}
+.table-wrap{overflow-x:auto;border-radius:8px;border:1px solid var(--border-color)}
+table{width:100%;border-collapse:collapse;font-size:13px}
+th{background:#0c1428;color:var(--text-secondary);font-weight:600;text-transform:uppercase;font-size:11px;letter-spacing:.5px;padding:12px 14px;text-align:left;white-space:nowrap;border-bottom:1px solid var(--border-color)}
+td{padding:10px 14px;border-bottom:1px solid var(--border-color)}
+tr:hover{background:rgba(74,143,231,.06)}
+.num{font-family:'JetBrains Mono',monospace;text-align:right}
+.loss{color:#ef4444}
+.profit{color:#22c55e}
+.be-row{background:rgba(74,143,231,.1)!important;font-weight:700}
+
+/* What-If */
+.whatif-section{margin:32px 0}
+.whatif-section h2{font-size:22px;margin-bottom:16px}
+.whatif-grid{display:grid;grid-template-columns:1fr 1fr;gap:24px}
+.whatif-card{background:var(--card-bg);border:1px solid var(--border-color);border-radius:8px;padding:20px}
+.whatif-card h3{font-size:15px;margin-bottom:12px;color:var(--accent-color)}
+.slider-group{margin-bottom:14px}
+.slider-group label{display:block;font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:var(--text-secondary);margin-bottom:6px}
+.slider-row{display:flex;align-items:center;gap:10px}
+.slider-row input[type="range"]{flex:1;accent-color:var(--accent-color)}
+.slider-val{font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:600;min-width:70px;text-align:right}
+.whatif-result{margin-top:14px;padding:14px;background:rgba(74,143,231,.04);border-radius:6px;border:1px solid var(--border-color)}
+.whatif-result .wr-label{font-size:11px;color:var(--text-secondary);text-transform:uppercase;letter-spacing:.5px}
+.whatif-result .wr-val{font-size:24px;font-weight:800;font-family:'JetBrains Mono',monospace;color:var(--accent-color)}
+.whatif-result .wr-change{font-size:12px;margin-top:4px}
+.whatif-placeholder{text-align:center;padding:30px 20px;color:var(--text-secondary);font-size:14px}
+
+/* Findings */
+.findings{margin:32px 0}
+.findings h2{font-size:22px;margin-bottom:16px}
+.finding-card{background:var(--card-bg);border:1px solid var(--border-color);border-radius:8px;padding:20px;margin-bottom:12px}
+.finding-card h3{font-size:16px;margin-bottom:6px;color:var(--accent-color)}
+.finding-card p{color:var(--text-secondary);font-size:14px;line-height:1.7}
+
+/* FAQ */
+.faq-section{margin:32px 0}
+.faq-section h2{font-size:22px;margin-bottom:16px}
+.faq-item{background:var(--card-bg);border:1px solid var(--border-color);border-radius:8px;margin-bottom:10px;overflow:hidden}
+.faq-q{padding:16px 20px;font-weight:600;cursor:pointer;display:flex;justify-content:space-between;align-items:center}
+.faq-q:hover{color:var(--accent-color)}
+.faq-q::after{content:'+';font-size:20px;color:var(--text-secondary);transition:transform .2s}
+.faq-item.open .faq-q::after{transform:rotate(45deg);color:var(--accent-color)}
+.faq-a{padding:0 20px 16px;color:var(--text-secondary);font-size:14px;line-height:1.7;display:none}
+.faq-item.open .faq-a{display:block}
+
+/* Related */
+.related-section{margin:32px 0}
+.related-section h2{font-size:22px;margin-bottom:16px}
+.related-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:12px}
+.related-card{background:var(--card-bg);border:1px solid var(--border-color);border-radius:8px;padding:16px;text-decoration:none;transition:border-color .2s}
+.related-card:hover{border-color:var(--accent-color);text-decoration:none}
+.related-card h3{font-size:15px;margin-bottom:4px;color:var(--text-primary)}
+.related-card p{font-size:13px;color:var(--text-secondary)}
+
+.methodology{margin:32px 0;background:var(--card-bg);border:1px solid var(--border-color);border-radius:8px;padding:24px}
+.methodology h2{font-size:18px;margin-bottom:12px}
+.methodology p{color:var(--text-secondary);font-size:14px;margin-bottom:10px;line-height:1.7}
+
+.disclaimer{margin:20px 0;padding:16px;border:1px solid var(--border-color);border-radius:8px;font-size:12px;color:var(--text-secondary);text-align:center;font-style:italic}
+
+footer{border-top:1px solid var(--border-color);padding:24px 0;text-align:center;color:var(--text-secondary);font-size:13px;margin-top:40px}
+
+@media(max-width:768px){
+  .calc-grid{grid-template-columns:1fr}
+  .result-grid{grid-template-columns:1fr 1fr}
+  .whatif-grid{grid-template-columns:1fr}
+  .related-grid{grid-template-columns:1fr}
+}
+@media(max-width:480px){
+  .result-grid{grid-template-columns:1fr}
+}
+  </style>
+
+<div class="container">
+    <h1>Break Even Calculator: Break Even Point &amp; Analysis</h1>
+    <p class="subtitle">Calculate the exact number of units you need to sell to cover all costs. Visualize cost vs revenue, analyze contribution margins, and run what-if scenarios on pricing and costs.</p>
+    <div class="updated-badge">Last Updated: March 2026</div>
+
+    <div class="calc-section">
+      <h2>Calculate Break-Even Point</h2>
+      <div class="calc-grid">
+        <div class="calc-inputs">
+          <div class="input-group">
+            <label>Fixed Costs ($)</label>
+            <input type="number" id="fixedCosts" placeholder="e.g. 10000" step="0.01" min="0">
+            <div class="input-hint">Monthly or annual fixed costs (rent, salaries, insurance, etc.)</div>
+          </div>
+          <div class="input-group">
+            <label>Variable Cost per Unit ($)</label>
+            <input type="number" id="variableCost" placeholder="e.g. 30" step="0.01" min="0">
+            <div class="input-hint">Materials, labor, shipping per unit</div>
+          </div>
+          <div class="input-group">
+            <label>Selling Price per Unit ($)</label>
+            <input type="number" id="sellingPrice" placeholder="e.g. 50" step="0.01" min="0">
+            <div class="input-hint">Price you charge customers per unit</div>
+          </div>
+          <button class="calc-btn" id="calcBtn">Calculate Break-Even Point</button>
+        </div>
+        <div class="calc-results" id="calcResults">
+          <div class="result-placeholder">Enter your fixed costs, variable cost per unit, and selling price to calculate your break-even point, contribution margin, and break-even revenue.</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="chart-section" id="chartSection" style="display:none">
+      <h2>Cost vs Revenue — Break-Even Chart</h2>
+      <div class="chart-wrap">
+        <div class="chart-container">
+          <canvas id="beChart"></canvas>
+        </div>
+        <div class="chart-legend">
+          <span><span class="dot" style="background:#22c55e"></span> Total Revenue</span>
+          <span><span class="dot" style="background:#ef4444"></span> Total Cost</span>
+          <span><span class="dot" style="background:var(--accent-color)"></span> Break-Even Point</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="profit-section" id="profitSection" style="display:none">
+      <h2>Profit Zone Table</h2>
+      <p style="color:var(--text-secondary);font-size:14px;margin-bottom:16px">See how profit or loss changes at various production quantities. The break-even row is highlighted.</p>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Units</th>
+              <th class="num">Revenue</th>
+              <th class="num">Total Cost</th>
+              <th class="num">Profit / Loss</th>
+              <th class="num">Margin</th>
+            </tr>
+          </thead>
+          <tbody id="profitTbody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="whatif-section" id="whatifSection" style="display:none">
+      <h2>What-If Scenarios</h2>
+      <p style="color:var(--text-secondary);font-size:14px;margin-bottom:16px">Adjust price or costs to see how they impact your break-even point.</p>
+      <div class="whatif-grid">
+        <div class="whatif-card">
+          <h3>Adjust Selling Price</h3>
+          <div class="slider-group">
+            <label>New Selling Price</label>
+            <div class="slider-row">
+              <input type="range" id="priceSlider" min="1" max="200" step="0.5">
+              <span class="slider-val" id="priceSliderVal">$0</span>
+            </div>
+          </div>
+          <div class="whatif-result" id="priceResult">
+            <div class="wr-label">New Break-Even Units</div>
+            <div class="wr-val" id="priceBeUnits">—</div>
+            <div class="wr-change" id="priceChange"></div>
+          </div>
+        </div>
+        <div class="whatif-card">
+          <h3>Adjust Variable Cost</h3>
+          <div class="slider-group">
+            <label>New Variable Cost per Unit</label>
+            <div class="slider-row">
+              <input type="range" id="costSlider" min="0" max="200" step="0.5">
+              <span class="slider-val" id="costSliderVal">$0</span>
+            </div>
+          </div>
+          <div class="whatif-result" id="costResult">
+            <div class="wr-label">New Break-Even Units</div>
+            <div class="wr-val" id="costBeUnits">—</div>
+            <div class="wr-change" id="costChange"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="findings">
+      <h2>Break-Even Analysis: Key Insights</h2>
+      <div class="finding-card">
+        <h3>Contribution Margin Drives Everything</h3>
+        <p>The single most important number in break-even analysis is the contribution margin — the difference between selling price and variable cost per unit. A product with a $50 price and $20 variable cost has a $30 contribution margin (60% ratio). Every dollar of contribution margin goes toward covering fixed costs first, then becomes pure profit. Doubling your contribution margin cuts your break-even point in half. This is why pricing power matters more than volume in most businesses.</p>
+      </div>
+      <div class="finding-card">
+        <h3>Fixed Costs Create Operating Leverage</h3>
+        <p>High fixed costs make break-even harder to reach, but once you pass it, profits grow rapidly. A software company with $100K in fixed costs and 90% contribution margin breaks even at $111K revenue — but at $200K revenue, profit is $80K (40% net margin). Compare a service business with $20K fixed costs and 30% contribution margin: break-even is $67K, but $200K revenue only yields $40K profit (20% net margin). The high-fixed-cost business has more operating leverage — more risk below break-even, more reward above it.</p>
+      </div>
+      <div class="finding-card">
+        <h3>Price Increases Have Outsized Impact</h3>
+        <p>A 10% price increase has a far larger effect on break-even than a 10% reduction in variable costs. If your price is $50 and variable cost is $30, a 10% price increase ($55) changes contribution margin from $20 to $25 — a 25% improvement, reducing break-even by 20%. A 10% variable cost reduction ($27) changes contribution margin from $20 to $23 — a 15% improvement, reducing break-even by 13%. Before cutting costs, consider whether the market can support a modest price increase.</p>
+      </div>
+    </div>
+
+    <div class="faq-section">
+      <h2>Frequently Asked Questions</h2>
+      <div id="faq"></div>
+    </div>
+
+    <div class="related-section">
+      <h2>Related Tools &amp; Resources</h2>
+      <div class="related-grid">
+        <a class="related-card" href="/sites/firemaths/profit-margin">
+          <h3>Profit Margin Calculator</h3>
+          <p>Calculate gross margin, markup percentage, and discount impact. Compare your margins against industry averages.</p>
+        </a>
+        <a class="related-card" href="/sites/firemaths/roi-calculator">
+          <h3>Investment Calculator</h3>
+          <p>Model compound growth, dividend reinvestment, and portfolio projections for long-term investment planning.</p>
+        </a>
+      </div>
+    </div>
+
+    <div class="methodology">
+      <h2>Methodology</h2>
+      <p>Break-even units are calculated as Fixed Costs ÷ (Selling Price − Variable Cost per Unit). Break-even revenue equals Break-Even Units × Selling Price. Contribution margin per unit equals Selling Price − Variable Cost. Contribution margin ratio equals Contribution Margin ÷ Selling Price × 100. Break-even revenue can also be calculated as Fixed Costs ÷ Contribution Margin Ratio.</p>
+      <p>The profit zone table shows profit or loss at incremental unit quantities from 0% to 200% of the break-even point. The chart plots total revenue and total cost lines with the break-even intersection point marked. What-if scenarios recalculate break-even in real time as you adjust price or cost inputs.</p>
+    </div>
+
+    <div class="disclaimer">This calculator is for informational and educational purposes only. Not financial advice. Actual break-even points depend on accurate cost classification. Always consult with a financial professional for business decisions.</div>
+</div>
+
+  <script is:inline>
+// Enter key support
+document.querySelectorAll('.calc-inputs input').forEach(function(input) {
+  input.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') document.getElementById('calcBtn').click();
+  });
+});
+
+var baseFixed = 0, baseVariable = 0, basePrice = 0, baseBEUnits = 0;
+
+// Main calculator
+document.getElementById('calcBtn').addEventListener('click', function() {
+  var fc = parseFloat(document.getElementById('fixedCosts').value);
+  var vc = parseFloat(document.getElementById('variableCost').value);
+  var sp = parseFloat(document.getElementById('sellingPrice').value);
+  var results = document.getElementById('calcResults');
+
+  if (isNaN(fc) || fc < 0) { results.innerHTML = '<div class="result-placeholder" style="color:#ef4444">Please enter valid fixed costs.</div>'; return; }
+  if (isNaN(vc) || vc < 0) { results.innerHTML = '<div class="result-placeholder" style="color:#ef4444">Please enter a valid variable cost per unit.</div>'; return; }
+  if (!sp || sp <= 0) { results.innerHTML = '<div class="result-placeholder" style="color:#ef4444">Please enter a valid selling price.</div>'; return; }
+  if (vc >= sp) { results.innerHTML = '<div class="result-placeholder" style="color:#ef4444">Variable cost must be less than selling price to have a positive contribution margin.</div>'; return; }
+
+  var cm = sp - vc;
+  var cmRatio = (cm / sp) * 100;
+  var beUnits = Math.ceil(fc / cm);
+  var beRevenue = beUnits * sp;
+
+  baseFixed = fc; baseVariable = vc; basePrice = sp; baseBEUnits = beUnits;
+
+  var html = '<div class="result-grid">';
+  html += '<div class="result-box highlight"><div class="val">' + beUnits.toLocaleString() + '</div><div class="label">Break-Even Units</div></div>';
+  html += '<div class="result-box highlight"><div class="val">$' + beRevenue.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2}) + '</div><div class="label">Break-Even Revenue</div></div>';
+  html += '<div class="result-box"><div class="val">$' + cm.toFixed(2) + '</div><div class="label">Contribution Margin</div></div>';
+  html += '<div class="result-box"><div class="val">' + cmRatio.toFixed(1) + '%</div><div class="label">CM Ratio</div></div>';
+  html += '</div>';
+
+  html += '<div style="margin-top:16px;font-size:13px;color:var(--text-secondary);line-height:2">';
+  html += '<div>Fixed Costs: <strong style="color:var(--text-primary)">$' + fc.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2}) + '</strong></div>';
+  html += '<div>Variable Cost/Unit: <strong style="color:var(--text-primary)">$' + vc.toFixed(2) + '</strong></div>';
+  html += '<div>Selling Price/Unit: <strong style="color:var(--text-primary)">$' + sp.toFixed(2) + '</strong></div>';
+  html += '<div>Contribution Margin: <strong style="color:#22c55e">$' + cm.toFixed(2) + '</strong> per unit (' + cmRatio.toFixed(1) + '% of price)</div>';
+  html += '<div>Each unit above break-even generates <strong style="color:#22c55e">$' + cm.toFixed(2) + '</strong> profit</div>';
+  html += '</div>';
+
+  results.innerHTML = html;
+
+  drawChart(fc, vc, sp, beUnits);
+  buildProfitTable(fc, vc, sp, beUnits);
+  initWhatIf(fc, vc, sp, beUnits);
+});
+
+// Chart drawing (pure canvas, no dependencies)
+function drawChart(fc, vc, sp, beUnits) {
+  var section = document.getElementById('chartSection');
+  section.style.display = 'block';
+  var canvas = document.getElementById('beChart');
+  var ctx = canvas.getContext('2d');
+
+  var dpr = window.devicePixelRatio || 1;
+  var rect = canvas.parentElement.getBoundingClientRect();
+  canvas.width = rect.width * dpr;
+  canvas.height = 350 * dpr;
+  canvas.style.width = rect.width + 'px';
+  canvas.style.height = '350px';
+  ctx.scale(dpr, dpr);
+
+  var W = rect.width, H = 350;
+  var pad = {top:30, right:30, bottom:50, left:70};
+  var cw = W - pad.left - pad.right;
+  var ch = H - pad.top - pad.bottom;
+
+  var maxUnits = Math.max(Math.ceil(beUnits * 2), 10);
+  var maxVal = Math.max(maxUnits * sp, fc + maxUnits * vc) * 1.1;
+
+  ctx.clearRect(0, 0, W, H);
+
+  // Grid lines
+  ctx.strokeStyle = 'rgba(255,255,255,0.06)';
+  ctx.lineWidth = 1;
+  var yTicks = 5;
+  for (var i = 0; i <= yTicks; i++) {
+    var y = pad.top + ch - (i / yTicks) * ch;
+    ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(pad.left + cw, y); ctx.stroke();
+    ctx.fillStyle = 'rgba(255,255,255,0.4)';
+    ctx.font = '11px JetBrains Mono, monospace';
+    ctx.textAlign = 'right';
+    var yVal = (maxVal * i / yTicks);
+    ctx.fillText('$' + (yVal >= 1000 ? (yVal / 1000).toFixed(0) + 'k' : yVal.toFixed(0)), pad.left - 8, y + 4);
+  }
+
+  var xTicks = Math.min(6, maxUnits);
+  for (var i = 0; i <= xTicks; i++) {
+    var x = pad.left + (i / xTicks) * cw;
+    ctx.beginPath(); ctx.moveTo(x, pad.top); ctx.lineTo(x, pad.top + ch); ctx.stroke();
+    ctx.fillStyle = 'rgba(255,255,255,0.4)';
+    ctx.textAlign = 'center';
+    ctx.fillText(Math.round(maxUnits * i / xTicks).toLocaleString(), x, H - pad.bottom + 20);
+  }
+
+  // X axis label
+  ctx.fillStyle = 'rgba(255,255,255,0.5)';
+  ctx.font = '12px Inter, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('Units Sold', pad.left + cw / 2, H - 5);
+
+  function toX(units) { return pad.left + (units / maxUnits) * cw; }
+  function toY(val) { return pad.top + ch - (val / maxVal) * ch; }
+
+  // Total cost line
+  ctx.beginPath();
+  ctx.strokeStyle = '#ef4444';
+  ctx.lineWidth = 2.5;
+  ctx.moveTo(toX(0), toY(fc));
+  ctx.lineTo(toX(maxUnits), toY(fc + maxUnits * vc));
+  ctx.stroke();
+
+  // Revenue line
+  ctx.beginPath();
+  ctx.strokeStyle = '#22c55e';
+  ctx.lineWidth = 2.5;
+  ctx.moveTo(toX(0), toY(0));
+  ctx.lineTo(toX(maxUnits), toY(maxUnits * sp));
+  ctx.stroke();
+
+  // Profit zone shading
+  ctx.fillStyle = 'rgba(34,197,94,0.06)';
+  ctx.beginPath();
+  ctx.moveTo(toX(beUnits), toY(beUnits * sp));
+  ctx.lineTo(toX(maxUnits), toY(maxUnits * sp));
+  ctx.lineTo(toX(maxUnits), toY(fc + maxUnits * vc));
+  ctx.closePath();
+  ctx.fill();
+
+  // Loss zone shading
+  ctx.fillStyle = 'rgba(239,68,68,0.06)';
+  ctx.beginPath();
+  ctx.moveTo(toX(0), toY(0));
+  ctx.lineTo(toX(beUnits), toY(beUnits * sp));
+  ctx.lineTo(toX(beUnits), toY(fc + beUnits * vc));
+  ctx.lineTo(toX(0), toY(fc));
+  ctx.closePath();
+  ctx.fill();
+
+  // Break-even point
+  var bx = toX(beUnits), by = toY(beUnits * sp);
+  ctx.beginPath();
+  ctx.arc(bx, by, 7, 0, Math.PI * 2);
+  ctx.fillStyle = 'rgba(74,143,231,0.2)';
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc(bx, by, 4, 0, Math.PI * 2);
+  ctx.fillStyle = '#4a8fe7';
+  ctx.fill();
+
+  // BE label
+  ctx.fillStyle = '#4a8fe7';
+  ctx.font = 'bold 11px Inter, sans-serif';
+  ctx.textAlign = 'center';
+  ctx.fillText('BE: ' + beUnits.toLocaleString() + ' units', bx, by - 14);
+
+  // Fixed cost line (dashed)
+  ctx.setLineDash([4, 4]);
+  ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(pad.left, toY(fc));
+  ctx.lineTo(pad.left + cw, toY(fc));
+  ctx.stroke();
+  ctx.setLineDash([]);
+
+  ctx.fillStyle = 'rgba(255,255,255,0.3)';
+  ctx.font = '10px Inter, sans-serif';
+  ctx.textAlign = 'left';
+  ctx.fillText('Fixed Costs', pad.left + 4, toY(fc) - 6);
+}
+
+// Profit zone table
+function buildProfitTable(fc, vc, sp, beUnits) {
+  document.getElementById('profitSection').style.display = 'block';
+  var tbody = document.getElementById('profitTbody');
+  tbody.innerHTML = '';
+
+  var cm = sp - vc;
+  var steps = [];
+  var maxU = Math.max(beUnits * 2, 10);
+  var step = Math.max(1, Math.round(maxU / 10));
+
+  // Always include 0, some intermediate steps, the BE point, and steps beyond
+  for (var u = 0; u <= maxU; u += step) {
+    steps.push(u);
+  }
+  if (steps.indexOf(beUnits) === -1) steps.push(beUnits);
+  steps.sort(function(a, b) { return a - b; });
+
+  steps.forEach(function(units) {
+    var revenue = units * sp;
+    var totalCost = fc + units * vc;
+    var profit = revenue - totalCost;
+    var margin = revenue > 0 ? (profit / revenue * 100) : 0;
+    var isBE = units === beUnits;
+    var cls = isBE ? ' class="be-row"' : '';
+    var pClass = profit < 0 ? 'loss' : (profit > 0 ? 'profit' : '');
+
+    tbody.innerHTML += '<tr' + cls + '>' +
+      '<td class="num">' + units.toLocaleString() + (isBE ? ' ★' : '') + '</td>' +
+      '<td class="num">$' + revenue.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2}) + '</td>' +
+      '<td class="num">$' + totalCost.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2}) + '</td>' +
+      '<td class="num ' + pClass + '">' + (profit >= 0 ? '$' + profit.toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2}) : '-$' + Math.abs(profit).toLocaleString(undefined, {minimumFractionDigits:2, maximumFractionDigits:2})) + '</td>' +
+      '<td class="num ' + pClass + '">' + margin.toFixed(1) + '%</td>' +
+    '</tr>';
+  });
+}
+
+// What-If scenarios
+function initWhatIf(fc, vc, sp, beUnits) {
+  document.getElementById('whatifSection').style.display = 'block';
+
+  var priceSlider = document.getElementById('priceSlider');
+  var costSlider = document.getElementById('costSlider');
+
+  // Set slider ranges
+  var priceMin = Math.max(vc + 0.5, sp * 0.5);
+  var priceMax = sp * 2;
+  priceSlider.min = priceMin.toFixed(2);
+  priceSlider.max = priceMax.toFixed(2);
+  priceSlider.value = sp;
+  priceSlider.step = Math.max(0.5, Math.round((priceMax - priceMin) / 100 * 2) / 2);
+
+  var costMin = 0;
+  var costMax = Math.max(sp - 0.5, vc * 2);
+  costSlider.min = costMin.toFixed(2);
+  costSlider.max = costMax.toFixed(2);
+  costSlider.value = vc;
+  costSlider.step = Math.max(0.5, Math.round(costMax / 100 * 2) / 2);
+
+  updatePriceWhatIf();
+  updateCostWhatIf();
+
+  priceSlider.addEventListener('input', updatePriceWhatIf);
+  costSlider.addEventListener('input', updateCostWhatIf);
+
+  function updatePriceWhatIf() {
+    var newPrice = parseFloat(priceSlider.value);
+    document.getElementById('priceSliderVal').textContent = '$' + newPrice.toFixed(2);
+    var newCM = newPrice - vc;
+    if (newCM <= 0) {
+      document.getElementById('priceBeUnits').textContent = '∞';
+      document.getElementById('priceChange').innerHTML = '<span style="color:#ef4444">Price must exceed variable cost</span>';
+      return;
+    }
+    var newBE = Math.ceil(fc / newCM);
+    var diff = newBE - beUnits;
+    var pct = beUnits > 0 ? ((diff / beUnits) * 100).toFixed(1) : 0;
+    document.getElementById('priceBeUnits').textContent = newBE.toLocaleString();
+    if (diff < 0) {
+      document.getElementById('priceChange').innerHTML = '<span style="color:#22c55e">▼ ' + Math.abs(diff).toLocaleString() + ' fewer units (' + Math.abs(pct) + '% improvement)</span>';
+    } else if (diff > 0) {
+      document.getElementById('priceChange').innerHTML = '<span style="color:#ef4444">▲ ' + diff.toLocaleString() + ' more units (' + pct + '% worse)</span>';
+    } else {
+      document.getElementById('priceChange').innerHTML = '<span style="color:var(--text-secondary)">No change from baseline</span>';
+    }
+  }
+
+  function updateCostWhatIf() {
+    var newVC = parseFloat(costSlider.value);
+    document.getElementById('costSliderVal').textContent = '$' + newVC.toFixed(2);
+    var newCM = sp - newVC;
+    if (newCM <= 0) {
+      document.getElementById('costBeUnits').textContent = '∞';
+      document.getElementById('costChange').innerHTML = '<span style="color:#ef4444">Variable cost must be less than price</span>';
+      return;
+    }
+    var newBE = Math.ceil(fc / newCM);
+    var diff = newBE - beUnits;
+    var pct = beUnits > 0 ? ((diff / beUnits) * 100).toFixed(1) : 0;
+    document.getElementById('costBeUnits').textContent = newBE.toLocaleString();
+    if (diff < 0) {
+      document.getElementById('costChange').innerHTML = '<span style="color:#22c55e">▼ ' + Math.abs(diff).toLocaleString() + ' fewer units (' + Math.abs(pct) + '% improvement)</span>';
+    } else if (diff > 0) {
+      document.getElementById('costChange').innerHTML = '<span style="color:#ef4444">▲ ' + diff.toLocaleString() + ' more units (' + pct + '% worse)</span>';
+    } else {
+      document.getElementById('costChange').innerHTML = '<span style="color:var(--text-secondary)">No change from baseline</span>';
+    }
+  }
+}
+
+// FAQ
+var faqs = [
+  {q:"What is a break-even point?",a:"The break-even point is the number of units you must sell to cover all costs — both fixed and variable. At break-even, total revenue equals total costs and profit is exactly zero. The formula is: Break-Even Units = Fixed Costs ÷ (Selling Price − Variable Cost per Unit). Below break-even you operate at a loss; above it every additional unit generates profit equal to the contribution margin."},
+  {q:"How do you calculate the break-even point in dollars?",a:"Break-even revenue = Fixed Costs ÷ Contribution Margin Ratio, where Contribution Margin Ratio = (Selling Price − Variable Cost) ÷ Selling Price. For example, $10,000 fixed costs with $50 price and $30 variable cost gives a 40% CM ratio, so break-even revenue is $25,000."},
+  {q:"What is a contribution margin?",a:"Contribution margin is selling price minus variable cost per unit. It represents how much each unit contributes toward covering fixed costs and then generating profit. The contribution margin ratio expresses this as a percentage of the selling price. Higher contribution margins mean fewer units needed to break even."},
+  {q:"What are fixed costs vs variable costs?",a:"Fixed costs stay constant regardless of volume — rent, salaries, insurance, loan payments. Variable costs change with production — materials, packaging, shipping per unit, sales commissions. Accurately separating them is essential for break-even analysis because it determines the contribution margin."},
+  {q:"How do I lower my break-even point?",a:"Three approaches: (1) Reduce fixed costs — negotiate lower rent, cut subscriptions. (2) Reduce variable costs — find cheaper suppliers, improve efficiency. (3) Increase selling price. A 10% price increase often has a bigger impact than a 10% cost reduction because it improves the contribution margin ratio more."},
+  {q:"What is break-even analysis used for?",a:"Break-even analysis helps with pricing strategy, cost management, new product launch decisions, investment evaluation (how much extra sales a new hire or machine requires), and risk assessment (how close current sales are to the break-even point). It's one of the most fundamental tools in management accounting."},
+  {q:"What is the margin of safety?",a:"Margin of safety = (Current Sales − Break-Even Sales) ÷ Current Sales × 100. It measures how far sales can drop before you start losing money. Above 30% is generally healthy. Below 15% signals vulnerability. Businesses with high fixed costs need larger margins of safety."},
+  {q:"Can break-even analysis work for multiple products?",a:"Yes, using a weighted-average contribution margin. Weight each product's CM by its share of total sales. The weighted CM replaces the single-product CM in the formula. The limitation: if the sales mix changes, the break-even point shifts."}
+];
+
+var faqEl = document.getElementById('faq');
+faqs.forEach(function(f) {
+  faqEl.innerHTML += '<div class="faq-item"><div class="faq-q">' + f.q + '</div><div class="faq-a">' + f.a + '</div></div>';
+});
+document.querySelectorAll('.faq-item').forEach(function(item) {
+  item.querySelector('.faq-q').addEventListener('click', function() { item.classList.toggle('open'); });
+});
+
+// Redraw chart on resize
+window.addEventListener('resize', function() {
+  if (basePrice > 0 && basePrice > baseVariable) {
+    drawChart(baseFixed, baseVariable, basePrice, baseBEUnits);
+  }
+});
+  </script>
+</SiteLayout>
