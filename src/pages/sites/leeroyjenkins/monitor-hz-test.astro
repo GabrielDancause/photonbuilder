@@ -1,0 +1,715 @@
+---
+import SiteLayout from "../../../layouts/SiteLayout.astro";
+
+const faqs = [
+  {
+    q: "What refresh rate is my monitor?",
+    a: "Your monitor's refresh rate is the number of times per second it updates the image on screen, measured in Hertz (Hz). A 60Hz monitor refreshes 60 times per second, while a 144Hz monitor refreshes 144 times. You can check your actual refresh rate using the FPS counter on this page — if requestAnimationFrame reports ~60 FPS, your display is running at 60Hz. You can also check in your OS display settings (Windows: Settings → Display → Advanced display; macOS: System Settings → Displays)."
+  },
+  {
+    q: "How does the monitor refresh rate test work?",
+    a: "This test uses several methods to help you verify your monitor's refresh rate. The FPS counter uses requestAnimationFrame to measure how many frames your browser actually renders per second — this directly corresponds to your display's refresh rate. The moving bar test lets you visually compare motion smoothness at different speeds. The UFO-style test shows objects moving at 30, 60, 120, 144, and 240 FPS side by side so you can see which ones appear smooth (matching your refresh rate) and which stutter. The pixel response test checks for ghosting and smearing."
+  },
+  {
+    q: "Why does my FPS counter show a different number than my monitor's rated refresh rate?",
+    a: "Several factors can cause a mismatch. If VSync is off, your browser may render at a different rate than your display. Some browsers cap requestAnimationFrame at 60 FPS regardless of your monitor's refresh rate — try Chrome or Edge with hardware acceleration enabled. If you're on a laptop, power saving mode often forces 60Hz even on 144Hz panels. Background processes, thermal throttling, or GPU driver settings can also limit the frame rate. Make sure your OS display settings actually have the higher refresh rate selected."
+  },
+  {
+    q: "What's the difference between 60Hz, 144Hz, and 240Hz?",
+    a: "At 60Hz, you see a new frame every 16.7ms. At 144Hz, it's every 6.9ms — motion appears noticeably smoother, cursor movement feels more responsive, and fast-moving objects have less blur. At 240Hz (4.2ms per frame), the improvement over 144Hz is subtler but still perceptible in competitive gaming. Most people can clearly see the difference between 60Hz and 144Hz. The jump from 144Hz to 240Hz is harder to notice in everyday use but matters in fast-paced shooters where every millisecond counts."
+  },
+  {
+    q: "Can I run a refresh rate test in my browser?",
+    a: "Yes, browser-based refresh rate tests are accurate for most purposes. Modern browsers use requestAnimationFrame, which syncs to your display's VSync signal, giving a reliable frame rate reading. The main limitation is that browsers typically cap at your monitor's refresh rate (they won't show more than your display can handle). For the most accurate results, use Chrome or Edge with hardware acceleration enabled, close other tabs, and make sure no other demanding applications are running."
+  },
+  {
+    q: "What is frame skipping and how do I detect it?",
+    a: "Frame skipping occurs when your monitor misses displaying certain frames, making motion appear less smooth than the refresh rate suggests. It can be caused by GPU bottlenecks, driver issues, or cable bandwidth limitations (especially with high resolutions at high refresh rates). To detect it, watch the moving bar test closely — if the bar appears to jump or stutter instead of moving smoothly, your monitor may be skipping frames. The FPS counter can also reveal inconsistent frame timing."
+  },
+  {
+    q: "What is pixel response time and why does it matter?",
+    a: "Pixel response time is how quickly a pixel can change from one color to another, usually measured in milliseconds (ms). Slow pixel response causes ghosting — a trailing shadow behind moving objects. Even a 240Hz monitor will show ghosting if pixel response is too slow. Grey-to-grey (GtG) response is the most common specification. For competitive gaming, look for 1-4ms GtG. IPS panels typically have 4-6ms, VA panels 8-15ms, and TN panels 1-2ms. Our pixel response test helps you visually check for ghosting on your specific display."
+  },
+  {
+    q: "How do I check for dead pixels on my monitor?",
+    a: "Use the dead pixel checker on this page to cycle through solid colors (red, green, blue, white, and black) in fullscreen mode. Dead pixels will appear as tiny dots that don't change color — a dead pixel stays black on all colors, while a stuck pixel stays one color (usually red, green, or blue) regardless of the background. Check each color carefully, especially in the corners and edges where dead pixels are most common. Most manufacturers have a dead pixel policy that allows returns if you find a certain number."
+  }
+];
+
+const schema = [
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "Monitor Refresh Rate Test — Hz Test, FPS Counter & Dead Pixel Checker",
+    "description": "Free monitor refresh rate test. Check your actual Hz, test frame rates at 30/60/120/144/240 FPS, detect dead pixels, and measure pixel response time.",
+    "applicationCategory": "UtilitiesApplication",
+    "operatingSystem": "Any",
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+    "author": { "@type": "Organization", "name": "Leeroy Jenkins" }
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": faqs.map(f => ({
+      "@type": "Question",
+      "name": f.q,
+      "acceptedAnswer": { "@type": "Answer", "text": f.a }
+    }))
+  }
+];
+
+export const meta = {
+  title: "Monitor Refresh Rate Test — Free Hz Test, FPS Counter & Dead Pixel Checker",
+  description: "Test your monitor's refresh rate (Hz) for free. Moving bar test, UFO-style FPS comparison at 30/60/120/144/240, live frame counter, pixel response test, and dead pixel checker.",
+  category: "tool",
+  published: "2026-03-21",
+};
+---
+
+<SiteLayout
+  site="leeroyjenkins"
+  title="Monitor Refresh Rate Test — Free Hz Test, FPS Counter & Dead Pixel Checker"
+  description="Test your monitor's refresh rate (Hz) for free. Moving bar test, UFO-style FPS comparison at 30/60/120/144/240, live frame counter, pixel response test, and dead pixel checker."
+  canonical="https://leeroyjenkins.quest/monitor-hz-test"
+  schema={schema}
+>
+  <div class="page-content">
+    <div class="hero">
+      <h1>Monitor Refresh Rate Test</h1>
+      <p>Test your monitor's actual Hz, compare frame rates side by side, measure pixel response, and check for dead pixels — all in your browser.</p>
+    </div>
+
+    <section class="content-section">
+      <!-- Tab Navigation -->
+      <div class="tab-nav" id="tab-nav">
+        <button class="tab-btn active" data-tab="fps">FPS Counter</button>
+        <button class="tab-btn" data-tab="bars">Moving Bars</button>
+        <button class="tab-btn" data-tab="ufo">UFO Test</button>
+        <button class="tab-btn" data-tab="pixel">Pixel Response</button>
+        <button class="tab-btn" data-tab="dead">Dead Pixels</button>
+      </div>
+
+      <!-- Tab 1: FPS Counter -->
+      <div class="tab-panel active" id="panel-fps">
+        <div class="fps-display-card">
+          <div class="fps-label">Your Actual Frame Rate</div>
+          <div class="fps-big" id="fps-value">—</div>
+          <div class="fps-unit">FPS</div>
+          <div class="fps-hz-label">Detected Refresh Rate: <strong id="detected-hz">measuring…</strong></div>
+          <div class="fps-stats">
+            <div class="fps-stat">
+              <span class="fps-stat-label">Min</span>
+              <span class="fps-stat-value" id="fps-min">—</span>
+            </div>
+            <div class="fps-stat">
+              <span class="fps-stat-label">Max</span>
+              <span class="fps-stat-value" id="fps-max">—</span>
+            </div>
+            <div class="fps-stat">
+              <span class="fps-stat-label">Avg</span>
+              <span class="fps-stat-value" id="fps-avg">—</span>
+            </div>
+            <div class="fps-stat">
+              <span class="fps-stat-label">Frame Time</span>
+              <span class="fps-stat-value" id="fps-ft">—</span>
+            </div>
+          </div>
+          <div class="fps-graph-wrap">
+            <canvas id="fps-graph" width="600" height="120"></canvas>
+          </div>
+          <button class="btn btn-sm" id="fps-reset-btn">Reset Stats</button>
+        </div>
+        <p class="test-hint">This counter uses <code>requestAnimationFrame</code> to measure your browser's actual rendering frame rate, which corresponds to your monitor's refresh rate when VSync is active.</p>
+      </div>
+
+      <!-- Tab 2: Moving Bars -->
+      <div class="tab-panel" id="panel-bars">
+        <p>Watch the bars move across the screen. On a higher refresh rate monitor, all bars will appear smoother. The speed label shows pixels per second.</p>
+        <div class="bars-controls">
+          <label>Background: <select id="bars-bg"><option value="#111">Dark</option><option value="#888">Grey</option><option value="#fff">White</option></select></label>
+          <label>Bar color: <select id="bars-color"><option value="#fff">White</option><option value="#0f0">Green</option><option value="#f00">Red</option><option value="#00f">Blue</option></select></label>
+          <button class="btn btn-sm" id="bars-toggle">Pause</button>
+        </div>
+        <div class="bars-canvas-wrap">
+          <canvas id="bars-canvas" width="900" height="360"></canvas>
+        </div>
+        <p class="test-hint">If a bar appears to stutter or jump instead of gliding smoothly, your monitor may be skipping frames at that speed. Faster bars reveal frame skipping more obviously.</p>
+      </div>
+
+      <!-- Tab 3: UFO Test -->
+      <div class="tab-panel" id="panel-ufo">
+        <p>Each row moves a square at a fixed update rate. On a 60Hz monitor, only the 30 and 60 FPS rows appear smooth. On 144Hz, you'll also see 120 and 144 FPS rows moving smoothly.</p>
+        <div class="ufo-container" id="ufo-container">
+          <div class="ufo-row" data-fps="30">
+            <span class="ufo-label">30 FPS</span>
+            <div class="ufo-track"><div class="ufo-block"></div></div>
+          </div>
+          <div class="ufo-row" data-fps="60">
+            <span class="ufo-label">60 FPS</span>
+            <div class="ufo-track"><div class="ufo-block"></div></div>
+          </div>
+          <div class="ufo-row" data-fps="120">
+            <span class="ufo-label">120 FPS</span>
+            <div class="ufo-track"><div class="ufo-block"></div></div>
+          </div>
+          <div class="ufo-row" data-fps="144">
+            <span class="ufo-label">144 FPS</span>
+            <div class="ufo-track"><div class="ufo-block"></div></div>
+          </div>
+          <div class="ufo-row" data-fps="240">
+            <span class="ufo-label">240 FPS</span>
+            <div class="ufo-track"><div class="ufo-block"></div></div>
+          </div>
+        </div>
+        <div class="ufo-controls">
+          <label>Speed: <select id="ufo-speed"><option value="400">Slow (400px/s)</option><option value="800" selected>Medium (800px/s)</option><option value="1200">Fast (1200px/s)</option></select></label>
+          <button class="btn btn-sm" id="ufo-toggle">Pause</button>
+        </div>
+        <p class="test-hint">Rows that appear to stutter are updating faster than your monitor can display. If the 144 FPS row looks identical to 60 FPS, your monitor is running at 60Hz.</p>
+      </div>
+
+      <!-- Tab 4: Pixel Response -->
+      <div class="tab-panel" id="panel-pixel">
+        <p>Test your monitor's pixel response time by watching transitions between colors. Slow response causes visible ghosting — trailing shadows behind moving objects.</p>
+        <div class="pixel-tests">
+          <div class="pixel-test-card">
+            <h3>Black → White Transition</h3>
+            <div class="pixel-box" id="pixel-bw"></div>
+            <button class="btn btn-sm" data-test="bw">Start</button>
+          </div>
+          <div class="pixel-test-card">
+            <h3>Grey → Grey Transition</h3>
+            <div class="pixel-box" id="pixel-gg"></div>
+            <button class="btn btn-sm" data-test="gg">Start</button>
+          </div>
+          <div class="pixel-test-card">
+            <h3>Moving Ghosting Test</h3>
+            <div class="pixel-ghost-track" id="ghost-track">
+              <div class="pixel-ghost-bar" id="ghost-bar"></div>
+            </div>
+            <button class="btn btn-sm" data-test="ghost">Start</button>
+          </div>
+        </div>
+        <p class="test-hint">IPS panels typically show minimal ghosting on black-to-white, but may struggle with grey-to-grey. VA panels often show noticeable smearing on dark transitions. TN panels are fastest but have narrower viewing angles.</p>
+      </div>
+
+      <!-- Tab 5: Dead Pixel Checker -->
+      <div class="tab-panel" id="panel-dead">
+        <p>Click the button below to enter fullscreen with a solid color. Click anywhere to cycle through colors (red, green, blue, white, black). Look for any pixel that doesn't match the background color. Press <kbd>Esc</kbd> to exit.</p>
+        <div class="dead-pixel-preview">
+          <div class="dead-preview-box" style="background:#f00;"></div>
+          <div class="dead-preview-box" style="background:#0f0;"></div>
+          <div class="dead-preview-box" style="background:#00f;"></div>
+          <div class="dead-preview-box" style="background:#fff;border:1px solid var(--border-color);"></div>
+          <div class="dead-preview-box" style="background:#000;"></div>
+        </div>
+        <button class="btn btn-primary" id="dead-pixel-btn">Launch Dead Pixel Checker</button>
+        <p class="test-hint">For best results, clean your screen first and test in a dimly lit room. Dead pixels appear as tiny dots that stay black. Stuck pixels remain one color (usually red, green, or blue) on all backgrounds.</p>
+      </div>
+
+      <!-- Refresh Rate Comparison Table -->
+      <h2>Monitor Refresh Rates Compared</h2>
+      <p>How different refresh rates affect your gaming and productivity experience.</p>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Refresh Rate</th>
+              <th>Frame Time</th>
+              <th>Best For</th>
+              <th>Noticeable Upgrade From</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>60Hz</strong></td><td>16.7ms</td><td>Office work, casual browsing, budget gaming</td><td>—</td></tr>
+            <tr><td><strong>75Hz</strong></td><td>13.3ms</td><td>Slight upgrade for casual users, some budget monitors</td><td>60Hz (subtle)</td></tr>
+            <tr><td><strong>120Hz</strong></td><td>8.3ms</td><td>Console gaming (PS5/Xbox), smooth productivity</td><td>60Hz (clear)</td></tr>
+            <tr><td><strong>144Hz</strong></td><td>6.9ms</td><td>Competitive gaming sweet spot, excellent value</td><td>60Hz (dramatic)</td></tr>
+            <tr><td><strong>165Hz</strong></td><td>6.1ms</td><td>Slight bump over 144Hz, common on modern panels</td><td>144Hz (subtle)</td></tr>
+            <tr><td><strong>240Hz</strong></td><td>4.2ms</td><td>Esports, competitive FPS players</td><td>144Hz (noticeable)</td></tr>
+            <tr><td><strong>360Hz+</strong></td><td>2.8ms</td><td>Professional esports, diminishing returns for most</td><td>240Hz (marginal)</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Tips -->
+      <h2>How to Get the Most From Your Refresh Rate</h2>
+      <ul>
+        <li><strong>Verify your OS settings.</strong> Having a 144Hz monitor means nothing if your display settings are still at 60Hz. On Windows, check Settings → Display → Advanced display settings. On macOS, check System Settings → Displays.</li>
+        <li><strong>Use the right cable.</strong> HDMI 1.4 caps out at 60Hz for 1440p. You need DisplayPort 1.2+ or HDMI 2.0+ for higher refresh rates at high resolutions. For 4K 144Hz, you need DisplayPort 1.4 or HDMI 2.1.</li>
+        <li><strong>Enable hardware acceleration.</strong> In Chrome, go to Settings → System → Use hardware acceleration. Without it, your browser may be capped at 60 FPS regardless of your monitor's refresh rate.</li>
+        <li><strong>Close background apps.</strong> Other applications competing for GPU resources can cause frame drops and inconsistent frame timing, even if your average FPS is high.</li>
+        <li><strong>Enable G-Sync or FreeSync.</strong> Adaptive sync eliminates screen tearing without the input lag penalty of traditional VSync, giving you smooth motion even when your FPS fluctuates.</li>
+        <li><strong>Match your GPU to your monitor.</strong> A 240Hz monitor is wasted if your GPU can only push 80 FPS in your game. Aim for a GPU that can consistently hit your monitor's refresh rate in the games you play.</li>
+      </ul>
+
+      <h2>Frequently Asked Questions</h2>
+      {faqs.map(f => (
+        <div class="faq-item">
+          <h3>{f.q}</h3>
+          <p>{f.a}</p>
+        </div>
+      ))}
+
+      <h2>Related Pages</h2>
+      <div class="related-grid">
+        <a href="/best-gaming-monitor" class="related-link">
+          <strong>Best Gaming Monitor 2026</strong>
+          <span>Top monitors for competitive gaming — 144Hz, 240Hz, and 360Hz picks</span>
+        </a>
+        <a href="/reaction-time-test" class="related-link">
+          <strong>Reaction Time Test</strong>
+          <span>Test your reaction speed — see how your monitor affects your response time</span>
+        </a>
+      </div>
+    </section>
+  </div>
+
+  <!-- Dead Pixel Fullscreen Overlay -->
+  <div id="dead-overlay" style="display:none;position:fixed;inset:0;z-index:99999;cursor:pointer;">
+    <div style="position:absolute;bottom:20px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.6);color:#fff;padding:8px 18px;border-radius:8px;font-size:14px;pointer-events:none;" id="dead-hint">Click to cycle colors · Press Esc to exit</div>
+  </div>
+
+  <script is:inline>
+  (function() {
+    /* ── Tab Switching ── */
+    var tabs = document.querySelectorAll('.tab-btn');
+    var panels = document.querySelectorAll('.tab-panel');
+    tabs.forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        tabs.forEach(function(t) { t.classList.remove('active'); });
+        panels.forEach(function(p) { p.classList.remove('active'); });
+        btn.classList.add('active');
+        document.getElementById('panel-' + btn.dataset.tab).classList.add('active');
+      });
+    });
+
+    /* ═══════════════════════════════════════
+       1. FPS COUNTER
+       ═══════════════════════════════════════ */
+    var fpsEl = document.getElementById('fps-value');
+    var detectedEl = document.getElementById('detected-hz');
+    var fpsMinEl = document.getElementById('fps-min');
+    var fpsMaxEl = document.getElementById('fps-max');
+    var fpsAvgEl = document.getElementById('fps-avg');
+    var fpsFtEl = document.getElementById('fps-ft');
+    var fpsCanvas = document.getElementById('fps-graph');
+    var fpsCtx = fpsCanvas.getContext('2d');
+
+    var fpsFrames = 0;
+    var fpsLast = performance.now();
+    var fpsMin = Infinity, fpsMax = 0, fpsSum = 0, fpsSamples = 0;
+    var fpsHistory = [];
+    var FPS_GRAPH_MAX = 120;
+
+    function resetFpsStats() {
+      fpsMin = Infinity; fpsMax = 0; fpsSum = 0; fpsSamples = 0;
+      fpsHistory = [];
+      fpsMinEl.textContent = '—';
+      fpsMaxEl.textContent = '—';
+      fpsAvgEl.textContent = '—';
+      fpsFtEl.textContent = '—';
+    }
+
+    document.getElementById('fps-reset-btn').addEventListener('click', resetFpsStats);
+
+    function fpsLoop(now) {
+      fpsFrames++;
+      var delta = now - fpsLast;
+      if (delta >= 500) {
+        var fps = Math.round((fpsFrames / delta) * 1000);
+        fpsEl.textContent = fps;
+        fpsFrames = 0;
+        fpsLast = now;
+
+        fpsSamples++;
+        fpsSum += fps;
+        if (fps < fpsMin) fpsMin = fps;
+        if (fps > fpsMax) fpsMax = fps;
+
+        fpsMinEl.textContent = fpsMin;
+        fpsMaxEl.textContent = fpsMax;
+        fpsAvgEl.textContent = Math.round(fpsSum / fpsSamples);
+        fpsFtEl.textContent = (1000 / fps).toFixed(1) + 'ms';
+
+        /* Snap to common Hz */
+        var avg = Math.round(fpsSum / fpsSamples);
+        var common = [30,60,75,90,120,144,165,180,240,360];
+        var closest = common.reduce(function(prev, curr) {
+          return Math.abs(curr - avg) < Math.abs(prev - avg) ? curr : prev;
+        });
+        if (Math.abs(closest - avg) <= 4) {
+          detectedEl.textContent = closest + ' Hz';
+        } else {
+          detectedEl.textContent = avg + ' Hz (non-standard)';
+        }
+
+        fpsHistory.push(fps);
+        if (fpsHistory.length > FPS_GRAPH_MAX) fpsHistory.shift();
+        drawFpsGraph();
+      }
+      requestAnimationFrame(fpsLoop);
+    }
+
+    function drawFpsGraph() {
+      var w = fpsCanvas.width, h = fpsCanvas.height;
+      var dpr = window.devicePixelRatio || 1;
+      fpsCanvas.width = fpsCanvas.parentElement.clientWidth * dpr;
+      fpsCanvas.height = 120 * dpr;
+      fpsCanvas.style.width = fpsCanvas.parentElement.clientWidth + 'px';
+      fpsCanvas.style.height = '120px';
+      fpsCtx.scale(dpr, dpr);
+      w = fpsCanvas.parentElement.clientWidth;
+      h = 120;
+
+      fpsCtx.clearRect(0, 0, w, h);
+
+      if (fpsHistory.length < 2) return;
+
+      var max = Math.max.apply(null, fpsHistory) + 10;
+      var min = Math.max(0, Math.min.apply(null, fpsHistory) - 10);
+      var range = max - min || 1;
+
+      /* Grid lines */
+      fpsCtx.strokeStyle = 'rgba(128,128,128,0.15)';
+      fpsCtx.lineWidth = 1;
+      for (var g = 0; g < 4; g++) {
+        var gy = h - ((h * g) / 3);
+        fpsCtx.beginPath();
+        fpsCtx.moveTo(0, gy);
+        fpsCtx.lineTo(w, gy);
+        fpsCtx.stroke();
+      }
+
+      /* Line */
+      fpsCtx.beginPath();
+      fpsCtx.strokeStyle = '#4caf50';
+      fpsCtx.lineWidth = 2;
+      var step = w / (FPS_GRAPH_MAX - 1);
+      for (var i = 0; i < fpsHistory.length; i++) {
+        var x = i * step;
+        var y = h - ((fpsHistory[i] - min) / range) * (h - 10) - 5;
+        if (i === 0) fpsCtx.moveTo(x, y);
+        else fpsCtx.lineTo(x, y);
+      }
+      fpsCtx.stroke();
+
+      /* Fill */
+      fpsCtx.lineTo((fpsHistory.length - 1) * step, h);
+      fpsCtx.lineTo(0, h);
+      fpsCtx.closePath();
+      fpsCtx.fillStyle = 'rgba(76,175,80,0.1)';
+      fpsCtx.fill();
+
+      fpsCtx.setTransform(1, 0, 0, 1, 0, 0);
+    }
+
+    requestAnimationFrame(fpsLoop);
+
+    /* ═══════════════════════════════════════
+       2. MOVING BARS
+       ═══════════════════════════════════════ */
+    var barsCanvas = document.getElementById('bars-canvas');
+    var bCtx = barsCanvas.getContext('2d');
+    var barsPaused = false;
+    var barsSpeeds = [200, 600, 1200, 2000, 3200];
+    var barsX = [0, 0, 0, 0, 0];
+    var barsLastTime = 0;
+
+    var barsBgSel = document.getElementById('bars-bg');
+    var barsColorSel = document.getElementById('bars-color');
+    var barsToggle = document.getElementById('bars-toggle');
+
+    barsToggle.addEventListener('click', function() {
+      barsPaused = !barsPaused;
+      barsToggle.textContent = barsPaused ? 'Play' : 'Pause';
+      if (!barsPaused) { barsLastTime = 0; requestAnimationFrame(barsLoop); }
+    });
+
+    function barsLoop(now) {
+      if (barsPaused) return;
+      if (!barsLastTime) barsLastTime = now;
+      var dt = (now - barsLastTime) / 1000;
+      barsLastTime = now;
+
+      var dpr = window.devicePixelRatio || 1;
+      var cw = barsCanvas.parentElement.clientWidth;
+      barsCanvas.width = cw * dpr;
+      barsCanvas.height = 360 * dpr;
+      barsCanvas.style.width = cw + 'px';
+      barsCanvas.style.height = '360px';
+      bCtx.scale(dpr, dpr);
+      var w = cw, h = 360;
+
+      bCtx.fillStyle = barsBgSel.value;
+      bCtx.fillRect(0, 0, w, h);
+
+      var rowH = h / barsSpeeds.length;
+      var barW = 40;
+
+      for (var i = 0; i < barsSpeeds.length; i++) {
+        barsX[i] += barsSpeeds[i] * dt;
+        if (barsX[i] > w) barsX[i] -= w + barW;
+
+        bCtx.fillStyle = barsColorSel.value;
+        bCtx.fillRect(barsX[i], i * rowH + 4, barW, rowH - 8);
+
+        bCtx.fillStyle = 'rgba(255,255,255,0.7)';
+        bCtx.font = '12px system-ui, sans-serif';
+        bCtx.fillText(barsSpeeds[i] + ' px/s', 8, i * rowH + rowH / 2 + 4);
+      }
+
+      bCtx.setTransform(1, 0, 0, 1, 0, 0);
+      requestAnimationFrame(barsLoop);
+    }
+    requestAnimationFrame(barsLoop);
+
+    /* ═══════════════════════════════════════
+       3. UFO TEST
+       ═══════════════════════════════════════ */
+    var ufoRows = document.querySelectorAll('.ufo-row');
+    var ufoPaused = false;
+    var ufoSpeedSel = document.getElementById('ufo-speed');
+    var ufoToggle = document.getElementById('ufo-toggle');
+    var ufoLastFrameTimes = {};
+    var ufoPositions = {};
+
+    ufoRows.forEach(function(row) {
+      var fps = parseInt(row.dataset.fps);
+      ufoLastFrameTimes[fps] = 0;
+      ufoPositions[fps] = 0;
+    });
+
+    ufoToggle.addEventListener('click', function() {
+      ufoPaused = !ufoPaused;
+      ufoToggle.textContent = ufoPaused ? 'Play' : 'Pause';
+      if (!ufoPaused) requestAnimationFrame(ufoLoop);
+    });
+
+    function ufoLoop(now) {
+      if (ufoPaused) return;
+      var speed = parseInt(ufoSpeedSel.value);
+
+      ufoRows.forEach(function(row) {
+        var fps = parseInt(row.dataset.fps);
+        var interval = 1000 / fps;
+        var track = row.querySelector('.ufo-track');
+        var block = row.querySelector('.ufo-block');
+        var trackW = track.clientWidth - 30;
+
+        if (!ufoLastFrameTimes[fps]) ufoLastFrameTimes[fps] = now;
+
+        if (now - ufoLastFrameTimes[fps] >= interval) {
+          var dt = (now - ufoLastFrameTimes[fps]) / 1000;
+          ufoLastFrameTimes[fps] = now;
+          ufoPositions[fps] += speed * dt;
+          if (ufoPositions[fps] > trackW) ufoPositions[fps] -= trackW + 30;
+          block.style.transform = 'translateX(' + ufoPositions[fps] + 'px)';
+        }
+      });
+
+      requestAnimationFrame(ufoLoop);
+    }
+    requestAnimationFrame(ufoLoop);
+
+    /* ═══════════════════════════════════════
+       4. PIXEL RESPONSE TEST
+       ═══════════════════════════════════════ */
+    var pixelBW = document.getElementById('pixel-bw');
+    var pixelGG = document.getElementById('pixel-gg');
+    var ghostBar = document.getElementById('ghost-bar');
+    var ghostTrack = document.getElementById('ghost-track');
+    var pixelIntervals = {};
+
+    document.querySelectorAll('[data-test]').forEach(function(btn) {
+      btn.addEventListener('click', function() {
+        var test = btn.dataset.test;
+        if (pixelIntervals[test]) {
+          clearInterval(pixelIntervals[test]);
+          pixelIntervals[test] = null;
+          btn.textContent = 'Start';
+          return;
+        }
+        btn.textContent = 'Stop';
+
+        if (test === 'bw') {
+          var black = true;
+          pixelIntervals.bw = setInterval(function() {
+            pixelBW.style.background = black ? '#fff' : '#000';
+            black = !black;
+          }, 200);
+        } else if (test === 'gg') {
+          var light = true;
+          pixelIntervals.gg = setInterval(function() {
+            pixelGG.style.background = light ? '#999' : '#333';
+            light = !light;
+          }, 200);
+        } else if (test === 'ghost') {
+          var gx = 0, gDir = 1;
+          pixelIntervals.ghost = setInterval(function() {
+            var maxX = ghostTrack.clientWidth - 30;
+            gx += gDir * 8;
+            if (gx >= maxX || gx <= 0) gDir *= -1;
+            ghostBar.style.transform = 'translateX(' + gx + 'px)';
+          }, 16);
+        }
+      });
+    });
+
+    /* ═══════════════════════════════════════
+       5. DEAD PIXEL CHECKER
+       ═══════════════════════════════════════ */
+    var deadOverlay = document.getElementById('dead-overlay');
+    var deadHint = document.getElementById('dead-hint');
+    var deadColors = ['#ff0000', '#00ff00', '#0000ff', '#ffffff', '#000000'];
+    var deadIdx = 0;
+
+    document.getElementById('dead-pixel-btn').addEventListener('click', function() {
+      deadIdx = 0;
+      deadOverlay.style.background = deadColors[0];
+      deadOverlay.style.display = 'block';
+      deadHint.style.display = 'block';
+      if (deadOverlay.requestFullscreen) {
+        deadOverlay.requestFullscreen().catch(function() {});
+      } else if (deadOverlay.webkitRequestFullscreen) {
+        deadOverlay.webkitRequestFullscreen();
+      }
+    });
+
+    deadOverlay.addEventListener('click', function() {
+      deadIdx++;
+      if (deadIdx >= deadColors.length) {
+        deadOverlay.style.display = 'none';
+        if (document.fullscreenElement) document.exitFullscreen();
+        return;
+      }
+      deadOverlay.style.background = deadColors[deadIdx];
+      deadHint.style.color = deadIdx === 3 ? '#000' : '#fff';
+      deadHint.style.background = deadIdx === 3 ? 'rgba(0,0,0,0.4)' : 'rgba(0,0,0,0.6)';
+    });
+
+    document.addEventListener('keydown', function(e) {
+      if (e.key === 'Escape' && deadOverlay.style.display === 'block') {
+        deadOverlay.style.display = 'none';
+      }
+    });
+
+    document.addEventListener('fullscreenchange', function() {
+      if (!document.fullscreenElement) deadOverlay.style.display = 'none';
+    });
+
+  })();
+  </script>
+
+  <style is:inline>
+    .page-content { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem; }
+    .hero { text-align: center; padding: 3rem 0 2rem; }
+    .hero h1 { font-size: 2.2rem; font-weight: 800; margin-bottom: 0.5rem; color: var(--text-primary); }
+    .hero p { color: var(--text-secondary); font-size: 1.1rem; max-width: 680px; margin: 0 auto; line-height: 1.5; }
+
+    .content-section { margin-bottom: 3rem; }
+    .content-section h2 { font-size: 1.8rem; color: var(--text-primary); margin-bottom: 1rem; margin-top: 2.5rem; }
+    .content-section h3 { font-size: 1.3rem; color: var(--text-primary); margin-bottom: 0.5rem; margin-top: 1.5rem; }
+    .content-section p { color: var(--text-secondary); line-height: 1.6; margin-bottom: 1rem; }
+    .content-section ul { color: var(--text-secondary); margin-bottom: 1rem; padding-left: 1.5rem; line-height: 1.6; }
+    .content-section li { margin-bottom: 0.5rem; }
+    a { color: var(--accent-color); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    strong { color: var(--text-primary); }
+    code { background: var(--card-bg); border: 1px solid var(--border-color); padding: 0.15em 0.4em; border-radius: 4px; font-size: 0.9em; }
+    kbd { background: var(--card-bg); border: 1px solid var(--border-color); padding: 0.15em 0.5em; border-radius: 4px; font-size: 0.85em; font-family: inherit; box-shadow: 0 1px 0 var(--border-color); }
+
+    /* Tab Nav */
+    .tab-nav { display: flex; gap: 0.25rem; border-bottom: 2px solid var(--border-color); margin-bottom: 1.5rem; overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .tab-btn { padding: 0.6rem 1rem; border: none; background: none; color: var(--text-secondary); font-weight: 600; font-size: 0.9rem; cursor: pointer; border-bottom: 2px solid transparent; margin-bottom: -2px; white-space: nowrap; transition: color 0.15s, border-color 0.15s; }
+    .tab-btn:hover { color: var(--text-primary); }
+    .tab-btn.active { color: var(--accent-color); border-bottom-color: var(--accent-color); }
+
+    .tab-panel { display: none; }
+    .tab-panel.active { display: block; }
+
+    /* FPS Counter */
+    .fps-display-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 2rem; text-align: center; }
+    .fps-label { font-size: 0.85rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); font-weight: 600; }
+    .fps-big { font-size: 5rem; font-weight: 900; color: var(--text-primary); line-height: 1.1; margin: 0.3rem 0; }
+    .fps-unit { font-size: 1.2rem; font-weight: 700; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.1em; }
+    .fps-hz-label { margin-top: 1rem; font-size: 0.95rem; color: var(--text-secondary); }
+    .fps-stats { display: flex; justify-content: center; gap: 1.5rem; margin: 1.5rem 0; flex-wrap: wrap; }
+    .fps-stat { display: flex; flex-direction: column; align-items: center; min-width: 70px; }
+    .fps-stat-label { font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-secondary); font-weight: 600; }
+    .fps-stat-value { font-size: 1.3rem; font-weight: 800; color: var(--text-primary); }
+    .fps-graph-wrap { margin: 1rem 0; border: 1px solid var(--border-color); border-radius: 8px; overflow: hidden; }
+    .fps-graph-wrap canvas { display: block; width: 100%; height: 120px; }
+
+    .test-hint { font-size: 0.85rem; color: var(--text-secondary); background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; padding: 0.8rem 1rem; margin-top: 1rem; }
+
+    /* Moving Bars */
+    .bars-controls { display: flex; gap: 1rem; align-items: center; margin-bottom: 0.75rem; flex-wrap: wrap; }
+    .bars-controls label { font-size: 0.85rem; color: var(--text-secondary); font-weight: 600; display: flex; align-items: center; gap: 0.4rem; }
+    .bars-controls select { background: var(--card-bg); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: 6px; padding: 0.3rem 0.5rem; font-size: 0.85rem; }
+    .bars-canvas-wrap { border: 1px solid var(--border-color); border-radius: 10px; overflow: hidden; }
+    .bars-canvas-wrap canvas { display: block; width: 100%; height: 360px; }
+
+    /* UFO Test */
+    .ufo-container { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 10px; overflow: hidden; }
+    .ufo-row { display: flex; align-items: center; border-bottom: 1px solid var(--border-color); padding: 0.5rem 0; }
+    .ufo-row:last-child { border-bottom: none; }
+    .ufo-label { min-width: 80px; text-align: center; font-size: 0.8rem; font-weight: 700; color: var(--text-secondary); }
+    .ufo-track { flex: 1; height: 36px; position: relative; overflow: hidden; }
+    .ufo-block { width: 30px; height: 30px; background: var(--accent-color); border-radius: 4px; position: absolute; top: 3px; left: 0; will-change: transform; }
+    .ufo-controls { display: flex; gap: 1rem; align-items: center; margin-top: 0.75rem; flex-wrap: wrap; }
+    .ufo-controls label { font-size: 0.85rem; color: var(--text-secondary); font-weight: 600; display: flex; align-items: center; gap: 0.4rem; }
+    .ufo-controls select { background: var(--card-bg); color: var(--text-primary); border: 1px solid var(--border-color); border-radius: 6px; padding: 0.3rem 0.5rem; font-size: 0.85rem; }
+
+    /* Pixel Response */
+    .pixel-tests { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1rem; }
+    .pixel-test-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 10px; padding: 1.2rem; text-align: center; }
+    .pixel-test-card h3 { margin-top: 0; font-size: 1rem; }
+    .pixel-box { width: 100%; height: 100px; border-radius: 8px; margin: 0.75rem 0; transition: none; }
+    #pixel-bw { background: #000; }
+    #pixel-gg { background: #333; }
+    .pixel-ghost-track { width: 100%; height: 60px; background: #111; border-radius: 8px; position: relative; overflow: hidden; margin: 0.75rem 0; }
+    .pixel-ghost-bar { width: 30px; height: 100%; background: #fff; position: absolute; top: 0; left: 0; will-change: transform; }
+
+    /* Dead Pixel */
+    .dead-pixel-preview { display: flex; gap: 0.5rem; justify-content: center; margin: 1rem 0; }
+    .dead-preview-box { width: 40px; height: 40px; border-radius: 6px; }
+
+    /* Buttons */
+    .btn { padding: 0.45rem 0.9rem; border-radius: 8px; border: 1px solid var(--border-color); background: transparent; color: var(--text-secondary); font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: all 0.15s; white-space: nowrap; }
+    .btn:hover { border-color: var(--accent-color); color: var(--text-primary); }
+    .btn-primary { background: var(--accent-color); color: #fff; border-color: var(--accent-color); padding: 0.6rem 1.6rem; font-size: 1rem; }
+    .btn-primary:hover { opacity: 0.9; }
+    .btn-sm { padding: 0.3rem 0.7rem; font-size: 0.8rem; }
+
+    /* Table */
+    .table-wrapper { overflow-x: auto; border: 1px solid var(--border-color); border-radius: 12px; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+    th { background: var(--card-bg); padding: 0.65rem 0.6rem; text-align: left; font-weight: 700; color: var(--text-primary); border-bottom: 2px solid var(--border-color); white-space: nowrap; }
+    td { padding: 0.55rem 0.6rem; border-bottom: 1px solid var(--border-color); color: var(--text-secondary); }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: var(--card-bg); }
+
+    /* FAQ */
+    .faq-item { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 10px; padding: 1.2rem 1.5rem; margin: 1rem 0; }
+    .faq-item h3 { margin-top: 0; font-size: 1.1rem; color: var(--text-primary); }
+    .faq-item p { margin-bottom: 0; }
+
+    /* Related */
+    .related-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 1rem; margin: 1.5rem 0; }
+    .related-link { display: flex; flex-direction: column; gap: 0.3rem; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 10px; padding: 1.2rem; text-decoration: none; transition: border-color 0.2s; }
+    .related-link:hover { border-color: var(--accent-color); text-decoration: none; }
+    .related-link strong { color: var(--text-primary); font-size: 1rem; }
+    .related-link span { color: var(--text-secondary); font-size: 0.85rem; }
+
+    @media (max-width: 600px) {
+      .hero h1 { font-size: 1.6rem; }
+      .fps-big { font-size: 3.5rem; }
+      .fps-stats { gap: 0.8rem; }
+      .tab-btn { padding: 0.5rem 0.7rem; font-size: 0.8rem; }
+      .ufo-label { min-width: 55px; font-size: 0.7rem; }
+      .pixel-tests { grid-template-columns: 1fr; }
+      .bars-controls { flex-direction: column; gap: 0.5rem; align-items: flex-start; }
+    }
+  </style>
+</SiteLayout>
