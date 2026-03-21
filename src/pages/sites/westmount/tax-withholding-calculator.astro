@@ -1,0 +1,779 @@
+---
+import SiteLayout from "../../../layouts/SiteLayout.astro";
+
+export const meta = {
+  title: "Tax Withholding Calculator: Optimize Your W-4 for 2026",
+  description: "Estimate federal tax withholding and optimize your W-4 form. Calculate recommended paycheck withholding, see if you'll get a refund or owe, and get W-4 guidance.",
+  category: "tool",
+  published: "2026-03-21"
+};
+
+const schema = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebApplication",
+      "name": meta.title,
+      "description": meta.description,
+      "url": "https://westmountfundamentals.com/tax-withholding-calculator",
+      "applicationCategory": "FinanceApplication",
+      "operatingSystem": "Any",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "author": {
+        "@type": "Organization",
+        "name": "Westmount Fundamentals",
+        "url": "https://westmountfundamentals.com"
+      }
+    },
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "How do I know if my tax withholding is correct?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Compare your current per-paycheck withholding to your estimated annual tax liability divided by the number of pay periods. If you consistently get large refunds (over $1,000), you're overwithholding and giving the government an interest-free loan. If you owe more than $1,000 at tax time, you're underwithholding and may face penalties."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What is the W-4 form and when should I update it?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "The W-4 is the IRS form you give your employer to determine how much federal income tax to withhold from your paycheck. You should update it after major life changes: getting married or divorced, having a child, buying a home, starting a side job, or receiving a large raise. The 2020 redesign eliminated allowances in favor of dollar-amount adjustments."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What are the 2026 federal income tax brackets?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "For 2026, the federal tax brackets for single filers are: 10% on income up to $11,925, 12% on $11,926–$48,475, 22% on $48,476–$103,350, 24% on $103,351–$197,300, 32% on $197,301–$250,525, 35% on $250,526–$626,350, and 37% on income over $626,350. Married filing jointly brackets are roughly double these thresholds."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Should I claim 0 or 1 on my W-4?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "The current W-4 form no longer uses allowance numbers like 0 or 1. Instead, you adjust withholding by entering dollar amounts for additional income, deductions, and extra withholding. To increase withholding (smaller paycheck, bigger refund), add an extra amount on Line 4(c). To decrease withholding (bigger paycheck, smaller refund), claim deductions on Line 4(b)."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How do pre-tax deductions like 401(k) affect my withholding?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Pre-tax deductions such as 401(k) contributions, HSA contributions, and health insurance premiums reduce your taxable income before withholding is calculated. For example, if you earn $5,000 per paycheck and contribute $500 to your 401(k), your employer calculates withholding on $4,500. This is why increasing your 401(k) contribution effectively lowers your tax bill."
+          }
+        }
+      ]
+    }
+  ]
+};
+---
+
+<SiteLayout
+  site="westmount"
+  title={meta.title}
+  description={meta.description}
+  canonical="https://westmountfundamentals.com/tax-withholding-calculator"
+  schema={schema}
+>
+  <div class="page-content">
+
+    <div style="text-align: center; margin-bottom: 2rem;">
+      <h1>Tax Withholding Calculator</h1>
+      <p style="font-size: 1.2rem; max-width: 640px; margin: 0 auto;">Estimate your federal tax withholding and optimize your W-4. See if you'll get a refund or owe at tax time.</p>
+    </div>
+
+    <div class="calculator-card">
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem;">
+        <div class="input-group">
+          <label for="filingStatus">Filing Status</label>
+          <div class="input-wrapper">
+            <select id="filingStatus">
+              <option value="single">Single</option>
+              <option value="married">Married Filing Jointly</option>
+              <option value="marriedSeparate">Married Filing Separately</option>
+              <option value="hoh">Head of Household</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="input-group">
+          <label for="payFrequency">Pay Frequency</label>
+          <div class="input-wrapper">
+            <select id="payFrequency">
+              <option value="52">Weekly</option>
+              <option value="26" selected>Bi-Weekly</option>
+              <option value="24">Semi-Monthly</option>
+              <option value="12">Monthly</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="input-group">
+          <label for="grossPay">Gross Pay Per Period</label>
+          <div class="input-wrapper">
+            <span style="position: absolute; left: 1rem; color: var(--text-secondary); pointer-events: none;">$</span>
+            <input type="number" id="grossPay" value="3500" min="0" step="50" style="padding-left: 2rem;">
+          </div>
+        </div>
+
+        <div class="input-group">
+          <label for="contrib401k">401(k) Per Period</label>
+          <div class="input-wrapper">
+            <span style="position: absolute; left: 1rem; color: var(--text-secondary); pointer-events: none;">$</span>
+            <input type="number" id="contrib401k" value="0" min="0" step="25" style="padding-left: 2rem;">
+          </div>
+        </div>
+
+        <div class="input-group">
+          <label for="contribHSA">HSA Per Period</label>
+          <div class="input-wrapper">
+            <span style="position: absolute; left: 1rem; color: var(--text-secondary); pointer-events: none;">$</span>
+            <input type="number" id="contribHSA" value="0" min="0" step="25" style="padding-left: 2rem;">
+          </div>
+        </div>
+
+        <div class="input-group">
+          <label for="healthIns">Health Insurance Per Period</label>
+          <div class="input-wrapper">
+            <span style="position: absolute; left: 1rem; color: var(--text-secondary); pointer-events: none;">$</span>
+            <input type="number" id="healthIns" value="0" min="0" step="25" style="padding-left: 2rem;">
+          </div>
+        </div>
+
+        <div class="input-group">
+          <label for="dependents">Number of Dependents</label>
+          <div class="input-wrapper">
+            <input type="number" id="dependents" value="0" min="0" max="20" step="1">
+          </div>
+        </div>
+
+        <div class="input-group">
+          <label for="currentWithholding">Current Withholding Per Period</label>
+          <div class="input-wrapper">
+            <span style="position: absolute; left: 1rem; color: var(--text-secondary); pointer-events: none;">$</span>
+            <input type="number" id="currentWithholding" value="0" min="0" step="10" style="padding-left: 2rem;">
+          </div>
+        </div>
+
+        <div class="input-group">
+          <label for="additionalWithholding">Additional Withholding Per Period</label>
+          <div class="input-wrapper">
+            <span style="position: absolute; left: 1rem; color: var(--text-secondary); pointer-events: none;">$</span>
+            <input type="number" id="additionalWithholding" value="0" min="0" step="10" style="padding-left: 2rem;">
+          </div>
+        </div>
+
+        <div class="input-group">
+          <label for="otherIncome">Other Annual Income</label>
+          <div class="input-wrapper">
+            <span style="position: absolute; left: 1rem; color: var(--text-secondary); pointer-events: none;">$</span>
+            <input type="number" id="otherIncome" value="0" min="0" step="500" style="padding-left: 2rem;">
+          </div>
+        </div>
+
+        <div class="input-group">
+          <label for="deductionType">Deduction Type</label>
+          <div class="input-wrapper">
+            <select id="deductionType">
+              <option value="standard">Standard Deduction</option>
+              <option value="itemized">Itemized Deductions</option>
+            </select>
+          </div>
+        </div>
+
+        <div class="input-group" id="itemizedGroup" style="display: none;">
+          <label for="itemizedAmount">Itemized Deductions</label>
+          <div class="input-wrapper">
+            <span style="position: absolute; left: 1rem; color: var(--text-secondary); pointer-events: none;">$</span>
+            <input type="number" id="itemizedAmount" value="0" min="0" step="500" style="padding-left: 2rem;">
+          </div>
+        </div>
+      </div>
+
+      <div style="text-align: center; margin-top: 1.5rem;">
+        <button id="calculateBtn" style="padding: 0.75rem 2rem; background: var(--accent-color); color: #fff; border: none; border-radius: 6px; font-size: 1rem; font-weight: 600; cursor: pointer;">Calculate Withholding</button>
+      </div>
+    </div>
+
+    <!-- Results -->
+    <div id="resultsSection" style="display: none;">
+      <div class="stats-grid" style="margin-top: 2rem;">
+        <div class="stat-card">
+          <span class="calc-result-label">Estimated Annual Tax</span>
+          <div style="font-size: 1.5rem; font-weight: 700; color: var(--accent-color);" id="annualTax">$0</div>
+          <div style="font-size: 0.9rem; color: var(--text-secondary); margin-top: 0.25rem;" id="effectiveRate"></div>
+        </div>
+        <div class="stat-card">
+          <span class="calc-result-label">Recommended Per Paycheck</span>
+          <div style="font-size: 1.5rem; font-weight: 700; color: var(--text-primary);" id="recommendedWithholding">$0</div>
+          <div style="font-size: 0.9rem; color: var(--text-secondary); margin-top: 0.25rem;" id="perPaycheckNote"></div>
+        </div>
+      </div>
+
+      <div class="stats-grid">
+        <div class="stat-card">
+          <span class="calc-result-label">Annual Gross Income</span>
+          <div style="font-size: 1.3rem; font-weight: 700; color: var(--text-primary);" id="annualGross">$0</div>
+        </div>
+        <div class="stat-card">
+          <span class="calc-result-label">Taxable Income</span>
+          <div style="font-size: 1.3rem; font-weight: 700; color: var(--text-primary);" id="taxableIncome">$0</div>
+        </div>
+        <div class="stat-card">
+          <span class="calc-result-label">Dependent Credit</span>
+          <div style="font-size: 1.3rem; font-weight: 700; color: var(--text-primary);" id="dependentCredit">$0</div>
+        </div>
+        <div class="stat-card">
+          <span class="calc-result-label">Refund / Amount Owed</span>
+          <div style="font-size: 1.3rem; font-weight: 700;" id="refundOwed">$0</div>
+        </div>
+      </div>
+
+      <!-- Bracket Breakdown -->
+      <div class="chart-container" style="margin-top: 2rem;">
+        <h3 style="margin-top: 0; margin-bottom: 1rem;">Tax Bracket Breakdown</h3>
+        <div class="table-container" style="max-height: 450px; overflow-y: auto;">
+          <table id="bracketTable">
+            <thead style="position: sticky; top: 0; z-index: 1;">
+              <tr>
+                <th>Bracket</th>
+                <th>Rate</th>
+                <th>Taxable In Bracket</th>
+                <th>Tax From Bracket</th>
+                <th>Cumulative Tax</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Withholding Comparison Chart -->
+      <div class="chart-container" style="margin-top: 2rem;">
+        <h3 style="margin-top: 0; margin-bottom: 1rem;">Current vs Recommended Withholding</h3>
+        <canvas id="withholdingChart" style="width: 100%; height: 280px;"></canvas>
+      </div>
+
+      <!-- W-4 Guidance -->
+      <div class="w4-guidance" id="w4Guidance" style="margin-top: 2rem; padding: 1.5rem; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px;">
+        <h3 style="margin-top: 0; margin-bottom: 1rem; color: var(--accent-color);">W-4 Form Guidance</h3>
+        <div id="w4Content"></div>
+      </div>
+
+      <div class="info-box" style="margin-top: 2rem; padding: 1.25rem; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px;">
+        <p style="margin: 0; color: var(--text-secondary); font-size: 0.95rem;"><strong>Disclaimer:</strong> This calculator provides estimates based on 2026 federal tax brackets and standard deduction amounts. It does not account for state/local taxes, AMT, NIIT, self-employment tax, or all possible credits and deductions. Consult a tax professional for personalized advice.</p>
+      </div>
+    </div>
+
+    <script is:inline>
+      const fmt = (n) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(n);
+      const fmtDec = (n, d) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: d, maximumFractionDigits: d }).format(n);
+      const fmtPct = (n) => n.toFixed(1) + '%';
+
+      // 2026 tax brackets
+      const brackets = {
+        single: [
+          { min: 0, max: 11925, rate: 0.10 },
+          { min: 11925, max: 48475, rate: 0.12 },
+          { min: 48475, max: 103350, rate: 0.22 },
+          { min: 103350, max: 197300, rate: 0.24 },
+          { min: 197300, max: 250525, rate: 0.32 },
+          { min: 250525, max: 626350, rate: 0.35 },
+          { min: 626350, max: Infinity, rate: 0.37 }
+        ],
+        married: [
+          { min: 0, max: 23850, rate: 0.10 },
+          { min: 23850, max: 96950, rate: 0.12 },
+          { min: 96950, max: 206700, rate: 0.22 },
+          { min: 206700, max: 394600, rate: 0.24 },
+          { min: 394600, max: 501050, rate: 0.32 },
+          { min: 501050, max: 751600, rate: 0.35 },
+          { min: 751600, max: Infinity, rate: 0.37 }
+        ],
+        marriedSeparate: [
+          { min: 0, max: 11925, rate: 0.10 },
+          { min: 11925, max: 48475, rate: 0.12 },
+          { min: 48475, max: 103350, rate: 0.22 },
+          { min: 103350, max: 197300, rate: 0.24 },
+          { min: 197300, max: 250525, rate: 0.32 },
+          { min: 250525, max: 375800, rate: 0.35 },
+          { min: 375800, max: Infinity, rate: 0.37 }
+        ],
+        hoh: [
+          { min: 0, max: 17000, rate: 0.10 },
+          { min: 17000, max: 64850, rate: 0.12 },
+          { min: 64850, max: 103350, rate: 0.22 },
+          { min: 103350, max: 197300, rate: 0.24 },
+          { min: 197300, max: 250500, rate: 0.32 },
+          { min: 250500, max: 626350, rate: 0.35 },
+          { min: 626350, max: Infinity, rate: 0.37 }
+        ]
+      };
+
+      const standardDeductions = {
+        single: 15700,
+        married: 31400,
+        marriedSeparate: 15700,
+        hoh: 23500
+      };
+
+      // Child tax credit per dependent (under 17)
+      const childTaxCredit = 2000;
+
+      document.getElementById('deductionType').addEventListener('change', function() {
+        document.getElementById('itemizedGroup').style.display = this.value === 'itemized' ? '' : 'none';
+      });
+
+      function calculateTax(taxableIncome, status) {
+        const b = brackets[status];
+        let tax = 0;
+        const breakdown = [];
+        let cumulative = 0;
+
+        for (let i = 0; i < b.length; i++) {
+          const bracketMin = b[i].min;
+          const bracketMax = b[i].max;
+          const rate = b[i].rate;
+
+          if (taxableIncome <= bracketMin) {
+            breakdown.push({ min: bracketMin, max: bracketMax, rate: rate, taxable: 0, tax: 0, cumulative: cumulative });
+            continue;
+          }
+
+          const taxableInBracket = Math.min(taxableIncome, bracketMax) - bracketMin;
+          const taxFromBracket = taxableInBracket * rate;
+          tax += taxFromBracket;
+          cumulative += taxFromBracket;
+          breakdown.push({ min: bracketMin, max: bracketMax, rate: rate, taxable: taxableInBracket, tax: taxFromBracket, cumulative: cumulative });
+        }
+
+        return { tax: tax, breakdown: breakdown };
+      }
+
+      function calculate() {
+        const status = document.getElementById('filingStatus').value;
+        const periods = parseInt(document.getElementById('payFrequency').value);
+        const grossPay = Math.max(0, parseFloat(document.getElementById('grossPay').value) || 0);
+        const contrib401k = Math.max(0, parseFloat(document.getElementById('contrib401k').value) || 0);
+        const contribHSA = Math.max(0, parseFloat(document.getElementById('contribHSA').value) || 0);
+        const healthIns = Math.max(0, parseFloat(document.getElementById('healthIns').value) || 0);
+        const dependents = Math.max(0, parseInt(document.getElementById('dependents').value) || 0);
+        const currentWithholding = Math.max(0, parseFloat(document.getElementById('currentWithholding').value) || 0);
+        const additionalWithholding = Math.max(0, parseFloat(document.getElementById('additionalWithholding').value) || 0);
+        const otherIncome = Math.max(0, parseFloat(document.getElementById('otherIncome').value) || 0);
+        const deductionType = document.getElementById('deductionType').value;
+        const itemizedAmount = Math.max(0, parseFloat(document.getElementById('itemizedAmount').value) || 0);
+
+        // Annual calculations
+        const annualGross = grossPay * periods;
+        const annualPreTax = (contrib401k + contribHSA + healthIns) * periods;
+        const annualAGI = annualGross - annualPreTax + otherIncome;
+
+        const deduction = deductionType === 'standard' ? standardDeductions[status] : itemizedAmount;
+        const taxableIncome = Math.max(0, annualAGI - deduction);
+
+        const result = calculateTax(taxableIncome, status);
+        let annualTax = result.tax;
+
+        // Apply child tax credit
+        const totalDependentCredit = dependents * childTaxCredit;
+        annualTax = Math.max(0, annualTax - totalDependentCredit);
+
+        const recommendedPerPeriod = annualTax / periods;
+        const totalCurrentWithholding = (currentWithholding + additionalWithholding) * periods;
+        const difference = totalCurrentWithholding - annualTax;
+
+        const effectiveRate = annualGross > 0 ? (annualTax / annualGross) * 100 : 0;
+
+        // Update UI
+        document.getElementById('resultsSection').style.display = '';
+        document.getElementById('annualTax').textContent = fmt(annualTax);
+        document.getElementById('effectiveRate').textContent = 'Effective rate: ' + fmtPct(effectiveRate);
+        document.getElementById('recommendedWithholding').textContent = fmtDec(recommendedPerPeriod, 2);
+        document.getElementById('perPaycheckNote').textContent = periods + ' pay periods/year';
+        document.getElementById('annualGross').textContent = fmt(annualGross);
+        document.getElementById('taxableIncome').textContent = fmt(taxableIncome);
+        document.getElementById('dependentCredit').textContent = fmt(totalDependentCredit);
+
+        const refundEl = document.getElementById('refundOwed');
+        if (currentWithholding === 0 && additionalWithholding === 0) {
+          refundEl.textContent = 'Enter current withholding';
+          refundEl.style.color = 'var(--text-secondary)';
+        } else if (difference > 0) {
+          refundEl.textContent = fmt(difference) + ' refund';
+          refundEl.style.color = '#4caf50';
+        } else if (difference < 0) {
+          refundEl.textContent = fmt(Math.abs(difference)) + ' owed';
+          refundEl.style.color = '#ef5350';
+        } else {
+          refundEl.textContent = '$0 — perfectly balanced';
+          refundEl.style.color = 'var(--accent-color)';
+        }
+
+        // Bracket table
+        const tbody = document.querySelector('#bracketTable tbody');
+        let html = '';
+        for (let i = 0; i < result.breakdown.length; i++) {
+          const b = result.breakdown[i];
+          const maxLabel = b.max === Infinity ? '+' : fmt(b.max);
+          html += '<tr>' +
+            '<td style="text-align: left;">' + fmt(b.min) + ' – ' + maxLabel + '</td>' +
+            '<td>' + (b.rate * 100) + '%</td>' +
+            '<td>' + fmt(b.taxable) + '</td>' +
+            '<td>' + fmt(b.tax) + '</td>' +
+            '<td>' + fmt(b.cumulative) + '</td>' +
+          '</tr>';
+        }
+        tbody.innerHTML = html;
+
+        // Draw chart
+        drawChart(currentWithholding + additionalWithholding, recommendedPerPeriod, periods);
+
+        // W-4 guidance
+        generateW4Guidance(status, recommendedPerPeriod, currentWithholding, additionalWithholding, deductionType, deduction, standardDeductions[status], otherIncome, dependents);
+      }
+
+      function drawChart(currentPerPeriod, recommendedPerPeriod, periods) {
+        const canvas = document.getElementById('withholdingChart');
+        const ctx = canvas.getContext('2d');
+        const dpr = window.devicePixelRatio || 1;
+        const rect = canvas.getBoundingClientRect();
+        canvas.width = rect.width * dpr;
+        canvas.height = 280 * dpr;
+        canvas.style.height = '280px';
+        ctx.scale(dpr, dpr);
+        const W = rect.width;
+        const H = 280;
+
+        ctx.clearRect(0, 0, W, H);
+
+        var styles = getComputedStyle(document.documentElement);
+        var textColor = styles.getPropertyValue('--text-secondary').trim() || '#888';
+        var borderColor = styles.getPropertyValue('--border-color').trim() || '#333';
+        var accentColor = styles.getPropertyValue('--accent-color').trim() || '#4a9eff';
+
+        var currentAnnual = currentPerPeriod * periods;
+        var recommendedAnnual = recommendedPerPeriod * periods;
+        var maxVal = Math.max(currentAnnual, recommendedAnnual, 1) * 1.2;
+
+        var pad = { top: 30, right: 40, bottom: 50, left: 40 };
+        var chartW = W - pad.left - pad.right;
+        var chartH = H - pad.top - pad.bottom;
+
+        var barWidth = Math.min(chartW * 0.25, 100);
+        var gap = chartW * 0.15;
+        var startX = pad.left + (chartW - barWidth * 2 - gap) / 2;
+
+        // Current bar
+        var currentHeight = maxVal > 0 ? (currentAnnual / maxVal) * chartH : 0;
+        var currentColor = '#e8a735';
+        ctx.fillStyle = currentColor;
+        ctx.fillRect(startX, pad.top + chartH - currentHeight, barWidth, currentHeight);
+
+        // Recommended bar
+        var recHeight = maxVal > 0 ? (recommendedAnnual / maxVal) * chartH : 0;
+        ctx.fillStyle = accentColor;
+        ctx.fillRect(startX + barWidth + gap, pad.top + chartH - recHeight, barWidth, recHeight);
+
+        // Labels
+        ctx.fillStyle = textColor;
+        ctx.font = '13px system-ui, sans-serif';
+        ctx.textAlign = 'center';
+        ctx.fillText('Current', startX + barWidth / 2, H - pad.bottom + 20);
+        ctx.fillText(fmt(currentAnnual) + '/yr', startX + barWidth / 2, H - pad.bottom + 38);
+
+        ctx.fillText('Recommended', startX + barWidth + gap + barWidth / 2, H - pad.bottom + 20);
+        ctx.fillText(fmt(recommendedAnnual) + '/yr', startX + barWidth + gap + barWidth / 2, H - pad.bottom + 38);
+
+        // Value labels on bars
+        ctx.font = 'bold 14px system-ui, sans-serif';
+        ctx.fillStyle = currentColor;
+        ctx.fillText(fmtDec(currentPerPeriod, 2), startX + barWidth / 2, pad.top + chartH - currentHeight - 8);
+
+        ctx.fillStyle = accentColor;
+        ctx.fillText(fmtDec(recommendedPerPeriod, 2), startX + barWidth + gap + barWidth / 2, pad.top + chartH - recHeight - 8);
+
+        // Baseline
+        ctx.strokeStyle = borderColor;
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.moveTo(pad.left, pad.top + chartH);
+        ctx.lineTo(W - pad.right, pad.top + chartH);
+        ctx.stroke();
+      }
+
+      function generateW4Guidance(status, recommended, current, additional, deductionType, deduction, stdDeduction, otherIncome, dependents) {
+        var content = '';
+        content += '<div style="color: var(--text-secondary); line-height: 1.7;">';
+
+        content += '<p style="margin-bottom: 1rem;"><strong>Step 1 (Filing Status):</strong> ';
+        if (status === 'single') content += 'Check the box for <strong>Single or Married filing separately</strong>.';
+        else if (status === 'married') content += 'Check the box for <strong>Married filing jointly</strong>.';
+        else if (status === 'marriedSeparate') content += 'Check the box for <strong>Single or Married filing separately</strong>.';
+        else content += 'Check the box for <strong>Head of household</strong>.';
+        content += '</p>';
+
+        content += '<p style="margin-bottom: 1rem;"><strong>Step 2 (Multiple Jobs):</strong> ';
+        if (otherIncome > 0) {
+          content += 'If you have multiple jobs or your spouse works, check the box in Step 2(c) or use the IRS Two-Earners Worksheet for more accuracy.';
+        } else {
+          content += 'If this is your only job (and your spouse doesn\'t work if married), you can skip this step.';
+        }
+        content += '</p>';
+
+        content += '<p style="margin-bottom: 1rem;"><strong>Step 3 (Dependents):</strong> ';
+        if (dependents > 0) {
+          content += 'Enter <strong>' + fmt(dependents * childTaxCredit) + '</strong> for your ' + dependents + ' dependent' + (dependents > 1 ? 's' : '') + ' ($2,000 per qualifying child under 17, or $500 for other dependents).';
+        } else {
+          content += 'Leave blank if you have no dependents.';
+        }
+        content += '</p>';
+
+        content += '<p style="margin-bottom: 1rem;"><strong>Step 4(a) (Other Income):</strong> ';
+        if (otherIncome > 0) {
+          content += 'Enter <strong>' + fmt(otherIncome) + '</strong> for your other annual income (interest, dividends, retirement, side income, etc.).';
+        } else {
+          content += 'Leave blank if you have no other income besides this job.';
+        }
+        content += '</p>';
+
+        content += '<p style="margin-bottom: 1rem;"><strong>Step 4(b) (Deductions):</strong> ';
+        if (deductionType === 'itemized' && deduction > stdDeduction) {
+          var excess = deduction - stdDeduction;
+          content += 'Enter <strong>' + fmt(excess) + '</strong> (your itemized deductions of ' + fmt(deduction) + ' minus the standard deduction of ' + fmt(stdDeduction) + ').';
+        } else {
+          content += 'Leave blank to use the standard deduction of ' + fmt(stdDeduction) + '. Only enter an amount here if your itemized deductions exceed this.';
+        }
+        content += '</p>';
+
+        var totalCurrent = current + additional;
+        var diff = recommended - totalCurrent;
+        content += '<p style="margin-bottom: 0;"><strong>Step 4(c) (Extra Withholding):</strong> ';
+        if (totalCurrent > 0 && diff > 5) {
+          content += 'Consider adding <strong>' + fmtDec(diff, 2) + '</strong> per paycheck in extra withholding to avoid owing at tax time.';
+        } else if (totalCurrent > 0 && diff < -5) {
+          content += 'You may be overwithholding. You could reduce extra withholding to keep more in each paycheck. Your recommended withholding is ' + fmtDec(recommended, 2) + ' per period.';
+        } else if (totalCurrent === 0) {
+          content += 'If your employer\'s default withholding doesn\'t match the recommended ' + fmtDec(recommended, 2) + ', enter the difference here.';
+        } else {
+          content += 'Your current withholding is close to optimal. No additional withholding needed.';
+        }
+        content += '</p>';
+
+        content += '</div>';
+        document.getElementById('w4Content').innerHTML = content;
+      }
+
+      document.getElementById('calculateBtn').addEventListener('click', calculate);
+      calculate();
+    </script>
+
+    <style>
+      .input-group {
+        margin-bottom: 1.5rem;
+      }
+      .input-group label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+        color: var(--text-primary);
+      }
+      .input-wrapper {
+        position: relative;
+        display: flex;
+        align-items: center;
+      }
+      .suffix {
+        position: absolute;
+        right: 0;
+        color: var(--text-secondary);
+        padding: 0 0.75rem;
+        font-size: 1rem;
+      }
+      .input-group input, .input-group select {
+        width: 100%;
+        padding: 0.75rem;
+        background: var(--bg-color);
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        color: var(--text-primary);
+        font-size: 1rem;
+      }
+      .input-group input:focus, .input-group select:focus {
+        outline: none;
+        border-color: var(--accent-color);
+        box-shadow: 0 0 0 2px rgba(var(--accent-color-rgb), 0.2);
+      }
+      .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 1rem;
+      }
+      .stat-card {
+        text-align: center;
+        padding: 1.25rem;
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        text-align: right;
+        font-size: 0.9rem;
+      }
+      th, td {
+        padding: 0.75rem;
+        border-bottom: 1px solid var(--border-color);
+      }
+      th {
+        text-align: right;
+        color: var(--text-secondary);
+        font-weight: 600;
+        background: var(--card-bg);
+      }
+      th:first-child, td:first-child {
+        text-align: left;
+      }
+      .content-section h2 {
+        color: var(--accent-color);
+        margin-top: 2.5rem;
+        margin-bottom: 1rem;
+      }
+      .content-section h3 {
+        color: var(--text-primary);
+        margin-top: 2rem;
+        margin-bottom: 1rem;
+      }
+      .content-section h4 {
+        color: var(--text-primary);
+        margin-top: 1.5rem;
+        margin-bottom: 0.5rem;
+      }
+      .content-section p {
+        margin-bottom: 1.5rem;
+        line-height: 1.7;
+        color: var(--text-secondary);
+      }
+      .content-section ul {
+        margin-bottom: 1.5rem;
+        padding-left: 1.5rem;
+        color: var(--text-secondary);
+      }
+      .content-section li {
+        margin-bottom: 0.5rem;
+      }
+      .faq-section {
+        margin-top: 4rem;
+        border-top: 1px solid var(--border-color);
+        padding-top: 2rem;
+      }
+      .faq-item {
+        margin-bottom: 2rem;
+      }
+      .faq-item h3 {
+        font-size: 1.2rem;
+        color: var(--text-primary);
+        margin-bottom: 0.5rem;
+      }
+      .faq-item p {
+        color: var(--text-secondary);
+        line-height: 1.6;
+      }
+      a {
+        color: var(--accent-color);
+        text-decoration: underline;
+      }
+      a:hover {
+        text-decoration: none;
+      }
+    </style>
+
+    <section class="content-section" style="margin-top: 3rem;">
+      <h2>Federal Tax Withholding: The Complete Guide</h2>
+      <p>Tax withholding is the amount your employer deducts from each paycheck and sends to the IRS on your behalf. Getting it right is one of the most impactful financial optimizations available to every W-2 employee, yet most people never touch their W-4 after their first day on the job. The result is either a large refund (meaning you gave the government an interest-free loan all year) or an unexpected bill at tax time (meaning you may face underpayment penalties).</p>
+
+      <p>This <strong>tax withholding calculator</strong> helps you estimate your federal income tax for the year and determine exactly how much should be withheld from each paycheck. It factors in your filing status, pre-tax deductions, dependents, and other income to give you a precise recommendation — along with specific W-4 form instructions to implement the changes. If you're also planning retirement contributions, our <a href="/compound-interest-calculator">compound interest calculator</a> can show how those pre-tax 401(k) dollars grow over time.</p>
+
+      <h3>How Federal Tax Withholding Works</h3>
+      <p>When you start a new job, you fill out IRS Form W-4, which tells your employer how to calculate your federal income tax withholding. Your employer uses the information on your W-4 — combined with IRS Publication 15-T withholding tables — to determine the amount to deduct from each paycheck.</p>
+
+      <p>The withholding system is designed as a pay-as-you-go mechanism. The IRS expects you to pay taxes throughout the year as you earn income, not in one lump sum on April 15. If you don't withhold enough, you may owe an underpayment penalty. The safe harbor rule says you won't be penalized if your withholding covers at least 90% of your current year's tax liability or 100% of last year's tax (110% if your AGI exceeds $150,000).</p>
+
+      <h3>Understanding the 2020+ W-4 Form</h3>
+      <p>The IRS redesigned the W-4 in 2020, eliminating the confusing "allowances" system that had been in place for decades. The new form uses straightforward dollar amounts instead. Here's what each step does:</p>
+      <ul>
+        <li><strong>Step 1:</strong> Your filing status — this determines which tax bracket schedule and standard deduction apply.</li>
+        <li><strong>Step 2:</strong> For multiple jobs or working spouses — adjusts withholding so the combined income is taxed correctly across all jobs.</li>
+        <li><strong>Step 3:</strong> Dependent credits — reduces withholding to account for the child tax credit ($2,000 per qualifying child under 17) and other dependent credits ($500 each).</li>
+        <li><strong>Step 4(a):</strong> Other income — increases withholding to cover income not subject to withholding (interest, dividends, side income).</li>
+        <li><strong>Step 4(b):</strong> Deductions — decreases withholding if your itemized deductions exceed the standard deduction.</li>
+        <li><strong>Step 4(c):</strong> Extra withholding — a flat dollar amount withheld from each paycheck on top of the calculated amount.</li>
+      </ul>
+
+      <h3>Pre-Tax Deductions and Their Impact</h3>
+      <p>Pre-tax deductions are one of the most powerful tax-reduction tools available to employees. Contributions to a traditional 401(k), HSA, and employer-sponsored health insurance premiums are all subtracted from your gross pay <em>before</em> federal income tax is calculated. This means every dollar you contribute to these accounts reduces your taxable income dollar-for-dollar.</p>
+
+      <p>For example, if you earn $91,000 annually and contribute $23,500 to your 401(k) (the 2026 limit), your taxable wage income drops to $67,500. If you're in the 22% marginal bracket, that 401(k) contribution saves you roughly $5,170 in federal income tax — money that stays invested and compounding rather than going to the IRS. To see what that tax-advantaged growth looks like over 20 or 30 years, try our <a href="/investment-calculator">investment calculator</a>.</p>
+
+      <h3>Common Withholding Mistakes</h3>
+      <h4>1. Never Updating Your W-4</h4>
+      <p>Life changes — marriage, children, a new job, a raise, buying a home — all affect your optimal withholding. The W-4 you filled out on your first day may be wildly inaccurate two years later. Review your withholding at least once a year or after any major life event.</p>
+
+      <h4>2. Treating a Big Refund as a Bonus</h4>
+      <p>A $3,000 refund means you overpaid by $250 per month. That money could have been in a high-yield savings account earning 4–5% interest, or invested in the market. Over a 30-year career, the opportunity cost of consistently overwithholding by $3,000 per year adds up to tens of thousands of dollars.</p>
+
+      <h4>3. Ignoring Other Income Sources</h4>
+      <p>Freelance income, rental income, investment dividends, and capital gains are not subject to employer withholding. If these represent a meaningful portion of your income, you'll need to either increase your W-4 withholding via Step 4(a) or make quarterly estimated tax payments. Failing to account for this income is one of the top reasons people owe at tax time.</p>
+
+      <h4>4. Married Couples Using the Wrong Strategy</h4>
+      <p>When both spouses work, each employer withholds taxes as if that paycheck is the only income. But because the combined income pushes you into higher brackets, this almost always results in underwithholding. Use Step 2 of the W-4 to address this — either check the box, use the Two-Earners Worksheet, or have the higher-earning spouse add extra withholding on Step 4(c).</p>
+
+      <h3>Refund vs. Owing: Finding the Sweet Spot</h3>
+      <p>The ideal withholding results in owing $0 and receiving $0 at tax time — your paycheck deductions exactly matched your tax liability. In practice, getting within a few hundred dollars is perfectly fine. Here's a general guideline:</p>
+      <ul>
+        <li><strong>Refund over $1,000:</strong> You're overwithholding. Adjust your W-4 to keep more money in each paycheck.</li>
+        <li><strong>Refund of $200–$1,000:</strong> You're in a reasonable range. Small adjustments optional.</li>
+        <li><strong>Owe $0–$500:</strong> You're well-optimized. This means your money worked for you all year.</li>
+        <li><strong>Owe over $1,000:</strong> You're underwithholding and may face penalties. Increase your withholding immediately.</li>
+      </ul>
+
+      <p>Use this calculator mid-year to check your trajectory and make adjustments. The IRS processes W-4 changes within one to two pay periods, so you have time to course-correct even in the second half of the year.</p>
+    </section>
+
+    <section class="faq-section">
+      <h2>Frequently Asked Questions</h2>
+      <div class="faq-item">
+        <h3>How do I know if my tax withholding is correct?</h3>
+        <p>Compare your current per-paycheck withholding to your estimated annual tax liability divided by the number of pay periods. If you consistently get large refunds (over $1,000), you're overwithholding and giving the government an interest-free loan. If you owe more than $1,000 at tax time, you're underwithholding and may face penalties.</p>
+      </div>
+      <div class="faq-item">
+        <h3>What is the W-4 form and when should I update it?</h3>
+        <p>The W-4 is the IRS form you give your employer to determine how much federal income tax to withhold from your paycheck. You should update it after major life changes: getting married or divorced, having a child, buying a home, starting a side job, or receiving a large raise. The 2020 redesign eliminated allowances in favor of dollar-amount adjustments.</p>
+      </div>
+      <div class="faq-item">
+        <h3>What are the 2026 federal income tax brackets?</h3>
+        <p>For 2026, the federal tax brackets for single filers are: 10% on income up to $11,925, 12% on $11,926–$48,475, 22% on $48,476–$103,350, 24% on $103,351–$197,300, 32% on $197,301–$250,525, 35% on $250,526–$626,350, and 37% on income over $626,350. Married filing jointly brackets are roughly double these thresholds.</p>
+      </div>
+      <div class="faq-item">
+        <h3>Should I claim 0 or 1 on my W-4?</h3>
+        <p>The current W-4 form no longer uses allowance numbers like 0 or 1. Instead, you adjust withholding by entering dollar amounts for additional income, deductions, and extra withholding. To increase withholding (smaller paycheck, bigger refund), add an extra amount on Line 4(c). To decrease withholding (bigger paycheck, smaller refund), claim deductions on Line 4(b).</p>
+      </div>
+      <div class="faq-item">
+        <h3>How do pre-tax deductions like 401(k) affect my withholding?</h3>
+        <p>Pre-tax deductions such as 401(k) contributions, HSA contributions, and health insurance premiums reduce your taxable income before withholding is calculated. For example, if you earn $5,000 per paycheck and contribute $500 to your 401(k), your employer calculates withholding on $4,500. This is why increasing your 401(k) contribution effectively lowers your tax bill.</p>
+      </div>
+    </section>
+
+  </div>
+</SiteLayout>

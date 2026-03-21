@@ -1,0 +1,626 @@
+---
+import SiteLayout from '../../../layouts/SiteLayout.astro';
+
+const schema = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@context": "https://schema.org",
+      "@type": "WebApplication",
+      "name": "Color Blindness Simulator — See How Colors Appear to Color Blind Users",
+      "url": "https://siliconbased.dev/color-blindness-simulator",
+      "description": "Free color blindness simulator. Enter any color and see how it looks with protanopia, deuteranopia, tritanopia, achromatopsia, protanomaly, and deuteranomaly. Check if your palette is distinguishable for all vision types.",
+      "applicationCategory": "DesignApplication",
+      "operatingSystem": "Any",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "author": {
+        "@type": "Organization",
+        "name": "GAB Ventures",
+        "url": "https://gab.ae"
+      }
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "What is color blindness?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Color blindness (color vision deficiency) is a condition where certain cone cells in the retina don't function normally, making it difficult to distinguish between specific colors. About 8% of men and 0.5% of women worldwide have some form of color blindness, most commonly red-green deficiency."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What are the different types of color blindness?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "The main types are: protanopia (no red cones, ~1% of males), deuteranopia (no green cones, ~1% of males), tritanopia (no blue cones, very rare), achromatopsia (total color blindness, ~1 in 30,000), protanomaly (reduced red sensitivity, ~1% of males), and deuteranomaly (reduced green sensitivity, ~5% of males — the most common form)."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How does color blindness simulation work?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Color blindness simulation uses mathematical color transformation matrices applied in linear RGB space. Each matrix approximates how the missing or reduced cone type changes color perception. The simulator linearizes the input color, applies the appropriate transformation matrix, then converts back to display-ready sRGB values."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Why should designers test for color blindness?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "With roughly 300 million people affected worldwide, failing to consider color blindness means a significant portion of your audience may not be able to distinguish important UI elements, read charts, or understand status indicators that rely solely on color. Testing ensures your designs communicate effectively to everyone."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How can I make my designs accessible to color blind users?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Use the palette checker to verify your color combinations are distinguishable under all vision types. Beyond color, add patterns, labels, icons, or varying brightness to convey meaning. Avoid relying on red vs. green alone for status indicators. Ensure sufficient contrast between adjacent colors in charts and graphs."
+          }
+        }
+      ]
+    },
+    {
+      "@context": "https://schema.org",
+      "@type": "Article",
+      "headline": "Color Blindness Simulator — Test How Colors Appear to Color Blind Users",
+      "description": "Free color blindness simulator with protanopia, deuteranopia, tritanopia, achromatopsia, protanomaly, and deuteranomaly simulations. Check palette accessibility.",
+      "datePublished": "2026-03-21T00:00:00Z",
+      "publisher": {
+        "@type": "Organization",
+        "name": "siliconbased.dev",
+        "url": "https://siliconbased.dev"
+      }
+    }
+  ]
+};
+
+const htmlBody = `<div class="page-content">
+<div class="hero">
+  <h1>Color Blindness Simulator</h1>
+  <p>See how colors appear to people with different types of color vision deficiency. Enter a color or build a palette to check accessibility.</p>
+</div>
+
+<div class="main">
+
+  <!-- Single Color Input -->
+  <div class="section-block first-section">
+    <div class="section-header">
+      <h2>Simulate a Single Color</h2>
+      <p class="section-desc">Enter a color via hex, RGB, or the color picker to see all simulations side by side.</p>
+    </div>
+    <div class="color-input-row">
+      <div class="input-group">
+        <label for="colorPicker">Pick</label>
+        <input type="color" id="colorPicker" value="#6366f1" />
+      </div>
+      <div class="input-group flex-1">
+        <label for="hexInput">Hex</label>
+        <input type="text" id="hexInput" value="#6366f1" placeholder="#6366f1" spellcheck="false" />
+      </div>
+      <div class="input-group">
+        <label for="rInput">R</label>
+        <input type="number" id="rInput" min="0" max="255" value="99" />
+      </div>
+      <div class="input-group">
+        <label for="gInput">G</label>
+        <input type="number" id="gInput" min="0" max="255" value="102" />
+      </div>
+      <div class="input-group">
+        <label for="bInput">B</label>
+        <input type="number" id="bInput" min="0" max="255" value="241" />
+      </div>
+    </div>
+
+    <div class="sim-grid" id="simGrid"></div>
+  </div>
+
+  <!-- Palette Checker -->
+  <div class="section-block">
+    <div class="section-header">
+      <h2>Palette Accessibility Checker</h2>
+      <p class="section-desc">Add multiple colors to see if they remain distinguishable under each type of color blindness.</p>
+    </div>
+    <div class="palette-input-row">
+      <div class="palette-colors" id="paletteColors"></div>
+      <div class="palette-actions">
+        <button class="add-color-btn" id="addColorBtn">+ Add Color</button>
+        <button class="reset-btn" id="resetPaletteBtn">Reset</button>
+      </div>
+    </div>
+    <div class="palette-sim-grid" id="paletteSimGrid"></div>
+  </div>
+
+  <!-- Reference Info -->
+  <div class="section-block">
+    <div class="section-header">
+      <h2>Types of Color Blindness</h2>
+    </div>
+    <div class="types-grid" id="typesGrid">
+      <div class="type-card">
+        <div class="type-badge red">Red-Blind</div>
+        <h3>Protanopia</h3>
+        <p class="type-prevalence">~1% of males</p>
+        <p>Complete absence of red cone cells. Reds appear dark and brownish. Difficulty distinguishing red from green, and red from black in dark shades.</p>
+      </div>
+      <div class="type-card">
+        <div class="type-badge green">Green-Blind</div>
+        <h3>Deuteranopia</h3>
+        <p class="type-prevalence">~1% of males</p>
+        <p>Complete absence of green cone cells. Greens shift toward beige/tan. Similar to protanopia but reds don't appear as dark. Most common dichromacy.</p>
+      </div>
+      <div class="type-card">
+        <div class="type-badge blue">Blue-Blind</div>
+        <h3>Tritanopia</h3>
+        <p class="type-prevalence">~0.003% of population</p>
+        <p>Complete absence of blue cone cells. Blues appear greenish, yellows appear pink/violet. Very rare, affects males and females equally.</p>
+      </div>
+      <div class="type-card">
+        <div class="type-badge gray">Total</div>
+        <h3>Achromatopsia</h3>
+        <p class="type-prevalence">~1 in 30,000</p>
+        <p>Complete color blindness — only shades of gray are perceived. Caused by non-functioning or absent cone cells. Often accompanied by light sensitivity.</p>
+      </div>
+      <div class="type-card">
+        <div class="type-badge red-light">Red-Weak</div>
+        <h3>Protanomaly</h3>
+        <p class="type-prevalence">~1% of males</p>
+        <p>Reduced sensitivity in red cones. Reds, oranges, and yellows appear shifted toward green. Less severe than protanopia — some red-green distinction remains.</p>
+      </div>
+      <div class="type-card">
+        <div class="type-badge green-light">Green-Weak</div>
+        <h3>Deuteranomaly</h3>
+        <p class="type-prevalence">~5% of males</p>
+        <p>Reduced sensitivity in green cones. The most common form of color blindness. Greens look more red/yellow. Mild cases may go unnoticed for years.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- SEO Content + FAQ -->
+  <div class="seo-content">
+    <h2>What is a Color Blindness Simulator?</h2>
+    <p>A color blindness simulator is an accessibility tool that transforms colors using mathematical models of color vision deficiency. It helps designers, developers, and content creators understand how their color choices appear to people with different types of color blindness. By testing your palette before shipping, you ensure that color-coded information — status indicators, charts, navigation elements — communicates effectively to all users.</p>
+
+    <h2>Understanding Color Vision Deficiency</h2>
+    <p>Human color vision relies on three types of cone cells in the retina, each sensitive to different wavelengths: long (red), medium (green), and short (blue). Color blindness occurs when one or more cone types are absent (dichromacy) or have shifted sensitivity (anomalous trichromacy):</p>
+    <ul>
+      <li><strong>Protan defects (red):</strong> Protanopia (no red cones) and protanomaly (reduced red sensitivity). Affects ~2% of males. Reds appear darker and can be confused with greens and browns.</li>
+      <li><strong>Deutan defects (green):</strong> Deuteranopia (no green cones) and deuteranomaly (reduced green sensitivity). Affects ~6% of males. The most common category. Greens shift toward reds and browns.</li>
+      <li><strong>Tritan defects (blue):</strong> Tritanopia (no blue cones) and tritanomaly (reduced blue sensitivity). Very rare (~0.003%). Blues and yellows become hard to distinguish.</li>
+      <li><strong>Achromatopsia:</strong> Total color blindness. Only luminance (brightness) is perceived. Extremely rare (~1 in 30,000).</li>
+    </ul>
+
+    <h2>How the Simulation Works</h2>
+    <p>This tool converts your input color from sRGB to linear RGB, applies a color transformation matrix specific to each deficiency type, then converts back to sRGB for display. The matrices are based on research by Brettel, Viénot, and Machado, widely used in accessibility tools. Anomalous trichromacy (protanomaly, deuteranomaly) uses interpolated matrices that blend between normal vision and full dichromacy to model the partial sensitivity loss.</p>
+
+    <h2>Design Tips for Color Accessibility</h2>
+    <p>Never rely on color alone to convey meaning. Pair color with text labels, icons, patterns, or varying brightness. Use the palette checker to verify that all colors in your UI remain distinguishable under each type. Pay special attention to red/green combinations in status indicators, charts, and form validation. Aim for sufficient luminance contrast between any adjacent colors.</p>
+
+    <h2>Frequently Asked Questions</h2>
+    <div style="margin-top: 24px;">
+      <h3 style="margin: 16px 0 8px; font-size: 1.1rem; color: #e0e0e0;">What is color blindness?</h3>
+      <p style="margin-bottom: 16px;">Color blindness (color vision deficiency) is a condition where certain cone cells in the retina don't function normally, making it difficult to distinguish between specific colors. About 8% of men and 0.5% of women worldwide have some form of color blindness.</p>
+
+      <h3 style="margin: 16px 0 8px; font-size: 1.1rem; color: #e0e0e0;">What are the different types of color blindness?</h3>
+      <p style="margin-bottom: 16px;">The main types are: protanopia (no red cones), deuteranopia (no green cones), tritanopia (no blue cones), achromatopsia (total color blindness), protanomaly (reduced red sensitivity), and deuteranomaly (reduced green sensitivity — the most common form, affecting ~5% of males).</p>
+
+      <h3 style="margin: 16px 0 8px; font-size: 1.1rem; color: #e0e0e0;">How does this simulator work?</h3>
+      <p style="margin-bottom: 16px;">The simulator applies color transformation matrices in linear RGB space to approximate how each type of color vision deficiency changes color perception. Each matrix models the specific cone deficiency or sensitivity reduction for that condition.</p>
+
+      <h3 style="margin: 16px 0 8px; font-size: 1.1rem; color: #e0e0e0;">Why should I test my designs for color blindness?</h3>
+      <p style="margin-bottom: 16px;">With roughly 300 million people affected worldwide, failing to consider color blindness means a significant portion of your audience may miss important information conveyed through color alone, such as status indicators, chart data, or form validation states.</p>
+
+      <h3 style="margin: 16px 0 8px; font-size: 1.1rem; color: #e0e0e0;">How can I make my designs more accessible?</h3>
+      <p style="margin-bottom: 16px;">Use the palette checker to verify your colors are distinguishable under all vision types. Add patterns, labels, icons, or varying brightness alongside color. Avoid relying on red vs. green alone for status indicators. Ensure sufficient luminance contrast between adjacent elements.</p>
+    </div>
+
+    <h2>Related Tools</h2>
+    <ul>
+      <li><a href="/color-palette-generator">Color Palette Generator</a> — Generate beautiful color schemes with harmony modes and contrast checking.</li>
+    </ul>
+  </div>
+
+</div>
+</div>`;
+
+export const meta = {
+  title: "Color Blindness Simulator — Test Color Accessibility Online",
+  description: "Free color blindness simulator. See how colors appear with protanopia, deuteranopia, tritanopia, achromatopsia, protanomaly, and deuteranomaly. Check palette accessibility instantly.",
+  category: "tool",
+  published: "2026-03-21",
+};
+---
+
+<SiteLayout
+  site="siliconbased"
+  title="Color Blindness Simulator — Test Color Accessibility Online"
+  description="Free color blindness simulator. See how colors appear with protanopia, deuteranopia, tritanopia, achromatopsia, protanomaly, and deuteranomaly. Check palette accessibility instantly."
+  canonical="https://siliconbased.dev/color-blindness-simulator"
+  schema={schema}
+>
+  <Fragment set:html={htmlBody} />
+
+  <script is:inline>
+// --- Color math utilities ---
+function hexToRGB(hex) {
+  hex = hex.replace('#', '');
+  if (hex.length === 3) hex = hex[0]+hex[0]+hex[1]+hex[1]+hex[2]+hex[2];
+  return { r: parseInt(hex.slice(0,2),16), g: parseInt(hex.slice(2,4),16), b: parseInt(hex.slice(4,6),16) };
+}
+
+function rgbToHex(r, g, b) {
+  return '#' + [r,g,b].map(c => Math.max(0,Math.min(255,Math.round(c))).toString(16).padStart(2,'0')).join('');
+}
+
+function linearize(c) {
+  c /= 255;
+  return c <= 0.04045 ? c / 12.92 : Math.pow((c + 0.055) / 1.055, 2.4);
+}
+
+function delinearize(c) {
+  c = Math.max(0, Math.min(1, c));
+  return c <= 0.0031308 ? Math.round(12.92 * c * 255) : Math.round((1.055 * Math.pow(c, 1/2.4) - 0.055) * 255);
+}
+
+function textColor(hex) {
+  const { r, g, b } = hexToRGB(hex);
+  return (0.299*r + 0.587*g + 0.114*b) / 255 > 0.55 ? '#000000' : '#ffffff';
+}
+
+// --- Color blindness transformation matrices ---
+// Based on Brettel/Viénot research
+// Each matrix: [r_from_r, r_from_g, r_from_b, g_from_r, g_from_g, g_from_b, b_from_r, b_from_g, b_from_b]
+const CB_MATRICES = {
+  protanopia:    [0.56667, 0.43333, 0.00000, 0.55833, 0.44167, 0.00000, 0.00000, 0.24167, 0.75833],
+  deuteranopia:  [0.62500, 0.37500, 0.00000, 0.70000, 0.30000, 0.00000, 0.00000, 0.30000, 0.70000],
+  tritanopia:    [0.95000, 0.05000, 0.00000, 0.00000, 0.43333, 0.56667, 0.00000, 0.47500, 0.52500],
+  achromatopsia: [0.29900, 0.58700, 0.11400, 0.29900, 0.58700, 0.11400, 0.29900, 0.58700, 0.11400],
+  // Anomalous trichromacy: interpolated 60% toward dichromacy
+  protanomaly:   [0.46667, 0.53333, 0.00000, 0.47833, 0.52167, 0.00000, 0.00000, 0.14500, 0.85500],
+  deuteranomaly: [0.57500, 0.42500, 0.00000, 0.62000, 0.38000, 0.00000, 0.00000, 0.18000, 0.82000]
+};
+
+// Compute anomaly matrices as interpolation: (1-t)*identity + t*dichromat, t=0.6
+(function computeAnomalyMatrices() {
+  const identity = [1,0,0, 0,1,0, 0,0,1];
+  const t = 0.6;
+  function interp(dict, full) {
+    return identity.map((v, i) => (1-t)*v + t*dict[i]);
+  }
+  CB_MATRICES.protanomaly = interp(CB_MATRICES.protanopia);
+  CB_MATRICES.deuteranomaly = interp(CB_MATRICES.deuteranopia);
+})();
+
+function simulateCB(hex, type) {
+  const { r, g, b } = hexToRGB(hex);
+  const lr = linearize(r), lg = linearize(g), lb = linearize(b);
+  const m = CB_MATRICES[type];
+  const sr = m[0]*lr + m[1]*lg + m[2]*lb;
+  const sg = m[3]*lr + m[4]*lg + m[5]*lb;
+  const sb = m[6]*lr + m[7]*lg + m[8]*lb;
+  return rgbToHex(delinearize(sr), delinearize(sg), delinearize(sb));
+}
+
+const CB_TYPES = [
+  { key: 'normal',        label: 'Normal Vision',  desc: 'Full color vision' },
+  { key: 'protanopia',    label: 'Protanopia',     desc: 'No red cones — reds appear dark/brown' },
+  { key: 'deuteranopia',  label: 'Deuteranopia',   desc: 'No green cones — greens shift to beige' },
+  { key: 'tritanopia',    label: 'Tritanopia',     desc: 'No blue cones — blues appear greenish' },
+  { key: 'achromatopsia', label: 'Achromatopsia',  desc: 'Total color blindness — grayscale only' },
+  { key: 'protanomaly',   label: 'Protanomaly',    desc: 'Reduced red sensitivity' },
+  { key: 'deuteranomaly', label: 'Deuteranomaly',  desc: 'Reduced green sensitivity — most common' }
+];
+
+// --- Single color simulation ---
+const colorPicker = document.getElementById('colorPicker');
+const hexInput = document.getElementById('hexInput');
+const rInput = document.getElementById('rInput');
+const gInput = document.getElementById('gInput');
+const bInput = document.getElementById('bInput');
+const simGrid = document.getElementById('simGrid');
+
+function getInputColor() {
+  return colorPicker.value;
+}
+
+function setInputsFromHex(hex) {
+  const { r, g, b } = hexToRGB(hex);
+  colorPicker.value = hex;
+  hexInput.value = hex.toUpperCase();
+  rInput.value = r;
+  gInput.value = g;
+  bInput.value = b;
+}
+
+function renderSimGrid() {
+  const hex = getInputColor();
+  simGrid.innerHTML = '';
+  CB_TYPES.forEach(t => {
+    const simHex = t.key === 'normal' ? hex : simulateCB(hex, t.key);
+    const tc = textColor(simHex);
+    const card = document.createElement('div');
+    card.className = 'sim-card';
+    card.innerHTML =
+      '<div class="sim-swatch" style="background:' + simHex + ';color:' + tc + ';">' +
+        '<span class="sim-hex">' + simHex.toUpperCase() + '</span>' +
+      '</div>' +
+      '<div class="sim-info">' +
+        '<div class="sim-label">' + t.label + '</div>' +
+        '<div class="sim-desc">' + t.desc + '</div>' +
+      '</div>';
+    simGrid.appendChild(card);
+  });
+}
+
+colorPicker.addEventListener('input', function() {
+  setInputsFromHex(this.value);
+  renderSimGrid();
+  renderPaletteSim();
+});
+
+hexInput.addEventListener('input', function() {
+  let val = this.value.trim();
+  if (!val.startsWith('#')) val = '#' + val;
+  if (/^#[0-9a-fA-F]{6}$/.test(val)) {
+    colorPicker.value = val;
+    const { r, g, b } = hexToRGB(val);
+    rInput.value = r; gInput.value = g; bInput.value = b;
+    renderSimGrid();
+    renderPaletteSim();
+  }
+});
+
+[rInput, gInput, bInput].forEach(inp => {
+  inp.addEventListener('input', function() {
+    const r = parseInt(rInput.value) || 0;
+    const g = parseInt(gInput.value) || 0;
+    const b = parseInt(bInput.value) || 0;
+    const hex = rgbToHex(r, g, b);
+    colorPicker.value = hex;
+    hexInput.value = hex.toUpperCase();
+    renderSimGrid();
+    renderPaletteSim();
+  });
+});
+
+// --- Palette Checker ---
+let paletteColors = ['#6366f1', '#ec4899', '#10b981', '#f59e0b', '#ef4444'];
+const paletteColorsEl = document.getElementById('paletteColors');
+const addColorBtn = document.getElementById('addColorBtn');
+const resetPaletteBtn = document.getElementById('resetPaletteBtn');
+const paletteSimGrid = document.getElementById('paletteSimGrid');
+
+function renderPaletteInputs() {
+  paletteColorsEl.innerHTML = '';
+  paletteColors.forEach((hex, i) => {
+    const wrap = document.createElement('div');
+    wrap.className = 'palette-color-input';
+    wrap.innerHTML =
+      '<input type="color" class="pal-picker" value="' + hex + '" data-i="' + i + '" />' +
+      '<input type="text" class="pal-hex" value="' + hex.toUpperCase() + '" data-i="' + i + '" spellcheck="false" />' +
+      '<button class="pal-remove" data-i="' + i + '" title="Remove">&times;</button>';
+    paletteColorsEl.appendChild(wrap);
+  });
+
+  paletteColorsEl.querySelectorAll('.pal-picker').forEach(inp => {
+    inp.addEventListener('input', function() {
+      paletteColors[parseInt(this.dataset.i)] = this.value;
+      renderPaletteInputs();
+      renderPaletteSim();
+    });
+  });
+
+  paletteColorsEl.querySelectorAll('.pal-hex').forEach(inp => {
+    inp.addEventListener('input', function() {
+      let val = this.value.trim();
+      if (!val.startsWith('#')) val = '#' + val;
+      if (/^#[0-9a-fA-F]{6}$/.test(val)) {
+        paletteColors[parseInt(this.dataset.i)] = val;
+        const picker = paletteColorsEl.querySelectorAll('.pal-picker')[parseInt(this.dataset.i)];
+        if (picker) picker.value = val;
+        renderPaletteSim();
+      }
+    });
+  });
+
+  paletteColorsEl.querySelectorAll('.pal-remove').forEach(btn => {
+    btn.addEventListener('click', function() {
+      if (paletteColors.length <= 2) return;
+      paletteColors.splice(parseInt(this.dataset.i), 1);
+      renderPaletteInputs();
+      renderPaletteSim();
+    });
+  });
+}
+
+function renderPaletteSim() {
+  paletteSimGrid.innerHTML = '';
+  CB_TYPES.forEach(t => {
+    const card = document.createElement('div');
+    card.className = 'pal-sim-card';
+    const strip = document.createElement('div');
+    strip.className = 'pal-sim-strip';
+    paletteColors.forEach(hex => {
+      const simHex = t.key === 'normal' ? hex : simulateCB(hex, t.key);
+      const swatch = document.createElement('div');
+      swatch.className = 'pal-sim-swatch';
+      swatch.style.background = simHex;
+      swatch.title = simHex.toUpperCase();
+      strip.appendChild(swatch);
+    });
+
+    // Check distinguishability
+    const simColors = paletteColors.map(hex => t.key === 'normal' ? hex : simulateCB(hex, t.key));
+    const distinguishable = checkDistinguishable(simColors);
+
+    card.innerHTML =
+      '<div class="pal-sim-header">' +
+        '<span class="pal-sim-label">' + t.label + '</span>' +
+        '<span class="pal-sim-badge ' + (distinguishable ? 'pass' : 'warn') + '">' +
+          (distinguishable ? 'Distinguishable' : 'Low contrast') +
+        '</span>' +
+      '</div>';
+    card.appendChild(strip);
+    paletteSimGrid.appendChild(card);
+  });
+}
+
+function checkDistinguishable(hexColors) {
+  // Check if all pairs have sufficient perceptual distance
+  for (let i = 0; i < hexColors.length; i++) {
+    for (let j = i + 1; j < hexColors.length; j++) {
+      const a = hexToRGB(hexColors[i]);
+      const b = hexToRGB(hexColors[j]);
+      // Simple Euclidean distance in RGB — threshold ~50
+      const dist = Math.sqrt(Math.pow(a.r-b.r,2) + Math.pow(a.g-b.g,2) + Math.pow(a.b-b.b,2));
+      if (dist < 50) return false;
+    }
+  }
+  return true;
+}
+
+addColorBtn.addEventListener('click', function() {
+  if (paletteColors.length >= 10) return;
+  // Add a random distinct color
+  const hue = Math.round(Math.random() * 360);
+  const hex = hslToHex(hue, 65, 55);
+  paletteColors.push(hex);
+  renderPaletteInputs();
+  renderPaletteSim();
+});
+
+resetPaletteBtn.addEventListener('click', function() {
+  paletteColors = ['#6366f1', '#ec4899', '#10b981', '#f59e0b', '#ef4444'];
+  renderPaletteInputs();
+  renderPaletteSim();
+});
+
+function hslToHex(h, s, l) {
+  s /= 100; l /= 100;
+  const a = s * Math.min(l, 1 - l);
+  const f = n => { const k = (n + h / 30) % 12; const c = l - a * Math.max(Math.min(k - 3, 9 - k, 1), -1); return Math.round(255 * c).toString(16).padStart(2, '0'); };
+  return '#' + f(0) + f(8) + f(4);
+}
+
+// --- Init ---
+renderSimGrid();
+renderPaletteInputs();
+renderPaletteSim();
+</script>
+
+  <style is:inline>
+
+.page-content { font-family: 'Inter', -apple-system, sans-serif; background: #060a12; color: #e0e0e0; min-height: 100vh; display: flex; flex-direction: column; }
+code, pre, .mono { font-family: 'JetBrains Mono', monospace; }
+.hero { text-align: center; padding: 48px 24px 24px; background: linear-gradient(180deg, #0f1729 0%, #060a12 100%); }
+.hero h1 { font-size: 2.4rem; font-weight: 900; color: #fff; margin-bottom: 6px; }
+.hero p { color: #888; font-size: 0.95rem; }
+.main { max-width: 1000px; margin: 0 auto; padding: 24px 20px 80px; flex: 1; width: 100%; }
+
+/* Section blocks */
+.section-block { margin-bottom: 40px; border-top: 1px solid #1e2030; padding-top: 32px; }
+.section-block.first-section { border-top: none; padding-top: 0; }
+.section-header h2 { color: #fff; font-size: 1.3rem; font-weight: 700; margin: 0 0 8px; }
+.section-desc { color: #888; font-size: 0.88rem; margin: 0 0 20px; }
+
+/* Color Input Row */
+.color-input-row { display: flex; gap: 12px; align-items: flex-end; margin-bottom: 28px; flex-wrap: wrap; }
+.input-group { display: flex; flex-direction: column; gap: 6px; }
+.input-group.flex-1 { flex: 1; min-width: 120px; }
+.input-group label { font-size: 0.75rem; font-weight: 600; color: #888; text-transform: uppercase; letter-spacing: 0.5px; }
+.input-group input[type="color"] { width: 48px; height: 42px; border: 2px solid #152040; border-radius: 8px; background: #0a1020; cursor: pointer; padding: 2px; }
+.input-group input[type="color"]::-webkit-color-swatch-wrapper { padding: 2px; }
+.input-group input[type="color"]::-webkit-color-swatch { border-radius: 4px; border: none; }
+.input-group input[type="text"],
+.input-group input[type="number"] { background: #0a1020; border: 2px solid #152040; color: #e0e0e0; padding: 8px 12px; border-radius: 8px; font-size: 0.88rem; font-family: 'JetBrains Mono', monospace; outline: none; transition: border-color 0.2s; width: 100%; box-sizing: border-box; }
+.input-group input[type="number"] { width: 70px; }
+.input-group input:focus { border-color: #818cf8; }
+
+/* Single Color Sim Grid */
+.sim-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 14px; }
+.sim-card { background: #0a1020; border: 1px solid #152040; border-radius: 12px; overflow: hidden; transition: transform 0.15s; }
+.sim-card:hover { transform: translateY(-2px); }
+.sim-swatch { height: 100px; display: flex; align-items: center; justify-content: center; }
+.sim-hex { font-family: 'JetBrains Mono', monospace; font-size: 0.9rem; font-weight: 700; letter-spacing: 0.5px; }
+.sim-info { padding: 12px 14px; }
+.sim-label { font-size: 0.85rem; font-weight: 700; color: #e0e0e0; margin-bottom: 2px; }
+.sim-desc { font-size: 0.75rem; color: #666; }
+
+/* Palette Checker */
+.palette-input-row { display: flex; gap: 16px; align-items: flex-start; margin-bottom: 24px; flex-wrap: wrap; }
+.palette-colors { display: flex; flex-wrap: wrap; gap: 8px; flex: 1; }
+.palette-color-input { display: flex; align-items: center; gap: 6px; background: #0a1020; border: 1px solid #152040; border-radius: 8px; padding: 4px 8px; }
+.pal-picker { width: 32px; height: 32px; border: 1px solid #2a2d40; border-radius: 6px; background: transparent; cursor: pointer; padding: 1px; }
+.pal-picker::-webkit-color-swatch-wrapper { padding: 1px; }
+.pal-picker::-webkit-color-swatch { border-radius: 4px; border: none; }
+.pal-hex { background: transparent; border: none; color: #ccc; font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; width: 80px; outline: none; }
+.pal-remove { background: none; border: none; color: #555; font-size: 1.1rem; cursor: pointer; padding: 2px 6px; border-radius: 4px; transition: color 0.15s; }
+.pal-remove:hover { color: #f87171; }
+.palette-actions { display: flex; gap: 8px; flex-shrink: 0; }
+.add-color-btn, .reset-btn { padding: 8px 16px; border-radius: 8px; font-size: 0.82rem; font-weight: 600; cursor: pointer; font-family: 'Inter', sans-serif; transition: all 0.15s; }
+.add-color-btn { background: #818cf8; color: #fff; border: none; }
+.add-color-btn:hover { background: #6366f1; }
+.reset-btn { background: #1e2030; color: #888; border: 1px solid #2a2d40; }
+.reset-btn:hover { background: #2a2d40; color: #ccc; }
+
+/* Palette Sim Grid */
+.palette-sim-grid { display: flex; flex-direction: column; gap: 12px; }
+.pal-sim-card { background: #0a1020; border: 1px solid #152040; border-radius: 12px; padding: 14px 16px; }
+.pal-sim-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px; }
+.pal-sim-label { font-size: 0.85rem; font-weight: 700; color: #ccc; }
+.pal-sim-badge { padding: 3px 10px; border-radius: 6px; font-size: 0.72rem; font-weight: 600; }
+.pal-sim-badge.pass { background: #4ade8020; color: #4ade80; border: 1px solid #4ade8040; }
+.pal-sim-badge.warn { background: #f59e0b20; color: #f59e0b; border: 1px solid #f59e0b40; }
+.pal-sim-strip { display: flex; gap: 6px; height: 48px; }
+.pal-sim-swatch { flex: 1; border-radius: 8px; transition: transform 0.1s; cursor: default; }
+.pal-sim-swatch:hover { transform: scaleY(1.1); }
+
+/* Types Grid */
+.types-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 14px; margin-top: 20px; }
+.type-card { background: #0a1020; border: 1px solid #152040; border-radius: 12px; padding: 20px; }
+.type-card h3 { color: #fff; font-size: 1.05rem; font-weight: 700; margin: 8px 0 4px; }
+.type-card p { color: #888; font-size: 0.85rem; line-height: 1.5; margin: 0; }
+.type-prevalence { color: #666 !important; font-size: 0.78rem !important; margin-bottom: 8px !important; font-family: 'JetBrains Mono', monospace; }
+.type-badge { display: inline-block; padding: 3px 10px; border-radius: 6px; font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; }
+.type-badge.red { background: #ef444420; color: #f87171; border: 1px solid #ef444440; }
+.type-badge.green { background: #10b98120; color: #34d399; border: 1px solid #10b98140; }
+.type-badge.blue { background: #3b82f620; color: #60a5fa; border: 1px solid #3b82f640; }
+.type-badge.gray { background: #6b728020; color: #9ca3af; border: 1px solid #6b728040; }
+.type-badge.red-light { background: #f5920b20; color: #fbbf24; border: 1px solid #f5920b40; }
+.type-badge.green-light { background: #84cc1620; color: #a3e635; border: 1px solid #84cc1640; }
+
+/* SEO Content */
+.seo-content { margin-top: 48px; border-top: 1px solid #1e2030; padding-top: 48px; color: #b0b8d0; font-size: 0.95rem; line-height: 1.6; }
+.seo-content h2 { color: #fff; font-size: 1.4rem; font-weight: 700; margin: 32px 0 16px; }
+.seo-content h2:first-child { margin-top: 0; }
+.seo-content p { margin-bottom: 16px; }
+.seo-content ul { margin-bottom: 16px; padding-left: 24px; }
+.seo-content li { margin-bottom: 8px; }
+.seo-content a { color: #818cf8; text-decoration: none; }
+.seo-content a:hover { text-decoration: underline; }
+
+/* Responsive */
+@media (max-width: 800px) {
+  .sim-grid { grid-template-columns: repeat(auto-fill, minmax(150px, 1fr)); }
+  .types-grid { grid-template-columns: 1fr; }
+  .color-input-row { flex-direction: row; }
+  .input-group input[type="number"] { width: 58px; }
+}
+@media (max-width: 480px) {
+  .sim-grid { grid-template-columns: 1fr 1fr; }
+  .sim-swatch { height: 72px; }
+  .palette-input-row { flex-direction: column; }
+  .palette-actions { width: 100%; }
+}
+
+</style>
+</SiteLayout>
