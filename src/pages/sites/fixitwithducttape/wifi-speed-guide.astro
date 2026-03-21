@@ -1,0 +1,559 @@
+---
+import SiteLayout from "../../../layouts/SiteLayout.astro";
+
+const wifiGenerations = [
+  { gen: "WiFi 4", standard: "802.11n", year: "2009", maxSpeed: "600 Mbps", band: "2.4 & 5 GHz", channels: "40 MHz", mimo: "4×4", range: "Good", ideal: "Basic browsing, email" },
+  { gen: "WiFi 5", standard: "802.11ac", year: "2014", maxSpeed: "3.5 Gbps", band: "5 GHz", channels: "80 MHz", mimo: "4×4 MU-MIMO", range: "Moderate", ideal: "HD streaming, light gaming" },
+  { gen: "WiFi 6", standard: "802.11ax", year: "2019", maxSpeed: "9.6 Gbps", band: "2.4 & 5 GHz", channels: "160 MHz", mimo: "8×8 MU-MIMO + OFDMA", range: "Good", ideal: "4K streaming, smart homes" },
+  { gen: "WiFi 6E", standard: "802.11ax", year: "2021", maxSpeed: "9.6 Gbps", band: "2.4, 5 & 6 GHz", channels: "160 MHz", mimo: "8×8 MU-MIMO + OFDMA", range: "Moderate", ideal: "VR, dense environments" },
+  { gen: "WiFi 7", standard: "802.11be", year: "2024", maxSpeed: "46 Gbps", band: "2.4, 5 & 6 GHz", channels: "320 MHz", mimo: "16×16 MU-MIMO + MLO", range: "Good", ideal: "8K streaming, AR/VR, cloud gaming" },
+];
+
+const speedIssues = [
+  { issue: "Slow speeds far from router", icon: "📡", cause: "WiFi signal weakens with distance and through walls.", fixes: ["Move router to a central location", "Use a mesh WiFi system or range extender", "Switch to 2.4 GHz band for longer range (slower but more penetrating)"] },
+  { issue: "Speeds drop at certain times", icon: "🕐", cause: "Network congestion from neighbors or household members.", fixes: ["Switch to 5 GHz or 6 GHz band (less congested)", "Change your WiFi channel in router settings", "Upgrade to a WiFi 6/6E router with OFDMA"] },
+  { issue: "Fast download but slow upload", icon: "⬆️", cause: "Most ISP plans are asymmetric — download is faster than upload by design.", fixes: ["Check your ISP plan's upload speed tier", "Consider fiber internet for symmetric speeds", "Use wired Ethernet for upload-heavy tasks like video calls"] },
+  { issue: "High ping / latency spikes", icon: "🏓", cause: "Network congestion, poor routing, or background downloads.", fixes: ["Enable QoS (Quality of Service) on your router", "Use Ethernet for gaming and video calls", "Pause background downloads and updates during gaming"] },
+  { issue: "Random disconnections", icon: "❌", cause: "Interference from appliances, outdated firmware, or overheating router.", fixes: ["Update router firmware", "Move router away from microwaves, baby monitors, and cordless phones", "Restart router weekly or set auto-reboot schedule"] },
+  { issue: "Old devices slowing everything down", icon: "🐌", cause: "Legacy WiFi 4 devices force the router into compatibility mode.", fixes: ["Enable band steering to push old devices to 2.4 GHz", "Create a separate SSID for older devices", "Upgrade old devices or use Ethernet adapters"] },
+];
+
+const bandwidthActivities = [
+  { activity: "Web browsing", down: 3, up: 1, ping: "< 100ms", devices: "per device" },
+  { activity: "Email & messaging", down: 1, up: 1, ping: "< 150ms", devices: "per device" },
+  { activity: "Music streaming", down: 2, up: 0.5, ping: "< 150ms", devices: "per device" },
+  { activity: "SD video streaming (720p)", down: 5, up: 1, ping: "< 100ms", devices: "per stream" },
+  { activity: "HD video streaming (1080p)", down: 10, up: 1, ping: "< 50ms", devices: "per stream" },
+  { activity: "4K video streaming", down: 25, up: 1, ping: "< 50ms", devices: "per stream" },
+  { activity: "Video call (1:1)", down: 5, up: 5, ping: "< 50ms", devices: "per call" },
+  { activity: "Video call (group)", down: 10, up: 10, ping: "< 30ms", devices: "per call" },
+  { activity: "Online gaming", down: 10, up: 5, ping: "< 30ms", devices: "per device" },
+  { activity: "Competitive gaming", down: 15, up: 10, ping: "< 15ms", devices: "per device" },
+  { activity: "Cloud gaming (1080p)", down: 35, up: 5, ping: "< 20ms", devices: "per stream" },
+  { activity: "Cloud gaming (4K)", down: 50, up: 10, ping: "< 15ms", devices: "per stream" },
+  { activity: "Working from home (general)", down: 25, up: 10, ping: "< 50ms", devices: "per person" },
+  { activity: "Large file downloads", down: 50, up: 10, ping: "any", devices: "per transfer" },
+  { activity: "Live streaming / uploading", down: 10, up: 25, ping: "< 50ms", devices: "per stream" },
+];
+
+const placementTips = [
+  { tip: "Place router in the center of your home", why: "WiFi radiates outward in all directions. A central position ensures even coverage throughout the house.", icon: "🏠" },
+  { tip: "Elevate the router — shelf or wall-mount", why: "WiFi signals travel slightly downward. Placing it high (5-6 feet) provides better coverage, especially for multi-story homes.", icon: "⬆️" },
+  { tip: "Keep away from walls and corners", why: "Walls absorb signal. Concrete, brick, and metal walls are the worst offenders, reducing signal strength by up to 50%.", icon: "🧱" },
+  { tip: "Avoid placing near metal objects", why: "Metal reflects and absorbs WiFi signals. Filing cabinets, mirrors (metal backing), and refrigerators are common culprits.", icon: "🪞" },
+  { tip: "Stay away from microwaves and baby monitors", why: "These devices operate on the 2.4 GHz band — the same as WiFi — causing direct interference.", icon: "📻" },
+  { tip: "Keep antennas perpendicular to each other", why: "One vertical and one horizontal antenna ensures signal coverage for devices in multiple orientations.", icon: "📶" },
+  { tip: "Don't hide the router in a closet", why: "Enclosed spaces trap heat (reducing performance) and add physical barriers between the router and your devices.", icon: "🚫" },
+  { tip: "Consider a mesh system for large homes", why: "For homes over 2,000 sq ft or multi-story houses, a single router often can't provide full coverage. Mesh nodes solve dead zones.", icon: "🔗" },
+];
+
+const faqs = [
+  {
+    q: "What is a good WiFi speed for home use?",
+    a: "For a typical household of 2-4 people, 100-200 Mbps download speed is sufficient for simultaneous HD streaming, video calls, and browsing. If you have many smart devices, do 4K streaming, or work from home, aim for 300-500 Mbps. Gigabit (1,000 Mbps) is ideal for heavy usage, large file transfers, or households with 10+ devices."
+  },
+  {
+    q: "Why is my WiFi speed slower than what I'm paying for?",
+    a: "Several factors reduce your actual speed: your ISP advertises 'up to' speeds, WiFi overhead reduces throughput by 30-50% compared to wired, distance from the router weakens signal, network congestion during peak hours, and older WiFi standards on your devices cap their speeds. Run a speed test over Ethernet to see your true connection speed, then compare to WiFi."
+  },
+  {
+    q: "What's the difference between Mbps and MBps?",
+    a: "Mbps (megabits per second) measures network speed. MBps (megabytes per second) measures file transfer speed. There are 8 bits in a byte, so 100 Mbps equals approximately 12.5 MBps. ISPs advertise in Mbps, but your computer shows downloads in MBps. A 100 Mbps connection downloads a file at roughly 12.5 megabytes per second."
+  },
+  {
+    q: "Should I use 2.4 GHz or 5 GHz WiFi?",
+    a: "Use 5 GHz for speed-sensitive activities (streaming, gaming, video calls) when you're close to the router. Use 2.4 GHz for devices far from the router or through walls, as it has better range and wall penetration. Smart home devices (thermostats, cameras) often only support 2.4 GHz. WiFi 6E and WiFi 7 routers add 6 GHz, which offers the fastest speeds with the least interference but shortest range."
+  },
+  {
+    q: "Does the number of devices connected affect WiFi speed?",
+    a: "Yes. Each connected device shares the available bandwidth. However, idle devices use minimal bandwidth. The impact depends on what each device is doing — 20 idle smart bulbs matter less than 3 people streaming 4K simultaneously. WiFi 6 and newer routers handle many devices much better thanks to OFDMA technology, which lets the router communicate with multiple devices simultaneously."
+  }
+];
+
+const schema = [
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "WiFi Speed Test Explainer & Bandwidth Calculator",
+    "description": "Understand WiFi speed test results, compare WiFi generations, troubleshoot common issues, and calculate your recommended internet speed based on your devices and activities.",
+    "applicationCategory": "UtilityApplication",
+    "operatingSystem": "Any",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD"
+    },
+    "author": {
+      "@type": "Organization",
+      "name": "Fix It With Duct Tape"
+    }
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": faqs.map(f => ({
+      "@type": "Question",
+      "name": f.q,
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": f.a
+      }
+    }))
+  }
+];
+
+export const meta = {
+  title: "WiFi Speed Test Explainer & Bandwidth Calculator — Understand Your Internet Speed",
+  description: "Learn what Mbps means, interpret speed test results, compare WiFi 4/5/6/6E/7, fix common WiFi issues, and calculate your ideal internet speed with our bandwidth calculator.",
+  category: "tool",
+  published: "2026-03-21",
+};
+---
+
+<SiteLayout
+  site="fixitwithducttape"
+  title="WiFi Speed Test Explainer & Bandwidth Calculator — Understand Your Internet Speed"
+  description="Learn what Mbps means, interpret speed test results, compare WiFi 4/5/6/6E/7, fix common WiFi issues, and calculate your ideal internet speed with our bandwidth calculator."
+  canonical="https://fixitwithducttape.photonbuilder.com/wifi-speed-guide"
+  schema={schema}
+>
+  <div class="page-content">
+    <div class="hero">
+      <h1>WiFi Speed Test Explainer</h1>
+      <p>Understand what your speed test results actually mean, compare WiFi generations, troubleshoot common issues, and calculate the internet speed your household needs.</p>
+    </div>
+
+    <section class="content-section">
+
+      <h2>What Do Mbps and Gbps Actually Mean?</h2>
+      <p><strong>Mbps</strong> stands for <em>megabits per second</em> — it measures how much data your connection can transfer every second. Think of it as the width of a highway: more Mbps means more lanes, so more data can flow at once.</p>
+      <p><strong>Gbps</strong> stands for <em>gigabits per second</em>. 1 Gbps = 1,000 Mbps. Gigabit internet is now widely available from fiber providers and is the gold standard for fast home connections.</p>
+      <div class="info-card">
+        <strong>Quick Reference:</strong>
+        <ul>
+          <li><strong>1 Mbps</strong> — can load a basic webpage in about 1 second</li>
+          <li><strong>25 Mbps</strong> — enough for one 4K Netflix stream</li>
+          <li><strong>100 Mbps</strong> — handles a family of 3-4 comfortably</li>
+          <li><strong>500 Mbps</strong> — heavy usage with 10+ devices</li>
+          <li><strong>1 Gbps (1,000 Mbps)</strong> — downloads a full HD movie in about 40 seconds</li>
+        </ul>
+      </div>
+      <p>Important: ISPs advertise in <strong>Mbps</strong> (megabits), but your computer shows downloads in <strong>MBps</strong> (megabytes). Divide Mbps by 8 to get MBps. A 200 Mbps plan downloads files at roughly 25 MBps.</p>
+
+      <h2>How to Read Speed Test Results</h2>
+      <p>When you run a speed test, you'll see four key metrics. Here's what each one means and why it matters.</p>
+
+      <div class="metrics-grid">
+        <div class="metric-card">
+          <div class="metric-icon">⬇️</div>
+          <h3>Download Speed</h3>
+          <p>How fast data comes <em>to</em> your device. This affects streaming, browsing, downloading files, and loading apps. This is the headline number ISPs advertise.</p>
+          <div class="metric-target">
+            <span class="label">Good:</span> 50+ Mbps
+            <span class="label">Great:</span> 200+ Mbps
+          </div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-icon">⬆️</div>
+          <h3>Upload Speed</h3>
+          <p>How fast data goes <em>from</em> your device to the internet. Crucial for video calls, live streaming, uploading files, and cloud backups. Often 5-10x slower than download on cable/DSL.</p>
+          <div class="metric-target">
+            <span class="label">Good:</span> 10+ Mbps
+            <span class="label">Great:</span> 50+ Mbps
+          </div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-icon">🏓</div>
+          <h3>Ping (Latency)</h3>
+          <p>The time it takes for a data packet to travel to a server and back, measured in milliseconds (ms). Lower is better. High ping causes lag in games and delays in video calls.</p>
+          <div class="metric-target">
+            <span class="label">Good:</span> &lt; 30ms
+            <span class="label">Acceptable:</span> &lt; 60ms
+          </div>
+        </div>
+        <div class="metric-card">
+          <div class="metric-icon">📊</div>
+          <h3>Jitter</h3>
+          <p>The variation in ping over time. High jitter means your connection is inconsistent — packets arrive at irregular intervals, causing stuttering in video calls and gaming.</p>
+          <div class="metric-target">
+            <span class="label">Good:</span> &lt; 5ms
+            <span class="label">Acceptable:</span> &lt; 15ms
+          </div>
+        </div>
+      </div>
+
+      <h2>WiFi Generations Compared</h2>
+      <p>Not all WiFi is created equal. Your router's WiFi generation determines your maximum wireless speed, range, and how well it handles multiple devices. Here's how they stack up.</p>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Generation</th>
+              <th>Standard</th>
+              <th>Year</th>
+              <th>Max Speed</th>
+              <th>Bands</th>
+              <th>Channel Width</th>
+              <th>Key Tech</th>
+              <th>Best For</th>
+            </tr>
+          </thead>
+          <tbody>
+            {wifiGenerations.map(w => (
+              <tr>
+                <td><strong>{w.gen}</strong></td>
+                <td>{w.standard}</td>
+                <td>{w.year}</td>
+                <td>{w.maxSpeed}</td>
+                <td>{w.band}</td>
+                <td>{w.channels}</td>
+                <td>{w.mimo}</td>
+                <td>{w.ideal}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+      <p><strong>Bottom line:</strong> If your router is WiFi 4 or WiFi 5, upgrading to WiFi 6 will give you the biggest real-world improvement — especially if you have many devices. WiFi 7 is future-proof but most devices don't support it yet.</p>
+
+      <h2>Common WiFi Speed Issues & Fixes</h2>
+      <p>Experiencing slow WiFi? Here are the most common problems and how to solve them.</p>
+      <div class="issues-grid">
+        {speedIssues.map(s => (
+          <div class="issue-card">
+            <div class="issue-header">
+              <span class="issue-icon">{s.icon}</span>
+              <h3>{s.issue}</h3>
+            </div>
+            <p class="issue-cause"><strong>Why it happens:</strong> {s.cause}</p>
+            <ul>
+              {s.fixes.map(f => <li>{f}</li>)}
+            </ul>
+          </div>
+        ))}
+      </div>
+
+      <h2>Optimal Router Placement Guide</h2>
+      <p>Where you place your router has a massive impact on WiFi performance. Follow these tips for the best coverage.</p>
+      <div class="placement-grid">
+        {placementTips.map(t => (
+          <div class="placement-card">
+            <div class="placement-icon">{t.icon}</div>
+            <div>
+              <h3>{t.tip}</h3>
+              <p>{t.why}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+
+      <div class="info-card">
+        <strong>Wall Material Signal Loss:</strong>
+        <ul>
+          <li><strong>Drywall:</strong> ~3 dB loss (minimal impact)</li>
+          <li><strong>Wood:</strong> ~4 dB loss (slight impact)</li>
+          <li><strong>Glass:</strong> ~4 dB loss (slight impact)</li>
+          <li><strong>Brick:</strong> ~6 dB loss (moderate impact)</li>
+          <li><strong>Concrete:</strong> ~10-15 dB loss (significant impact)</li>
+          <li><strong>Metal:</strong> ~20+ dB loss (severe — near total block)</li>
+        </ul>
+        <p style="margin-bottom:0;margin-top:0.5rem;">Every 3 dB of loss cuts your signal strength in half. Two concrete walls between you and your router can reduce signal by up to 97%.</p>
+      </div>
+
+      <h2>Bandwidth Requirements by Activity</h2>
+      <p>Use this table to understand how much speed each online activity needs. These are per-device minimums for a smooth experience.</p>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Activity</th>
+              <th>Download (Mbps)</th>
+              <th>Upload (Mbps)</th>
+              <th>Ping Target</th>
+              <th>Note</th>
+            </tr>
+          </thead>
+          <tbody>
+            {bandwidthActivities.map(a => (
+              <tr>
+                <td><strong>{a.activity}</strong></td>
+                <td>{a.down}</td>
+                <td>{a.up}</td>
+                <td>{a.ping}</td>
+                <td>{a.devices}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <h2>Bandwidth Calculator</h2>
+      <p>Enter the number of devices doing each activity simultaneously to see your recommended internet speed. We add a 25% overhead buffer for WiFi efficiency loss.</p>
+
+      <div class="calculator" id="bandwidth-calculator">
+        <div class="calc-inputs">
+          <div class="calc-row">
+            <label>4K video streams</label>
+            <div class="stepper">
+              <button class="step-btn" data-target="n4k" data-dir="-1" aria-label="Decrease">−</button>
+              <input type="number" id="n4k" value="0" min="0" max="20" aria-label="Number of 4K streams">
+              <button class="step-btn" data-target="n4k" data-dir="1" aria-label="Increase">+</button>
+            </div>
+          </div>
+          <div class="calc-row">
+            <label>HD video streams (1080p)</label>
+            <div class="stepper">
+              <button class="step-btn" data-target="nhd" data-dir="-1" aria-label="Decrease">−</button>
+              <input type="number" id="nhd" value="0" min="0" max="20" aria-label="Number of HD streams">
+              <button class="step-btn" data-target="nhd" data-dir="1" aria-label="Increase">+</button>
+            </div>
+          </div>
+          <div class="calc-row">
+            <label>Video calls</label>
+            <div class="stepper">
+              <button class="step-btn" data-target="ncalls" data-dir="-1" aria-label="Decrease">−</button>
+              <input type="number" id="ncalls" value="0" min="0" max="10" aria-label="Number of video calls">
+              <button class="step-btn" data-target="ncalls" data-dir="1" aria-label="Increase">+</button>
+            </div>
+          </div>
+          <div class="calc-row">
+            <label>Online gaming devices</label>
+            <div class="stepper">
+              <button class="step-btn" data-target="ngaming" data-dir="-1" aria-label="Decrease">−</button>
+              <input type="number" id="ngaming" value="0" min="0" max="10" aria-label="Number of gaming devices">
+              <button class="step-btn" data-target="ngaming" data-dir="1" aria-label="Increase">+</button>
+            </div>
+          </div>
+          <div class="calc-row">
+            <label>Cloud gaming streams</label>
+            <div class="stepper">
+              <button class="step-btn" data-target="ncloud" data-dir="-1" aria-label="Decrease">−</button>
+              <input type="number" id="ncloud" value="0" min="0" max="10" aria-label="Number of cloud gaming streams">
+              <button class="step-btn" data-target="ncloud" data-dir="1" aria-label="Increase">+</button>
+            </div>
+          </div>
+          <div class="calc-row">
+            <label>Work-from-home users</label>
+            <div class="stepper">
+              <button class="step-btn" data-target="nwfh" data-dir="-1" aria-label="Decrease">−</button>
+              <input type="number" id="nwfh" value="0" min="0" max="10" aria-label="Number of WFH users">
+              <button class="step-btn" data-target="nwfh" data-dir="1" aria-label="Increase">+</button>
+            </div>
+          </div>
+          <div class="calc-row">
+            <label>General browsing devices</label>
+            <div class="stepper">
+              <button class="step-btn" data-target="nbrowse" data-dir="-1" aria-label="Decrease">−</button>
+              <input type="number" id="nbrowse" value="0" min="0" max="30" aria-label="Number of browsing devices">
+              <button class="step-btn" data-target="nbrowse" data-dir="1" aria-label="Increase">+</button>
+            </div>
+          </div>
+          <div class="calc-row">
+            <label>Smart home devices (cameras, etc.)</label>
+            <div class="stepper">
+              <button class="step-btn" data-target="nsmart" data-dir="-1" aria-label="Decrease">−</button>
+              <input type="number" id="nsmart" value="0" min="0" max="50" aria-label="Number of smart devices">
+              <button class="step-btn" data-target="nsmart" data-dir="1" aria-label="Increase">+</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="calc-result" id="calc-result">
+          <div class="result-speed">
+            <span class="result-label">Recommended Download Speed</span>
+            <span class="result-value" id="result-download">0 Mbps</span>
+          </div>
+          <div class="result-speed">
+            <span class="result-label">Recommended Upload Speed</span>
+            <span class="result-value" id="result-upload">0 Mbps</span>
+          </div>
+          <div class="result-tier" id="result-tier"></div>
+          <p class="result-note">Includes 25% WiFi overhead buffer. Wired connections may need less.</p>
+        </div>
+      </div>
+
+      <h2>Frequently Asked Questions</h2>
+      {faqs.map(f => (
+        <div class="faq-item">
+          <h3>{f.q}</h3>
+          <p>{f.a}</p>
+        </div>
+      ))}
+
+    </section>
+  </div>
+
+  <script is:inline>
+    (function() {
+      var rates = {
+        n4k: { down: 25, up: 1 },
+        nhd: { down: 10, up: 1 },
+        ncalls: { down: 10, up: 10 },
+        ngaming: { down: 10, up: 5 },
+        ncloud: { down: 35, up: 5 },
+        nwfh: { down: 25, up: 10 },
+        nbrowse: { down: 3, up: 1 },
+        nsmart: { down: 5, up: 3 }
+      };
+
+      function calc() {
+        var totalDown = 0, totalUp = 0;
+        var ids = Object.keys(rates);
+        for (var i = 0; i < ids.length; i++) {
+          var el = document.getElementById(ids[i]);
+          if (!el) continue;
+          var n = parseInt(el.value) || 0;
+          totalDown += n * rates[ids[i]].down;
+          totalUp += n * rates[ids[i]].up;
+        }
+        var buffDown = Math.ceil(totalDown * 1.25);
+        var buffUp = Math.ceil(totalUp * 1.25);
+
+        document.getElementById('result-download').textContent = buffDown + ' Mbps';
+        document.getElementById('result-upload').textContent = buffUp + ' Mbps';
+
+        var tierEl = document.getElementById('result-tier');
+        if (buffDown === 0) {
+          tierEl.textContent = 'Add your devices above to see a recommendation.';
+          tierEl.className = 'result-tier';
+        } else if (buffDown <= 50) {
+          tierEl.textContent = 'A basic plan (50 Mbps) should work fine for your needs.';
+          tierEl.className = 'result-tier tier-basic';
+        } else if (buffDown <= 100) {
+          tierEl.textContent = 'A standard plan (100 Mbps) is recommended for your usage.';
+          tierEl.className = 'result-tier tier-standard';
+        } else if (buffDown <= 300) {
+          tierEl.textContent = 'A high-speed plan (300 Mbps) is recommended. Consider WiFi 6 router.';
+          tierEl.className = 'result-tier tier-fast';
+        } else if (buffDown <= 500) {
+          tierEl.textContent = 'A premium plan (500 Mbps) is ideal. WiFi 6 or 6E router recommended.';
+          tierEl.className = 'result-tier tier-premium';
+        } else {
+          tierEl.textContent = 'Gigabit internet (1,000 Mbps) recommended. Use WiFi 6E/7 or mesh system.';
+          tierEl.className = 'result-tier tier-gig';
+        }
+      }
+
+      var inputs = document.querySelectorAll('.calc-inputs input');
+      for (var i = 0; i < inputs.length; i++) {
+        inputs[i].addEventListener('input', calc);
+      }
+
+      var btns = document.querySelectorAll('.step-btn');
+      for (var j = 0; j < btns.length; j++) {
+        btns[j].addEventListener('click', function() {
+          var target = document.getElementById(this.dataset.target);
+          if (!target) return;
+          var val = parseInt(target.value) || 0;
+          var dir = parseInt(this.dataset.dir);
+          var next = val + dir;
+          var min = parseInt(target.min) || 0;
+          var max = parseInt(target.max) || 99;
+          if (next < min) next = min;
+          if (next > max) next = max;
+          target.value = next;
+          calc();
+        });
+      }
+
+      calc();
+    })();
+  </script>
+
+  <style is:inline>
+    .page-content { max-width: 1000px; margin: 0 auto; padding: 2rem 1.5rem; }
+    .hero { text-align: center; padding: 3rem 0 2rem; }
+    .hero h1 { font-size: 2.2rem; font-weight: 800; margin-bottom: 0.5rem; color: var(--text-primary); }
+    .hero p { color: var(--text-secondary); font-size: 1.1rem; max-width: 650px; margin: 0 auto; line-height: 1.5; }
+
+    .content-section { margin-bottom: 3rem; }
+    .content-section h2 { font-size: 1.8rem; color: var(--text-primary); margin-bottom: 1rem; margin-top: 2.5rem; }
+    .content-section h3 { font-size: 1.3rem; color: var(--text-primary); margin-bottom: 0.5rem; margin-top: 1.5rem; }
+    .content-section p { color: var(--text-secondary); line-height: 1.6; margin-bottom: 1rem; }
+    .content-section ul { color: var(--text-secondary); margin-bottom: 1rem; padding-left: 1.5rem; line-height: 1.6; }
+    .content-section li { margin-bottom: 0.5rem; }
+
+    a { color: var(--accent-color); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    strong { color: var(--text-primary); }
+
+    /* Info Card */
+    .info-card { background: var(--card-bg); border: 1px solid var(--border-color); border-left: 4px solid var(--accent-color); border-radius: 10px; padding: 1.2rem 1.5rem; margin: 1.5rem 0; }
+    .info-card ul { margin-bottom: 0; }
+
+    /* Metrics Grid */
+    .metrics-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1rem; margin: 1.5rem 0; }
+    .metric-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.2rem; }
+    .metric-icon { font-size: 1.5rem; margin-bottom: 0.5rem; }
+    .metric-card h3 { margin: 0 0 0.5rem; font-size: 1.1rem; color: var(--text-primary); }
+    .metric-card p { font-size: 0.9rem; margin-bottom: 0.75rem; }
+    .metric-target { font-size: 0.85rem; color: var(--text-secondary); }
+    .metric-target .label { font-weight: 700; color: var(--accent-color); margin-right: 0.2rem; }
+    .metric-target .label:not(:first-child) { margin-left: 0.75rem; }
+
+    /* WiFi Comparison Table */
+    .table-wrapper { overflow-x: auto; margin: 1.5rem 0; border: 1px solid var(--border-color); border-radius: 12px; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+    th { background: var(--card-bg); padding: 0.75rem 0.6rem; text-align: left; font-weight: 700; color: var(--text-primary); border-bottom: 2px solid var(--border-color); white-space: nowrap; }
+    td { padding: 0.65rem 0.6rem; border-bottom: 1px solid var(--border-color); color: var(--text-secondary); }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: var(--card-bg); }
+
+    /* Issues Grid */
+    .issues-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem; margin: 1.5rem 0; }
+    .issue-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.2rem 1.5rem; }
+    .issue-header { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem; }
+    .issue-icon { font-size: 1.3rem; }
+    .issue-header h3 { margin: 0; font-size: 1.05rem; color: var(--text-primary); }
+    .issue-cause { font-size: 0.9rem; margin-bottom: 0.75rem; }
+    .issue-card ul { margin-bottom: 0; font-size: 0.9rem; }
+
+    /* Placement Grid */
+    .placement-grid { display: grid; gap: 0.75rem; margin: 1.5rem 0; }
+    .placement-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 10px; padding: 1rem 1.2rem; display: flex; gap: 1rem; align-items: flex-start; }
+    .placement-icon { font-size: 1.5rem; flex-shrink: 0; margin-top: 0.1rem; }
+    .placement-card h3 { margin: 0 0 0.3rem; font-size: 1.05rem; color: var(--text-primary); }
+    .placement-card p { margin: 0; font-size: 0.9rem; }
+
+    /* Calculator */
+    .calculator { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem; margin: 1.5rem 0; }
+    .calc-inputs { display: flex; flex-direction: column; gap: 0.6rem; margin-bottom: 1.5rem; }
+    .calc-row { display: flex; justify-content: space-between; align-items: center; padding: 0.5rem 0; border-bottom: 1px solid var(--border-color); }
+    .calc-row:last-child { border-bottom: none; }
+    .calc-row label { color: var(--text-primary); font-weight: 500; font-size: 0.95rem; }
+
+    .stepper { display: flex; align-items: center; gap: 0; }
+    .step-btn { width: 36px; height: 36px; border: 1px solid var(--border-color); background: var(--card-bg); color: var(--text-primary); font-size: 1.1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: background 0.15s; }
+    .step-btn:first-child { border-radius: 8px 0 0 8px; }
+    .step-btn:last-child { border-radius: 0 8px 8px 0; }
+    .step-btn:hover { background: var(--accent-color); color: #000; }
+    .calc-inputs input[type="number"] { width: 50px; height: 36px; text-align: center; border: 1px solid var(--border-color); border-left: none; border-right: none; background: transparent; color: var(--text-primary); font-size: 1rem; font-weight: 600; -moz-appearance: textfield; }
+    .calc-inputs input[type="number"]::-webkit-outer-spin-button,
+    .calc-inputs input[type="number"]::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
+
+    .calc-result { background: var(--bg-primary, #111); border: 2px solid var(--accent-color); border-radius: 12px; padding: 1.5rem; text-align: center; }
+    .result-speed { margin-bottom: 0.75rem; }
+    .result-label { display: block; font-size: 0.85rem; color: var(--text-secondary); text-transform: uppercase; letter-spacing: 0.04em; font-weight: 600; }
+    .result-value { display: block; font-size: 2rem; font-weight: 800; color: var(--accent-color); }
+    .result-tier { font-size: 0.95rem; color: var(--text-secondary); margin: 0.75rem 0 0.5rem; font-weight: 500; }
+    .result-tier.tier-basic { color: #22c55e; }
+    .result-tier.tier-standard { color: #22c55e; }
+    .result-tier.tier-fast { color: var(--accent-color); }
+    .result-tier.tier-premium { color: #f59e0b; }
+    .result-tier.tier-gig { color: #ef4444; }
+    .result-note { font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 0; opacity: 0.7; }
+
+    /* FAQ */
+    .faq-item { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 10px; padding: 1.2rem 1.5rem; margin: 1rem 0; }
+    .faq-item h3 { margin-top: 0; font-size: 1.1rem; color: var(--text-primary); }
+    .faq-item p { margin-bottom: 0; }
+
+    @media (max-width: 600px) {
+      .hero h1 { font-size: 1.6rem; }
+      .metrics-grid { grid-template-columns: 1fr; }
+      .issues-grid { grid-template-columns: 1fr; }
+      .calc-row { flex-direction: column; align-items: flex-start; gap: 0.5rem; }
+      .calc-row label { font-size: 0.9rem; }
+    }
+  </style>
+</SiteLayout>
