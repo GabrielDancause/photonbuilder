@@ -1,0 +1,1332 @@
+---
+import SiteLayout from "../../../layouts/SiteLayout.astro";
+
+const schema = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebApplication",
+      "name": "CAGR Calculator",
+      "url": "https://firemaths.info/cagr-calculator",
+      "description": "Calculate Compound Annual Growth Rate (CAGR) for your investments. Compare up to 5 investments side-by-side with growth charts.",
+      "applicationCategory": "FinanceApplication",
+      "operatingSystem": "All",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      }
+    },
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "What is CAGR and how is it calculated?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "CAGR (Compound Annual Growth Rate) measures the mean annual growth rate of an investment over a period longer than one year. The formula is: CAGR = (Ending Value / Beginning Value)^(1 / Number of Years) - 1. It smooths out volatility to show a steady annual rate that would produce the same final result."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What is the difference between CAGR and average annual return?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Average annual return is a simple arithmetic mean of yearly returns, while CAGR accounts for compounding. For example, if an investment goes up 100% one year and down 50% the next, the average annual return is 25%, but the CAGR is 0% because you're back where you started. CAGR gives a more accurate picture of actual growth."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What is a good CAGR for investments?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "The S&P 500 has historically returned a CAGR of roughly 10% before inflation (about 7% after inflation). A CAGR above 10% is generally considered strong. However, what constitutes a 'good' CAGR depends on the asset class, risk level, and investment time horizon."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "Can CAGR be negative?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Yes. A negative CAGR means your investment lost value over the period. For example, if you invested $10,000 and it was worth $7,000 after 3 years, the CAGR would be approximately -11.27%, indicating an average annual decline of about 11.27%."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How do I compare multiple investments using CAGR?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Enter each investment's beginning value, ending value, and time period into the comparison mode. CAGR normalizes returns to an annual rate, so you can fairly compare investments held for different lengths of time. The growth chart visualizes how each investment would grow over time at its CAGR."
+          }
+        }
+      ]
+    }
+  ]
+};
+
+export const meta = {
+  title: "CAGR Calculator | firemaths.info",
+  description: "Calculate Compound Annual Growth Rate (CAGR) for your investments. Compare up to 5 investments side-by-side with interactive growth charts.",
+  category: "tool",
+  published: "2026-03-21",
+};
+---
+
+<SiteLayout
+  site="firemaths"
+  title="CAGR Calculator | firemaths.info"
+  description="Calculate Compound Annual Growth Rate (CAGR) for your investments. Compare up to 5 investments side-by-side with interactive growth charts."
+  canonical="https://firemaths.info/cagr-calculator" schema={schema}
+>
+  <style>
+:root {
+            --danger-color: #ff4a4a;
+            --success-color: #4aff8a;
+}
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-primary);
+            font-family: var(--font-ui);
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        h1, h2, h3, h4 {
+            font-weight: 700;
+            line-height: 1.2;
+            color: var(--text-primary);
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            padding: 2rem 1.5rem;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+
+        header h1 {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+            color: var(--accent-color);
+        }
+
+        header p {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+        }
+
+        /* Layout */
+        .dashboard {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 2rem;
+            margin-bottom: 3rem;
+        }
+
+        @media (min-width: 768px) {
+            .dashboard {
+                grid-template-columns: 2fr 1fr;
+            }
+        }
+
+        /* Cards */
+        .card {
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 1.5rem;
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .card-header h2 {
+            font-size: 1.25rem;
+        }
+
+        /* Summary Panel */
+        .summary-panel .result-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px dashed var(--border-color);
+        }
+
+        .summary-panel .result-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .result-label {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+
+        .result-value {
+            font-family: var(--font-mono);
+            font-size: 1.25rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .result-final .result-value {
+            font-size: 1.75rem;
+            color: var(--accent-color);
+            font-weight: 700;
+        }
+
+        .val-positive {
+            color: var(--success-color);
+        }
+
+        .val-negative {
+            color: var(--danger-color);
+        }
+
+        /* Form Inputs */
+        .input-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-size: 0.75rem;
+            font-weight: 500;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+        }
+
+        .input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+
+        .prefix, .suffix {
+            position: absolute;
+            color: var(--text-secondary);
+            font-family: var(--font-mono);
+            font-size: 0.875rem;
+            pointer-events: none;
+        }
+
+        .prefix { left: 0.75rem; }
+        .suffix { right: 0.75rem; }
+
+        input[type="number"], input[type="date"] {
+            width: 100%;
+            background-color: var(--card-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            font-family: var(--font-mono);
+            font-size: 0.875rem;
+            padding: 0.5rem 0.75rem;
+            border-radius: 6px;
+            transition: border-color 0.2s;
+            -moz-appearance: textfield;
+        }
+
+        input[type="number"]::-webkit-outer-spin-button,
+        input[type="number"]::-webkit-inner-spin-button {
+            -webkit-appearance: none;
+            margin: 0;
+        }
+
+        input[type="number"]:focus, input[type="date"]:focus {
+            outline: none;
+            border-color: var(--accent-color);
+        }
+
+        input[type="date"]::-webkit-calendar-picker-indicator {
+            filter: invert(0.7);
+        }
+
+        .has-prefix input { padding-left: 1.75rem; }
+        .has-suffix input { padding-right: 2rem; }
+
+        /* Buttons */
+        .btn {
+            background-color: var(--bg-color);
+            border: 1px solid var(--border-color);
+            color: var(--text-primary);
+            cursor: pointer;
+            padding: 0.5rem 1rem;
+            border-radius: 6px;
+            font-size: 0.875rem;
+            font-weight: 500;
+            font-family: var(--font-ui);
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+
+        .btn:hover {
+            border-color: var(--accent-color);
+            color: var(--accent-color);
+        }
+
+        .btn-primary {
+            background-color: rgba(212, 160, 23, 0.1);
+            border-color: var(--accent-color);
+            color: var(--accent-color);
+            width: 100%;
+            padding: 0.75rem;
+        }
+
+        .btn-primary:hover {
+            background-color: rgba(212, 160, 23, 0.2);
+            color: #fff;
+        }
+
+        .copy-btn {
+            background: none;
+            border: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            cursor: pointer;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.75rem;
+            font-family: var(--font-ui);
+            transition: all 0.2s;
+        }
+
+        .copy-btn:hover {
+            border-color: var(--accent-color);
+            color: var(--text-primary);
+        }
+
+        /* Tabs */
+        .tab-bar {
+            display: flex;
+            gap: 0;
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .tab-btn {
+            background: none;
+            border: none;
+            border-bottom: 2px solid transparent;
+            color: var(--text-secondary);
+            cursor: pointer;
+            font-family: var(--font-ui);
+            font-size: 0.875rem;
+            font-weight: 500;
+            padding: 0.75rem 1.25rem;
+            transition: all 0.2s;
+        }
+
+        .tab-btn:hover {
+            color: var(--text-primary);
+        }
+
+        .tab-btn.active {
+            color: var(--accent-color);
+            border-bottom-color: var(--accent-color);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        /* Single calculator inputs */
+        .calc-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        @media (min-width: 640px) {
+            .calc-grid {
+                grid-template-columns: 1fr 1fr;
+            }
+            .calc-grid.three-col {
+                grid-template-columns: repeat(3, 1fr);
+            }
+        }
+
+        /* Toggle for years vs dates */
+        .toggle-row {
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            margin-bottom: 1rem;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        .toggle-switch {
+            position: relative;
+            width: 40px;
+            height: 22px;
+            flex-shrink: 0;
+        }
+
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+
+        .toggle-slider {
+            position: absolute;
+            inset: 0;
+            background-color: var(--border-color);
+            border-radius: 11px;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        .toggle-slider::before {
+            content: '';
+            position: absolute;
+            height: 16px;
+            width: 16px;
+            left: 3px;
+            bottom: 3px;
+            background: var(--text-primary);
+            border-radius: 50%;
+            transition: transform 0.2s;
+        }
+
+        .toggle-switch input:checked + .toggle-slider {
+            background-color: var(--accent-color);
+        }
+
+        .toggle-switch input:checked + .toggle-slider::before {
+            transform: translateX(18px);
+        }
+
+        /* Results display */
+        .results-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .result-card {
+            background-color: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1rem;
+            text-align: center;
+        }
+
+        .result-card .result-label {
+            display: block;
+            margin-bottom: 0.5rem;
+        }
+
+        .result-card .result-value {
+            justify-content: center;
+        }
+
+        .result-card.highlight {
+            border-color: var(--accent-color);
+            background-color: rgba(212, 160, 23, 0.05);
+        }
+
+        .result-card.highlight .result-value {
+            font-size: 1.75rem;
+            color: var(--accent-color);
+        }
+
+        /* Year-by-year table */
+        .projection-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-family: var(--font-mono);
+            font-size: 0.8rem;
+            margin-top: 1rem;
+        }
+
+        .projection-table th {
+            text-align: left;
+            font-size: 0.7rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 0.5rem 0.75rem;
+            border-bottom: 1px solid var(--border-color);
+            font-family: var(--font-ui);
+        }
+
+        .projection-table td {
+            padding: 0.5rem 0.75rem;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-primary);
+        }
+
+        .projection-table tr:last-child td {
+            border-bottom: none;
+            font-weight: 600;
+        }
+
+        .projection-table tr:hover td {
+            background-color: rgba(212, 160, 23, 0.03);
+        }
+
+        /* Comparison mode */
+        .comparison-row {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+
+        @media (min-width: 640px) {
+            .comparison-row {
+                grid-template-columns: minmax(120px, 1fr) repeat(3, 1fr);
+                align-items: end;
+            }
+        }
+
+        .comp-investment {
+            background-color: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1rem;
+            position: relative;
+        }
+
+        .comp-color-dot {
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            display: inline-block;
+            margin-right: 0.5rem;
+            vertical-align: middle;
+        }
+
+        .comp-name {
+            font-weight: 600;
+            color: var(--text-primary);
+            background: transparent;
+            border: none;
+            border-bottom: 1px solid var(--border-color);
+            color: var(--text-primary);
+            font-family: var(--font-ui);
+            font-size: 0.9rem;
+            padding: 0.25rem 0;
+            width: 140px;
+        }
+
+        .comp-name:focus {
+            outline: none;
+            border-bottom-color: var(--accent-color);
+        }
+
+        .comp-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 1rem;
+        }
+
+        .comp-inputs {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            gap: 0.75rem;
+            margin-bottom: 0.75rem;
+        }
+
+        .comp-results {
+            display: flex;
+            gap: 1rem;
+            padding-top: 0.75rem;
+            border-top: 1px solid var(--border-color);
+            font-family: var(--font-mono);
+            font-size: 0.8rem;
+            flex-wrap: wrap;
+        }
+
+        .comp-result-block {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .comp-result-label {
+            font-family: var(--font-ui);
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            margin-bottom: 0.15rem;
+        }
+
+        .btn-remove-comp {
+            background: none;
+            border: none;
+            color: var(--danger-color);
+            cursor: pointer;
+            font-size: 0.8rem;
+            opacity: 0.7;
+            transition: opacity 0.2s;
+        }
+
+        .btn-remove-comp:hover {
+            opacity: 1;
+        }
+
+        /* Chart */
+        .chart-container {
+            position: relative;
+            width: 100%;
+            margin-top: 1.5rem;
+        }
+
+        .chart-canvas {
+            width: 100%;
+            height: 300px;
+            display: block;
+        }
+
+        .chart-legend {
+            display: flex;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-top: 0.75rem;
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.35rem;
+        }
+
+        .legend-swatch {
+            width: 14px;
+            height: 3px;
+            border-radius: 2px;
+        }
+
+        /* SEO Content */
+        .seo-content {
+            margin-top: 4rem;
+            margin-bottom: 4rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--border-color);
+        }
+
+        .seo-content h2 {
+            font-size: 1.75rem;
+            margin-top: 2.5rem;
+            margin-bottom: 1rem;
+            color: var(--accent-color);
+        }
+
+        .seo-content p {
+            margin-bottom: 1rem;
+            color: var(--text-secondary);
+        }
+
+        .seo-content ul, .seo-content ol {
+            margin-bottom: 1.5rem;
+            padding-left: 1.5rem;
+            color: var(--text-secondary);
+        }
+
+        .seo-content li {
+            margin-bottom: 0.5rem;
+        }
+
+        .seo-content code {
+            background-color: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            padding: 0.15rem 0.4rem;
+            font-family: var(--font-mono);
+            font-size: 0.85rem;
+        }
+
+        .seo-content .formula-block {
+            background-color: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1.25rem;
+            margin: 1.5rem 0;
+            text-align: center;
+            font-family: var(--font-mono);
+            font-size: 1.1rem;
+            color: var(--accent-color);
+        }
+
+        .example-box {
+            background-color: var(--bg-color);
+            border-left: 3px solid var(--accent-color);
+            border-radius: 0 8px 8px 0;
+            padding: 1rem 1.25rem;
+            margin: 1rem 0 1.5rem;
+        }
+
+        .example-box p {
+            margin-bottom: 0.5rem;
+        }
+
+        .example-box p:last-child {
+            margin-bottom: 0;
+        }
+
+        /* Footer */
+        footer {
+            text-align: center;
+            padding: 2rem 0;
+            border-top: 1px solid var(--border-color);
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+        }
+
+        footer a {
+            color: var(--accent-color);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        footer a:hover {
+            color: var(--text-primary);
+            text-decoration: underline;
+        }
+  </style>
+
+<div class="container">
+    <h1>CAGR Calculator</h1>
+    <p style="text-align:center; color: var(--text-secondary); margin-bottom: 2rem; font-size: 1.1rem;">Calculate Compound Annual Growth Rate and compare investment performance</p>
+
+    <main>
+        <!-- Tab Bar -->
+        <div class="tab-bar">
+            <button class="tab-btn active" data-tab="single">Single Calculator</button>
+            <button class="tab-btn" data-tab="compare">Compare Investments</button>
+        </div>
+
+        <!-- SINGLE CALCULATOR TAB -->
+        <div class="tab-content active" id="tab-single">
+            <div class="dashboard">
+                <div class="card">
+                    <div class="card-header">
+                        <h2>Investment Details</h2>
+                    </div>
+
+                    <div class="calc-grid">
+                        <div class="input-group">
+                            <label>Beginning Value</label>
+                            <div class="input-wrapper has-prefix">
+                                <span class="prefix">$</span>
+                                <input type="number" id="single-begin" value="10000" min="0" step="100">
+                            </div>
+                        </div>
+                        <div class="input-group">
+                            <label>Ending Value</label>
+                            <div class="input-wrapper has-prefix">
+                                <span class="prefix">$</span>
+                                <input type="number" id="single-end" value="25000" min="0" step="100">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="toggle-row">
+                        <span>Years</span>
+                        <label class="toggle-switch">
+                            <input type="checkbox" id="use-dates-toggle">
+                            <span class="toggle-slider"></span>
+                        </label>
+                        <span>Start / End Dates</span>
+                    </div>
+
+                    <div id="years-input-row" class="calc-grid">
+                        <div class="input-group">
+                            <label>Number of Years</label>
+                            <div class="input-wrapper has-suffix">
+                                <span class="suffix">Yrs</span>
+                                <input type="number" id="single-years" value="7" min="0.1" step="0.1">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div id="dates-input-row" class="calc-grid" style="display:none;">
+                        <div class="input-group">
+                            <label>Start Date</label>
+                            <div class="input-wrapper">
+                                <input type="date" id="single-start-date" value="2019-01-01">
+                            </div>
+                        </div>
+                        <div class="input-group">
+                            <label>End Date</label>
+                            <div class="input-wrapper">
+                                <input type="date" id="single-end-date" value="2026-01-01">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Results -->
+                    <div class="results-grid" style="margin-top: 0.5rem;">
+                        <div class="result-card highlight" style="grid-column: 1 / -1;">
+                            <span class="result-label">CAGR</span>
+                            <div class="result-value">
+                                <span id="single-cagr">0.00%</span>
+                                <button class="copy-btn" onclick="copyValue('single-cagr', this)">Copy</button>
+                            </div>
+                        </div>
+                        <div class="result-card">
+                            <span class="result-label">Total Return</span>
+                            <div class="result-value"><span id="single-total-return">0.00%</span></div>
+                        </div>
+                        <div class="result-card">
+                            <span class="result-label">Equiv. Simple Return/yr</span>
+                            <div class="result-value"><span id="single-simple-return">0.00%</span></div>
+                        </div>
+                    </div>
+
+                    <!-- Year-by-year projection -->
+                    <div class="card-header" style="margin-top: 1rem;">
+                        <h2>Year-by-Year Projected Values</h2>
+                    </div>
+                    <div style="max-height: 320px; overflow-y: auto;">
+                        <table class="projection-table" id="projection-table">
+                            <thead>
+                                <tr>
+                                    <th>Year</th>
+                                    <th>Projected Value</th>
+                                    <th>Growth</th>
+                                </tr>
+                            </thead>
+                            <tbody id="projection-body"></tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Summary Column -->
+                <div class="card summary-panel" style="align-self: start;">
+                    <div class="card-header">
+                        <h2>Breakdown</h2>
+                    </div>
+
+                    <div class="result-item">
+                        <span class="result-label">Beginning Value</span>
+                        <div class="result-value"><span id="sum-begin">$10,000</span></div>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label">Ending Value</span>
+                        <div class="result-value"><span id="sum-end">$25,000</span></div>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label">Net Gain / Loss</span>
+                        <div class="result-value"><span id="sum-gain">$15,000</span></div>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label">Duration</span>
+                        <div class="result-value"><span id="sum-duration">7.00 yrs</span></div>
+                    </div>
+                    <div class="result-item result-final" style="margin-top: 1rem;">
+                        <span class="result-label" style="color: var(--text-primary);">CAGR</span>
+                        <div class="result-value">
+                            <span id="sum-cagr">0.00%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- COMPARISON TAB -->
+        <div class="tab-content" id="tab-compare">
+            <div class="card">
+                <div class="card-header">
+                    <h2>Compare Investments (up to 5)</h2>
+                </div>
+
+                <div id="comp-container"></div>
+
+                <div style="margin-top: 1rem;" id="comp-add-wrapper">
+                    <button class="btn btn-primary" id="btn-add-comp">+ Add Investment</button>
+                </div>
+
+                <!-- Chart -->
+                <div class="chart-container">
+                    <canvas class="chart-canvas" id="growth-chart"></canvas>
+                    <div class="chart-legend" id="chart-legend"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- SEO Content -->
+        <div class="seo-content">
+            <h2>What Is CAGR?</h2>
+            <p><strong>Compound Annual Growth Rate (CAGR)</strong> represents the rate at which an investment would have grown if it had grown at a steady rate every year. It smooths out the volatility of year-to-year returns to give you a single, comparable annual rate.</p>
+            <div class="formula-block">CAGR = (Ending Value / Beginning Value)<sup>1/n</sup> &minus; 1</div>
+            <p>Where <code>n</code> is the number of years. Unlike a simple average of annual returns, CAGR accounts for the compounding effect — the fact that returns in later years are earned on a larger base.</p>
+
+            <h2>CAGR vs Average Annual Return</h2>
+            <p>Many investors confuse CAGR with the arithmetic average of yearly returns. These two metrics can paint very different pictures:</p>
+
+            <div class="example-box">
+                <p><strong>Example:</strong> You invest $10,000. In Year 1 it grows 60% to $16,000. In Year 2 it drops 40% to $9,600.</p>
+                <p><strong>Average annual return:</strong> (60% + (−40%)) / 2 = <strong>10%</strong> — sounds great!</p>
+                <p><strong>CAGR:</strong> ($9,600 / $10,000)<sup>1/2</sup> − 1 = <strong>−2.02%</strong> — the reality is you lost money.</p>
+            </div>
+
+            <p>The average annual return is misleading because it ignores compounding. CAGR always reflects your actual experience as an investor.</p>
+
+            <h2>How to Use This Calculator</h2>
+            <ol>
+                <li><strong>Enter Beginning Value:</strong> The amount you originally invested or the starting value of the asset.</li>
+                <li><strong>Enter Ending Value:</strong> The final or current value of your investment.</li>
+                <li><strong>Enter Duration:</strong> Use the number of years directly, or toggle to date mode to enter start and end dates for precise calculation.</li>
+                <li><strong>Read Your Results:</strong> The calculator shows CAGR, total return percentage, and equivalent simple annual return, plus a year-by-year projection table.</li>
+                <li><strong>Compare Investments:</strong> Switch to the comparison tab to enter up to 5 investments side-by-side and see their growth curves on a single chart.</li>
+            </ol>
+
+            <h2>What Is a Good CAGR?</h2>
+            <p>Context matters. Here are some benchmarks:</p>
+            <ul>
+                <li><strong>S&P 500 (historical):</strong> ~10% nominal, ~7% inflation-adjusted</li>
+                <li><strong>US Real Estate (historical):</strong> ~3-4% above inflation</li>
+                <li><strong>High-yield Savings:</strong> ~4-5% (varies with interest rates)</li>
+                <li><strong>Individual Stocks:</strong> Top performers can achieve 15-25%+, but with higher risk</li>
+            </ul>
+            <p>A CAGR above 10% is generally considered strong for long-term equity investments. For lower-risk assets like bonds, 4-6% may be excellent. Always compare within the same asset class and risk level.</p>
+
+            <h2>Limitations of CAGR</h2>
+            <p>While CAGR is powerful, it has limitations to be aware of:</p>
+            <ul>
+                <li>It assumes a smooth growth rate and hides volatility — two investments with the same CAGR can have very different risk profiles.</li>
+                <li>It doesn't account for cash flows like additional contributions or withdrawals during the period.</li>
+                <li>It only uses two data points (beginning and ending values), ignoring everything that happened in between.</li>
+                <li>For investments with ongoing contributions, <strong>IRR (Internal Rate of Return)</strong> is a more appropriate metric.</li>
+            </ul>
+        </div>
+    </main>
+</div>
+
+  <script is:inline>
+    // Format currency
+    const formatCurrency = (value) => {
+        return new Intl.NumberFormat('en-US', {
+            style: 'currency',
+            currency: 'USD',
+            maximumFractionDigits: 0
+        }).format(value);
+    };
+
+    // Format percentage
+    const formatPercent = (value) => {
+        if (!isFinite(value)) return 'N/A';
+        return new Intl.NumberFormat('en-US', {
+            style: 'percent',
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2
+        }).format(value / 100);
+    };
+
+    // Copy to clipboard
+    window.copyValue = async (elementId, btn) => {
+        const text = document.getElementById(elementId).innerText;
+        try {
+            await navigator.clipboard.writeText(text);
+            const originalText = btn.innerText;
+            btn.innerText = 'Copied!';
+            setTimeout(() => { btn.innerText = originalText; }, 2000);
+        } catch (err) {
+            console.error('Failed to copy text: ', err);
+        }
+    };
+
+    // Set color class based on value
+    const setColorClass = (el, val) => {
+        el.classList.remove('val-positive', 'val-negative');
+        if (val > 0) el.classList.add('val-positive');
+        else if (val < 0) el.classList.add('val-negative');
+    };
+
+    // ============================
+    // TABS
+    // ============================
+    const tabBtns = document.querySelectorAll('.tab-btn');
+    tabBtns.forEach(btn => {
+        btn.addEventListener('click', () => {
+            tabBtns.forEach(b => b.classList.remove('active'));
+            btn.classList.add('active');
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+            document.getElementById('tab-' + btn.dataset.tab).classList.add('active');
+            if (btn.dataset.tab === 'compare') drawChart();
+        });
+    });
+
+    // ============================
+    // SINGLE CALCULATOR
+    // ============================
+    const elBegin = document.getElementById('single-begin');
+    const elEnd = document.getElementById('single-end');
+    const elYears = document.getElementById('single-years');
+    const elStartDate = document.getElementById('single-start-date');
+    const elEndDate = document.getElementById('single-end-date');
+    const elUseDates = document.getElementById('use-dates-toggle');
+    const yearsRow = document.getElementById('years-input-row');
+    const datesRow = document.getElementById('dates-input-row');
+
+    elUseDates.addEventListener('change', () => {
+        const useDates = elUseDates.checked;
+        yearsRow.style.display = useDates ? 'none' : 'grid';
+        datesRow.style.display = useDates ? 'grid' : 'none';
+        calcSingle();
+    });
+
+    const getYears = () => {
+        if (elUseDates.checked) {
+            const start = new Date(elStartDate.value);
+            const end = new Date(elEndDate.value);
+            if (isNaN(start) || isNaN(end)) return 0;
+            return (end - start) / (365.25 * 24 * 60 * 60 * 1000);
+        }
+        return parseFloat(elYears.value) || 0;
+    };
+
+    const calcSingle = () => {
+        const beginVal = parseFloat(elBegin.value) || 0;
+        const endVal = parseFloat(elEnd.value) || 0;
+        const years = getYears();
+
+        let cagr = 0;
+        if (beginVal > 0 && endVal > 0 && years > 0) {
+            cagr = (Math.pow(endVal / beginVal, 1 / years) - 1) * 100;
+        } else if (beginVal > 0 && endVal === 0 && years > 0) {
+            cagr = -100;
+        }
+
+        const totalReturn = beginVal > 0 ? ((endVal - beginVal) / beginVal) * 100 : 0;
+        const simpleReturn = years > 0 ? totalReturn / years : 0;
+        const gain = endVal - beginVal;
+
+        // Update results
+        const elCagr = document.getElementById('single-cagr');
+        elCagr.textContent = formatPercent(cagr);
+        setColorClass(elCagr, cagr);
+
+        const elTR = document.getElementById('single-total-return');
+        elTR.textContent = formatPercent(totalReturn);
+        setColorClass(elTR, totalReturn);
+
+        const elSR = document.getElementById('single-simple-return');
+        elSR.textContent = formatPercent(simpleReturn);
+        setColorClass(elSR, simpleReturn);
+
+        // Summary
+        document.getElementById('sum-begin').textContent = formatCurrency(beginVal);
+        document.getElementById('sum-end').textContent = formatCurrency(endVal);
+        const elGain = document.getElementById('sum-gain');
+        elGain.textContent = formatCurrency(gain);
+        setColorClass(elGain, gain);
+        document.getElementById('sum-duration').textContent = years.toFixed(2) + ' yrs';
+        const elSumCagr = document.getElementById('sum-cagr');
+        elSumCagr.textContent = formatPercent(cagr);
+        setColorClass(elSumCagr, cagr);
+
+        // Year-by-year projection table
+        buildProjectionTable(beginVal, cagr, years);
+    };
+
+    const buildProjectionTable = (beginVal, cagr, totalYears) => {
+        const tbody = document.getElementById('projection-body');
+        tbody.innerHTML = '';
+        if (beginVal <= 0 || totalYears <= 0 || !isFinite(cagr)) return;
+
+        const wholeYears = Math.ceil(totalYears);
+        const rate = cagr / 100;
+
+        for (let y = 0; y <= wholeYears; y++) {
+            const val = beginVal * Math.pow(1 + rate, y);
+            const growth = y === 0 ? 0 : ((val - beginVal) / beginVal) * 100;
+            const tr = document.createElement('tr');
+            tr.innerHTML =
+                '<td>Year ' + y + '</td>' +
+                '<td>' + formatCurrency(val) + '</td>' +
+                '<td class="' + (growth > 0 ? 'val-positive' : growth < 0 ? 'val-negative' : '') + '">' + (y === 0 ? '—' : formatPercent(growth)) + '</td>';
+            tbody.appendChild(tr);
+        }
+    };
+
+    [elBegin, elEnd, elYears, elStartDate, elEndDate].forEach(el => {
+        el.addEventListener('input', calcSingle);
+    });
+
+    calcSingle();
+
+    // ============================
+    // COMPARISON MODE
+    // ============================
+    const COMP_COLORS = ['#d4a017', '#4aff8a', '#4a9eff', '#ff6b6b', '#c084fc'];
+    let compCount = 0;
+    const compContainer = document.getElementById('comp-container');
+
+    const calcComparison = () => {
+        const items = compContainer.querySelectorAll('.comp-investment');
+        items.forEach(item => {
+            const bv = parseFloat(item.querySelector('.comp-begin').value) || 0;
+            const ev = parseFloat(item.querySelector('.comp-end').value) || 0;
+            const yrs = parseFloat(item.querySelector('.comp-years').value) || 0;
+
+            let cagr = 0;
+            if (bv > 0 && ev > 0 && yrs > 0) {
+                cagr = (Math.pow(ev / bv, 1 / yrs) - 1) * 100;
+            } else if (bv > 0 && ev === 0 && yrs > 0) {
+                cagr = -100;
+            }
+
+            const totalRet = bv > 0 ? ((ev - bv) / bv) * 100 : 0;
+            const gain = ev - bv;
+
+            const elCagr = item.querySelector('.comp-cagr-val');
+            elCagr.textContent = formatPercent(cagr);
+            setColorClass(elCagr, cagr);
+
+            const elTR = item.querySelector('.comp-total-val');
+            elTR.textContent = formatPercent(totalRet);
+            setColorClass(elTR, totalRet);
+
+            const elGain = item.querySelector('.comp-gain-val');
+            elGain.textContent = formatCurrency(gain);
+            setColorClass(elGain, gain);
+        });
+
+        drawChart();
+    };
+
+    const addCompInvestment = (name, bv, ev, yrs) => {
+        const items = compContainer.querySelectorAll('.comp-investment');
+        if (items.length >= 5) return;
+
+        const idx = compCount;
+        compCount++;
+        const color = COMP_COLORS[idx % COMP_COLORS.length];
+
+        const div = document.createElement('div');
+        div.className = 'comp-investment';
+        div.dataset.color = color;
+        div.innerHTML =
+            '<div class="comp-header">' +
+                '<div><span class="comp-color-dot" style="background:' + color + '"></span>' +
+                '<input type="text" class="comp-name" value="' + name + '" placeholder="Name"></div>' +
+                '<button class="btn-remove-comp" title="Remove">✕</button>' +
+            '</div>' +
+            '<div class="comp-inputs">' +
+                '<div class="input-group"><label>Begin Value</label><div class="input-wrapper has-prefix"><span class="prefix">$</span>' +
+                '<input type="number" class="comp-begin" value="' + bv + '" min="0" step="100"></div></div>' +
+                '<div class="input-group"><label>End Value</label><div class="input-wrapper has-prefix"><span class="prefix">$</span>' +
+                '<input type="number" class="comp-end" value="' + ev + '" min="0" step="100"></div></div>' +
+                '<div class="input-group"><label>Years</label><div class="input-wrapper has-suffix"><span class="suffix">Yrs</span>' +
+                '<input type="number" class="comp-years" value="' + yrs + '" min="0.1" step="0.1"></div></div>' +
+            '</div>' +
+            '<div class="comp-results">' +
+                '<div class="comp-result-block"><span class="comp-result-label">CAGR:</span><span class="comp-cagr-val">—</span></div>' +
+                '<div class="comp-result-block"><span class="comp-result-label">Total Return:</span><span class="comp-total-val">—</span></div>' +
+                '<div class="comp-result-block"><span class="comp-result-label">Net Gain:</span><span class="comp-gain-val">—</span></div>' +
+            '</div>';
+
+        div.querySelector('.btn-remove-comp').addEventListener('click', () => {
+            div.remove();
+            if (compContainer.querySelectorAll('.comp-investment').length === 0) {
+                addCompInvestment('Investment 1', 10000, 25000, 7);
+            }
+            updateAddBtnVisibility();
+            calcComparison();
+        });
+
+        div.querySelectorAll('input').forEach(inp => {
+            inp.addEventListener('input', calcComparison);
+        });
+
+        compContainer.appendChild(div);
+        updateAddBtnVisibility();
+        calcComparison();
+    };
+
+    const updateAddBtnVisibility = () => {
+        const count = compContainer.querySelectorAll('.comp-investment').length;
+        document.getElementById('comp-add-wrapper').style.display = count >= 5 ? 'none' : 'block';
+    };
+
+    document.getElementById('btn-add-comp').addEventListener('click', () => {
+        const n = compContainer.querySelectorAll('.comp-investment').length + 1;
+        addCompInvestment('Investment ' + n, 10000, 15000, 5);
+    });
+
+    // Default comparison investments
+    addCompInvestment('S&P 500', 10000, 26000, 10);
+    addCompInvestment('Real Estate', 10000, 18000, 10);
+    addCompInvestment('Bonds', 10000, 14000, 10);
+
+    // ============================
+    // CANVAS CHART
+    // ============================
+    const drawChart = () => {
+        const canvas = document.getElementById('growth-chart');
+        const ctx = canvas.getContext('2d');
+        const dpr = window.devicePixelRatio || 1;
+        const rect = canvas.getBoundingClientRect();
+
+        canvas.width = rect.width * dpr;
+        canvas.height = rect.height * dpr;
+        ctx.scale(dpr, dpr);
+
+        const W = rect.width;
+        const H = rect.height;
+        const PAD = { top: 20, right: 20, bottom: 35, left: 65 };
+        const plotW = W - PAD.left - PAD.right;
+        const plotH = H - PAD.top - PAD.bottom;
+
+        ctx.clearRect(0, 0, W, H);
+
+        // Gather data
+        const items = compContainer.querySelectorAll('.comp-investment');
+        if (items.length === 0) return;
+
+        let maxYears = 0;
+        const datasets = [];
+
+        items.forEach(item => {
+            const bv = parseFloat(item.querySelector('.comp-begin').value) || 0;
+            const ev = parseFloat(item.querySelector('.comp-end').value) || 0;
+            const yrs = parseFloat(item.querySelector('.comp-years').value) || 0;
+            const name = item.querySelector('.comp-name').value;
+            const color = item.dataset.color;
+
+            if (bv <= 0 || yrs <= 0) return;
+
+            let cagr = 0;
+            if (ev > 0) cagr = Math.pow(ev / bv, 1 / yrs) - 1;
+            else cagr = -1;
+
+            if (yrs > maxYears) maxYears = yrs;
+
+            datasets.push({ name, color, bv, cagr, yrs });
+        });
+
+        if (datasets.length === 0 || maxYears <= 0) return;
+
+        const chartYears = Math.ceil(maxYears);
+        // Compute all values to find max
+        let maxVal = 0;
+        datasets.forEach(d => {
+            for (let y = 0; y <= chartYears; y++) {
+                const v = d.bv * Math.pow(1 + d.cagr, y);
+                if (v > maxVal) maxVal = v;
+            }
+        });
+
+        if (maxVal <= 0) maxVal = 1;
+
+        // Grid + labels
+        const textColor = getComputedStyle(document.documentElement).getPropertyValue('--text-secondary').trim() || '#888';
+        const gridColor = getComputedStyle(document.documentElement).getPropertyValue('--border-color').trim() || '#333';
+
+        ctx.font = '11px sans-serif';
+        ctx.fillStyle = textColor;
+        ctx.strokeStyle = gridColor;
+        ctx.lineWidth = 0.5;
+
+        // Y grid
+        const yTicks = 5;
+        for (let i = 0; i <= yTicks; i++) {
+            const val = (maxVal / yTicks) * i;
+            const y = PAD.top + plotH - (i / yTicks) * plotH;
+            ctx.beginPath();
+            ctx.moveTo(PAD.left, y);
+            ctx.lineTo(W - PAD.right, y);
+            ctx.stroke();
+            ctx.textAlign = 'right';
+            ctx.textBaseline = 'middle';
+            ctx.fillText('$' + Math.round(val).toLocaleString(), PAD.left - 8, y);
+        }
+
+        // X grid
+        for (let x = 0; x <= chartYears; x++) {
+            const px = PAD.left + (x / chartYears) * plotW;
+            ctx.beginPath();
+            ctx.moveTo(px, PAD.top);
+            ctx.lineTo(px, PAD.top + plotH);
+            ctx.stroke();
+            ctx.textAlign = 'center';
+            ctx.textBaseline = 'top';
+            ctx.fillText('Yr ' + x, px, PAD.top + plotH + 8);
+        }
+
+        // Draw lines
+        datasets.forEach(d => {
+            ctx.beginPath();
+            ctx.strokeStyle = d.color;
+            ctx.lineWidth = 2.5;
+            ctx.lineJoin = 'round';
+
+            const steps = chartYears * 4;
+            for (let s = 0; s <= steps; s++) {
+                const yr = (s / steps) * chartYears;
+                const val = d.bv * Math.pow(1 + d.cagr, yr);
+                const px = PAD.left + (yr / chartYears) * plotW;
+                const py = PAD.top + plotH - (val / maxVal) * plotH;
+                if (s === 0) ctx.moveTo(px, py);
+                else ctx.lineTo(px, py);
+            }
+            ctx.stroke();
+        });
+
+        // Legend
+        const legendEl = document.getElementById('chart-legend');
+        legendEl.innerHTML = '';
+        datasets.forEach(d => {
+            const cagr = (d.cagr * 100).toFixed(2);
+            const span = document.createElement('span');
+            span.className = 'legend-item';
+            span.innerHTML = '<span class="legend-swatch" style="background:' + d.color + '"></span>' + d.name + ' (' + cagr + '%)';
+            legendEl.appendChild(span);
+        });
+    };
+
+    // Redraw on resize
+    window.addEventListener('resize', () => {
+        if (document.getElementById('tab-compare').classList.contains('active')) {
+            drawChart();
+        }
+    });
+  </script>
+
+  <!-- Pillar Guide Link -->
+  <div class="max-w-3xl mx-auto px-5 pt-8 pb-12">
+    <div class="border-t border-[var(--border-color)] pt-8">
+      <p class="text-xs font-bold text-[var(--accent-color)] tracking-wide uppercase mb-2">📚 Complete Guide</p>
+      <a href="/guide-investing-complete" class="block bg-[var(--card-bg)] border border-[var(--border-color)] rounded-xl p-5 hover:border-[var(--accent-color)] hover:-translate-y-0.5 transition-all">
+        <h3 class="text-base font-bold text-white">Beginner's Guide to Investing Your Money</h3>
+        <p class="text-sm text-[var(--text-secondary)] mt-1">Read the full guide →</p>
+      </a>
+    </div>
+  </div>
+</SiteLayout>

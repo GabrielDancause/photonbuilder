@@ -1,0 +1,678 @@
+---
+import SiteLayout from '../../../layouts/SiteLayout.astro';
+
+export const meta = {
+  title: 'Markdown Table Generator — Visual Table Builder & Formatter',
+  description: 'Build markdown tables visually with a point-and-click editor. Set rows, columns, alignment. Import CSV/TSV, export as markdown, HTML, or CSV. Pretty print with aligned pipes. Free online tool.',
+  category: 'tool',
+  published: '2026-03-24'
+};
+
+const SITE_ID = 'papyruspeople';
+
+const schema = [
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "Markdown Table Generator",
+    "description": "Visual markdown table builder with CSV/TSV import, multiple export formats, column alignment controls, and pretty print formatting.",
+    "applicationCategory": "UtilityApplication",
+    "operatingSystem": "All",
+    "url": "https://papyruspeople.photonbuilder.com/markdown-table-generator"
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "How do I create a markdown table?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "A markdown table uses pipes (|) and hyphens (-) to define columns and rows. The first row is the header, followed by a separator row of hyphens, then data rows. This generator lets you build tables visually — click cells to edit, use +/- buttons to add or remove rows and columns, and the markdown is generated automatically."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How do I set column alignment in a markdown table?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Column alignment is controlled by colons in the separator row. A colon on the left (:---) means left-aligned, colons on both sides (:---:) means centered, and a colon on the right (---:) means right-aligned. In this generator, simply click the alignment button on each column header to cycle through left, center, and right alignment."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Can I import data from a spreadsheet into a markdown table?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes. Copy cells from any spreadsheet application (Excel, Google Sheets, Numbers) and paste into the import textarea. The generator automatically detects tab-separated values from spreadsheet pastes. You can also paste comma-separated (CSV) data. The imported data instantly populates the visual table editor."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "What is pretty print formatting for markdown tables?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Pretty print aligns the pipe characters vertically by padding each cell with spaces so all columns have equal width. This makes the raw markdown source code much easier to read and edit by hand. While both compact and pretty-printed tables render identically, pretty print is preferred in documentation and README files for readability."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "What export formats are supported?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "The generator supports three export formats: Markdown (standard pipe-delimited table syntax compatible with GitHub, GitLab, and most markdown renderers), HTML (a complete <table> element ready to paste into web pages), and CSV (comma-separated values for importing into spreadsheets or databases)."
+        }
+      }
+    ]
+  }
+];
+
+const relatedPages = [
+  { url: '/sites/papyruspeople/lorem-ipsum-generator', title: 'Lorem Ipsum Generator', description: 'Generate dummy placeholder text in multiple styles' },
+  { url: '/sites/papyruspeople/character-counter', title: 'Character Counter', description: 'Count characters, words, sentences, and paragraphs in real time' }
+];
+---
+
+<SiteLayout
+  site={SITE_ID}
+  title={meta.title}
+  description={meta.description}
+  schema={schema}
+  canonical="https://papyruspeople.photonbuilder.com/markdown-table-generator"
+>
+  <div class="page-content">
+    <div class="hero">
+      <h1>Markdown Table Generator</h1>
+      <p>Build markdown tables visually. Click cells to edit, set alignment, import CSV, and export in multiple formats.</p>
+    </div>
+
+    <div class="tool-container card">
+      <div class="toolbar">
+        <div class="toolbar-group">
+          <span class="toolbar-label">Columns</span>
+          <button id="btn-col-minus" class="btn-small" title="Remove column">−</button>
+          <span id="col-count" class="count-display">3</span>
+          <button id="btn-col-plus" class="btn-small" title="Add column">+</button>
+        </div>
+        <div class="toolbar-group">
+          <span class="toolbar-label">Rows</span>
+          <button id="btn-row-minus" class="btn-small" title="Remove row">−</button>
+          <span id="row-count" class="count-display">3</span>
+          <button id="btn-row-plus" class="btn-small" title="Add row">+</button>
+        </div>
+        <div class="toolbar-group">
+          <label class="toggle-label">
+            <input type="checkbox" id="opt-pretty" checked>
+            <span>Pretty print</span>
+          </label>
+        </div>
+      </div>
+
+      <div class="table-wrapper">
+        <table id="edit-table">
+          <thead id="table-head"></thead>
+          <tbody id="table-body"></tbody>
+        </table>
+      </div>
+
+      <div class="actions-row">
+        <button id="btn-copy" class="btn-primary">Copy Markdown</button>
+        <div class="export-group">
+          <label for="export-format" class="sr-only">Export format</label>
+          <select id="export-format">
+            <option value="markdown">Markdown</option>
+            <option value="html">HTML</option>
+            <option value="csv">CSV</option>
+          </select>
+          <button id="btn-export" class="btn-secondary">Export</button>
+        </div>
+        <button id="btn-import" class="btn-secondary">Import CSV/TSV</button>
+        <button id="btn-clear" class="btn-secondary">Clear</button>
+      </div>
+
+      <div id="import-panel" class="import-panel" style="display:none;">
+        <label for="import-textarea">Paste CSV or TSV data below:</label>
+        <textarea id="import-textarea" rows="5" placeholder="Paste comma-separated or tab-separated data here..."></textarea>
+        <div class="import-actions">
+          <button id="btn-import-apply" class="btn-primary">Apply</button>
+          <button id="btn-import-cancel" class="btn-secondary">Cancel</button>
+        </div>
+      </div>
+
+      <div class="output-area">
+        <div class="output-header">
+          <span class="output-title">Markdown Preview</span>
+          <span id="output-stats" class="output-stats-inline"></span>
+        </div>
+        <pre id="output" class="output-text"></pre>
+      </div>
+    </div>
+
+    <div class="content-section card">
+      <h2>What Is a Markdown Table?</h2>
+      <p>A <strong>markdown table</strong> uses pipes (<code>|</code>) and hyphens (<code>-</code>) to structure data into rows and columns. Markdown tables are supported by <strong>GitHub</strong>, <strong>GitLab</strong>, <strong>Reddit</strong>, <strong>Notion</strong>, and most documentation platforms. They're the standard way to present tabular data in README files, wikis, and technical documentation.</p>
+      <p>This free <strong>markdown table generator</strong> lets you build tables visually instead of typing pipe characters by hand. Click any cell to edit its content, use the <code>+</code> and <code>−</code> buttons to add or remove rows and columns, and set column alignment with a single click. The live preview updates instantly as you type.</p>
+
+      <h3>How to Use the Markdown Table Generator</h3>
+      <p>Start by setting the number of rows and columns using the <code>+</code> and <code>−</code> buttons. Click any cell to type content. Use <strong>Tab</strong> to move between cells and <strong>Enter</strong> to add a new row. Click the alignment indicator on each column header to cycle through left, center, and right alignment. The markdown output updates in real time below the table.</p>
+
+      <h3>Import and Export Options</h3>
+      <p>Click <strong>Import CSV/TSV</strong> to paste spreadsheet data — the generator auto-detects the delimiter and populates the table. Export your table as <strong>Markdown</strong> for documentation, <strong>HTML</strong> for web pages, or <strong>CSV</strong> for spreadsheets. The <strong>pretty print</strong> toggle aligns pipe characters vertically for cleaner raw markdown.</p>
+
+      <h3>Keyboard Shortcuts</h3>
+      <p>Navigate the table efficiently with keyboard shortcuts: <strong>Tab</strong> moves to the next cell, <strong>Shift+Tab</strong> moves to the previous cell, and <strong>Enter</strong> adds a new row when pressed in the last row. These shortcuts make it fast to build large tables without reaching for the mouse.</p>
+    </div>
+
+    <div class="content-section card">
+      <h2>Frequently Asked Questions</h2>
+
+      <div class="faq-item">
+        <h3>How do I create a markdown table?</h3>
+        <p>A markdown table uses pipes (|) and hyphens (-) to define columns and rows. The first row is the header, followed by a separator row of hyphens, then data rows. This generator lets you build tables visually — click cells to edit, use +/- buttons to add or remove rows and columns, and the markdown is generated automatically.</p>
+      </div>
+
+      <div class="faq-item">
+        <h3>How do I set column alignment in a markdown table?</h3>
+        <p>Column alignment is controlled by colons in the separator row. A colon on the left (<code>:---</code>) means left-aligned, colons on both sides (<code>:---:</code>) means centered, and a colon on the right (<code>---:</code>) means right-aligned. In this generator, simply click the alignment button on each column header to cycle through left, center, and right alignment.</p>
+      </div>
+
+      <div class="faq-item">
+        <h3>Can I import data from a spreadsheet into a markdown table?</h3>
+        <p>Yes. Copy cells from any spreadsheet application (Excel, Google Sheets, Numbers) and paste into the import textarea. The generator automatically detects tab-separated values from spreadsheet pastes. You can also paste comma-separated (CSV) data. The imported data instantly populates the visual table editor.</p>
+      </div>
+
+      <div class="faq-item">
+        <h3>What is pretty print formatting for markdown tables?</h3>
+        <p>Pretty print aligns the pipe characters vertically by padding each cell with spaces so all columns have equal width. This makes the raw markdown source code much easier to read and edit by hand. While both compact and pretty-printed tables render identically, pretty print is preferred in documentation and README files for readability.</p>
+      </div>
+
+      <div class="faq-item">
+        <h3>What export formats are supported?</h3>
+        <p>The generator supports three export formats: Markdown (standard pipe-delimited table syntax compatible with GitHub, GitLab, and most markdown renderers), HTML (a complete &lt;table&gt; element ready to paste into web pages), and CSV (comma-separated values for importing into spreadsheets or databases).</p>
+      </div>
+    </div>
+
+    <div class="content-section card">
+      <h2>Related Tools</h2>
+      <div class="related-grid">
+        {relatedPages.map(page => (
+          <a href={page.url} class="related-card">
+            <h3>{page.title}</h3>
+            <p>{page.description}</p>
+          </a>
+        ))}
+      </div>
+    </div>
+  </div>
+
+  <script is:inline>
+    document.addEventListener('DOMContentLoaded', () => {
+      const tableHead = document.getElementById('table-head');
+      const tableBody = document.getElementById('table-body');
+      const colCountEl = document.getElementById('col-count');
+      const rowCountEl = document.getElementById('row-count');
+      const outputEl = document.getElementById('output');
+      const statsEl = document.getElementById('output-stats');
+      const optPretty = document.getElementById('opt-pretty');
+      const exportFormat = document.getElementById('export-format');
+      const importPanel = document.getElementById('import-panel');
+      const importTextarea = document.getElementById('import-textarea');
+
+      let cols = 3;
+      let rows = 3;
+      let headers = ['Header 1', 'Header 2', 'Header 3'];
+      let data = [
+        ['', '', ''],
+        ['', '', ''],
+        ['', '', '']
+      ];
+      let alignments = ['left', 'left', 'left'];
+
+      function buildTable() {
+        tableHead.innerHTML = '';
+        tableBody.innerHTML = '';
+
+        // Header row
+        const headRow = document.createElement('tr');
+        for (let c = 0; c < cols; c++) {
+          const th = document.createElement('th');
+          const alignBtn = document.createElement('button');
+          alignBtn.className = 'align-btn';
+          alignBtn.title = 'Click to change alignment';
+          alignBtn.textContent = alignments[c] === 'left' ? '⬅' : alignments[c] === 'center' ? '⬌' : '➡';
+          alignBtn.dataset.col = c;
+          alignBtn.addEventListener('click', () => {
+            const order = ['left', 'center', 'right'];
+            const idx = order.indexOf(alignments[c]);
+            alignments[c] = order[(idx + 1) % 3];
+            buildTable();
+            updateOutput();
+          });
+
+          const input = document.createElement('input');
+          input.type = 'text';
+          input.value = headers[c];
+          input.className = 'cell-input header-input';
+          input.dataset.row = '-1';
+          input.dataset.col = c;
+          input.addEventListener('input', (e) => {
+            headers[c] = e.target.value;
+            updateOutput();
+          });
+          input.addEventListener('keydown', handleCellKeydown);
+
+          th.appendChild(alignBtn);
+          th.appendChild(input);
+          headRow.appendChild(th);
+        }
+        tableHead.appendChild(headRow);
+
+        // Data rows
+        for (let r = 0; r < rows; r++) {
+          const tr = document.createElement('tr');
+          for (let c = 0; c < cols; c++) {
+            const td = document.createElement('td');
+            const input = document.createElement('input');
+            input.type = 'text';
+            input.value = data[r][c];
+            input.className = 'cell-input';
+            input.dataset.row = r;
+            input.dataset.col = c;
+            input.addEventListener('input', (e) => {
+              data[r][c] = e.target.value;
+              updateOutput();
+            });
+            input.addEventListener('keydown', handleCellKeydown);
+            td.appendChild(input);
+            tr.appendChild(td);
+          }
+          tableBody.appendChild(tr);
+        }
+      }
+
+      function handleCellKeydown(e) {
+        const r = parseInt(e.target.dataset.row);
+        const c = parseInt(e.target.dataset.col);
+
+        if (e.key === 'Tab') {
+          e.preventDefault();
+          let nextR = r;
+          let nextC = c + (e.shiftKey ? -1 : 1);
+          if (nextC >= cols) { nextC = 0; nextR++; }
+          if (nextC < 0) { nextC = cols - 1; nextR--; }
+          if (nextR >= rows) nextR = -1;
+          if (nextR < -1) nextR = rows - 1;
+          const selector = '.cell-input[data-row="' + nextR + '"][data-col="' + nextC + '"]';
+          const next = document.querySelector(selector);
+          if (next) next.focus();
+        } else if (e.key === 'Enter' && r === rows - 1) {
+          e.preventDefault();
+          addRow();
+          setTimeout(() => {
+            const selector = '.cell-input[data-row="' + rows + '"][data-col="0"]';
+            const next = document.querySelector(selector);
+            if (next) next.focus();
+          }, 0);
+        }
+      }
+
+      function addRow() {
+        rows++;
+        data.push(new Array(cols).fill(''));
+        rowCountEl.textContent = rows;
+        buildTable();
+        updateOutput();
+      }
+
+      function removeRow() {
+        if (rows <= 1) return;
+        rows--;
+        data.pop();
+        rowCountEl.textContent = rows;
+        buildTable();
+        updateOutput();
+      }
+
+      function addCol() {
+        cols++;
+        headers.push('Header ' + cols);
+        alignments.push('left');
+        for (let r = 0; r < rows; r++) {
+          data[r].push('');
+        }
+        colCountEl.textContent = cols;
+        buildTable();
+        updateOutput();
+      }
+
+      function removeCol() {
+        if (cols <= 1) return;
+        cols--;
+        headers.pop();
+        alignments.pop();
+        for (let r = 0; r < rows; r++) {
+          data[r].pop();
+        }
+        colCountEl.textContent = cols;
+        buildTable();
+        updateOutput();
+      }
+
+      function generateMarkdown(pretty) {
+        const allRows = [headers, ...data];
+        const colWidths = [];
+
+        if (pretty) {
+          for (let c = 0; c < cols; c++) {
+            let max = 3; // minimum separator width
+            for (const row of allRows) {
+              max = Math.max(max, (row[c] || '').length);
+            }
+            colWidths.push(max);
+          }
+        }
+
+        function padCell(text, colIdx) {
+          if (!pretty) return ' ' + (text || '') + ' ';
+          const w = colWidths[colIdx];
+          const t = text || '';
+          const align = alignments[colIdx];
+          if (align === 'center') {
+            const totalPad = w - t.length;
+            const left = Math.floor(totalPad / 2);
+            const right = totalPad - left;
+            return ' ' + ' '.repeat(left) + t + ' '.repeat(right) + ' ';
+          } else if (align === 'right') {
+            return ' ' + t.padStart(w) + ' ';
+          }
+          return ' ' + t.padEnd(w) + ' ';
+        }
+
+        function makeSeparator(colIdx) {
+          const w = pretty ? colWidths[colIdx] : 3;
+          const dashes = '-'.repeat(w);
+          const align = alignments[colIdx];
+          if (align === 'center') return ':' + dashes + ':';
+          if (align === 'right') return '-' + dashes + ':';
+          return ':' + dashes + '-';
+        }
+
+        const lines = [];
+        // Header
+        lines.push('|' + headers.map((h, i) => padCell(h, i)).join('|') + '|');
+        // Separator
+        lines.push('|' + alignments.map((_, i) => ' ' + makeSeparator(i) + ' ').join('|') + '|');
+        // Data rows
+        for (const row of data) {
+          lines.push('|' + row.map((cell, i) => padCell(cell, i)).join('|') + '|');
+        }
+
+        return lines.join('\n');
+      }
+
+      function generateHTML() {
+        let html = '<table>\n  <thead>\n    <tr>\n';
+        for (let c = 0; c < cols; c++) {
+          const align = alignments[c] !== 'left' ? ' style="text-align: ' + alignments[c] + ';"' : '';
+          html += '      <th' + align + '>' + escapeHTML(headers[c]) + '</th>\n';
+        }
+        html += '    </tr>\n  </thead>\n  <tbody>\n';
+        for (const row of data) {
+          html += '    <tr>\n';
+          for (let c = 0; c < cols; c++) {
+            const align = alignments[c] !== 'left' ? ' style="text-align: ' + alignments[c] + ';"' : '';
+            html += '      <td' + align + '>' + escapeHTML(row[c]) + '</td>\n';
+          }
+          html += '    </tr>\n';
+        }
+        html += '  </tbody>\n</table>';
+        return html;
+      }
+
+      function generateCSV() {
+        const allRows = [headers, ...data];
+        return allRows.map(row =>
+          row.map(cell => {
+            const val = cell || '';
+            if (val.includes(',') || val.includes('"') || val.includes('\n')) {
+              return '"' + val.replace(/"/g, '""') + '"';
+            }
+            return val;
+          }).join(',')
+        ).join('\n');
+      }
+
+      function escapeHTML(str) {
+        const div = document.createElement('div');
+        div.textContent = str || '';
+        return div.innerHTML;
+      }
+
+      function updateOutput() {
+        const md = generateMarkdown(optPretty.checked);
+        outputEl.textContent = md;
+        statsEl.textContent = cols + ' columns · ' + (rows + 1) + ' rows · ' + md.length + ' chars';
+      }
+
+      function importData(text) {
+        const lines = text.trim().split('\n').filter(l => l.trim());
+        if (lines.length === 0) return;
+
+        // Detect delimiter: tab vs comma
+        const firstLine = lines[0];
+        const delimiter = firstLine.includes('\t') ? '\t' : ',';
+
+        function parseLine(line) {
+          if (delimiter === '\t') return line.split('\t').map(s => s.trim());
+          // Simple CSV parse
+          const cells = [];
+          let current = '';
+          let inQuotes = false;
+          for (let i = 0; i < line.length; i++) {
+            const ch = line[i];
+            if (inQuotes) {
+              if (ch === '"' && line[i + 1] === '"') {
+                current += '"';
+                i++;
+              } else if (ch === '"') {
+                inQuotes = false;
+              } else {
+                current += ch;
+              }
+            } else {
+              if (ch === '"') {
+                inQuotes = true;
+              } else if (ch === ',') {
+                cells.push(current.trim());
+                current = '';
+              } else {
+                current += ch;
+              }
+            }
+          }
+          cells.push(current.trim());
+          return cells;
+        }
+
+        const parsed = lines.map(parseLine);
+        const maxCols = Math.max(...parsed.map(r => r.length));
+
+        // Pad rows to same length
+        for (const row of parsed) {
+          while (row.length < maxCols) row.push('');
+        }
+
+        headers = parsed[0] || [];
+        data = parsed.slice(1);
+        if (data.length === 0) data = [new Array(maxCols).fill('')];
+        cols = maxCols;
+        rows = data.length;
+        alignments = new Array(cols).fill('left');
+
+        colCountEl.textContent = cols;
+        rowCountEl.textContent = rows;
+        buildTable();
+        updateOutput();
+      }
+
+      function clearTable() {
+        headers = [];
+        data = [];
+        for (let c = 0; c < cols; c++) headers.push('Header ' + (c + 1));
+        for (let r = 0; r < rows; r++) data.push(new Array(cols).fill(''));
+        alignments = new Array(cols).fill('left');
+        buildTable();
+        updateOutput();
+      }
+
+      // Event listeners
+      document.getElementById('btn-col-plus').addEventListener('click', addCol);
+      document.getElementById('btn-col-minus').addEventListener('click', removeCol);
+      document.getElementById('btn-row-plus').addEventListener('click', addRow);
+      document.getElementById('btn-row-minus').addEventListener('click', removeRow);
+      optPretty.addEventListener('change', updateOutput);
+
+      document.getElementById('btn-copy').addEventListener('click', () => {
+        const md = generateMarkdown(optPretty.checked);
+        navigator.clipboard.writeText(md).then(() => {
+          const btn = document.getElementById('btn-copy');
+          const orig = btn.textContent;
+          btn.textContent = 'Copied!';
+          setTimeout(() => { btn.textContent = orig; }, 1500);
+        });
+      });
+
+      document.getElementById('btn-export').addEventListener('click', () => {
+        const fmt = exportFormat.value;
+        let content, filename, mime;
+        if (fmt === 'html') {
+          content = generateHTML();
+          filename = 'table.html';
+          mime = 'text/html';
+        } else if (fmt === 'csv') {
+          content = generateCSV();
+          filename = 'table.csv';
+          mime = 'text/csv';
+        } else {
+          content = generateMarkdown(optPretty.checked);
+          filename = 'table.md';
+          mime = 'text/markdown';
+        }
+        const blob = new Blob([content], { type: mime });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = filename;
+        a.click();
+        URL.revokeObjectURL(url);
+      });
+
+      document.getElementById('btn-import').addEventListener('click', () => {
+        importPanel.style.display = importPanel.style.display === 'none' ? 'block' : 'none';
+      });
+
+      document.getElementById('btn-import-apply').addEventListener('click', () => {
+        const text = importTextarea.value;
+        if (text.trim()) {
+          importData(text);
+          importTextarea.value = '';
+          importPanel.style.display = 'none';
+        }
+      });
+
+      document.getElementById('btn-import-cancel').addEventListener('click', () => {
+        importTextarea.value = '';
+        importPanel.style.display = 'none';
+      });
+
+      document.getElementById('btn-clear').addEventListener('click', clearTable);
+
+      // Initialize
+      buildTable();
+      updateOutput();
+    });
+  </script>
+
+  <style is:inline>
+    .page-content { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem; }
+    .hero { text-align: center; margin-bottom: 2.5rem; }
+    .hero h1 { font-size: 2.5rem; font-weight: 800; margin-bottom: 0.5rem; color: var(--text-primary); }
+    .hero p { color: var(--text-secondary); font-size: 1.1rem; }
+
+    .card { background: var(--card-bg); border: 1px solid var(--border-color, #2a2418); border-radius: 12px; padding: 2rem; }
+    .sr-only { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); border: 0; }
+
+    .toolbar { display: flex; flex-wrap: wrap; align-items: center; gap: 1.5rem; margin-bottom: 1.5rem; }
+    .toolbar-group { display: flex; align-items: center; gap: 0.5rem; }
+    .toolbar-label { font-weight: 600; font-size: 0.9rem; color: var(--text-primary); }
+    .count-display { font-size: 1rem; font-weight: 700; color: var(--accent-color, #D4A574); min-width: 1.5rem; text-align: center; }
+    .btn-small { width: 30px; height: 30px; border-radius: 6px; border: 1px solid var(--border-color, #2a2418); background: var(--bg-color, #0a0806); color: var(--text-primary); font-size: 1.1rem; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: border-color 0.2s; line-height: 1; }
+    .btn-small:hover { border-color: var(--accent-color, #D4A574); color: var(--accent-color, #D4A574); }
+
+    .toggle-label { display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; color: var(--text-secondary); cursor: pointer; }
+    .toggle-label input[type="checkbox"] { accent-color: var(--accent-color, #D4A574); width: 16px; height: 16px; cursor: pointer; }
+
+    .table-wrapper { overflow-x: auto; margin-bottom: 1.5rem; border: 1px solid var(--border-color, #2a2418); border-radius: 8px; }
+    #edit-table { width: 100%; border-collapse: collapse; }
+    #edit-table th, #edit-table td { border: 1px solid var(--border-color, #2a2418); padding: 0; }
+    #edit-table th { background: color-mix(in srgb, var(--accent-color, #D4A574) 10%, var(--bg-color, #0a0806)); }
+    #edit-table th { position: relative; }
+
+    .align-btn { position: absolute; top: 2px; right: 2px; width: 22px; height: 22px; border: none; background: transparent; color: var(--text-secondary); font-size: 0.7rem; cursor: pointer; border-radius: 4px; padding: 0; display: flex; align-items: center; justify-content: center; opacity: 0.6; transition: opacity 0.2s; }
+    .align-btn:hover { opacity: 1; background: var(--border-color, #2a2418); }
+
+    .cell-input { width: 100%; padding: 0.55rem 0.65rem; border: none; background: transparent; color: var(--text-primary); font-size: 0.9rem; font-family: inherit; box-sizing: border-box; outline: none; }
+    .cell-input:focus { background: color-mix(in srgb, var(--accent-color, #D4A574) 8%, transparent); }
+    .header-input { font-weight: 600; padding-right: 1.75rem; }
+
+    .actions-row { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-bottom: 1.5rem; align-items: center; }
+    .btn-primary, .btn-secondary { padding: 0.65rem 1.5rem; border-radius: 8px; font-size: 0.95rem; font-weight: 600; cursor: pointer; border: 1px solid transparent; transition: all 0.2s; }
+    .btn-primary { background: var(--accent-color, #D4A574); color: #0a0806; border-color: var(--accent-color, #D4A574); }
+    .btn-primary:hover { opacity: 0.9; }
+    .btn-secondary { background: transparent; color: var(--text-primary); border-color: var(--border-color, #2a2418); }
+    .btn-secondary:hover { border-color: var(--accent-color, #D4A574); color: var(--accent-color, #D4A574); }
+
+    .export-group { display: flex; gap: 0; }
+    .export-group select { padding: 0.65rem 0.75rem; border-radius: 8px 0 0 8px; border: 1px solid var(--border-color, #2a2418); background: var(--bg-color, #0a0806); color: var(--text-primary); font-size: 0.9rem; border-right: none; }
+    .export-group select:focus { outline: none; border-color: var(--accent-color, #D4A574); }
+    .export-group .btn-secondary { border-radius: 0 8px 8px 0; }
+
+    .import-panel { margin-bottom: 1.5rem; padding: 1.25rem; background: var(--bg-color, #0a0806); border: 1px solid var(--border-color, #2a2418); border-radius: 8px; }
+    .import-panel label { display: block; margin-bottom: 0.5rem; font-weight: 600; font-size: 0.9rem; color: var(--text-primary); }
+    .import-panel textarea { width: 100%; padding: 0.75rem; border: 1px solid var(--border-color, #2a2418); border-radius: 6px; background: var(--card-bg); color: var(--text-primary); font-family: monospace; font-size: 0.85rem; resize: vertical; box-sizing: border-box; }
+    .import-panel textarea:focus { outline: none; border-color: var(--accent-color, #D4A574); }
+    .import-actions { display: flex; gap: 0.5rem; margin-top: 0.75rem; }
+
+    .output-area { border: 1px solid var(--border-color, #2a2418); border-radius: 8px; background: var(--bg-color, #0a0806); overflow: hidden; }
+    .output-header { display: flex; justify-content: space-between; align-items: center; padding: 0.75rem 1rem; border-bottom: 1px solid var(--border-color, #2a2418); }
+    .output-title { font-weight: 600; font-size: 0.9rem; color: var(--text-primary); }
+    .output-stats-inline { font-size: 0.8rem; color: var(--text-secondary); }
+    .output-text { padding: 1rem; font-size: 0.85rem; color: var(--text-primary); line-height: 1.6; white-space: pre; word-break: break-word; overflow-x: auto; max-height: 400px; overflow-y: auto; min-height: 60px; margin: 0; font-family: monospace; }
+
+    .content-section { margin-top: 2rem; }
+    .content-section h2 { font-size: 1.5rem; font-weight: 700; margin-bottom: 1rem; color: var(--text-primary); }
+    .content-section h3 { font-size: 1.15rem; font-weight: 600; margin-top: 1.25rem; margin-bottom: 0.5rem; color: var(--text-primary); }
+    .content-section p { color: var(--text-secondary); line-height: 1.7; margin-bottom: 0.75rem; }
+    .content-section code { background: var(--bg-color, #0a0806); padding: 0.15rem 0.4rem; border-radius: 4px; font-size: 0.85em; color: var(--accent-color, #D4A574); }
+
+    .faq-item { border-bottom: 1px solid var(--border-color, #2a2418); padding-bottom: 1.25rem; margin-bottom: 1.25rem; }
+    .faq-item:last-child { border-bottom: none; margin-bottom: 0; padding-bottom: 0; }
+    .faq-item h3 { margin-top: 0; }
+
+    .related-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1rem; }
+    .related-card { display: block; padding: 1.25rem; background: var(--bg-color, #0a0806); border: 1px solid var(--border-color, #2a2418); border-radius: 8px; text-decoration: none; transition: border-color 0.2s; }
+    .related-card:hover { border-color: var(--accent-color, #D4A574); }
+    .related-card h3 { font-size: 1rem; font-weight: 600; color: var(--text-primary); margin: 0 0 0.4rem; }
+    .related-card p { font-size: 0.85rem; color: var(--text-secondary); margin: 0; line-height: 1.4; }
+
+    @media (max-width: 600px) {
+      .toolbar { flex-direction: column; align-items: flex-start; gap: 0.75rem; }
+      .actions-row { flex-direction: column; }
+      .btn-primary, .btn-secondary { width: 100%; text-align: center; }
+      .export-group { width: 100%; }
+      .export-group select { flex: 1; }
+      .export-group .btn-secondary { flex: 1; }
+    }
+  </style>
+</SiteLayout>
