@@ -35,6 +35,22 @@ const SITE_MAP = {
   'thenookienook.com': 'nookienook',
   'www.thenookienook.com': 'nookienook',
   'montrealjobs.photonbuilder.com': 'montrealjobs',
+  'bodycount.photonbuilder.com': 'bodycount',
+  'www.bodycount.photonbuilder.com': 'bodycount',
+  'sendnerds.photonbuilder.com': 'sendnerds',
+  'www.sendnerds.photonbuilder.com': 'sendnerds',
+  'justonemoment.photonbuilder.com': 'justonemoment',
+  'www.justonemoment.photonbuilder.com': 'justonemoment',
+  'getthebag.photonbuilder.com': 'getthebag',
+  'www.getthebag.photonbuilder.com': 'getthebag',
+  'fixitwithducttape.photonbuilder.com': 'fixitwithducttape',
+  'www.fixitwithducttape.photonbuilder.com': 'fixitwithducttape',
+  'papyruspeople.photonbuilder.com': 'papyruspeople',
+  'www.papyruspeople.photonbuilder.com': 'papyruspeople',
+  'eeniemeenie.photonbuilder.com': 'eeniemeenie',
+  'www.eeniemeenie.photonbuilder.com': 'eeniemeenie',
+  'pleasestartplease.photonbuilder.com': 'pleasestartplease',
+  'www.pleasestartplease.photonbuilder.com': 'pleasestartplease',
 };
 
 // SEO redirects per site (from → to)

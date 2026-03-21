@@ -80,6 +80,47 @@ SITES = {
         "ga": "properties/528386310",
         "domain": "photonbuilder.com",
     },
+    # Subsites — GA/GSC properties TBD after setup
+    "bodycount": {
+        "gsc": "sc-domain:bodycount.photonbuilder.com",
+        "ga": None,
+        "domain": "bodycount.photonbuilder.com",
+    },
+    "sendnerds": {
+        "gsc": "sc-domain:sendnerds.photonbuilder.com",
+        "ga": None,
+        "domain": "sendnerds.photonbuilder.com",
+    },
+    "justonemoment": {
+        "gsc": "sc-domain:justonemoment.photonbuilder.com",
+        "ga": None,
+        "domain": "justonemoment.photonbuilder.com",
+    },
+    "getthebag": {
+        "gsc": "sc-domain:getthebag.photonbuilder.com",
+        "ga": None,
+        "domain": "getthebag.photonbuilder.com",
+    },
+    "fixitwithducttape": {
+        "gsc": "sc-domain:fixitwithducttape.photonbuilder.com",
+        "ga": None,
+        "domain": "fixitwithducttape.photonbuilder.com",
+    },
+    "papyruspeople": {
+        "gsc": "sc-domain:papyruspeople.photonbuilder.com",
+        "ga": None,
+        "domain": "papyruspeople.photonbuilder.com",
+    },
+    "eeniemeenie": {
+        "gsc": "sc-domain:eeniemeenie.photonbuilder.com",
+        "ga": None,
+        "domain": "eeniemeenie.photonbuilder.com",
+    },
+    "pleasestartplease": {
+        "gsc": "sc-domain:pleasestartplease.photonbuilder.com",
+        "ga": None,
+        "domain": "pleasestartplease.photonbuilder.com",
+    },
 }
 
 GOG_CREDS = Path(os.path.expanduser("~/Library/Application Support/gogcli/credentials.json"))
@@ -349,7 +390,7 @@ def main():
             if result:
                 gsc_file = f"gsc/{site_id}/{today}.json"
 
-        if not gsc_only:
+        if not gsc_only and config.get("ga"):
             result = pull_ga(creds, site_id, config)
             if result:
                 ga_file = f"ga/{site_id}/{today}.json"

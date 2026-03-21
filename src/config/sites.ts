@@ -136,15 +136,15 @@ export const sites: Record<string, SiteConfig> = {
 sites['bodycount'] = {
   id: 'bodycount',
   name: 'Body Count',
-  domain: 'photonbuilder.com',
+  domain: 'bodycount.photonbuilder.com',
   accent: '#E05A5A',
   theme: { bg: '#060a12', cardBg: '#0a1020', border: '#152040', textPrimary: '#e2e8f0', textSecondary: '#94a3b8' },
   gaId: 'G-CYV604162T',
   nav: [
-    { label: 'Calculators', href: '/bodycount/#tools' },
-    { label: 'Studies', href: '/bodycount/#studies' },
-    { label: 'Guides', href: '/bodycount/#guides' },
-    { label: 'Lists', href: '/bodycount/#lists' },
+    { label: 'Calculators', href: '/#tools' },
+    { label: 'Studies', href: '/#studies' },
+    { label: 'Guides', href: '/#guides' },
+    { label: 'Lists', href: '/#lists' },
   ],
   footer: { text: '© 2026 Body Count', gabVentures: true },
   newsletter: { emoji: '🔍', title: 'Weekly True Crime Brief', subtitle: 'Data, stats & analysis. No spam.' },
@@ -169,13 +169,13 @@ sites['nookienook'] = {
 sites['getthebag'] = {
   id: 'getthebag',
   name: 'Get The Bag',
-  domain: 'photonbuilder.com',
+  domain: 'getthebag.photonbuilder.com',
   accent: '#3B82F6',
   theme: { bg: '#060a12', cardBg: '#0a1020', border: '#152040', textPrimary: '#e2e8f0', textSecondary: '#94a3b8' },
   gaId: 'G-CYV604162T',
   nav: [
-    { label: 'Tools', href: '/getthebag/#tools' },
-    { label: 'Guides', href: '/getthebag/#guides' },
+    { label: 'Tools', href: '/#tools' },
+    { label: 'Guides', href: '/#guides' },
   ],
   footer: { text: '© 2026 Get The Bag', gabVentures: true },
 };
@@ -183,13 +183,13 @@ sites['getthebag'] = {
 sites['sendnerds'] = {
   id: 'sendnerds',
   name: 'Send Nerds',
-  domain: 'photonbuilder.com',
+  domain: 'sendnerds.photonbuilder.com',
   accent: '#3B82F6',
   theme: { bg: '#060812', cardBg: '#0a1020', border: '#152040', textPrimary: '#e2e8f0', textSecondary: '#94a3b8' },
   gaId: 'G-CYV604162T',
   nav: [
-    { label: 'Calculators', href: '/sendnerds/#tools' },
-    { label: 'Guides', href: '/sendnerds/#guides' },
+    { label: 'Calculators', href: '/#tools' },
+    { label: 'Guides', href: '/#guides' },
   ],
   footer: { text: '© 2026 Send Nerds', gabVentures: true },
 };
@@ -197,13 +197,13 @@ sites['sendnerds'] = {
 sites['justonemoment'] = {
   id: 'justonemoment',
   name: 'Just One Moment',
-  domain: 'photonbuilder.com',
+  domain: 'justonemoment.photonbuilder.com',
   accent: '#F59E0B',
   theme: { bg: '#060812', cardBg: '#0a1020', border: '#152040', textPrimary: '#e2e8f0', textSecondary: '#94a3b8' },
   gaId: 'G-CYV604162T',
   nav: [
-    { label: 'Timers', href: '/justonemoment/#tools' },
-    { label: 'Calculators', href: '/justonemoment/#calculators' },
+    { label: 'Timers', href: '/#tools' },
+    { label: 'Calculators', href: '/#calculators' },
   ],
   footer: { text: '© 2026 Just One Moment', gabVentures: true },
 };
@@ -211,13 +211,13 @@ sites['justonemoment'] = {
 sites['fixitwithducttape'] = {
   id: 'fixitwithducttape',
   name: 'Fix It With Duct Tape',
-  domain: 'photonbuilder.com',
+  domain: 'fixitwithducttape.photonbuilder.com',
   accent: '#A0A0A0',
   theme: { bg: '#0a0a0a', cardBg: '#141414', border: '#252525', textPrimary: '#e2e8f0', textSecondary: '#94a3b8' },
   gaId: 'G-CYV604162T',
   nav: [
-    { label: 'Reviews', href: '/fixitwithducttape/#tools' },
-    { label: 'Comparisons', href: '/fixitwithducttape/#guides' },
+    { label: 'Reviews', href: '/#tools' },
+    { label: 'Comparisons', href: '/#guides' },
   ],
   footer: { text: '© 2026 Fix It With Duct Tape', gabVentures: true },
 };
@@ -225,13 +225,13 @@ sites['fixitwithducttape'] = {
 sites['papyruspeople'] = {
   id: 'papyruspeople',
   name: 'Papyrus People',
-  domain: 'photonbuilder.com',
+  domain: 'papyruspeople.photonbuilder.com',
   accent: '#D4A574',
   theme: { bg: '#0a0806', cardBg: '#12100c', border: '#2a2418', textPrimary: '#e8e0d0', textSecondary: '#a09880' },
   gaId: 'G-CYV604162T',
   nav: [
-    { label: 'Translators', href: '/papyruspeople/#tools' },
-    { label: 'Fonts', href: '/papyruspeople/#guides' },
+    { label: 'Translators', href: '/#tools' },
+    { label: 'Fonts', href: '/#guides' },
   ],
   footer: { text: '© 2026 Papyrus People', gabVentures: true },
 };
@@ -239,13 +239,13 @@ sites['papyruspeople'] = {
 sites['eeniemeenie'] = {
   id: 'eeniemeenie',
   name: 'Eenie Meenie',
-  domain: 'photonbuilder.com',
+  domain: 'eeniemeenie.photonbuilder.com',
   accent: '#E040FB',
   theme: { bg: '#0a060c', cardBg: '#140e18', border: '#2a1e34', textPrimary: '#e8e0f0', textSecondary: '#a090b8' },
   gaId: 'G-CYV604162T',
   nav: [
-    { label: 'Generators', href: '/eeniemeenie/#tools' },
-    { label: 'Spinners', href: '/eeniemeenie/#guides' },
+    { label: 'Generators', href: '/#tools' },
+    { label: 'Spinners', href: '/#guides' },
   ],
   footer: { text: '© 2026 Eenie Meenie', gabVentures: true },
 };
@@ -253,13 +253,13 @@ sites['eeniemeenie'] = {
 sites['pleasestartplease'] = {
   id: 'pleasestartplease',
   name: 'Please Start Please',
-  domain: 'photonbuilder.com',
+  domain: 'pleasestartplease.photonbuilder.com',
   accent: '#EF4444',
   theme: { bg: '#0a0606', cardBg: '#141010', border: '#2a1a1a', textPrimary: '#e8e0e0', textSecondary: '#a09090' },
   gaId: 'G-CYV604162T',
   nav: [
-    { label: 'Calculators', href: '/pleasestartplease/#tools' },
-    { label: 'Guides', href: '/pleasestartplease/#guides' },
+    { label: 'Calculators', href: '/#tools' },
+    { label: 'Guides', href: '/#guides' },
   ],
   footer: { text: '© 2026 Please Start Please', gabVentures: true },
 };
