@@ -1,9 +1,40 @@
 ---
 import SiteLayout from '../../../layouts/SiteLayout.astro';
-export const meta = { title: 'Random Wheel Spinner', description: 'Can\'t decide? Add your options and spin the wheel. Who knows what fate has in store for you next.', category: 'tools', published: '2026-03-15' };
+export const meta = { title: 'Wheel Spinner — Spin the Wheel to Decide Online', description: 'Customizable spinning wheel for making decisions. Add up to 20 options, spin with satisfying animation, save configurations. Includes preset wheels for restaurants, movies, workouts & more.', category: 'tool', published: '2026-03-21' };
 const SITE_ID = 'eeniemeenie';
+
+const faqItems = [
+  { q: 'How does the wheel spinner work?', a: 'The wheel uses your browser\'s cryptographic random number generator (crypto.getRandomValues) to select a truly random stopping point. The spinning animation is purely visual — the result is determined the moment you click Spin, then the wheel animates to land on that result with a smooth CSS easing curve.' },
+  { q: 'Can I save my custom wheel?', a: 'Yes! Click the "Save Wheel" button to store your current wheel configuration (options, colors, and weights) to your browser\'s localStorage. You can save multiple named wheels and load them anytime. Your data never leaves your device.' },
+  { q: 'What are weighted segments?', a: 'By default, every option has equal probability. When you enable weighted mode, you can assign a numeric weight to each option. Higher weights mean larger segments and higher chances of being selected. For example, if option A has weight 3 and option B has weight 1, A is three times more likely to be picked.' },
+  { q: 'Can I use the wheel on mobile?', a: 'Absolutely. The wheel is fully responsive and touch-friendly. Tap the Spin button or tap directly on the wheel to spin it. The animation and sound effects work on all modern mobile browsers.' },
+  { q: 'What preset wheels are available?', a: 'Four built-in presets are included: Restaurant Picker (10 cuisine types), Movie Genre (8 genres), Workout Type (8 exercises), and Who Does the Dishes (common household names). You can load any preset with one click and customize it further.' },
+];
+
+const faqSchema = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": faqItems.map(item => ({
+    "@type": "Question",
+    "name": item.q,
+    "acceptedAnswer": { "@type": "Answer", "text": item.a }
+  }))
+};
+
+const webAppSchema = {
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "Wheel Spinner — Decision Spinner",
+  "url": "https://eeniemeenie.photonbuilder.com/wheel-spinner",
+  "applicationCategory": "UtilityApplication",
+  "operatingSystem": "Any",
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+  "description": meta.description
+};
+
+const combinedSchema = [faqSchema, webAppSchema];
 ---
-<SiteLayout title={meta.title} description={meta.description} site={SITE_ID}>
+<SiteLayout title={meta.title} description={meta.description} site={SITE_ID} schema={combinedSchema} canonical="https://eeniemeenie.photonbuilder.com/wheel-spinner">
 <style is:inline>
 
   .page-content {
@@ -28,275 +59,1064 @@ const SITE_ID = 'eeniemeenie';
     max-width: 600px;
     margin: 0 auto;
   }
-  .wheel-layout {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 3rem;
-    align-items: start;
-  }
-  @media (max-width: 768px) {
-    .wheel-layout {
-      grid-template-columns: 1fr;
-    }
-  }
 
-  .wheel-section {
+  /* Wheel area */
+  .wheel-area {
     display: flex;
     flex-direction: column;
     align-items: center;
-  }
-
-  .wheel-container {
-    position: relative;
-    width: 320px;
-    height: 320px;
     margin-bottom: 2rem;
+    width: 100%;
+    max-width: 700px;
   }
-
+  .wheel-wrapper {
+    position: relative;
+    width: 340px;
+    height: 340px;
+    margin-bottom: 1.5rem;
+  }
+  @media (max-width: 480px) {
+    .wheel-wrapper { width: 280px; height: 280px; }
+  }
+  .wheel-canvas {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: filter 0.2s;
+  }
+  .wheel-canvas:hover { filter: brightness(1.05); }
   .wheel-pointer {
     position: absolute;
-    top: -15px;
+    top: -18px;
     left: 50%;
     transform: translateX(-50%);
     width: 0;
     height: 0;
-    border-left: 15px solid transparent;
-    border-right: 15px solid transparent;
-    border-top: 30px solid var(--text-primary);
-    z-index: 10;
-    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.5));
+    border-left: 16px solid transparent;
+    border-right: 16px solid transparent;
+    border-top: 30px solid var(--accent-color);
+    filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+    z-index: 2;
   }
-
-  .wheel {
-    width: 100%;
-    height: 100%;
+  .wheel-center {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 40px;
+    height: 40px;
     border-radius: 50%;
-    border: 4px solid var(--border-color);
-    box-shadow: 0 0 20px rgba(0,0,0,0.3);
-    transition: transform 4s cubic-bezier(0.1, 0.8, 0.2, 1);
-    background: conic-gradient(from 0deg, var(--card-bg) 0deg, var(--card-bg) 360deg);
+    background: var(--card-bg);
+    border: 3px solid var(--accent-color);
+    z-index: 2;
+    pointer-events: none;
   }
 
-  .spin-btn {
-    width: 200px;
-    font-size: 1.5rem;
-    letter-spacing: 2px;
-    margin-bottom: 1.5rem;
-  }
-
-  .btn-primary {
+  /* Result display */
+  .result-display {
+    min-height: 70px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
     padding: 1rem;
+    width: 100%;
+  }
+  .result-text {
+    font-size: 2rem;
+    font-weight: 900;
+    color: var(--accent-color);
+    text-align: center;
+    line-height: 1.2;
+  }
+  .result-text.placeholder {
+    color: var(--text-secondary);
+    font-size: 1.3rem;
+    font-weight: 400;
+  }
+  .result-text.animate {
+    animation: resultPop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  }
+  @keyframes resultPop {
+    0% { transform: scale(0.3); opacity: 0; }
+    60% { transform: scale(1.1); }
+    100% { transform: scale(1); opacity: 1; }
+  }
+
+  /* Spin button */
+  .btn-primary {
+    padding: 1rem 2.5rem;
     background-color: var(--accent-color);
     color: #fff;
     border: none;
     border-radius: 8px;
-    font-size: 1.1rem;
+    font-size: 1.3rem;
     font-weight: 800;
     cursor: pointer;
     transition: opacity 0.2s, transform 0.1s;
-    text-align: center;
+    letter-spacing: 2px;
+    text-transform: uppercase;
   }
-  .btn-primary:hover {
-    opacity: 0.9;
-  }
-  .btn-primary:active {
-    transform: scale(0.98);
-  }
-  .btn-primary:disabled {
-    opacity: 0.5;
-    cursor: not-allowed;
+  .btn-primary:hover { opacity: 0.9; }
+  .btn-primary:active { transform: scale(0.97); }
+  .btn-primary:disabled { opacity: 0.5; cursor: not-allowed; }
+  .spin-hint {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-top: 0.75rem;
   }
 
-  .btn-secondary {
+  /* Options panel */
+  .options-panel {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.5rem;
     width: 100%;
-    padding: 0.8rem;
-    background-color: transparent;
-    border: 1px solid var(--accent-color);
-    color: var(--accent-color);
-    border-radius: 8px;
-    font-size: 1rem;
+    max-width: 700px;
+    margin-bottom: 1.5rem;
+  }
+  .panel-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  .panel-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--text-primary);
+  }
+  .panel-actions {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+  }
+  .btn-small {
+    padding: 0.4rem 0.8rem;
+    background: var(--bg-color);
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    border-radius: 6px;
+    font-size: 0.82rem;
     font-weight: 600;
     cursor: pointer;
     transition: all 0.2s;
   }
-  .btn-secondary:hover {
-    background-color: rgba(224, 64, 251, 0.1);
-  }
+  .btn-small:hover { border-color: var(--accent-color); color: var(--text-primary); }
+  .btn-small.active { border-color: var(--accent-color); color: var(--accent-color); background: rgba(224, 64, 251, 0.08); }
 
-  .winner-display {
-    min-height: 4rem;
+  /* Option items */
+  .options-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    margin-bottom: 1rem;
+    max-height: 400px;
+    overflow-y: auto;
+  }
+  .option-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+  }
+  .option-color {
+    width: 28px;
+    height: 28px;
+    border-radius: 6px;
+    border: 1px solid var(--border-color);
+    cursor: pointer;
+    flex-shrink: 0;
+    padding: 0;
+  }
+  .option-name {
+    flex: 1;
+    background: var(--bg-color);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    padding: 0.5rem 0.65rem;
+    border-radius: 6px;
+    font-size: 0.95rem;
+    font-family: var(--font-body);
+  }
+  .option-name:focus { outline: none; border-color: var(--accent-color); }
+  .option-weight {
+    width: 60px;
+    background: var(--bg-color);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    padding: 0.5rem;
+    border-radius: 6px;
+    font-size: 0.9rem;
+    text-align: center;
+    font-family: var(--font-body);
+    display: none;
+  }
+  .option-weight:focus { outline: none; border-color: var(--accent-color); }
+  .option-weight.visible { display: block; }
+  .option-remove {
+    width: 28px;
+    height: 28px;
+    background: none;
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    border-radius: 6px;
+    cursor: pointer;
+    font-size: 1rem;
+    line-height: 1;
+    flex-shrink: 0;
+    transition: all 0.2s;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 2rem;
-    font-weight: 800;
-    color: var(--accent-color);
-    text-align: center;
-    word-break: break-word;
-    width: 100%;
   }
-  .winner-display.celebrate {
-    animation: bounceIn 0.6s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  .option-remove:hover { border-color: #e74c3c; color: #e74c3c; }
+  .add-option-row {
+    display: flex;
+    gap: 0.5rem;
   }
-  @keyframes bounceIn {
-    0% { transform: scale(0.5); opacity: 0; }
-    50% { transform: scale(1.1); }
-    100% { transform: scale(1); opacity: 1; }
-  }
-
-  .input-card {
-    margin: 0;
-  }
-  .input-help {
-    font-size: 0.9rem;
-    margin-bottom: 0.5rem;
-    color: var(--text-secondary);
-  }
-  .entries-input {
-    width: 100%;
-    background-color: var(--bg-color);
+  .add-option-input {
+    flex: 1;
+    background: var(--bg-color);
     border: 1px solid var(--border-color);
     color: var(--text-primary);
+    padding: 0.5rem 0.65rem;
+    border-radius: 6px;
+    font-size: 0.95rem;
     font-family: var(--font-body);
-    font-size: 1rem;
-    padding: 0.75rem;
-    border-radius: 8px;
-    resize: vertical;
+  }
+  .add-option-input:focus { outline: none; border-color: var(--accent-color); }
+
+  /* Settings row */
+  .option-toggle {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    padding: 0.4rem 0.8rem;
+    background: var(--bg-color);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    font-size: 0.82rem;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s;
+    user-select: none;
+  }
+  .option-toggle:hover { border-color: var(--accent-color); color: var(--text-primary); }
+  .option-toggle.active { border-color: var(--accent-color); color: var(--accent-color); background: rgba(224, 64, 251, 0.08); }
+  .option-toggle input { display: none; }
+
+  /* Speed control */
+  .speed-control {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
     margin-bottom: 1rem;
   }
-  .entries-input:focus {
-    outline: none;
-    border-color: var(--accent-color);
+  .speed-label {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    font-weight: 600;
+    white-space: nowrap;
   }
+  .speed-slider {
+    flex: 1;
+    accent-color: var(--accent-color);
+    max-width: 200px;
+  }
+  .speed-value {
+    font-size: 0.85rem;
+    color: var(--text-primary);
+    font-weight: 600;
+    min-width: 35px;
+  }
+
+  /* Presets */
+  .presets-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+    margin-top: 2rem;
+    width: 100%;
+    max-width: 700px;
+  }
+  @media (max-width: 600px) {
+    .presets-grid { grid-template-columns: repeat(2, 1fr); }
+  }
+  .card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.25rem;
+  }
+  .card h3 {
+    color: var(--accent-color);
+    margin-bottom: 0.5rem;
+    font-size: 1rem;
+  }
+  .card p {
+    color: var(--text-secondary);
+    font-size: 0.82rem;
+    margin-bottom: 0.75rem;
+  }
+  .mode-generate-btn {
+    padding: 0.5rem 1rem;
+    background: var(--accent-color);
+    color: #fff;
+    border: none;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: opacity 0.2s;
+    width: 100%;
+  }
+  .mode-generate-btn:hover { opacity: 0.9; }
+
+  /* Save/Load */
+  .save-load-section {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 1rem;
+    flex-wrap: wrap;
+  }
+  .saved-wheels-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+    margin-top: 0.75rem;
+  }
+  .saved-wheel-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0.75rem;
+    background: var(--bg-color);
+    border-radius: 6px;
+    font-size: 0.85rem;
+  }
+  .saved-wheel-name {
+    color: var(--text-primary);
+    font-weight: 600;
+    cursor: pointer;
+    transition: color 0.2s;
+  }
+  .saved-wheel-name:hover { color: var(--accent-color); }
+  .saved-wheel-delete {
+    background: none;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    font-size: 0.9rem;
+    padding: 0.2rem;
+    transition: color 0.2s;
+  }
+  .saved-wheel-delete:hover { color: #e74c3c; }
+
+  /* History */
+  .history-section {
+    margin-top: 2rem;
+    width: 100%;
+    max-width: 700px;
+  }
+  .history-list {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+    max-height: 400px;
+    overflow-y: auto;
+  }
+  .history-entry {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.6rem 1rem;
+    background: var(--bg-color);
+    border-radius: 8px;
+    font-size: 0.85rem;
+  }
+  .history-nums {
+    color: var(--text-primary);
+    font-weight: 600;
+    word-break: break-all;
+  }
+  .history-meta {
+    color: var(--text-secondary);
+    font-size: 0.75rem;
+    white-space: nowrap;
+    margin-left: 1rem;
+  }
+  .history-empty {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    font-style: italic;
+    text-align: center;
+    padding: 1rem;
+  }
+
+  /* FAQ */
+  .faq-section {
+    margin-top: 3rem;
+    max-width: 700px;
+    width: 100%;
+  }
+  .faq-section h2 {
+    text-align: center;
+    margin-bottom: 1.5rem;
+    color: var(--accent-color);
+  }
+  .faq-item {
+    border-bottom: 1px solid var(--border-color);
+    padding: 1rem 0;
+  }
+  .faq-q {
+    font-weight: 700;
+    color: var(--text-primary);
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 1rem;
+  }
+  .faq-q::after {
+    content: '+';
+    font-size: 1.3rem;
+    color: var(--accent-color);
+    flex-shrink: 0;
+    transition: transform 0.2s;
+  }
+  .faq-item.open .faq-q::after {
+    content: '\2212';
+  }
+  .faq-a {
+    color: var(--text-secondary);
+    line-height: 1.6;
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease, padding 0.3s ease;
+    padding-top: 0;
+  }
+  .faq-item.open .faq-a {
+    max-height: 300px;
+    padding-top: 0.75rem;
+  }
+
+  /* Related */
+  .related-section {
+    margin-top: 3rem;
+    width: 100%;
+    max-width: 700px;
+  }
+  .related-section h2 {
+    text-align: center;
+    margin-bottom: 1.5rem;
+    color: var(--accent-color);
+  }
+  .related-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+  }
+  @media (max-width: 600px) {
+    .related-grid { grid-template-columns: 1fr; }
+  }
+  .related-link {
+    display: block;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    padding: 1.25rem;
+    text-decoration: none;
+    color: var(--text-primary);
+    transition: border-color 0.2s, transform 0.2s;
+  }
+  .related-link:hover { border-color: var(--accent-color); transform: translateY(-2px); }
+  .related-link h4 { margin-bottom: 0.4rem; }
+  .related-link p { font-size: 0.85rem; color: var(--text-secondary); margin: 0; }
 
 </style>
 <div class="page-content">
 
 <div class="hero">
-  <h1>Random Wheel Spinner</h1>
-  <p>Add your options, spin the wheel, and let fate decide.</p>
+  <h1>Wheel Spinner</h1>
+  <p>Add your options and let the wheel decide. Customizable, satisfying, and completely random.</p>
 </div>
 
 <div class="container">
-  <div class="wheel-layout">
-    <div class="wheel-section">
-      <div class="wheel-container">
-        <div class="wheel-pointer"></div>
-        <div id="wheel" class="wheel"></div>
-      </div>
-      <button id="btn-spin" class="btn-primary spin-btn">SPIN</button>
-      <div id="winner-display" class="winner-display"></div>
+
+  <!-- Wheel -->
+  <div class="wheel-area">
+    <div class="wheel-wrapper">
+      <div class="wheel-pointer"></div>
+      <canvas class="wheel-canvas" id="wheel-canvas" width="680" height="680"></canvas>
+      <div class="wheel-center"></div>
     </div>
 
-    <div class="input-section">
-      <div class="calculator-card input-card">
-        <h3>Entries</h3>
-        <p class="input-help">Enter one option per line</p>
-        <textarea id="wheel-entries" class="entries-input" rows="12">Yes
-No
-Maybe
-Try Again
-Definitely</textarea>
-        <button id="btn-update" class="btn-secondary">Update Wheel</button>
+    <div class="result-display">
+      <div class="result-text placeholder" id="result-text">Spin the wheel to decide!</div>
+    </div>
+
+    <button id="btn-spin" class="btn-primary">Spin</button>
+    <div class="spin-hint">or press <kbd>Space</kbd></div>
+  </div>
+
+  <!-- Options panel -->
+  <div class="options-panel">
+    <div class="panel-header">
+      <span class="panel-title">Wheel Options</span>
+      <div class="panel-actions">
+        <label class="option-toggle" id="opt-weighted"><input type="checkbox"> Weighted</label>
+        <label class="option-toggle active" id="opt-sound"><input type="checkbox" checked> Sound</label>
       </div>
+    </div>
+
+    <div class="speed-control">
+      <span class="speed-label">Spin Speed</span>
+      <input type="range" class="speed-slider" id="speed-slider" min="1" max="5" value="3">
+      <span class="speed-value" id="speed-value">3</span>
+    </div>
+
+    <div class="options-list" id="options-list"></div>
+
+    <div class="add-option-row">
+      <input type="text" class="add-option-input" id="add-option-input" placeholder="Type an option and press Enter" maxlength="50">
+      <button class="btn-small" id="btn-add-option">Add</button>
+    </div>
+
+    <div class="save-load-section">
+      <button class="btn-small" id="btn-save-wheel">Save Wheel</button>
+      <button class="btn-small" id="btn-clear-all">Clear All</button>
+    </div>
+    <div class="saved-wheels-list" id="saved-wheels-list"></div>
+  </div>
+
+  <!-- Presets -->
+  <div class="presets-grid">
+    <div class="card">
+      <h3>Restaurant Picker</h3>
+      <p>10 cuisine types to choose from.</p>
+      <button class="mode-generate-btn" data-preset="restaurant">Load Preset</button>
+    </div>
+    <div class="card">
+      <h3>Movie Genre</h3>
+      <p>8 genres for movie night.</p>
+      <button class="mode-generate-btn" data-preset="movie">Load Preset</button>
+    </div>
+    <div class="card">
+      <h3>Workout Type</h3>
+      <p>8 exercises to keep it fresh.</p>
+      <button class="mode-generate-btn" data-preset="workout">Load Preset</button>
+    </div>
+    <div class="card">
+      <h3>Who Does the Dishes</h3>
+      <p>Settle it fairly, no arguments.</p>
+      <button class="mode-generate-btn" data-preset="dishes">Load Preset</button>
     </div>
   </div>
-</div>
+
+  <!-- History -->
+  <div class="card history-section">
+    <h3>Spin History <span id="history-count" style="font-weight:400;color:var(--text-secondary);font-size:0.85rem;">(last 20)</span></h3>
+    <div id="history-list" class="history-list">
+      <div class="history-empty">No spins yet.</div>
+    </div>
+  </div>
+
+  <!-- FAQ -->
+  <div class="faq-section">
+    <h2>Frequently Asked Questions</h2>
+    {faqItems.map(item => (
+      <div class="faq-item">
+        <div class="faq-q">{item.q}</div>
+        <div class="faq-a">{item.a}</div>
+      </div>
+    ))}
+  </div>
+
+  <!-- Related pages -->
+  <div class="related-section">
+    <h2>More Random Tools</h2>
+    <div class="related-grid">
+      <a href="/eeniemeenie/random-number-generator" class="related-link">
+        <h4>Random Number Generator</h4>
+        <p>Generate truly random numbers in any range.</p>
+      </a>
+      <a href="/eeniemeenie/coin-flip" class="related-link">
+        <h4>Coin Flip</h4>
+        <p>Heads or tails? Flip a coin with realistic animation.</p>
+      </a>
+      <a href="/eeniemeenie/name-generator" class="related-link">
+        <h4>Name Generator</h4>
+        <p>Pick a random name from your list in one click.</p>
+      </a>
+    </div>
+  </div>
 
 </div>
+</div>
+
 <script is:inline>
+document.addEventListener('DOMContentLoaded', () => {
 
-  document.addEventListener('DOMContentLoaded', () => {
-    const wheel = document.getElementById('wheel');
-    const btnSpin = document.getElementById('btn-spin');
-    const btnUpdate = document.getElementById('btn-update');
-    const entriesInput = document.getElementById('wheel-entries');
-    const winnerDisplay = document.getElementById('winner-display');
+  const canvas = document.getElementById('wheel-canvas');
+  const ctx = canvas.getContext('2d');
+  const btnSpin = document.getElementById('btn-spin');
+  const resultText = document.getElementById('result-text');
+  const optionsList = document.getElementById('options-list');
+  const addInput = document.getElementById('add-option-input');
+  const speedSlider = document.getElementById('speed-slider');
+  const speedValue = document.getElementById('speed-value');
+  const historyListEl = document.getElementById('history-list');
+  const savedWheelsList = document.getElementById('saved-wheels-list');
 
-    let currentRotation = 0;
-    let isSpinning = false;
-    let entries = [];
+  const DEFAULT_COLORS = [
+    '#e040fb', '#7c4dff', '#00bcd4', '#ff5722', '#4caf50',
+    '#ff9800', '#e91e63', '#2196f3', '#8bc34a', '#ffc107',
+    '#9c27b0', '#00e676', '#ff6e40', '#448aff', '#69f0ae',
+    '#ffab40', '#ea80fc', '#18ffff', '#ff3d00', '#76ff03'
+  ];
 
-    // Palette for wheel segments
-    const colors = [
-      '#E040FB', '#8E24AA', '#5E35B1', '#3949AB', '#1E88E5',
-      '#039BE5', '#00ACC1', '#00897B', '#43A047', '#7CB342',
-      '#C0CA33', '#FDD835', '#FFB300', '#FB8C00', '#F4511E',
-      '#E53935', '#D81B60'
-    ];
+  const PRESETS = {
+    restaurant: { name: 'Restaurant Picker', items: ['Italian', 'Chinese', 'Mexican', 'Japanese', 'Indian', 'Thai', 'Mediterranean', 'Korean', 'Vietnamese', 'American'] },
+    movie: { name: 'Movie Genre', items: ['Action', 'Comedy', 'Drama', 'Horror', 'Sci-Fi', 'Romance', 'Thriller', 'Animation'] },
+    workout: { name: 'Workout Type', items: ['Running', 'Yoga', 'HIIT', 'Swimming', 'Cycling', 'Weight Lifting', 'Pilates', 'Boxing'] },
+    dishes: { name: 'Who Does the Dishes', items: ['Alex', 'Jordan', 'Sam', 'Taylor', 'Casey', 'Morgan'] }
+  };
 
-    function updateWheel() {
-      const rawEntries = entriesInput.value.split('\n').map(e => e.trim()).filter(e => e.length > 0);
-      entries = rawEntries.length > 0 ? rawEntries : ['Empty'];
+  let options = [
+    { name: 'Option 1', color: DEFAULT_COLORS[0], weight: 1 },
+    { name: 'Option 2', color: DEFAULT_COLORS[1], weight: 1 },
+    { name: 'Option 3', color: DEFAULT_COLORS[2], weight: 1 },
+    { name: 'Option 4', color: DEFAULT_COLORS[3], weight: 1 },
+  ];
 
-      const total = entries.length;
-      let gradientParts = [];
-      const anglePerSegment = 360 / total;
+  let isSpinning = false;
+  let currentAngle = 0;
+  let weighted = false;
+  let soundEnabled = true;
+  let spinSpeed = 3;
+  let history = [];
+  let audioCtx = null;
 
-      for (let i = 0; i < total; i++) {
-        const color = colors[i % colors.length];
-        const startAngle = i * anglePerSegment;
-        const endAngle = (i + 1) * anglePerSegment;
-        gradientParts.push(`${color} ${startAngle}deg ${endAngle}deg`);
+  // --- Audio ---
+  function initAudio() {
+    if (!audioCtx) {
+      try { audioCtx = new (window.AudioContext || window.webkitAudioContext)(); } catch(e) {}
+    }
+  }
+
+  function playTick() {
+    if (!soundEnabled || !audioCtx) return;
+    try {
+      const osc = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.frequency.value = 800 + Math.random() * 400;
+      osc.type = 'sine';
+      gain.gain.setValueAtTime(0.08, audioCtx.currentTime);
+      gain.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.05);
+      osc.start(audioCtx.currentTime);
+      osc.stop(audioCtx.currentTime + 0.05);
+    } catch(e) {}
+  }
+
+  function playWin() {
+    if (!soundEnabled || !audioCtx) return;
+    try {
+      const notes = [523, 659, 784];
+      notes.forEach((freq, i) => {
+        const osc = audioCtx.createOscillator();
+        const gain = audioCtx.createGain();
+        osc.connect(gain);
+        gain.connect(audioCtx.destination);
+        osc.frequency.value = freq;
+        osc.type = 'sine';
+        const t = audioCtx.currentTime + i * 0.12;
+        gain.gain.setValueAtTime(0.12, t);
+        gain.gain.exponentialRampToValueAtTime(0.001, t + 0.3);
+        osc.start(t);
+        osc.stop(t + 0.3);
+      });
+    } catch(e) {}
+  }
+
+  // --- Drawing ---
+  function getTotalWeight() {
+    if (!weighted) return options.length;
+    return options.reduce((sum, o) => sum + Math.max(1, o.weight || 1), 0);
+  }
+
+  function getSegmentAngles() {
+    const total = getTotalWeight();
+    const angles = [];
+    let start = 0;
+    for (let i = 0; i < options.length; i++) {
+      const w = weighted ? Math.max(1, options[i].weight || 1) : 1;
+      const sweep = (w / total) * Math.PI * 2;
+      angles.push({ start, sweep });
+      start += sweep;
+    }
+    return angles;
+  }
+
+  function drawWheel() {
+    const w = canvas.width;
+    const h = canvas.height;
+    const cx = w / 2;
+    const cy = h / 2;
+    const r = Math.min(cx, cy) - 8;
+
+    ctx.clearRect(0, 0, w, h);
+
+    if (options.length === 0) {
+      ctx.beginPath();
+      ctx.arc(cx, cy, r, 0, Math.PI * 2);
+      ctx.fillStyle = '#333';
+      ctx.fill();
+      ctx.strokeStyle = '#555';
+      ctx.lineWidth = 3;
+      ctx.stroke();
+      ctx.fillStyle = '#888';
+      ctx.font = '600 24px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('Add options below', cx, cy);
+      return;
+    }
+
+    const segments = getSegmentAngles();
+
+    segments.forEach((seg, i) => {
+      const startAngle = seg.start + currentAngle;
+      const endAngle = seg.start + seg.sweep + currentAngle;
+
+      // Segment fill
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.arc(cx, cy, r, startAngle, endAngle);
+      ctx.closePath();
+      ctx.fillStyle = options[i].color;
+      ctx.fill();
+
+      // Segment border
+      ctx.strokeStyle = 'rgba(0,0,0,0.15)';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+
+      // Text
+      const midAngle = startAngle + seg.sweep / 2;
+      const textR = r * 0.65;
+      const tx = cx + Math.cos(midAngle) * textR;
+      const ty = cy + Math.sin(midAngle) * textR;
+
+      ctx.save();
+      ctx.translate(tx, ty);
+      ctx.rotate(midAngle);
+
+      const maxLen = seg.sweep * r * 0.5;
+      let fontSize = Math.min(22, Math.max(11, seg.sweep * r * 0.08));
+      ctx.font = '700 ' + fontSize + 'px sans-serif';
+      let label = options[i].name;
+      if (ctx.measureText(label).width > maxLen && label.length > 8) {
+        label = label.substring(0, 7) + '\u2026';
       }
 
-      wheel.style.background = `conic-gradient(from 0deg, ${gradientParts.join(', ')})`;
+      ctx.fillStyle = '#fff';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.shadowColor = 'rgba(0,0,0,0.4)';
+      ctx.shadowBlur = 3;
+      ctx.fillText(label, 0, 0);
+      ctx.restore();
+    });
 
-      // Reset state
-      wheel.style.transition = 'none';
-      wheel.style.transform = `rotate(${currentRotation}deg)`;
-      winnerDisplay.textContent = '';
-      winnerDisplay.classList.remove('celebrate');
+    // Outer ring
+    ctx.beginPath();
+    ctx.arc(cx, cy, r, 0, Math.PI * 2);
+    ctx.strokeStyle = 'rgba(255,255,255,0.15)';
+    ctx.lineWidth = 4;
+    ctx.stroke();
+  }
+
+  // --- Spinning ---
+  function spin() {
+    if (isSpinning || options.length < 2) return;
+
+    initAudio();
+    isSpinning = true;
+    btnSpin.disabled = true;
+
+    // Pick random winner using crypto
+    const totalWeight = getTotalWeight();
+    const arr = new Uint32Array(1);
+    crypto.getRandomValues(arr);
+    const randVal = (arr[0] / 0xFFFFFFFF) * totalWeight;
+
+    let cumulative = 0;
+    let winnerIdx = 0;
+    for (let i = 0; i < options.length; i++) {
+      const w = weighted ? Math.max(1, options[i].weight || 1) : 1;
+      cumulative += w;
+      if (randVal < cumulative) { winnerIdx = i; break; }
     }
 
-    function spin() {
-      if (isSpinning || entries.length === 0) return;
+    // Calculate target angle to land on winner
+    const segments = getSegmentAngles();
+    const winSeg = segments[winnerIdx];
+    // Random position within segment
+    crypto.getRandomValues(arr);
+    const posInSeg = (arr[0] / 0xFFFFFFFF) * winSeg.sweep;
+    const targetSegAngle = winSeg.start + posInSeg;
 
-      isSpinning = true;
-      btnSpin.disabled = true;
-      winnerDisplay.textContent = 'Spinning...';
-      winnerDisplay.classList.remove('celebrate');
+    // Pointer at top = 3pi/2. We need currentAngle such that pointer lands in segment.
+    const baseSpins = (3 + spinSpeed * 2);
+    const targetAngle = (Math.PI * 1.5 - targetSegAngle) + Math.PI * 2 * baseSpins;
 
-      const spins = Math.floor(Math.random() * 5) + 5; // 5 to 9 full spins
-      const extraDegrees = Math.floor(Math.random() * 360);
-      const totalRotation = currentRotation + (spins * 360) + extraDegrees;
+    const startAngle = currentAngle % (Math.PI * 2);
+    const totalRotation = targetAngle - startAngle;
+    const duration = 3000 + spinSpeed * 800;
 
-      wheel.style.transition = 'transform 4s cubic-bezier(0.1, 0.8, 0.2, 1)';
-      wheel.style.transform = `rotate(${totalRotation}deg)`;
+    let startTime = null;
+    let lastTickSeg = -1;
 
-      setTimeout(() => {
+    function animate(timestamp) {
+      if (!startTime) startTime = timestamp;
+      const elapsed = timestamp - startTime;
+      const progress = Math.min(elapsed / duration, 1);
+
+      // Cubic ease-out
+      const eased = 1 - Math.pow(1 - progress, 3);
+      currentAngle = startAngle + totalRotation * eased;
+
+      drawWheel();
+
+      // Tick sounds
+      if (soundEnabled && options.length > 0) {
+        const segSize = (Math.PI * 2) / options.length;
+        const curSeg = Math.floor(((currentAngle % (Math.PI * 2)) + Math.PI * 4) / segSize);
+        if (curSeg !== lastTickSeg) { playTick(); lastTickSeg = curSeg; }
+      }
+
+      if (progress < 1) {
+        requestAnimationFrame(animate);
+      } else {
+        currentAngle = currentAngle % (Math.PI * 2);
         isSpinning = false;
         btnSpin.disabled = false;
-        currentRotation = totalRotation;
 
-        // Calculate winner
-        // The pointer is at the top (0 degrees).
-        // The wheel rotates clockwise.
-        // A rotation of `totalRotation` means the segment at `-totalRotation` is now at the top.
-        const normalizedRotation = totalRotation % 360;
+        const winner = options[winnerIdx].name;
+        resultText.textContent = winner;
+        resultText.className = 'result-text';
+        void resultText.offsetWidth;
+        resultText.classList.add('animate');
 
-        // The top is 0 deg. When we rotate by `normalizedRotation`, the angle at the top
-        // in the wheel's original coordinate system is `360 - normalizedRotation`.
-        const pointerAngle = (360 - normalizedRotation) % 360;
-
-        const anglePerSegment = 360 / entries.length;
-        const winnerIndex = Math.floor(pointerAngle / anglePerSegment);
-
-        winnerDisplay.textContent = entries[winnerIndex];
-
-        // Trigger celebration
-        void winnerDisplay.offsetWidth; // Force reflow
-        winnerDisplay.classList.add('celebrate');
-
-      }, 4000); // Wait for transition to finish
+        playWin();
+        addHistory(winner);
+      }
     }
 
-    btnUpdate.addEventListener('click', updateWheel);
-    btnSpin.addEventListener('click', spin);
+    resultText.textContent = 'Spinning...';
+    resultText.className = 'result-text placeholder';
+    requestAnimationFrame(animate);
+  }
 
-    // Initial setup
-    updateWheel();
+  // --- History ---
+  function addHistory(winner) {
+    history.unshift({ winner, time: new Date() });
+    if (history.length > 20) history.pop();
+    renderHistory();
+  }
+
+  function renderHistory() {
+    if (history.length === 0) {
+      historyListEl.innerHTML = '<div class="history-empty">No spins yet.</div>';
+      return;
+    }
+    historyListEl.innerHTML = history.map(function(entry) {
+      var time = entry.time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+      return '<div class="history-entry"><span class="history-nums">' + entry.winner.replace(/</g, '&lt;') + '</span><span class="history-meta">' + time + '</span></div>';
+    }).join('');
+  }
+
+  // --- Options UI ---
+  function renderOptions() {
+    optionsList.innerHTML = '';
+    options.forEach(function(opt, i) {
+      var row = document.createElement('div');
+      row.className = 'option-item';
+
+      var colorInput = document.createElement('input');
+      colorInput.type = 'color';
+      colorInput.className = 'option-color';
+      colorInput.value = opt.color;
+      colorInput.addEventListener('input', function(e) { options[i].color = e.target.value; drawWheel(); });
+
+      var nameInput = document.createElement('input');
+      nameInput.type = 'text';
+      nameInput.className = 'option-name';
+      nameInput.value = opt.name;
+      nameInput.maxLength = 50;
+      nameInput.addEventListener('input', function(e) { options[i].name = e.target.value; drawWheel(); });
+
+      var weightInput = document.createElement('input');
+      weightInput.type = 'number';
+      weightInput.className = 'option-weight' + (weighted ? ' visible' : '');
+      weightInput.value = opt.weight || 1;
+      weightInput.min = 1;
+      weightInput.max = 100;
+      weightInput.title = 'Weight';
+      weightInput.addEventListener('input', function(e) { options[i].weight = Math.max(1, parseInt(e.target.value) || 1); drawWheel(); });
+
+      var removeBtn = document.createElement('button');
+      removeBtn.className = 'option-remove';
+      removeBtn.textContent = '\u00d7';
+      removeBtn.title = 'Remove';
+      removeBtn.addEventListener('click', function() {
+        if (options.length <= 2) return;
+        options.splice(i, 1);
+        renderOptions();
+        drawWheel();
+      });
+
+      row.appendChild(colorInput);
+      row.appendChild(nameInput);
+      row.appendChild(weightInput);
+      row.appendChild(removeBtn);
+      optionsList.appendChild(row);
+    });
+  }
+
+  function addOption(name) {
+    if (options.length >= 20) return;
+    var trimmed = (name || '').trim();
+    if (!trimmed) return;
+    options.push({ name: trimmed, color: DEFAULT_COLORS[options.length % DEFAULT_COLORS.length], weight: 1 });
+    renderOptions();
+    drawWheel();
+    addInput.value = '';
+  }
+
+  // --- Save/Load ---
+  function getSavedWheels() {
+    try { return JSON.parse(localStorage.getItem('wheelSpinner_saved') || '{}'); } catch(e) { return {}; }
+  }
+
+  function saveWheel() {
+    var name = prompt('Name this wheel:');
+    if (!name || !name.trim()) return;
+    var saved = getSavedWheels();
+    saved[name.trim()] = { options: JSON.parse(JSON.stringify(options)), weighted: weighted };
+    localStorage.setItem('wheelSpinner_saved', JSON.stringify(saved));
+    renderSavedWheels();
+  }
+
+  function loadWheel(name) {
+    var saved = getSavedWheels();
+    if (!saved[name]) return;
+    options = saved[name].options;
+    weighted = saved[name].weighted || false;
+    document.getElementById('opt-weighted').classList.toggle('active', weighted);
+    renderOptions();
+    drawWheel();
+  }
+
+  function deleteSavedWheel(name) {
+    var saved = getSavedWheels();
+    delete saved[name];
+    localStorage.setItem('wheelSpinner_saved', JSON.stringify(saved));
+    renderSavedWheels();
+  }
+
+  function renderSavedWheels() {
+    var saved = getSavedWheels();
+    var keys = Object.keys(saved);
+    if (keys.length === 0) {
+      savedWheelsList.innerHTML = '';
+      return;
+    }
+    savedWheelsList.innerHTML = keys.map(function(name) {
+      return '<div class="saved-wheel-item"><span class="saved-wheel-name" data-name="' + name.replace(/"/g, '&quot;') + '">' + name.replace(/</g, '&lt;') + '</span><button class="saved-wheel-delete" data-name="' + name.replace(/"/g, '&quot;') + '" title="Delete">\u00d7</button></div>';
+    }).join('');
+
+    savedWheelsList.querySelectorAll('.saved-wheel-name').forEach(function(el) {
+      el.addEventListener('click', function() { loadWheel(el.dataset.name); });
+    });
+    savedWheelsList.querySelectorAll('.saved-wheel-delete').forEach(function(el) {
+      el.addEventListener('click', function() { deleteSavedWheel(el.dataset.name); });
+    });
+  }
+
+  // --- Events ---
+  btnSpin.addEventListener('click', spin);
+
+  canvas.addEventListener('click', spin);
+
+  document.addEventListener('keydown', function(e) {
+    if (e.code === 'Space' && !e.repeat && e.target.tagName !== 'INPUT' && e.target.tagName !== 'TEXTAREA') {
+      e.preventDefault();
+      spin();
+    }
   });
 
+  document.getElementById('btn-add-option').addEventListener('click', function() { addOption(addInput.value); });
+  addInput.addEventListener('keydown', function(e) { if (e.key === 'Enter') addOption(addInput.value); });
+
+  document.getElementById('opt-weighted').addEventListener('click', function() {
+    weighted = !weighted;
+    this.classList.toggle('active', weighted);
+    renderOptions();
+    drawWheel();
+  });
+
+  document.getElementById('opt-sound').addEventListener('click', function() {
+    soundEnabled = !soundEnabled;
+    this.classList.toggle('active', soundEnabled);
+  });
+
+  speedSlider.addEventListener('input', function() {
+    spinSpeed = parseInt(speedSlider.value);
+    speedValue.textContent = spinSpeed;
+  });
+
+  document.getElementById('btn-save-wheel').addEventListener('click', saveWheel);
+
+  document.getElementById('btn-clear-all').addEventListener('click', function() {
+    options = [
+      { name: 'Option 1', color: DEFAULT_COLORS[0], weight: 1 },
+      { name: 'Option 2', color: DEFAULT_COLORS[1], weight: 1 },
+    ];
+    renderOptions();
+    drawWheel();
+  });
+
+  // Presets
+  document.querySelectorAll('[data-preset]').forEach(function(btn) {
+    btn.addEventListener('click', function() {
+      var preset = PRESETS[btn.dataset.preset];
+      if (!preset) return;
+      options = preset.items.map(function(name, i) { return { name: name, color: DEFAULT_COLORS[i % DEFAULT_COLORS.length], weight: 1 }; });
+      renderOptions();
+      drawWheel();
+    });
+  });
+
+  // FAQ accordion
+  document.querySelectorAll('.faq-q').forEach(function(q) {
+    q.addEventListener('click', function() {
+      q.parentElement.classList.toggle('open');
+    });
+  });
+
+  // Init
+  renderOptions();
+  renderSavedWheels();
+  drawWheel();
+
+});
 </script>
 </SiteLayout>

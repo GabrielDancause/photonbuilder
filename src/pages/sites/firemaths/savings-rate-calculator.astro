@@ -1,0 +1,1373 @@
+---
+import SiteLayout from "../../../layouts/SiteLayout.astro";
+
+const schema = {
+  "@context": "https://schema.org",
+  "@type": "WebApplication",
+  "name": "Savings Rate Calculator",
+  "url": "https://firemaths.info/savings-rate-calculator",
+  "description": "Calculate your savings rate and estimate how many years until financial independence based on your income, expenses, and investment returns.",
+  "applicationCategory": "FinanceApplication",
+  "operatingSystem": "All",
+  "offers": {
+    "@type": "Offer",
+    "price": "0",
+    "priceCurrency": "USD"
+  }
+};
+
+const faqSchema = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    {
+      "@type": "Question",
+      "name": "What is a good savings rate for financial independence?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "A savings rate of 50% or higher is considered excellent for achieving financial independence (FI) quickly — typically in about 17 years. The FIRE community generally recommends saving at least 25-50% of take-home pay. At 25%, you can expect to reach FI in roughly 32 years. At 75%, it drops to about 7 years. The national average savings rate in the US is only about 3-5%, which would require 60+ years of working."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How do I calculate my savings rate?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Your savings rate is calculated by dividing your total monthly savings and investments by your take-home pay (after-tax income), then multiplying by 100. For example, if your take-home pay is $6,000/month and you save/invest $2,000/month, your savings rate is 33.3%. Some people prefer to calculate it against gross income, but using take-home pay gives a more actionable number since taxes are largely outside your control."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "How does savings rate affect time to financial independence?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Your savings rate is the single most important factor determining how quickly you reach financial independence. This is because a higher savings rate works in two ways: it increases the amount you invest AND decreases the amount you need in retirement (since you're already living on less). At a 10% savings rate, FI takes about 51 years. At 30%, it's about 28 years. At 50%, roughly 17 years. At 70%, only about 8.5 years. The math assumes you can live on the same expenses in retirement and uses the 4% safe withdrawal rate."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "What expenses should I include when calculating my savings rate?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "Include all monthly expenses: housing (rent/mortgage, insurance, property tax), utilities, groceries, transportation, insurance premiums, subscriptions, dining out, entertainment, clothing, healthcare costs, and any debt payments. Do NOT include savings contributions, investment contributions, or retirement account contributions — those count as savings, not expenses. The key formula is: Savings Rate = (Take-Home Pay - Total Expenses) / Take-Home Pay × 100."
+      }
+    },
+    {
+      "@type": "Question",
+      "name": "Does investment return rate matter more than savings rate?",
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": "For most people, savings rate matters significantly more than investment returns, especially in the early years. Increasing your savings rate from 10% to 20% can cut decades off your FI timeline, while the difference between a 6% and 8% return might only save a few years. However, as your portfolio grows larger, investment returns become more impactful since they compound on a bigger base. The best strategy is to maximize your savings rate first, then optimize your investment returns through low-cost index funds and proper asset allocation."
+      }
+    }
+  ]
+};
+
+export const meta = {
+  title: "Savings Rate Calculator | firemaths.info",
+  description: "Calculate your savings rate and estimate years to financial independence. See how your savings rate compares to national averages and FI milestones.",
+  category: "tool",
+  published: "2026-03-21",
+};
+---
+
+<SiteLayout
+  site="firemaths"
+  title="Savings Rate Calculator | firemaths.info"
+  description="Calculate your savings rate and estimate years to financial independence. See how your savings rate compares to national averages and FI milestones."
+  canonical="https://firemaths.info/savings-rate-calculator" schema={schema}
+>
+  <style>
+:root {
+    --chart-color-a: #D4A017;
+    --chart-color-b: #4A90E2;
+    --chart-color-c: #50E3C2;
+    --chart-color-d: #E85D75;
+}
+
+* {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+body {
+    background-color: var(--bg-color);
+    color: var(--text-primary);
+    font-family: var(--font-ui);
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4 {
+    font-weight: 700;
+    line-height: 1.2;
+    color: var(--text-primary);
+}
+
+.container {
+    max-width: 1000px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem;
+}
+
+header {
+    text-align: center;
+    margin-bottom: 3rem;
+}
+
+header h1 {
+    font-size: 2.5rem;
+    margin-bottom: 0.5rem;
+    color: var(--accent-color);
+}
+
+header p {
+    color: var(--text-secondary);
+    font-size: 1.1rem;
+}
+
+.calculator-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 2rem;
+    margin-bottom: 3rem;
+}
+
+@media (min-width: 768px) {
+    .calculator-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+.scenario-card {
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.5rem;
+}
+
+.scenario-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+    padding-bottom: 1rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.scenario-header h2 {
+    font-size: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.input-group {
+    margin-bottom: 1.25rem;
+}
+
+.input-group label {
+    display: block;
+    margin-bottom: 0.5rem;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: var(--text-secondary);
+}
+
+.input-wrapper {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.prefix, .suffix {
+    position: absolute;
+    color: var(--text-secondary);
+    font-family: var(--font-mono);
+    font-size: 1rem;
+    pointer-events: none;
+}
+
+.prefix { left: 1rem; }
+.suffix { right: 1rem; }
+
+input[type="number"], select {
+    width: 100%;
+    background-color: var(--bg-color);
+    border: 1px solid var(--border-color);
+    color: var(--text-primary);
+    font-family: var(--font-mono);
+    font-size: 1rem;
+    padding: 0.75rem 1rem;
+    border-radius: 6px;
+    transition: border-color 0.2s;
+    -moz-appearance: textfield;
+}
+
+input[type="number"]::-webkit-outer-spin-button,
+input[type="number"]::-webkit-inner-spin-button {
+    -webkit-appearance: none;
+    margin: 0;
+}
+
+input[type="number"]:focus, select:focus {
+    outline: none;
+    border-color: var(--accent-color);
+}
+
+.has-prefix input { padding-left: 2rem; }
+.has-suffix input { padding-right: 2.5rem; }
+
+.results {
+    margin-top: 2rem;
+    padding-top: 1.5rem;
+    border-top: 1px solid var(--border-color);
+    display: flex;
+    flex-direction: column;
+}
+
+.result-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1rem;
+}
+
+.result-label {
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+}
+
+.result-value {
+    font-family: var(--font-mono);
+    font-size: 1.125rem;
+    font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.result-final .result-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--accent-color);
+}
+
+.copy-btn {
+    background: none;
+    border: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    font-family: var(--font-ui);
+    transition: all 0.2s;
+}
+
+.copy-btn:hover {
+    border-color: var(--accent-color);
+    color: var(--text-primary);
+}
+
+.chart-section {
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 3rem;
+}
+
+.chart-header {
+    margin-bottom: 1.5rem;
+    text-align: center;
+}
+
+.chart-legend {
+    display: flex;
+    justify-content: center;
+    gap: 1.5rem;
+    margin-top: 1rem;
+    font-size: 0.875rem;
+    color: var(--text-secondary);
+    flex-wrap: wrap;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.indicator {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    display: inline-block;
+}
+
+.indicator-a { background-color: var(--chart-color-a); }
+.indicator-b { background-color: var(--chart-color-b); }
+.indicator-c { background-color: var(--chart-color-c); }
+.indicator-d { background-color: var(--chart-color-d); }
+
+.chart-container {
+    width: 100%;
+    height: 400px;
+    position: relative;
+}
+
+canvas {
+    width: 100%;
+    height: 100%;
+}
+
+.scenario-comparison {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+    margin-bottom: 3rem;
+}
+
+@media (max-width: 640px) {
+    .scenario-comparison {
+        grid-template-columns: 1fr;
+    }
+}
+
+.scenario-box {
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.5rem;
+    text-align: center;
+}
+
+.scenario-box h3 {
+    font-size: 1rem;
+    margin-bottom: 0.25rem;
+}
+
+.scenario-box .rate {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin-bottom: 1rem;
+}
+
+.scenario-box .amount {
+    font-family: var(--font-mono);
+    font-size: 1.35rem;
+    font-weight: 700;
+    margin-bottom: 0.5rem;
+}
+
+.scenario-box .detail {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.25rem;
+}
+
+.scenario-optimistic { border-top: 3px solid #50E3C2; }
+.scenario-moderate { border-top: 3px solid #4A90E2; }
+.scenario-conservative { border-top: 3px solid #D4A017; }
+
+.scenario-optimistic .amount { color: #50E3C2; }
+.scenario-moderate .amount { color: #4A90E2; }
+.scenario-conservative .amount { color: #D4A017; }
+
+.milestone-card {
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 3rem;
+}
+
+.milestone-card h2 {
+    font-size: 1.25rem;
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.milestone-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+}
+
+@media (max-width: 640px) {
+    .milestone-grid {
+        grid-template-columns: 1fr 1fr;
+    }
+}
+
+.milestone-item {
+    text-align: center;
+    padding: 1rem 0.5rem;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+    transition: border-color 0.2s;
+}
+
+.milestone-item.active {
+    border-color: var(--accent-color);
+    background-color: rgba(212, 160, 23, 0.05);
+}
+
+.milestone-rate {
+    font-family: var(--font-mono);
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--accent-color);
+}
+
+.milestone-years {
+    font-family: var(--font-mono);
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0.25rem 0;
+}
+
+.milestone-label {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+}
+
+.avg-card {
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 3rem;
+}
+
+.avg-card h2 {
+    font-size: 1.25rem;
+    margin-bottom: 1rem;
+    padding-bottom: 0.75rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.avg-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+}
+
+@media (max-width: 640px) {
+    .avg-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.avg-item {
+    text-align: center;
+    padding: 1rem;
+    border-radius: 8px;
+    border: 1px solid var(--border-color);
+}
+
+.avg-item.highlighted {
+    border-color: var(--accent-color);
+    background-color: rgba(212, 160, 23, 0.05);
+}
+
+.avg-age {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.5rem;
+}
+
+.avg-rate {
+    font-family: var(--font-mono);
+    font-size: 1.25rem;
+    font-weight: 700;
+}
+
+.avg-label {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    margin-top: 0.25rem;
+}
+
+.your-rate-badge {
+    display: inline-block;
+    background-color: var(--accent-color);
+    color: #000;
+    font-size: 0.7rem;
+    font-weight: 700;
+    padding: 0.15rem 0.5rem;
+    border-radius: 4px;
+    margin-top: 0.5rem;
+}
+
+.progress-bar-container {
+    margin-top: 1.5rem;
+    padding: 1rem;
+    background-color: var(--bg-color);
+    border-radius: 8px;
+}
+
+.progress-bar-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin-bottom: 0.5rem;
+}
+
+.progress-bar {
+    width: 100%;
+    height: 24px;
+    background-color: var(--border-color);
+    border-radius: 12px;
+    overflow: hidden;
+    position: relative;
+}
+
+.progress-fill {
+    height: 100%;
+    border-radius: 12px;
+    background: linear-gradient(90deg, var(--chart-color-d), var(--chart-color-a), var(--chart-color-c));
+    transition: width 0.5s ease;
+}
+
+.progress-markers {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 0.25rem;
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+    position: relative;
+}
+
+.tips-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    margin-bottom: 3rem;
+}
+
+@media (max-width: 640px) {
+    .tips-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.tip-card {
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.5rem;
+}
+
+.tip-card h3 {
+    font-size: 1.1rem;
+    margin-bottom: 1rem;
+    color: var(--accent-color);
+}
+
+.tip-card ul {
+    list-style: none;
+    padding: 0;
+}
+
+.tip-card li {
+    color: var(--text-secondary);
+    margin-bottom: 0.75rem;
+    padding-left: 1.25rem;
+    position: relative;
+    font-size: 0.9rem;
+}
+
+.tip-card li::before {
+    content: "›";
+    position: absolute;
+    left: 0;
+    color: var(--accent-color);
+    font-weight: bold;
+}
+
+.seo-content {
+    margin-bottom: 4rem;
+}
+
+.seo-content h2 {
+    font-size: 1.75rem;
+    margin-top: 2.5rem;
+    margin-bottom: 1rem;
+    color: var(--accent-color);
+}
+
+.seo-content p {
+    margin-bottom: 1rem;
+    color: var(--text-secondary);
+}
+
+.seo-content ul {
+    margin-bottom: 1.5rem;
+    padding-left: 1.5rem;
+    color: var(--text-secondary);
+}
+
+.seo-content li {
+    margin-bottom: 0.5rem;
+}
+
+.faq-section {
+    margin-bottom: 4rem;
+}
+
+.faq-section h2 {
+    font-size: 1.75rem;
+    margin-bottom: 1.5rem;
+    color: var(--accent-color);
+}
+
+.faq-item {
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    margin-bottom: 0.75rem;
+    overflow: hidden;
+}
+
+.faq-question {
+    width: 100%;
+    background: none;
+    border: none;
+    color: var(--text-primary);
+    font-family: var(--font-ui);
+    font-size: 1rem;
+    font-weight: 600;
+    padding: 1.25rem 1.5rem;
+    text-align: left;
+    cursor: pointer;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: color 0.2s;
+}
+
+.faq-question:hover {
+    color: var(--accent-color);
+}
+
+.faq-question::after {
+    content: "+";
+    font-size: 1.25rem;
+    font-weight: 300;
+    color: var(--text-secondary);
+    transition: transform 0.2s;
+    flex-shrink: 0;
+    margin-left: 1rem;
+}
+
+.faq-item.open .faq-question::after {
+    content: "\2212";
+}
+
+.faq-answer {
+    display: none;
+    padding: 0 1.5rem 1.25rem;
+    color: var(--text-secondary);
+    line-height: 1.7;
+    font-size: 0.95rem;
+}
+
+.faq-item.open .faq-answer {
+    display: block;
+}
+
+.related-links {
+    margin-bottom: 3rem;
+}
+
+.related-links h2 {
+    font-size: 1.25rem;
+    margin-bottom: 1rem;
+}
+
+.related-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1rem;
+}
+
+@media (max-width: 640px) {
+    .related-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+.related-grid a {
+    background-color: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 1rem 1.25rem;
+    color: var(--text-primary);
+    text-decoration: none;
+    font-weight: 500;
+    font-size: 0.95rem;
+    transition: border-color 0.2s, color 0.2s;
+}
+
+.related-grid a:hover {
+    border-color: var(--accent-color);
+    color: var(--accent-color);
+}
+
+footer {
+    text-align: center;
+    padding: 2rem 0;
+    border-top: 1px solid var(--border-color);
+    color: var(--text-secondary);
+    font-size: 0.875rem;
+}
+
+footer a {
+    color: var(--accent-color);
+    text-decoration: none;
+    transition: color 0.2s;
+}
+
+footer a:hover {
+    color: var(--text-primary);
+    text-decoration: underline;
+}
+  </style>
+
+<div class="container">
+    <h1>Savings Rate Calculator</h1>
+    <p style="text-align:center; color:var(--text-secondary); font-size:1.1rem; margin-bottom:2rem;">Calculate your savings rate and estimate your time to financial independence</p>
+
+    <main>
+        <div class="calculator-grid">
+            <!-- Inputs -->
+            <div class="scenario-card">
+                <div class="scenario-header">
+                    <h2>Your Income &amp; Expenses</h2>
+                </div>
+
+                <div class="inputs">
+                    <div class="input-group">
+                        <label for="gross-income">Gross Annual Income (before tax)</label>
+                        <div class="input-wrapper has-prefix">
+                            <span class="prefix">$</span>
+                            <input type="number" id="gross-income" value="85000" min="0" step="1000">
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="take-home-pay">Monthly Take-Home Pay (after tax)</label>
+                        <div class="input-wrapper has-prefix">
+                            <span class="prefix">$</span>
+                            <input type="number" id="take-home-pay" value="5500" min="0" step="100">
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="monthly-expenses">Total Monthly Expenses</label>
+                        <div class="input-wrapper has-prefix">
+                            <span class="prefix">$</span>
+                            <input type="number" id="monthly-expenses" value="3500" min="0" step="100">
+                        </div>
+                    </div>
+
+                    <div class="input-group">
+                        <label for="monthly-savings">Total Monthly Savings / Investments</label>
+                        <div class="input-wrapper has-prefix">
+                            <span class="prefix">$</span>
+                            <input type="number" id="monthly-savings" value="2000" min="0" step="100">
+                        </div>
+                    </div>
+
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                        <div class="input-group">
+                            <label for="current-age">Current Age</label>
+                            <div class="input-wrapper">
+                                <input type="number" id="current-age" value="30" min="18" max="80" step="1">
+                            </div>
+                        </div>
+                        <div class="input-group">
+                            <label for="current-portfolio">Current Portfolio Value</label>
+                            <div class="input-wrapper has-prefix">
+                                <span class="prefix">$</span>
+                                <input type="number" id="current-portfolio" value="50000" min="0" step="1000">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Results -->
+            <div class="scenario-card">
+                <div class="scenario-header">
+                    <h2>Your Savings Rate</h2>
+                </div>
+
+                <div class="results" style="margin-top: 0; border-top: none; padding-top: 0;">
+                    <div class="result-item result-final" style="margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border-color);">
+                        <span class="result-label" style="font-size: 1rem;">Savings Rate</span>
+                        <div class="result-value">
+                            <span id="savings-rate">0%</span>
+                            <button class="copy-btn" onclick="copyValue('savings-rate', this)">Copy</button>
+                        </div>
+                    </div>
+
+                    <div class="result-item">
+                        <span class="result-label">Annual Savings</span>
+                        <span class="result-value" id="annual-savings" style="color: var(--chart-color-c);">$0</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label">Annual Expenses</span>
+                        <span class="result-value" id="annual-expenses" style="color: var(--chart-color-d);">$0</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label">FI Number (25x expenses)</span>
+                        <span class="result-value" id="fi-number" style="color: var(--chart-color-b);">$0</span>
+                    </div>
+
+                    <div style="flex-grow: 1;"></div>
+
+                    <div class="result-item" style="padding-top: 1rem; border-top: 1px dashed var(--border-color);">
+                        <span class="result-label">Effective Tax Rate</span>
+                        <span class="result-value" id="tax-rate" style="font-size: 1rem;">0%</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label">Gross Savings Rate</span>
+                        <span class="result-value" id="gross-savings-rate" style="font-size: 1rem; color: var(--text-secondary);">0%</span>
+                    </div>
+                    <div class="result-item">
+                        <span class="result-label">Expense-to-Income Ratio</span>
+                        <span class="result-value" id="expense-ratio" style="font-size: 0.9rem; font-family: var(--font-ui); color: var(--text-secondary);">0%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Savings Rate Progress Bar -->
+        <div class="milestone-card">
+            <h2>Your Savings Rate vs. FI Milestones</h2>
+            <div class="progress-bar-container">
+                <div class="progress-bar-label">
+                    <span>0%</span>
+                    <span id="progress-label">Your Rate: 0%</span>
+                    <span>100%</span>
+                </div>
+                <div class="progress-bar">
+                    <div class="progress-fill" id="progress-fill" style="width: 0%"></div>
+                </div>
+                <div class="progress-markers">
+                    <span>|</span>
+                    <span style="position:absolute;left:25%">25%</span>
+                    <span style="position:absolute;left:50%">50%</span>
+                    <span style="position:absolute;left:75%">75%</span>
+                    <span>|</span>
+                </div>
+            </div>
+            <div class="milestone-grid" style="margin-top: 1.5rem;">
+                <div class="milestone-item" id="ms-25">
+                    <div class="milestone-rate">25%</div>
+                    <div class="milestone-years">~32 years</div>
+                    <div class="milestone-label">to FI</div>
+                </div>
+                <div class="milestone-item" id="ms-50">
+                    <div class="milestone-rate">50%</div>
+                    <div class="milestone-years">~17 years</div>
+                    <div class="milestone-label">to FI</div>
+                </div>
+                <div class="milestone-item" id="ms-75">
+                    <div class="milestone-rate">75%</div>
+                    <div class="milestone-years">~7 years</div>
+                    <div class="milestone-label">to FI</div>
+                </div>
+                <div class="milestone-item" id="ms-90">
+                    <div class="milestone-rate">90%</div>
+                    <div class="milestone-years">~3 years</div>
+                    <div class="milestone-label">to FI</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Years to FI at different return rates -->
+        <h2 style="font-size: 1.75rem; margin-bottom: 1.5rem; color: var(--accent-color);">Years to Financial Independence</h2>
+        <div class="scenario-comparison">
+            <div class="scenario-box scenario-conservative">
+                <h3>Conservative</h3>
+                <p class="rate">4% real return</p>
+                <p class="amount" id="fi-years-4">0 yrs</p>
+                <p class="detail" id="fi-bal-4">Portfolio at FI: —</p>
+                <p class="detail" id="fi-age-4">FI age: —</p>
+            </div>
+            <div class="scenario-box scenario-moderate">
+                <h3>Moderate</h3>
+                <p class="rate">6% real return</p>
+                <p class="amount" id="fi-years-6">0 yrs</p>
+                <p class="detail" id="fi-bal-6">Portfolio at FI: —</p>
+                <p class="detail" id="fi-age-6">FI age: —</p>
+            </div>
+            <div class="scenario-box scenario-optimistic">
+                <h3>Optimistic</h3>
+                <p class="rate">8% real return</p>
+                <p class="amount" id="fi-years-8">0 yrs</p>
+                <p class="detail" id="fi-bal-8">Portfolio at FI: —</p>
+                <p class="detail" id="fi-age-8">FI age: —</p>
+            </div>
+        </div>
+
+        <!-- Savings Rate vs Years to FI Chart (Mr. Money Mustache style) -->
+        <div class="chart-section">
+            <div class="chart-header">
+                <h2>Savings Rate vs. Years to Financial Independence</h2>
+                <p style="color: var(--text-secondary); font-size: 0.85rem; margin-top: 0.5rem;">The classic relationship between savings rate and retirement timeline (assumes 5% real return)</p>
+                <div class="chart-legend">
+                    <div class="legend-item"><span class="indicator indicator-a"></span> Years to FI curve</div>
+                    <div class="legend-item"><span class="indicator indicator-d"></span> Your savings rate</div>
+                </div>
+            </div>
+            <div class="chart-container">
+                <canvas id="fiChart"></canvas>
+            </div>
+        </div>
+
+        <!-- National Average Comparison -->
+        <div class="avg-card">
+            <h2>Your Savings Rate vs. National Average by Age</h2>
+            <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 1rem;">US personal savings rate averages by age group (Bureau of Economic Analysis &amp; Federal Reserve data)</p>
+            <div class="avg-grid" id="avg-grid">
+                <div class="avg-item" id="avg-under25">
+                    <div class="avg-age">Under 25</div>
+                    <div class="avg-rate">-2%</div>
+                    <div class="avg-label">Avg. savings rate</div>
+                </div>
+                <div class="avg-item" id="avg-25-34">
+                    <div class="avg-age">25–34</div>
+                    <div class="avg-rate">4%</div>
+                    <div class="avg-label">Avg. savings rate</div>
+                </div>
+                <div class="avg-item" id="avg-35-44">
+                    <div class="avg-age">35–44</div>
+                    <div class="avg-rate">5%</div>
+                    <div class="avg-label">Avg. savings rate</div>
+                </div>
+                <div class="avg-item" id="avg-45-54">
+                    <div class="avg-age">45–54</div>
+                    <div class="avg-rate">7%</div>
+                    <div class="avg-label">Avg. savings rate</div>
+                </div>
+                <div class="avg-item" id="avg-55-64">
+                    <div class="avg-age">55–64</div>
+                    <div class="avg-rate">10%</div>
+                    <div class="avg-label">Avg. savings rate</div>
+                </div>
+                <div class="avg-item" id="avg-65plus">
+                    <div class="avg-age">65+</div>
+                    <div class="avg-rate">13%</div>
+                    <div class="avg-label">Avg. savings rate</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Tips -->
+        <h2 style="font-size: 1.75rem; margin-bottom: 1.5rem; color: var(--accent-color);">How to Increase Your Savings Rate</h2>
+        <div class="tips-grid">
+            <div class="tip-card">
+                <h3>Reduce Expenses</h3>
+                <ul>
+                    <li>Housing is typically your biggest expense — consider house hacking, downsizing, or relocating to a lower-cost area</li>
+                    <li>Cut transportation costs: drive a used car, bike commute, or use public transit instead of a car payment</li>
+                    <li>Cook at home more often — the average household spends $3,500+/year dining out</li>
+                    <li>Audit subscriptions monthly and cancel what you don't actively use</li>
+                    <li>Switch to a no-fee bank and high-yield savings account to stop bleeding fees</li>
+                </ul>
+            </div>
+            <div class="tip-card">
+                <h3>Increase Income</h3>
+                <ul>
+                    <li>Negotiate your salary — most people leave 10-20% on the table by not negotiating</li>
+                    <li>Develop a side income: freelancing, consulting, or a small business can add $500-2,000+/month</li>
+                    <li>Invest in skills that increase your earning power — certifications, degrees, or career pivots</li>
+                    <li>Maximize employer benefits: 401(k) match, HSA, ESPP discounts are free money</li>
+                    <li>Direct all raises and bonuses straight to savings — avoid lifestyle inflation</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- SEO Content -->
+        <div class="seo-content">
+            <h2>What Is a Savings Rate and Why Does It Matter?</h2>
+            <p>Your savings rate is the percentage of your take-home pay that you save and invest rather than spend. It is widely considered the <strong>single most important number</strong> in personal finance, especially for those pursuing financial independence (FI) or early retirement (FIRE). Unlike investment returns — which are partially outside your control — your savings rate is something you can directly influence through spending and income decisions.</p>
+            <p>The reason savings rate is so powerful is that it works on both sides of the equation simultaneously. A higher savings rate means you're investing more money each month <em>and</em> proving you can live on less — which means your FI target number is lower. This double effect is why even small improvements in savings rate can dramatically accelerate your timeline.</p>
+
+            <h2>The Math Behind Savings Rate and Financial Independence</h2>
+            <p>The relationship between savings rate and years to financial independence follows a surprisingly simple formula, popularized by Mr. Money Mustache. Assuming you can live on the same level of expenses in retirement and use the 4% safe withdrawal rate (meaning you need 25x your annual expenses saved), the math works out as follows:</p>
+            <ul>
+                <li><strong>10% savings rate:</strong> ~51 years to FI</li>
+                <li><strong>25% savings rate:</strong> ~32 years to FI</li>
+                <li><strong>50% savings rate:</strong> ~17 years to FI</li>
+                <li><strong>75% savings rate:</strong> ~7 years to FI</li>
+                <li><strong>90% savings rate:</strong> ~under 3 years to FI</li>
+            </ul>
+            <p>These numbers assume a 5% real (inflation-adjusted) return on investments. The curve is exponential — going from a 10% to a 20% savings rate saves you far more years than going from 70% to 80%. This is why the first improvements in savings rate yield the biggest results.</p>
+
+            <h2>How the National Average Compares</h2>
+            <p>The US personal savings rate has historically averaged around 3-8%, though it spiked temporarily during the COVID-19 pandemic. By age group, younger Americans (under 25) often have negative savings rates due to student loans and entry-level salaries, while those 55+ tend to save 10-13% as they focus on retirement. For context, the average American would need to work over 60 years to become financially independent at a 5% savings rate — which is why most people work until traditional retirement age or beyond.</p>
+            <p>If your savings rate is above 15%, you're already doing better than the vast majority of Americans. Above 30%, you're in an elite group that will likely achieve financial independence well before the traditional retirement age of 65.</p>
+
+            <h2>Savings Rate vs. Investment Returns</h2>
+            <p>A common debate in personal finance is whether to focus on optimizing investments or increasing savings rate. The answer depends on your portfolio size. When your portfolio is small (under $100,000), your savings rate dominates — a $500/month increase in savings has far more impact than an extra 2% return on a small balance. As your portfolio grows past $500,000+, investment returns begin to matter more because they compound on a larger base.</p>
+            <p>The optimal strategy is to focus on savings rate aggressively in your early years, while investing in low-cost index funds for solid market returns. As your portfolio grows, investment optimization (tax-loss harvesting, asset location, rebalancing) becomes increasingly worthwhile.</p>
+        </div>
+
+        <!-- FAQ -->
+        <div class="faq-section">
+            <h2>Frequently Asked Questions</h2>
+            <div class="faq-item">
+                <button class="faq-question" onclick="toggleFaq(this)">What is a good savings rate for financial independence?</button>
+                <div class="faq-answer">A savings rate of 50% or higher is considered excellent for achieving financial independence (FI) quickly — typically in about 17 years. The FIRE community generally recommends saving at least 25–50% of take-home pay. At 25%, you can expect to reach FI in roughly 32 years. At 75%, it drops to about 7 years. The national average savings rate in the US is only about 3–5%, which would require 60+ years of working.</div>
+            </div>
+            <div class="faq-item">
+                <button class="faq-question" onclick="toggleFaq(this)">How do I calculate my savings rate?</button>
+                <div class="faq-answer">Your savings rate is calculated by dividing your total monthly savings and investments by your take-home pay (after-tax income), then multiplying by 100. For example, if your take-home pay is $6,000/month and you save/invest $2,000/month, your savings rate is 33.3%. Some people prefer to calculate it against gross income, but using take-home pay gives a more actionable number since taxes are largely outside your control.</div>
+            </div>
+            <div class="faq-item">
+                <button class="faq-question" onclick="toggleFaq(this)">How does savings rate affect time to financial independence?</button>
+                <div class="faq-answer">Your savings rate is the single most important factor determining how quickly you reach financial independence. This is because a higher savings rate works in two ways: it increases the amount you invest AND decreases the amount you need in retirement (since you're already living on less). At a 10% savings rate, FI takes about 51 years. At 30%, it's about 28 years. At 50%, roughly 17 years. At 70%, only about 8.5 years.</div>
+            </div>
+            <div class="faq-item">
+                <button class="faq-question" onclick="toggleFaq(this)">What expenses should I include when calculating my savings rate?</button>
+                <div class="faq-answer">Include all monthly expenses: housing (rent/mortgage, insurance, property tax), utilities, groceries, transportation, insurance premiums, subscriptions, dining out, entertainment, clothing, and healthcare costs. Do NOT include savings contributions, investment contributions, or retirement account contributions — those count as savings, not expenses. The key formula is: Savings Rate = (Take-Home Pay - Total Expenses) / Take-Home Pay x 100.</div>
+            </div>
+            <div class="faq-item">
+                <button class="faq-question" onclick="toggleFaq(this)">Does investment return rate matter more than savings rate?</button>
+                <div class="faq-answer">For most people, savings rate matters significantly more than investment returns, especially in the early years. Increasing your savings rate from 10% to 20% can cut decades off your FI timeline, while the difference between a 6% and 8% return might only save a few years. However, as your portfolio grows larger, investment returns become more impactful since they compound on a bigger base. The best strategy is to maximize your savings rate first, then optimize your investment returns through low-cost index funds.</div>
+            </div>
+        </div>
+
+        <!-- Related -->
+        <div class="related-links">
+            <h2>Related Calculators</h2>
+            <div class="related-grid">
+                <a href="/sites/firemaths/retirement-savings-calculator">Retirement Savings Calculator</a>
+                <a href="/sites/firemaths/compound-interest-calculator">Compound Interest Calculator</a>
+                <a href="/sites/firemaths/coast-fire-calculator">Coast FIRE Calculator</a>
+            </div>
+        </div>
+    </main>
+</div>
+
+  <script is:inline type="application/ld+json" set:html={JSON.stringify(faqSchema)} />
+
+  <script is:inline>
+const formatCurrency = (value) => {
+    return new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+        maximumFractionDigits: 0
+    }).format(value);
+};
+
+window.copyValue = async (elementId, btn) => {
+    const text = document.getElementById(elementId).innerText;
+    try {
+        await navigator.clipboard.writeText(text);
+        const orig = btn.innerText;
+        btn.innerText = 'Copied!';
+        setTimeout(() => { btn.innerText = orig; }, 2000);
+    } catch (err) {
+        console.error('Failed to copy: ', err);
+    }
+};
+
+window.toggleFaq = (btn) => {
+    const item = btn.parentElement;
+    item.classList.toggle('open');
+};
+
+// Calculate years to FI given savings rate and real return rate
+function yearsToFI(savingsRate, realReturn, currentPortfolio, annualSavings, annualExpenses) {
+    if (savingsRate >= 1) return 0;
+    if (savingsRate <= 0) return Infinity;
+
+    const fiNumber = annualExpenses * 25; // 4% rule
+    if (currentPortfolio >= fiNumber) return 0;
+
+    const monthlyReturn = realReturn / 12;
+    const monthlySavings = annualSavings / 12;
+    let balance = currentPortfolio;
+    let months = 0;
+    const maxMonths = 100 * 12;
+
+    while (balance < fiNumber && months < maxMonths) {
+        balance = balance * (1 + monthlyReturn) + monthlySavings;
+        months++;
+    }
+
+    return months / 12;
+}
+
+// Classic MMM formula: years to FI based purely on savings rate (no existing portfolio)
+function yearsToFIPure(savingsRate, realReturn) {
+    if (savingsRate >= 1) return 0;
+    if (savingsRate <= 0) return Infinity;
+
+    // FI number = annual expenses * 25
+    // annual expenses = (1 - savingsRate) * income
+    // annual savings = savingsRate * income
+    // We need: portfolio = 25 * annual expenses
+    // Solving with compound growth:
+    const r = realReturn;
+    if (r === 0) return (1 - savingsRate) * 25 / savingsRate;
+
+    // Using future value of annuity formula
+    // FV = PMT * ((1+r)^n - 1) / r = 25 * expenses
+    // PMT = savingsRate * income, expenses = (1-savingsRate) * income
+    // savingsRate * ((1+r)^n - 1) / r = 25 * (1 - savingsRate)
+    // ((1+r)^n - 1) / r = 25 * (1-savingsRate) / savingsRate
+    const target = 25 * (1 - savingsRate) / savingsRate;
+    const n = Math.log(target * r + 1) / Math.log(1 + r);
+    return Math.max(0, n);
+}
+
+function updateAll() {
+    const grossIncome = parseFloat(document.getElementById('gross-income').value) || 0;
+    const takeHomePay = parseFloat(document.getElementById('take-home-pay').value) || 0;
+    const monthlyExpenses = parseFloat(document.getElementById('monthly-expenses').value) || 0;
+    const monthlySavings = parseFloat(document.getElementById('monthly-savings').value) || 0;
+    const currentAge = parseInt(document.getElementById('current-age').value) || 30;
+    const currentPortfolio = parseFloat(document.getElementById('current-portfolio').value) || 0;
+
+    // Calculate savings rate
+    const savingsRate = takeHomePay > 0 ? (monthlySavings / takeHomePay) : 0;
+    const savingsRatePct = savingsRate * 100;
+    const grossSavingsRate = grossIncome > 0 ? (monthlySavings * 12 / grossIncome) * 100 : 0;
+    const annualSavings = monthlySavings * 12;
+    const annualExpenses = monthlyExpenses * 12;
+    const fiNumber = annualExpenses * 25;
+    const annualTakeHome = takeHomePay * 12;
+    const taxRate = grossIncome > 0 ? ((grossIncome - annualTakeHome) / grossIncome) * 100 : 0;
+    const expenseRatio = takeHomePay > 0 ? (monthlyExpenses / takeHomePay) * 100 : 0;
+
+    // Update main results
+    document.getElementById('savings-rate').innerText = savingsRatePct.toFixed(1) + '%';
+    document.getElementById('annual-savings').innerText = formatCurrency(annualSavings);
+    document.getElementById('annual-expenses').innerText = formatCurrency(annualExpenses);
+    document.getElementById('fi-number').innerText = formatCurrency(fiNumber);
+    document.getElementById('tax-rate').innerText = taxRate.toFixed(1) + '%';
+    document.getElementById('gross-savings-rate').innerText = grossSavingsRate.toFixed(1) + '%';
+    document.getElementById('expense-ratio').innerText = expenseRatio.toFixed(1) + '%';
+
+    // Progress bar
+    const fillPct = Math.min(100, Math.max(0, savingsRatePct));
+    document.getElementById('progress-fill').style.width = fillPct + '%';
+    document.getElementById('progress-label').innerText = 'Your Rate: ' + savingsRatePct.toFixed(1) + '%';
+
+    // Milestone highlights
+    ['25', '50', '75', '90'].forEach(ms => {
+        const el = document.getElementById('ms-' + ms);
+        if (savingsRatePct >= parseInt(ms)) {
+            el.classList.add('active');
+        } else {
+            el.classList.remove('active');
+        }
+    });
+
+    // Years to FI at different return rates
+    [4, 6, 8].forEach(rate => {
+        const realReturn = rate / 100;
+        const years = yearsToFI(savingsRate, realReturn, currentPortfolio, annualSavings, annualExpenses);
+        const yearsText = years >= 99 ? '99+ yrs' : years.toFixed(1) + ' yrs';
+        document.getElementById('fi-years-' + rate).innerText = yearsText;
+
+        // Portfolio at FI
+        document.getElementById('fi-bal-' + rate).innerText = 'FI target: ' + formatCurrency(fiNumber);
+
+        // FI age
+        const fiAge = currentAge + years;
+        const ageText = years >= 99 ? 'FI age: 99+' : 'FI age: ' + Math.round(fiAge);
+        document.getElementById('fi-age-' + rate).innerText = ageText;
+    });
+
+    // National average comparison
+    const ageGroups = [
+        { id: 'avg-under25', min: 0, max: 24 },
+        { id: 'avg-25-34', min: 25, max: 34 },
+        { id: 'avg-35-44', min: 35, max: 44 },
+        { id: 'avg-45-54', min: 45, max: 54 },
+        { id: 'avg-55-64', min: 55, max: 64 },
+        { id: 'avg-65plus', min: 65, max: 120 }
+    ];
+
+    ageGroups.forEach(group => {
+        const el = document.getElementById(group.id);
+        const badge = el.querySelector('.your-rate-badge');
+        if (badge) badge.remove();
+
+        if (currentAge >= group.min && currentAge <= group.max) {
+            el.classList.add('highlighted');
+            const badgeEl = document.createElement('div');
+            badgeEl.className = 'your-rate-badge';
+            badgeEl.innerText = 'YOU: ' + savingsRatePct.toFixed(1) + '%';
+            el.appendChild(badgeEl);
+        } else {
+            el.classList.remove('highlighted');
+        }
+    });
+
+    // Draw chart
+    drawChart(savingsRatePct);
+}
+
+// Chart: Savings Rate vs Years to FI
+let chartCanvas = document.getElementById('fiChart');
+let ctx = chartCanvas.getContext('2d');
+
+function drawChart(userSavingsRate) {
+    const dpr = window.devicePixelRatio || 1;
+    const rect = chartCanvas.parentElement.getBoundingClientRect();
+    chartCanvas.width = rect.width * dpr;
+    chartCanvas.height = rect.height * dpr;
+    ctx.setTransform(1, 0, 0, 1, 0, 0);
+    ctx.scale(dpr, dpr);
+
+    const width = rect.width;
+    const height = rect.height;
+    ctx.clearRect(0, 0, width, height);
+
+    const padding = { top: 20, right: 20, bottom: 40, left: 60 };
+    const cw = width - padding.left - padding.right;
+    const ch = height - padding.top - padding.bottom;
+
+    // Generate curve data: savings rate 5% to 95%
+    const curveData = [];
+    for (let sr = 5; sr <= 95; sr++) {
+        const years = yearsToFIPure(sr / 100, 0.05); // 5% real return
+        curveData.push({ sr, years: Math.min(years, 70) });
+    }
+
+    const maxYears = 70;
+    const xOf = (sr) => padding.left + cw * ((sr - 5) / 90);
+    const yOf = (years) => padding.top + ch * (years / maxYears);
+
+    // Grid
+    ctx.strokeStyle = '#2a2010';
+    ctx.lineWidth = 1;
+    ctx.font = '12px Inter, sans-serif';
+    ctx.fillStyle = '#888888';
+
+    // Y-axis (years)
+    ctx.textAlign = 'right';
+    ctx.textBaseline = 'middle';
+    const yTicks = [0, 10, 20, 30, 40, 50, 60, 70];
+    yTicks.forEach(val => {
+        const y = yOf(val);
+        ctx.beginPath();
+        ctx.moveTo(padding.left, y);
+        ctx.lineTo(width - padding.right, y);
+        ctx.stroke();
+        ctx.fillText(val + ' yr', padding.left - 8, y);
+    });
+
+    // X-axis (savings rate)
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'top';
+    for (let sr = 10; sr <= 90; sr += 10) {
+        const x = xOf(sr);
+        ctx.beginPath();
+        ctx.moveTo(x, height - padding.bottom);
+        ctx.lineTo(x, height - padding.bottom + 5);
+        ctx.stroke();
+        ctx.fillText(sr + '%', x, height - padding.bottom + 8);
+    }
+
+    // X-axis label
+    ctx.fillStyle = '#888888';
+    ctx.textAlign = 'center';
+    ctx.fillText('Savings Rate', width / 2, height - 5);
+
+    // Draw curve
+    ctx.beginPath();
+    ctx.strokeStyle = '#D4A017';
+    ctx.lineWidth = 3;
+    curveData.forEach((point, i) => {
+        const x = xOf(point.sr);
+        const y = yOf(point.years);
+        if (i === 0) ctx.moveTo(x, y);
+        else ctx.lineTo(x, y);
+    });
+    ctx.stroke();
+
+    // Fill under curve
+    ctx.lineTo(xOf(95), yOf(0));
+    ctx.lineTo(xOf(5), yOf(0));
+    ctx.closePath();
+    ctx.fillStyle = 'rgba(212, 160, 23, 0.08)';
+    ctx.fill();
+
+    // Draw user's savings rate line
+    if (userSavingsRate >= 5 && userSavingsRate <= 95) {
+        const userYears = yearsToFIPure(userSavingsRate / 100, 0.05);
+        const userYearsCapped = Math.min(userYears, 70);
+        const ux = xOf(userSavingsRate);
+        const uy = yOf(userYearsCapped);
+
+        // Vertical dashed line
+        ctx.setLineDash([5, 5]);
+        ctx.strokeStyle = '#E85D75';
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(ux, yOf(0));
+        ctx.lineTo(ux, uy);
+        ctx.stroke();
+
+        // Horizontal dashed line
+        ctx.beginPath();
+        ctx.moveTo(padding.left, uy);
+        ctx.lineTo(ux, uy);
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // Dot
+        ctx.beginPath();
+        ctx.arc(ux, uy, 6, 0, Math.PI * 2);
+        ctx.fillStyle = '#E85D75';
+        ctx.fill();
+        ctx.strokeStyle = '#fff';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // Label
+        ctx.fillStyle = '#E85D75';
+        ctx.font = 'bold 13px Inter, sans-serif';
+        ctx.textAlign = 'left';
+        const labelText = userSavingsRate.toFixed(1) + '% → ' + (userYears >= 99 ? '99+' : userYearsCapped.toFixed(1)) + ' years';
+        const labelX = ux + 10;
+        const labelY = uy - 10;
+        // Background
+        const metrics = ctx.measureText(labelText);
+        ctx.fillStyle = 'rgba(0,0,0,0.7)';
+        ctx.fillRect(labelX - 4, labelY - 12, metrics.width + 8, 18);
+        ctx.fillStyle = '#E85D75';
+        ctx.fillText(labelText, labelX, labelY);
+    }
+}
+
+// Attach listeners
+document.querySelectorAll('input[type="number"]').forEach(input => {
+    input.addEventListener('input', updateAll);
+});
+
+// Initial calculation
+updateAll();
+
+// Redraw chart on resize
+window.addEventListener('resize', () => {
+    const sr = parseFloat(document.getElementById('monthly-savings').value) || 0;
+    const thp = parseFloat(document.getElementById('take-home-pay').value) || 0;
+    drawChart(thp > 0 ? (sr / thp) * 100 : 0);
+});
+  </script>
+</SiteLayout>
