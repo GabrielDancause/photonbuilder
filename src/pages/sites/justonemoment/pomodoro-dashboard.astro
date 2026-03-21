@@ -1,0 +1,742 @@
+---
+import SiteLayout from "../../../layouts/SiteLayout.astro";
+
+export const meta = {
+  title: "Pomodoro Statistics Dashboard - Track Focus Time & Productivity",
+  description: "Track Pomodoro sessions with 25/5 and 50/10 modes, view weekly and monthly stats, streak counter, productivity heatmap calendar, and focus time charts. All data stored locally.",
+  category: "tool",
+  published: "2025-06-10",
+};
+
+const schema = [
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "Pomodoro Statistics Dashboard",
+    "description": meta.description,
+    "url": "https://justonemoment.photonbuilder.com/pomodoro-dashboard",
+    "applicationCategory": "ProductivityApplication",
+    "operatingSystem": "Any",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD"
+    },
+    "author": {
+      "@type": "Organization",
+      "name": "JustOneMoment"
+    }
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "How does the Pomodoro Statistics Dashboard track my sessions?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Each time you complete a focus session using the built-in timer, the dashboard logs the date, duration, and mode (25/5 or 50/10) to your browser's localStorage. No data is sent to any server — everything stays on your device."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "What is the difference between the 25/5 and 50/10 Pomodoro modes?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "The classic 25/5 mode uses 25 minutes of focused work followed by a 5-minute break. The 50/10 mode doubles the intervals — 50 minutes of focus and a 10-minute break — which suits deep work sessions that benefit from longer uninterrupted stretches."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How is the streak counter calculated?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "The streak counts consecutive calendar days where you completed at least 4 Pomodoro sessions. If you miss a day or complete fewer than 4 sessions, the streak resets. Your longest streak is also tracked for motivation."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "What does the productivity heatmap show?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "The heatmap displays a GitHub-style contribution calendar spanning the last 52 weeks. Each cell represents a day, colored from light to dark based on how many Pomodoro sessions you completed. Hover over any cell to see the exact date and session count."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Can I export my Pomodoro data?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes. Click the Export JSON button to download a complete JSON file containing all your session logs, statistics, and streak data. You can use this for personal analytics, backups, or importing into other productivity tools."
+        }
+      }
+    ]
+  }
+];
+---
+
+<SiteLayout site="justonemoment" title={meta.title} description={meta.description} canonical="https://justonemoment.photonbuilder.com/pomodoro-dashboard" schema={schema}>
+  <div class="page-content">
+    <div class="hero">
+      <h1>Pomodoro Statistics Dashboard</h1>
+      <p class="subtitle">Track your focus sessions, build streaks, and visualize your productivity over time.</p>
+    </div>
+
+    <section class="timer-section">
+      <div class="mode-tabs">
+        <button class="mode-btn active" data-mode="25">25 / 5</button>
+        <button class="mode-btn" data-mode="50">50 / 10</button>
+      </div>
+      <div class="timer-display" id="timerDisplay">25:00</div>
+      <div class="timer-label" id="timerLabel">Focus Time</div>
+      <div class="timer-controls">
+        <button class="ctrl-btn" id="startBtn">Start</button>
+        <button class="ctrl-btn" id="resetBtn">Reset</button>
+      </div>
+      <div class="session-count" id="sessionCount">Sessions today: 0</div>
+    </section>
+
+    <section class="stats-overview">
+      <h2>Overview</h2>
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div class="stat-value" id="statTodayFocus">0m</div>
+          <div class="stat-label">Focus Today</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="statTodaySessions">0</div>
+          <div class="stat-label">Sessions Today</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="statWeekFocus">0h</div>
+          <div class="stat-label">Focus This Week</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="statWeekSessions">0</div>
+          <div class="stat-label">Sessions This Week</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="statMonthFocus">0h</div>
+          <div class="stat-label">Focus This Month</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="statMonthSessions">0</div>
+          <div class="stat-label">Sessions This Month</div>
+        </div>
+        <div class="stat-card">
+          <div class="stat-value" id="statDailyAvg">0m</div>
+          <div class="stat-label">Daily Average</div>
+        </div>
+        <div class="stat-card accent-card">
+          <div class="stat-value" id="statStreak">0</div>
+          <div class="stat-label">Day Streak (4+/day)</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="heatmap-section">
+      <h2>Productivity Heatmap</h2>
+      <p class="section-desc">Sessions per day over the last 52 weeks.</p>
+      <div class="heatmap-wrap">
+        <div class="heatmap-months" id="heatmapMonths"></div>
+        <div class="heatmap-container">
+          <div class="heatmap-days">
+            <span></span><span>Mon</span><span></span><span>Wed</span><span></span><span>Fri</span><span></span>
+          </div>
+          <div class="heatmap-grid" id="heatmapGrid"></div>
+        </div>
+      </div>
+      <div class="heatmap-legend">
+        <span>Less</span>
+        <span class="legend-cell" data-level="0"></span>
+        <span class="legend-cell" data-level="1"></span>
+        <span class="legend-cell" data-level="2"></span>
+        <span class="legend-cell" data-level="3"></span>
+        <span class="legend-cell" data-level="4"></span>
+        <span>More</span>
+      </div>
+    </section>
+
+    <section class="chart-section">
+      <h2>Focus Time by Day of Week</h2>
+      <p class="section-desc">Average focus minutes per weekday based on all your data.</p>
+      <div class="bar-chart" id="barChart"></div>
+    </section>
+
+    <section class="log-section">
+      <div class="log-header">
+        <h2>Daily Session Log</h2>
+        <button class="ctrl-btn export-btn" id="exportBtn">Export JSON</button>
+      </div>
+      <div class="log-table-wrap">
+        <table class="log-table" id="logTable">
+          <thead>
+            <tr><th>Date</th><th>Sessions</th><th>Focus Time</th><th>Modes</th></tr>
+          </thead>
+          <tbody id="logBody"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="content-body">
+      <h2>How to Use the Pomodoro Dashboard</h2>
+      <p>Choose your preferred mode — <strong>25/5</strong> for classic Pomodoro intervals or <strong>50/10</strong> for extended deep work. Press Start to begin a focus session. When the timer ends, a break period starts automatically. Each completed focus session is logged to your browser's local storage.</p>
+      <p>The dashboard aggregates your sessions into daily, weekly, and monthly statistics. The <strong>streak counter</strong> tracks consecutive days where you completed at least 4 Pomodoros, helping you build a consistent focus habit.</p>
+
+      <h2>Reading the Heatmap</h2>
+      <div class="callout">
+        <strong>Consistency Over Intensity</strong>
+        <p>Research shows that regular daily focus sessions produce better results than occasional marathon sprints. Aim for at least 4 sessions per day to keep your streak alive.</p>
+      </div>
+      <ul>
+        <li><strong>Darker cells</strong> indicate more sessions completed on that day.</li>
+        <li><strong>Hover any cell</strong> to see the exact date and session count.</li>
+        <li><strong>Empty cells</strong> represent days with no recorded sessions.</li>
+      </ul>
+    </section>
+
+    <section class="faq-section">
+      <h2>Frequently Asked Questions</h2>
+      {schema[1].mainEntity.map((faq) => (
+        <details>
+          <summary>{faq.name}</summary>
+          <p>{faq.acceptedAnswer.text}</p>
+        </details>
+      ))}
+    </section>
+
+    <section class="related-timers">
+      <h2>Related Tools</h2>
+      <div class="related-grid">
+        <a href="/sites/justonemoment/pomodoro-timer" class="related-link">Free Online Pomodoro Timer</a>
+        <a href="/sites/justonemoment/world-clock" class="related-link">World Clock Dashboard</a>
+        <a href="/sites/justonemoment/best-timer-apps" class="related-link">Best Timer Apps Guide</a>
+      </div>
+    </section>
+  </div>
+
+  <style is:inline>
+    :root {
+      --pomo-accent: #e74c3c;
+      --pomo-green: #27ae60;
+      --pomo-blue: #3498db;
+      --pomo-orange: #f39c12;
+      --heatmap-0: color-mix(in srgb, var(--border-color, #e2e8f0) 40%, transparent);
+      --heatmap-1: color-mix(in srgb, var(--pomo-green) 30%, transparent);
+      --heatmap-2: color-mix(in srgb, var(--pomo-green) 50%, transparent);
+      --heatmap-3: color-mix(in srgb, var(--pomo-green) 70%, transparent);
+      --heatmap-4: var(--pomo-green);
+    }
+
+    .page-content { max-width: 1100px; margin: 0 auto; padding: 2rem 1.5rem; line-height: 1.6; }
+    .hero { text-align: center; padding: 3rem 0 1.5rem; }
+    .hero h1 { font-size: 2.4rem; font-weight: 800; margin-bottom: 0.5rem; }
+    .subtitle { color: var(--text-secondary); font-size: 1.1rem; }
+
+    /* Timer */
+    .timer-section {
+      text-align: center; padding: 2.5rem 2rem; background: var(--card-bg);
+      border: 1px solid var(--border-color); border-radius: 16px; margin-bottom: 2.5rem;
+    }
+    .mode-tabs { display: flex; justify-content: center; gap: 0.5rem; margin-bottom: 1.5rem; }
+    .mode-btn {
+      padding: 0.5rem 1.5rem; border: 2px solid var(--border-color); border-radius: 8px;
+      background: transparent; color: var(--text-primary); cursor: pointer; font-size: 1rem;
+      font-weight: 600; transition: border-color 0.2s, background 0.2s;
+    }
+    .mode-btn.active { border-color: var(--pomo-accent); background: color-mix(in srgb, var(--pomo-accent) 10%, transparent); }
+    .mode-btn:hover { border-color: var(--pomo-accent); }
+
+    .timer-display {
+      font-size: 5rem; font-weight: 800; font-variant-numeric: tabular-nums;
+      color: var(--text-primary); letter-spacing: 0.05em; line-height: 1.1; margin-bottom: 0.25rem;
+    }
+    .timer-display.running { color: var(--pomo-accent); }
+    .timer-display.on-break { color: var(--pomo-green); }
+
+    .timer-label { font-size: 0.95rem; color: var(--text-secondary); margin-bottom: 1.5rem; font-weight: 500; }
+
+    .timer-controls { display: flex; justify-content: center; gap: 0.75rem; margin-bottom: 1rem; }
+    .ctrl-btn {
+      padding: 0.65rem 2rem; border: 1px solid var(--border-color); border-radius: 8px;
+      background: var(--card-bg); color: var(--text-primary); cursor: pointer; font-size: 0.95rem;
+      font-weight: 600; transition: border-color 0.2s, background 0.2s;
+    }
+    .ctrl-btn:hover { border-color: var(--pomo-accent); }
+    .ctrl-btn.active-start { background: var(--pomo-accent); color: #fff; border-color: var(--pomo-accent); }
+
+    .session-count { font-size: 0.9rem; color: var(--text-secondary); }
+
+    /* Stats */
+    .stats-overview { margin-bottom: 2.5rem; }
+    .stats-overview h2 { margin-bottom: 1rem; }
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem; }
+    .stat-card {
+      background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px;
+      padding: 1.25rem; text-align: center;
+    }
+    .stat-card.accent-card { border-color: var(--pomo-orange); background: color-mix(in srgb, var(--pomo-orange) 5%, var(--card-bg, #fff)); }
+    .stat-value { font-size: 2rem; font-weight: 800; color: var(--text-primary); font-variant-numeric: tabular-nums; }
+    .stat-label { font-size: 0.8rem; color: var(--text-secondary); margin-top: 0.25rem; font-weight: 500; }
+
+    /* Heatmap */
+    .heatmap-section { margin-bottom: 2.5rem; }
+    .heatmap-section h2 { margin-bottom: 0.5rem; }
+    .section-desc { color: var(--text-secondary); font-size: 0.95rem; margin-bottom: 1.25rem; }
+    .heatmap-wrap { overflow-x: auto; }
+    .heatmap-months { display: flex; gap: 0; padding-left: 40px; margin-bottom: 4px; font-size: 0.7rem; color: var(--text-secondary); }
+    .heatmap-months span { flex: none; }
+    .heatmap-container { display: flex; gap: 4px; }
+    .heatmap-days { display: flex; flex-direction: column; gap: 3px; font-size: 0.65rem; color: var(--text-secondary); min-width: 32px; padding-top: 0; }
+    .heatmap-days span { height: 13px; line-height: 13px; }
+    .heatmap-grid { display: flex; gap: 3px; }
+    .heatmap-col { display: flex; flex-direction: column; gap: 3px; }
+    .heatmap-cell {
+      width: 13px; height: 13px; border-radius: 2px; background: var(--heatmap-0);
+      position: relative; cursor: default;
+    }
+    .heatmap-cell[data-level="1"] { background: var(--heatmap-1); }
+    .heatmap-cell[data-level="2"] { background: var(--heatmap-2); }
+    .heatmap-cell[data-level="3"] { background: var(--heatmap-3); }
+    .heatmap-cell[data-level="4"] { background: var(--heatmap-4); }
+    .heatmap-cell:hover::after {
+      content: attr(data-tip); position: absolute; bottom: 120%; left: 50%; transform: translateX(-50%);
+      background: var(--text-primary); color: var(--card-bg, #fff); padding: 3px 8px; border-radius: 4px;
+      font-size: 0.65rem; white-space: nowrap; z-index: 10; pointer-events: none;
+    }
+    .heatmap-legend { display: flex; align-items: center; gap: 4px; margin-top: 8px; font-size: 0.7rem; color: var(--text-secondary); }
+    .legend-cell { width: 13px; height: 13px; border-radius: 2px; display: inline-block; }
+    .legend-cell[data-level="0"] { background: var(--heatmap-0); }
+    .legend-cell[data-level="1"] { background: var(--heatmap-1); }
+    .legend-cell[data-level="2"] { background: var(--heatmap-2); }
+    .legend-cell[data-level="3"] { background: var(--heatmap-3); }
+    .legend-cell[data-level="4"] { background: var(--heatmap-4); }
+
+    /* Bar Chart */
+    .chart-section { margin-bottom: 2.5rem; }
+    .chart-section h2 { margin-bottom: 0.5rem; }
+    .bar-chart { display: flex; align-items: flex-end; gap: 1rem; height: 200px; padding: 1rem 0; }
+    .bar-col { flex: 1; display: flex; flex-direction: column; align-items: center; height: 100%; justify-content: flex-end; }
+    .bar-fill {
+      width: 100%; max-width: 60px; border-radius: 6px 6px 0 0; background: var(--pomo-blue);
+      transition: height 0.3s; min-height: 2px;
+    }
+    .bar-value { font-size: 0.75rem; font-weight: 600; color: var(--text-primary); margin-bottom: 4px; font-variant-numeric: tabular-nums; }
+    .bar-label { font-size: 0.75rem; color: var(--text-secondary); margin-top: 6px; }
+
+    /* Log */
+    .log-section { margin-bottom: 2.5rem; }
+    .log-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; flex-wrap: wrap; gap: 0.5rem; }
+    .log-header h2 { margin: 0; }
+    .export-btn { font-size: 0.85rem; padding: 0.45rem 1.25rem; }
+    .log-table-wrap { overflow-x: auto; }
+    .log-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+    .log-table th, .log-table td { padding: 0.6rem 1rem; text-align: left; border-bottom: 1px solid var(--border-color); color: var(--text-primary); }
+    .log-table th { font-weight: 600; font-size: 0.8rem; color: var(--text-secondary); }
+    .log-table tbody tr:hover { background: color-mix(in srgb, var(--border-color) 30%, transparent); }
+    .log-table .empty-row td { text-align: center; color: var(--text-secondary); padding: 2rem; }
+
+    /* Content */
+    .content-body { margin-top: 2rem; }
+    .content-body h2 { margin-top: 2.5rem; margin-bottom: 1rem; color: var(--text-primary); }
+    .content-body p { margin-bottom: 1.25rem; color: var(--text-secondary); }
+    .content-body ul { margin-bottom: 1.25rem; padding-left: 1.5rem; color: var(--text-secondary); }
+    .content-body li { margin-bottom: 0.5rem; }
+    .callout { background: color-mix(in srgb, #e74c3c 10%, transparent); border-left: 4px solid #e74c3c; padding: 1rem 1.5rem; border-radius: 0 8px 8px 0; margin: 1.5rem 0; }
+
+    /* FAQ */
+    .faq-section { margin-top: 3rem; }
+    .faq-section h2 { margin-bottom: 1.5rem; }
+    .faq-section details { margin: 1rem 0; padding: 1rem; background: var(--card-bg); border-radius: 8px; border: 1px solid var(--border-color); }
+    .faq-section summary { font-weight: 600; cursor: pointer; color: var(--text-primary); outline: none; }
+    .faq-section p { margin-top: 1rem; margin-bottom: 0; color: var(--text-secondary); }
+
+    /* Related */
+    .related-timers { margin-top: 3rem; }
+    .related-timers h2 { margin-bottom: 1rem; }
+    .related-grid { display: flex; flex-wrap: wrap; gap: 0.75rem; }
+    .related-link {
+      padding: 0.5rem 1rem; background: var(--card-bg); border: 1px solid var(--border-color);
+      border-radius: 8px; color: var(--text-primary); text-decoration: none; font-size: 0.9rem;
+      transition: border-color 0.2s;
+    }
+    .related-link:hover { border-color: var(--pomo-accent); text-decoration: none; }
+    a { color: var(--pomo-accent); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    @media (max-width: 768px) {
+      .hero h1 { font-size: 1.8rem; }
+      .timer-display { font-size: 3.5rem; }
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .bar-chart { gap: 0.5rem; }
+    }
+  </style>
+
+  <script is:inline>
+    document.addEventListener("DOMContentLoaded", () => {
+      const LS_KEY = "pomo_dashboard_sessions";
+      const MODES = { 25: { focus: 25, break: 5 }, 50: { focus: 50, break: 10 } };
+
+      let currentMode = 25;
+      let timerSeconds = MODES[25].focus * 60;
+      let timerRunning = false;
+      let timerInterval = null;
+      let isBreak = false;
+
+      const display = document.getElementById("timerDisplay");
+      const label = document.getElementById("timerLabel");
+      const startBtn = document.getElementById("startBtn");
+      const resetBtn = document.getElementById("resetBtn");
+      const sessionCountEl = document.getElementById("sessionCount");
+
+      // --- Data helpers ---
+      function getSessions() {
+        try { return JSON.parse(localStorage.getItem(LS_KEY)) || []; } catch { return []; }
+      }
+      function saveSessions(s) { localStorage.setItem(LS_KEY, JSON.stringify(s)); }
+
+      function todayKey() {
+        const d = new Date();
+        return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+      }
+
+      function dateKey(d) {
+        return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0");
+      }
+
+      function logSession(mode) {
+        const sessions = getSessions();
+        sessions.push({ date: todayKey(), duration: MODES[mode].focus, mode: mode, ts: Date.now() });
+        saveSessions(sessions);
+        refreshAll();
+      }
+
+      // --- Aggregate helpers ---
+      function groupByDate(sessions) {
+        const map = {};
+        sessions.forEach(s => {
+          if (!map[s.date]) map[s.date] = { count: 0, focus: 0, modes: {} };
+          map[s.date].count++;
+          map[s.date].focus += s.duration;
+          map[s.date].modes[s.mode] = (map[s.date].modes[s.mode] || 0) + 1;
+        });
+        return map;
+      }
+
+      function isInWeek(dateStr) {
+        const d = new Date(dateStr + "T00:00:00");
+        const now = new Date();
+        const startOfWeek = new Date(now);
+        startOfWeek.setDate(now.getDate() - now.getDay());
+        startOfWeek.setHours(0, 0, 0, 0);
+        return d >= startOfWeek;
+      }
+
+      function isInMonth(dateStr) {
+        const d = new Date(dateStr + "T00:00:00");
+        const now = new Date();
+        return d.getMonth() === now.getMonth() && d.getFullYear() === now.getFullYear();
+      }
+
+      function calcStreak(byDate) {
+        const dates = Object.keys(byDate).filter(d => byDate[d].count >= 4).sort().reverse();
+        if (dates.length === 0) return 0;
+        let streak = 0;
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        let checkDate = new Date(today);
+        // Allow today to not yet have 4 — check yesterday first if today doesn't qualify
+        const todayStr = dateKey(checkDate);
+        if (!dates.includes(todayStr)) {
+          checkDate.setDate(checkDate.getDate() - 1);
+        }
+        for (let i = 0; i < 1000; i++) {
+          const key = dateKey(checkDate);
+          if (dates.includes(key)) {
+            streak++;
+            checkDate.setDate(checkDate.getDate() - 1);
+          } else {
+            break;
+          }
+        }
+        return streak;
+      }
+
+      function formatMinutes(m) {
+        if (m < 60) return m + "m";
+        const h = Math.floor(m / 60);
+        const rm = m % 60;
+        return rm > 0 ? h + "h " + rm + "m" : h + "h";
+      }
+
+      // --- Timer ---
+      function formatTime(sec) {
+        const m = Math.floor(sec / 60);
+        const s = sec % 60;
+        return String(m).padStart(2, "0") + ":" + String(s).padStart(2, "0");
+      }
+
+      function updateDisplay() {
+        display.textContent = formatTime(timerSeconds);
+        display.className = "timer-display" + (timerRunning ? (isBreak ? " on-break" : " running") : "");
+        label.textContent = isBreak ? "Break Time" : "Focus Time";
+        startBtn.textContent = timerRunning ? "Pause" : "Start";
+        startBtn.className = "ctrl-btn" + (timerRunning ? " active-start" : "");
+      }
+
+      function tick() {
+        if (timerSeconds <= 0) {
+          clearInterval(timerInterval);
+          timerRunning = false;
+          if (!isBreak) {
+            logSession(currentMode);
+            // Start break
+            isBreak = true;
+            timerSeconds = MODES[currentMode].break * 60;
+            updateDisplay();
+            timerRunning = true;
+            timerInterval = setInterval(tick, 1000);
+            try { new Audio("data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdH2LkZaXk4+HfnRqYWBkaXF8ho2TlpaSjYZ+dWxjYGRsdoCJkJWXk46Hf3VsY2BkbHaAiZCVl5OOh391bGNgZGx2gA==").play(); } catch {}
+            return;
+          } else {
+            // Break ended
+            isBreak = false;
+            timerSeconds = MODES[currentMode].focus * 60;
+            updateDisplay();
+            try { new Audio("data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdH2LkZaXk4+HfnRqYWBkaXF8ho2TlpaSjYZ+dWxjYGRsdoCJkJWXk46Hf3VsY2BkbHaAiZCVl5OOh391bGNgZGx2gA==").play(); } catch {}
+            return;
+          }
+        }
+        timerSeconds--;
+        updateDisplay();
+      }
+
+      startBtn.addEventListener("click", () => {
+        if (timerRunning) {
+          clearInterval(timerInterval);
+          timerRunning = false;
+        } else {
+          timerRunning = true;
+          timerInterval = setInterval(tick, 1000);
+        }
+        updateDisplay();
+      });
+
+      resetBtn.addEventListener("click", () => {
+        clearInterval(timerInterval);
+        timerRunning = false;
+        isBreak = false;
+        timerSeconds = MODES[currentMode].focus * 60;
+        updateDisplay();
+      });
+
+      document.querySelectorAll(".mode-btn").forEach(btn => {
+        btn.addEventListener("click", () => {
+          if (timerRunning) return;
+          document.querySelectorAll(".mode-btn").forEach(b => b.classList.remove("active"));
+          btn.classList.add("active");
+          currentMode = Number(btn.dataset.mode);
+          isBreak = false;
+          timerSeconds = MODES[currentMode].focus * 60;
+          updateDisplay();
+        });
+      });
+
+      // --- Refresh all stats ---
+      function refreshAll() {
+        const sessions = getSessions();
+        const byDate = groupByDate(sessions);
+        const tk = todayKey();
+
+        // Today
+        const todayData = byDate[tk] || { count: 0, focus: 0 };
+        document.getElementById("statTodayFocus").textContent = formatMinutes(todayData.focus);
+        document.getElementById("statTodaySessions").textContent = todayData.count;
+        sessionCountEl.textContent = "Sessions today: " + todayData.count;
+
+        // Week
+        let weekFocus = 0, weekSessions = 0;
+        Object.keys(byDate).forEach(d => {
+          if (isInWeek(d)) { weekFocus += byDate[d].focus; weekSessions += byDate[d].count; }
+        });
+        document.getElementById("statWeekFocus").textContent = formatMinutes(weekFocus);
+        document.getElementById("statWeekSessions").textContent = weekSessions;
+
+        // Month
+        let monthFocus = 0, monthSessions = 0;
+        Object.keys(byDate).forEach(d => {
+          if (isInMonth(d)) { monthFocus += byDate[d].focus; monthSessions += byDate[d].count; }
+        });
+        document.getElementById("statMonthFocus").textContent = formatMinutes(monthFocus);
+        document.getElementById("statMonthSessions").textContent = monthSessions;
+
+        // Daily average
+        const allDates = Object.keys(byDate);
+        if (allDates.length > 0) {
+          const totalFocus = allDates.reduce((sum, d) => sum + byDate[d].focus, 0);
+          document.getElementById("statDailyAvg").textContent = formatMinutes(Math.round(totalFocus / allDates.length));
+        } else {
+          document.getElementById("statDailyAvg").textContent = "0m";
+        }
+
+        // Streak
+        document.getElementById("statStreak").textContent = calcStreak(byDate);
+
+        renderHeatmap(byDate);
+        renderBarChart(sessions);
+        renderLog(byDate);
+      }
+
+      // --- Heatmap ---
+      function renderHeatmap(byDate) {
+        const grid = document.getElementById("heatmapGrid");
+        const monthsEl = document.getElementById("heatmapMonths");
+        grid.innerHTML = "";
+        monthsEl.innerHTML = "";
+
+        const today = new Date();
+        today.setHours(0, 0, 0, 0);
+        const startDay = new Date(today);
+        startDay.setDate(startDay.getDate() - 363); // ~52 weeks
+        // Adjust to start on Sunday
+        startDay.setDate(startDay.getDate() - startDay.getDay());
+
+        const weeks = [];
+        let d = new Date(startDay);
+        let currentWeek = [];
+        const monthPositions = [];
+        let lastMonth = -1;
+
+        while (d <= today) {
+          if (d.getDay() === 0 && currentWeek.length > 0) {
+            weeks.push(currentWeek);
+            currentWeek = [];
+          }
+          const key = dateKey(d);
+          const count = byDate[key] ? byDate[key].count : 0;
+          let level = 0;
+          if (count >= 8) level = 4;
+          else if (count >= 6) level = 3;
+          else if (count >= 4) level = 2;
+          else if (count >= 1) level = 1;
+
+          if (d.getMonth() !== lastMonth) {
+            monthPositions.push({ month: d.toLocaleString("en-US", { month: "short" }), week: weeks.length });
+            lastMonth = d.getMonth();
+          }
+
+          currentWeek.push({ key, count, level, date: new Date(d) });
+          d.setDate(d.getDate() + 1);
+        }
+        if (currentWeek.length > 0) weeks.push(currentWeek);
+
+        // Month labels
+        const cellW = 16; // 13px + 3px gap
+        monthPositions.forEach((mp, i) => {
+          const span = document.createElement("span");
+          span.textContent = mp.month;
+          const nextWeek = i < monthPositions.length - 1 ? monthPositions[i + 1].week : weeks.length;
+          span.style.width = (nextWeek - mp.week) * cellW + "px";
+          monthsEl.appendChild(span);
+        });
+
+        // Grid
+        weeks.forEach(week => {
+          const col = document.createElement("div");
+          col.className = "heatmap-col";
+          week.forEach(cell => {
+            const el = document.createElement("div");
+            el.className = "heatmap-cell";
+            el.dataset.level = cell.level;
+            const dateStr = cell.date.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+            el.dataset.tip = dateStr + ": " + cell.count + " session" + (cell.count !== 1 ? "s" : "");
+            col.appendChild(el);
+          });
+          // Pad incomplete weeks
+          while (col.children.length < 7) {
+            const empty = document.createElement("div");
+            empty.className = "heatmap-cell";
+            empty.style.visibility = "hidden";
+            col.appendChild(empty);
+          }
+          grid.appendChild(col);
+        });
+      }
+
+      // --- Bar Chart ---
+      function renderBarChart(sessions) {
+        const chart = document.getElementById("barChart");
+        const dayNames = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"];
+        const totals = [0, 0, 0, 0, 0, 0, 0];
+        const counts = [0, 0, 0, 0, 0, 0, 0];
+
+        sessions.forEach(s => {
+          const d = new Date(s.date + "T00:00:00");
+          const dow = d.getDay();
+          totals[dow] += s.duration;
+          counts[dow]++;
+        });
+
+        const avgs = totals.map((t, i) => {
+          // Count unique days for this DOW
+          const uniqueDays = new Set(sessions.filter(s => new Date(s.date + "T00:00:00").getDay() === i).map(s => s.date)).size;
+          return uniqueDays > 0 ? Math.round(t / uniqueDays) : 0;
+        });
+
+        const maxVal = Math.max(...avgs, 1);
+
+        chart.innerHTML = dayNames.map((name, i) => {
+          const pct = (avgs[i] / maxVal) * 100;
+          return `<div class="bar-col">
+            <div class="bar-value">${avgs[i]}m</div>
+            <div class="bar-fill" style="height: ${Math.max(pct, 1)}%"></div>
+            <div class="bar-label">${name}</div>
+          </div>`;
+        }).join("");
+      }
+
+      // --- Log ---
+      function renderLog(byDate) {
+        const body = document.getElementById("logBody");
+        const dates = Object.keys(byDate).sort().reverse().slice(0, 30);
+        if (dates.length === 0) {
+          body.innerHTML = '<tr class="empty-row"><td colspan="4">No sessions recorded yet. Start the timer to begin tracking.</td></tr>';
+          return;
+        }
+        body.innerHTML = dates.map(d => {
+          const data = byDate[d];
+          const modeStr = Object.entries(data.modes).map(([m, c]) => c + "x " + m + "/" + (m === "25" ? "5" : "10")).join(", ");
+          const dateObj = new Date(d + "T00:00:00");
+          const friendly = dateObj.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric", year: "numeric" });
+          return `<tr><td>${friendly}</td><td>${data.count}</td><td>${formatMinutes(data.focus)}</td><td>${modeStr}</td></tr>`;
+        }).join("");
+      }
+
+      // --- Export ---
+      document.getElementById("exportBtn").addEventListener("click", () => {
+        const sessions = getSessions();
+        const byDate = groupByDate(sessions);
+        const data = {
+          exportDate: new Date().toISOString(),
+          totalSessions: sessions.length,
+          totalFocusMinutes: sessions.reduce((s, x) => s + x.duration, 0),
+          currentStreak: calcStreak(byDate),
+          sessions: sessions,
+          dailySummary: byDate
+        };
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = "pomodoro-stats-" + todayKey() + ".json";
+        a.click();
+        URL.revokeObjectURL(url);
+      });
+
+      // --- Init ---
+      updateDisplay();
+      refreshAll();
+    });
+  </script>
+</SiteLayout>

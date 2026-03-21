@@ -1,0 +1,917 @@
+---
+import SiteLayout from "../../../layouts/SiteLayout.astro";
+
+export const meta = {
+  title: "Retirement Income Planner: Map Your Income Sources Year by Year",
+  description: "Plan retirement income from multiple sources — Social Security/CPP, pensions, 401k/RRSP, rental income, and more. See income gaps, optimal claiming ages, and tax-efficient withdrawal strategies.",
+  category: "tool",
+  published: "2026-03-21"
+};
+
+const schema = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebApplication",
+      "name": meta.title,
+      "description": meta.description,
+      "applicationCategory": "FinanceApplication",
+      "operatingSystem": "Any",
+      "offers": {
+        "@type": "Offer",
+        "price": "0",
+        "priceCurrency": "USD"
+      },
+      "author": {
+        "@type": "Organization",
+        "name": "Westmount Fundamentals",
+        "url": "https://westmountfundamentals.com"
+      },
+      "publisher": {
+        "@type": "Organization",
+        "name": "Westmount Fundamentals",
+        "logo": {
+          "@type": "ImageObject",
+          "url": "https://westmountfundamentals.com/logo.png"
+        }
+      },
+      "datePublished": meta.published,
+      "mainEntityOfPage": {
+        "@type": "WebPage",
+        "@id": "https://westmountfundamentals.com/retirement-income-planner"
+      }
+    },
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "When should I start collecting Social Security or CPP?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Delaying Social Security from 62 to 70 increases your benefit by roughly 77%. CPP can be taken as early as 60 or delayed to 70, with a similar trade-off. The optimal age depends on your health, other income sources, and whether you need the money immediately. This planner compares claiming ages side by side so you can see the cumulative impact."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How much income do I need in retirement?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "A common rule of thumb is 70-80% of your pre-retirement income, but actual needs vary widely. Housing costs, healthcare, travel plans, and debt all affect the number. This planner lets you set your desired monthly spending and shows the gap between that target and your projected income sources year by year."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What is a tax-efficient withdrawal strategy in retirement?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Tax-efficient withdrawal ordering typically means drawing from taxable accounts first, then tax-deferred accounts (401k/RRSP), and finally tax-free accounts (Roth IRA/TFSA). This lets tax-advantaged accounts compound longer. However, Roth conversions in low-income years and managing tax brackets can further optimize your after-tax income."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How does inflation affect retirement income?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Inflation erodes purchasing power over time. At 3% inflation, $5,000 today buys only about $3,700 worth of goods in 10 years. Social Security and CPP include cost-of-living adjustments, but pensions and fixed annuities often do not. This planner lets you flag which income streams are inflation-adjusted so you can see the real value of your income over time."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What is an income waterfall chart?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "An income waterfall chart stacks your retirement income sources by year, showing how each contributes to your total. It visually reveals when income streams start and stop, how your total changes as you age, and where gaps exist relative to your spending target. It is one of the most useful tools for retirement income planning."
+          }
+        }
+      ]
+    }
+  ]
+};
+---
+
+<SiteLayout
+  site="westmount"
+  title={meta.title}
+  description={meta.description}
+  canonical="https://westmountfundamentals.com/retirement-income-planner"
+  schema={schema}
+>
+  <div class="page-content">
+
+    <div style="text-align: center; margin-bottom: 2rem;">
+      <h1>Retirement Income Planner</h1>
+      <p style="font-size: 1.2rem; max-width: 640px; margin: 0 auto;">Map your retirement income from every source. See gaps, compare claiming strategies, and plan tax-efficient withdrawals.</p>
+    </div>
+
+    <div class="calculator-card">
+      <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem;">
+        <div class="input-group">
+          <label for="currentAge">Current Age</label>
+          <div class="input-wrapper">
+            <input type="number" id="currentAge" value="55" min="30" max="80" step="1">
+          </div>
+        </div>
+        <div class="input-group">
+          <label for="retireAge">Retirement Age</label>
+          <div class="input-wrapper">
+            <input type="number" id="retireAge" value="65" min="50" max="80" step="1">
+          </div>
+        </div>
+        <div class="input-group">
+          <label for="planToAge">Plan To Age</label>
+          <div class="input-wrapper">
+            <input type="number" id="planToAge" value="90" min="70" max="105" step="1">
+          </div>
+        </div>
+        <div class="input-group">
+          <label for="desiredSpending">Desired Monthly Spending</label>
+          <div class="input-wrapper">
+            <span style="position: absolute; left: 1rem; color: var(--text-secondary); pointer-events: none;">$</span>
+            <input type="number" id="desiredSpending" value="5000" min="500" step="100" style="padding-left: 2rem;">
+          </div>
+        </div>
+        <div class="input-group">
+          <label for="inflationRate">Inflation Rate</label>
+          <div class="input-wrapper">
+            <input type="number" id="inflationRate" value="2.5" min="0" max="10" step="0.1">
+            <span class="suffix">%</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Income Streams -->
+    <div class="calculator-card" style="margin-top: 1.5rem;">
+      <h3 style="margin-top: 0; margin-bottom: 1rem;">Income Streams</h3>
+      <div id="streamsList"></div>
+      <div style="display: flex; flex-wrap: wrap; gap: 0.5rem; margin-top: 1rem;">
+        <button class="add-btn" data-type="ss">+ Social Security / CPP</button>
+        <button class="add-btn" data-type="pension">+ Pension</button>
+        <button class="add-btn" data-type="401k">+ 401k / RRSP</button>
+        <button class="add-btn" data-type="rental">+ Rental Income</button>
+        <button class="add-btn" data-type="parttime">+ Part-Time Work</button>
+        <button class="add-btn" data-type="annuity">+ Annuity</button>
+      </div>
+    </div>
+
+    <div style="text-align: center; margin-top: 1.5rem;">
+      <button id="calculateBtn" style="padding: 0.75rem 2rem; background: var(--accent-color); color: #fff; border: none; border-radius: 6px; font-size: 1rem; font-weight: 600; cursor: pointer;">Calculate Retirement Income</button>
+    </div>
+
+    <!-- Results -->
+    <div id="resultsSection" style="display: none;">
+      <div class="stats-grid" style="margin-top: 2rem;">
+        <div class="stat-card">
+          <span class="calc-result-label">Income at Retirement</span>
+          <div style="font-size: 1.5rem; font-weight: 700; color: var(--accent-color);" id="incomeAtRetire">$0</div>
+          <div style="font-size: 0.9rem; color: var(--text-secondary); margin-top: 0.25rem;" id="incomeAtRetireNote"></div>
+        </div>
+        <div class="stat-card">
+          <span class="calc-result-label">Peak Monthly Income</span>
+          <div style="font-size: 1.5rem; font-weight: 700; color: var(--text-primary);" id="peakIncome">$0</div>
+          <div style="font-size: 0.9rem; color: var(--text-secondary); margin-top: 0.25rem;" id="peakIncomeAge"></div>
+        </div>
+        <div class="stat-card">
+          <span class="calc-result-label">Income Gap at Retirement</span>
+          <div style="font-size: 1.5rem; font-weight: 700;" id="incomeGap">$0</div>
+          <div style="font-size: 0.9rem; color: var(--text-secondary); margin-top: 0.25rem;" id="incomeGapNote"></div>
+        </div>
+        <div class="stat-card">
+          <span class="calc-result-label">Lifetime Income (Total)</span>
+          <div style="font-size: 1.5rem; font-weight: 700; color: var(--text-primary);" id="lifetimeIncome">$0</div>
+        </div>
+      </div>
+
+      <!-- SS/CPP Claiming Comparison -->
+      <div class="chart-container" style="margin-top: 2rem;" id="claimingSection">
+        <h3 style="margin-top: 0; margin-bottom: 1rem;">Social Security / CPP Claiming Age Comparison</h3>
+        <div class="stats-grid" id="claimingGrid"></div>
+      </div>
+
+      <!-- Tax Strategy -->
+      <div class="chart-container" style="margin-top: 2rem;" id="taxSection">
+        <h3 style="margin-top: 0; margin-bottom: 1rem;">Tax-Efficient Withdrawal Ordering</h3>
+        <div id="taxStrategy"></div>
+      </div>
+
+      <!-- Waterfall Chart -->
+      <div class="chart-container" style="margin-top: 2rem;">
+        <h3 style="margin-top: 0; margin-bottom: 1rem;">Year-by-Year Income Waterfall</h3>
+        <canvas id="waterfallChart" style="width: 100%; height: 380px;"></canvas>
+      </div>
+
+      <!-- Table -->
+      <div class="chart-container" style="margin-top: 2rem;">
+        <h3 style="margin-top: 0; margin-bottom: 1rem;">Year-by-Year Income Breakdown</h3>
+        <div class="table-container" style="max-height: 500px; overflow-y: auto;">
+          <table id="incomeTable">
+            <thead style="position: sticky; top: 0; z-index: 1;">
+              <tr id="tableHeader"></tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="info-box" style="margin-top: 2rem; padding: 1.25rem; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px;">
+        <p style="margin: 0; color: var(--text-secondary); font-size: 0.95rem;"><strong>Important:</strong> This planner provides estimates for educational purposes. Actual Social Security/CPP benefits depend on your earnings history. Tax implications vary by jurisdiction and personal circumstances. Consult a qualified financial advisor for personalized retirement planning.</p>
+      </div>
+    </div>
+
+    <script is:inline>
+      const fmt = (n) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', minimumFractionDigits: 0, maximumFractionDigits: 0 }).format(n);
+      const fmtK = (n) => n >= 1000000 ? '$' + (n / 1000000).toFixed(1) + 'M' : n >= 1000 ? '$' + (n / 1000).toFixed(0) + 'K' : fmt(n);
+
+      const streamTypes = {
+        ss:       { label: 'Social Security / CPP', defaultAmount: 1800, defaultStart: 65, defaultEnd: null, taxable: true,  inflAdj: true,  hasClaimAge: true },
+        pension:  { label: 'Pension',               defaultAmount: 1200, defaultStart: 65, defaultEnd: null, taxable: true,  inflAdj: false, hasClaimAge: false },
+        '401k':   { label: '401k / RRSP',           defaultAmount: 2000, defaultStart: 65, defaultEnd: 85,   taxable: true,  inflAdj: false, hasClaimAge: false },
+        rental:   { label: 'Rental Income',         defaultAmount: 1500, defaultStart: 55, defaultEnd: null, taxable: true,  inflAdj: true,  hasClaimAge: false },
+        parttime: { label: 'Part-Time Work',        defaultAmount: 1000, defaultStart: 65, defaultEnd: 70,   taxable: true,  inflAdj: false, hasClaimAge: false },
+        annuity:  { label: 'Annuity',               defaultAmount: 800,  defaultStart: 70, defaultEnd: null, taxable: false, inflAdj: false, hasClaimAge: false }
+      };
+
+      const streamColors = ['#4a9eff', '#e8a735', '#34d399', '#f87171', '#a78bfa', '#fb923c', '#38bdf8', '#f472b6'];
+
+      let streams = [];
+      let nextId = 0;
+
+      function addStream(type) {
+        const def = streamTypes[type];
+        const retireAge = parseInt(document.getElementById('retireAge').value) || 65;
+        streams.push({
+          id: nextId++,
+          type: type,
+          label: def.label,
+          amount: def.defaultAmount,
+          startAge: def.defaultStart || retireAge,
+          endAge: def.defaultEnd || null,
+          taxable: def.taxable,
+          inflAdj: def.inflAdj,
+          hasClaimAge: def.hasClaimAge
+        });
+        renderStreams();
+      }
+
+      function removeStream(id) {
+        streams = streams.filter(function(s) { return s.id !== id; });
+        renderStreams();
+      }
+
+      function renderStreams() {
+        var container = document.getElementById('streamsList');
+        if (streams.length === 0) {
+          container.innerHTML = '<p style="color: var(--text-secondary); text-align: center; padding: 1rem;">No income streams added yet. Add your first source below.</p>';
+          return;
+        }
+        var html = '';
+        streams.forEach(function(s, idx) {
+          var color = streamColors[idx % streamColors.length];
+          html += '<div class="stream-card" style="border-left: 3px solid ' + color + ';">' +
+            '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.75rem;">' +
+              '<strong style="color: var(--text-primary);">' + s.label + '</strong>' +
+              '<button class="remove-btn" data-id="' + s.id + '">&times;</button>' +
+            '</div>' +
+            '<div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 0.75rem;">' +
+              '<div class="input-group" style="margin-bottom:0;">' +
+                '<label>Monthly Amount</label>' +
+                '<div class="input-wrapper">' +
+                  '<span style="position: absolute; left: 0.75rem; color: var(--text-secondary); pointer-events: none;">$</span>' +
+                  '<input type="number" class="stream-amount" data-id="' + s.id + '" value="' + s.amount + '" min="0" step="50" style="padding-left: 1.75rem;">' +
+                '</div>' +
+              '</div>' +
+              '<div class="input-group" style="margin-bottom:0;">' +
+                '<label>Start Age</label>' +
+                '<div class="input-wrapper">';
+          if (s.hasClaimAge) {
+            html += '<select class="stream-start" data-id="' + s.id + '">';
+            for (var a = 60; a <= 70; a++) {
+              html += '<option value="' + a + '"' + (a === s.startAge ? ' selected' : '') + '>' + a + '</option>';
+            }
+            html += '</select>';
+          } else {
+            html += '<input type="number" class="stream-start" data-id="' + s.id + '" value="' + s.startAge + '" min="50" max="90" step="1">';
+          }
+          html += '</div></div>' +
+              '<div class="input-group" style="margin-bottom:0;">' +
+                '<label>End Age <span style="font-weight:400;color:var(--text-secondary);">(blank = lifetime)</span></label>' +
+                '<div class="input-wrapper">' +
+                  '<input type="number" class="stream-end" data-id="' + s.id + '" value="' + (s.endAge || '') + '" min="50" max="105" step="1" placeholder="∞">' +
+                '</div>' +
+              '</div>' +
+              '<div class="input-group" style="margin-bottom:0;">' +
+                '<label>Inflation-Adjusted</label>' +
+                '<div class="input-wrapper">' +
+                  '<select class="stream-infl" data-id="' + s.id + '">' +
+                    '<option value="yes"' + (s.inflAdj ? ' selected' : '') + '>Yes</option>' +
+                    '<option value="no"' + (!s.inflAdj ? ' selected' : '') + '>No</option>' +
+                  '</select>' +
+                '</div>' +
+              '</div>' +
+              '<div class="input-group" style="margin-bottom:0;">' +
+                '<label>Taxable</label>' +
+                '<div class="input-wrapper">' +
+                  '<select class="stream-tax" data-id="' + s.id + '">' +
+                    '<option value="yes"' + (s.taxable ? ' selected' : '') + '>Yes</option>' +
+                    '<option value="no"' + (!s.taxable ? ' selected' : '') + '>No</option>' +
+                  '</select>' +
+                '</div>' +
+              '</div>' +
+            '</div>' +
+          '</div>';
+        });
+        container.innerHTML = html;
+
+        // Bind remove buttons
+        container.querySelectorAll('.remove-btn').forEach(function(btn) {
+          btn.addEventListener('click', function() { removeStream(parseInt(this.dataset.id)); });
+        });
+
+        // Bind input changes
+        container.querySelectorAll('.stream-amount').forEach(function(el) {
+          el.addEventListener('input', function() {
+            var s = streams.find(function(x) { return x.id === parseInt(el.dataset.id); });
+            if (s) s.amount = parseFloat(el.value) || 0;
+          });
+        });
+        container.querySelectorAll('.stream-start').forEach(function(el) {
+          el.addEventListener('change', function() {
+            var s = streams.find(function(x) { return x.id === parseInt(el.dataset.id); });
+            if (s) s.startAge = parseInt(el.value) || 65;
+          });
+        });
+        container.querySelectorAll('.stream-end').forEach(function(el) {
+          el.addEventListener('input', function() {
+            var s = streams.find(function(x) { return x.id === parseInt(el.dataset.id); });
+            if (s) s.endAge = el.value ? parseInt(el.value) : null;
+          });
+        });
+        container.querySelectorAll('.stream-infl').forEach(function(el) {
+          el.addEventListener('change', function() {
+            var s = streams.find(function(x) { return x.id === parseInt(el.dataset.id); });
+            if (s) s.inflAdj = el.value === 'yes';
+          });
+        });
+        container.querySelectorAll('.stream-tax').forEach(function(el) {
+          el.addEventListener('change', function() {
+            var s = streams.find(function(x) { return x.id === parseInt(el.dataset.id); });
+            if (s) s.taxable = el.value === 'yes';
+          });
+        });
+      }
+
+      // Add stream buttons
+      document.querySelectorAll('.add-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() { addStream(this.dataset.type); });
+      });
+
+      // SS/CPP claiming age benefit multiplier (relative to age 65 baseline)
+      function ssMultiplier(claimAge) {
+        if (claimAge <= 62) return 0.70;
+        if (claimAge === 63) return 0.75;
+        if (claimAge === 64) return 0.867;
+        if (claimAge === 65) return 0.933;
+        if (claimAge === 66) return 1.0;
+        if (claimAge === 67) return 1.08;
+        if (claimAge === 68) return 1.16;
+        if (claimAge === 69) return 1.24;
+        return 1.32; // 70
+      }
+
+      function calculate() {
+        // Read inputs
+        var currentAge = parseInt(document.getElementById('currentAge').value) || 55;
+        var retireAge = parseInt(document.getElementById('retireAge').value) || 65;
+        var planToAge = parseInt(document.getElementById('planToAge').value) || 90;
+        var desiredSpending = parseFloat(document.getElementById('desiredSpending').value) || 5000;
+        var inflRate = (parseFloat(document.getElementById('inflationRate').value) || 2.5) / 100;
+
+        if (retireAge <= currentAge) retireAge = currentAge + 1;
+        if (planToAge <= retireAge) planToAge = retireAge + 10;
+
+        // Sync stream values from DOM
+        document.querySelectorAll('.stream-amount').forEach(function(el) {
+          var s = streams.find(function(x) { return x.id === parseInt(el.dataset.id); });
+          if (s) s.amount = parseFloat(el.value) || 0;
+        });
+        document.querySelectorAll('.stream-start').forEach(function(el) {
+          var s = streams.find(function(x) { return x.id === parseInt(el.dataset.id); });
+          if (s) s.startAge = parseInt(el.value) || 65;
+        });
+        document.querySelectorAll('.stream-end').forEach(function(el) {
+          var s = streams.find(function(x) { return x.id === parseInt(el.dataset.id); });
+          if (s) s.endAge = el.value ? parseInt(el.value) : null;
+        });
+
+        // Build year-by-year data
+        var years = [];
+        var peakIncome = 0;
+        var peakAge = retireAge;
+        var lifetimeTotal = 0;
+
+        for (var age = retireAge; age <= planToAge; age++) {
+          var yearsFromRetire = age - retireAge;
+          var inflFactor = Math.pow(1 + inflRate, yearsFromRetire);
+          var adjustedSpending = desiredSpending * inflFactor;
+          var yearData = { age: age, streams: [], total: 0, spending: adjustedSpending, gap: 0 };
+
+          streams.forEach(function(s, idx) {
+            var endAge = s.endAge || planToAge + 1;
+            var monthlyAmount = 0;
+            if (age >= s.startAge && age < endAge) {
+              monthlyAmount = s.amount;
+              // Apply SS multiplier based on actual claiming age
+              if (s.hasClaimAge) {
+                monthlyAmount = s.amount * ssMultiplier(s.startAge) / ssMultiplier(65);
+              }
+              // Apply inflation adjustment
+              if (s.inflAdj) {
+                monthlyAmount = monthlyAmount * inflFactor;
+              }
+            }
+            yearData.streams.push({ label: s.label, amount: monthlyAmount, taxable: s.taxable, color: streamColors[idx % streamColors.length] });
+            yearData.total += monthlyAmount;
+          });
+
+          yearData.gap = yearData.total - adjustedSpending;
+          lifetimeTotal += yearData.total * 12;
+
+          if (yearData.total > peakIncome) {
+            peakIncome = yearData.total;
+            peakAge = age;
+          }
+
+          years.push(yearData);
+        }
+
+        // Update summary stats
+        document.getElementById('resultsSection').style.display = '';
+        var retireData = years[0] || { total: 0, gap: 0 };
+        document.getElementById('incomeAtRetire').textContent = fmt(retireData.total);
+        document.getElementById('incomeAtRetireNote').textContent = 'per month at age ' + retireAge;
+        document.getElementById('peakIncome').textContent = fmt(peakIncome);
+        document.getElementById('peakIncomeAge').textContent = 'at age ' + peakAge;
+
+        var gapEl = document.getElementById('incomeGap');
+        if (retireData.gap >= 0) {
+          gapEl.textContent = '+' + fmt(retireData.gap);
+          gapEl.style.color = '#34d399';
+          document.getElementById('incomeGapNote').textContent = 'surplus per month';
+        } else {
+          gapEl.textContent = fmt(retireData.gap);
+          gapEl.style.color = '#f87171';
+          document.getElementById('incomeGapNote').textContent = 'shortfall per month';
+        }
+        document.getElementById('lifetimeIncome').textContent = fmtK(lifetimeTotal);
+
+        // SS/CPP Claiming comparison
+        var ssStreams = streams.filter(function(s) { return s.hasClaimAge; });
+        var claimSection = document.getElementById('claimingSection');
+        if (ssStreams.length > 0) {
+          claimSection.style.display = '';
+          var claimHtml = '';
+          var claimAges = [62, 65, 67, 70];
+          claimAges.forEach(function(claimAge) {
+            var totalLifetime = 0;
+            ssStreams.forEach(function(s) {
+              var adj = s.amount * ssMultiplier(claimAge) / ssMultiplier(65);
+              for (var a = claimAge; a <= planToAge; a++) {
+                var yf = a - retireAge;
+                var infl = s.inflAdj ? Math.pow(1 + inflRate, Math.max(0, yf)) : 1;
+                totalLifetime += adj * infl * 12;
+              }
+            });
+            var monthlyAtClaim = 0;
+            ssStreams.forEach(function(s) {
+              monthlyAtClaim += s.amount * ssMultiplier(claimAge) / ssMultiplier(65);
+            });
+            claimHtml += '<div class="stat-card">' +
+              '<span class="calc-result-label">Claim at ' + claimAge + '</span>' +
+              '<div style="font-size: 1.3rem; font-weight: 700; color: var(--text-primary);">' + fmt(monthlyAtClaim) + '/mo</div>' +
+              '<div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 0.25rem;">Lifetime: ' + fmtK(totalLifetime) + '</div>' +
+            '</div>';
+          });
+          document.getElementById('claimingGrid').innerHTML = claimHtml;
+        } else {
+          claimSection.style.display = 'none';
+        }
+
+        // Tax strategy
+        var taxSection = document.getElementById('taxSection');
+        var hasTaxable = streams.some(function(s) { return s.taxable; });
+        var hasNonTax = streams.some(function(s) { return !s.taxable; });
+        if (streams.length > 0) {
+          taxSection.style.display = '';
+          var taxableStreams = [];
+          var nonTaxableStreams = [];
+          streams.forEach(function(s) {
+            if (s.taxable) taxableStreams.push(s.label);
+            else nonTaxableStreams.push(s.label);
+          });
+
+          var stratHtml = '<div style="display: grid; grid-template-columns: 1fr; gap: 1rem;">';
+          // Ordering
+          var order = [];
+          // 1. Non-taxable first (Roth/TFSA, non-taxable annuities)
+          if (nonTaxableStreams.length > 0) {
+            order.push({ priority: 3, label: 'Tax-Free Sources', items: nonTaxableStreams, note: 'Draw last — let these grow tax-free as long as possible', color: '#34d399' });
+          }
+          // 2. Taxable accounts (rental, part-time)
+          var nonDeferredTaxable = streams.filter(function(s) { return s.taxable && s.type !== '401k'; }).map(function(s) { return s.label; });
+          if (nonDeferredTaxable.length > 0) {
+            order.push({ priority: 1, label: 'Taxable Income (received automatically)', items: nonDeferredTaxable, note: 'These arrive regardless — plan around them', color: '#4a9eff' });
+          }
+          // 3. Tax-deferred (401k/RRSP)
+          var deferred = streams.filter(function(s) { return s.type === '401k'; }).map(function(s) { return s.label; });
+          if (deferred.length > 0) {
+            order.push({ priority: 2, label: 'Tax-Deferred Withdrawals', items: deferred, note: 'Fill lower tax brackets first — consider Roth conversions in low-income years', color: '#e8a735' });
+          }
+
+          order.sort(function(a, b) { return a.priority - b.priority; });
+
+          order.forEach(function(o, i) {
+            stratHtml += '<div style="padding: 1rem; background: var(--bg-color); border-radius: 6px; border-left: 3px solid ' + o.color + ';">' +
+              '<div style="font-weight: 600; color: var(--text-primary); margin-bottom: 0.25rem;">' + (i + 1) + '. ' + o.label + '</div>' +
+              '<div style="font-size: 0.9rem; color: var(--text-secondary);">' + o.items.join(', ') + '</div>' +
+              '<div style="font-size: 0.85rem; color: var(--text-secondary); margin-top: 0.25rem; font-style: italic;">' + o.note + '</div>' +
+            '</div>';
+          });
+          stratHtml += '</div>';
+          document.getElementById('taxStrategy').innerHTML = stratHtml;
+        } else {
+          taxSection.style.display = 'none';
+        }
+
+        // Draw waterfall chart
+        drawWaterfall(years);
+
+        // Build table
+        buildTable(years);
+      }
+
+      function drawWaterfall(years) {
+        var canvas = document.getElementById('waterfallChart');
+        var ctx = canvas.getContext('2d');
+        var dpr = window.devicePixelRatio || 1;
+        var rect = canvas.getBoundingClientRect();
+        canvas.width = rect.width * dpr;
+        canvas.height = 380 * dpr;
+        canvas.style.height = '380px';
+        ctx.scale(dpr, dpr);
+        var W = rect.width;
+        var H = 380;
+
+        ctx.clearRect(0, 0, W, H);
+
+        var pad = { top: 20, right: 20, bottom: 60, left: 70 };
+        var cw = W - pad.left - pad.right;
+        var ch = H - pad.top - pad.bottom;
+
+        if (years.length === 0) return;
+
+        // Find max value for scaling
+        var maxVal = 0;
+        years.forEach(function(y) {
+          if (y.total > maxVal) maxVal = y.total;
+          if (y.spending > maxVal) maxVal = y.spending;
+        });
+        maxVal *= 1.1;
+        if (maxVal === 0) maxVal = 1;
+
+        var barWidth = Math.max(4, Math.min(30, (cw / years.length) * 0.7));
+        var barGap = cw / years.length;
+
+        var styles = getComputedStyle(document.documentElement);
+        var textColor = styles.getPropertyValue('--text-secondary').trim() || '#888';
+        var borderColor = styles.getPropertyValue('--border-color').trim() || '#333';
+
+        // Grid
+        ctx.strokeStyle = borderColor;
+        ctx.lineWidth = 0.5;
+        ctx.font = '11px system-ui, sans-serif';
+        ctx.fillStyle = textColor;
+
+        var gridLines = 5;
+        for (var g = 0; g <= gridLines; g++) {
+          var y = pad.top + (g / gridLines) * ch;
+          var val = maxVal - (g / gridLines) * maxVal;
+          ctx.beginPath();
+          ctx.moveTo(pad.left, y);
+          ctx.lineTo(W - pad.right, y);
+          ctx.stroke();
+          ctx.textAlign = 'right';
+          ctx.fillText(fmtK(val), pad.left - 8, y + 4);
+        }
+
+        // Stacked bars
+        years.forEach(function(yr, i) {
+          var x = pad.left + i * barGap + (barGap - barWidth) / 2;
+          var cumY = 0;
+          yr.streams.forEach(function(s) {
+            if (s.amount <= 0) return;
+            var barH = (s.amount / maxVal) * ch;
+            var yPos = pad.top + ch - cumY - barH;
+            ctx.fillStyle = s.color;
+            ctx.fillRect(x, yPos, barWidth, barH);
+            cumY += barH;
+          });
+
+          // X labels
+          if (years.length <= 30 || i % Math.ceil(years.length / 15) === 0) {
+            ctx.fillStyle = textColor;
+            ctx.textAlign = 'center';
+            ctx.font = '10px system-ui, sans-serif';
+            ctx.fillText(yr.age.toString(), x + barWidth / 2, H - pad.bottom + 15);
+          }
+        });
+
+        // Spending line
+        ctx.strokeStyle = '#f87171';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([6, 3]);
+        ctx.beginPath();
+        years.forEach(function(yr, i) {
+          var x = pad.left + i * barGap + barGap / 2;
+          var y = pad.top + ch - (yr.spending / maxVal) * ch;
+          if (i === 0) ctx.moveTo(x, y);
+          else ctx.lineTo(x, y);
+        });
+        ctx.stroke();
+        ctx.setLineDash([]);
+
+        // Legend
+        ctx.font = '11px system-ui, sans-serif';
+        var legendX = pad.left;
+        var legendY = H - 10;
+        var uniqueStreams = [];
+        var seen = {};
+        if (years.length > 0) {
+          years[0].streams.forEach(function(s, idx) {
+            if (!seen[s.label]) {
+              seen[s.label] = true;
+              uniqueStreams.push(s);
+            }
+          });
+        }
+        uniqueStreams.forEach(function(s, idx) {
+          ctx.fillStyle = s.color;
+          ctx.fillRect(legendX, legendY - 8, 10, 10);
+          ctx.fillStyle = textColor;
+          ctx.textAlign = 'left';
+          ctx.fillText(s.label, legendX + 14, legendY);
+          legendX += ctx.measureText(s.label).width + 28;
+        });
+        // Spending legend
+        ctx.strokeStyle = '#f87171';
+        ctx.lineWidth = 2;
+        ctx.setLineDash([4, 2]);
+        ctx.beginPath();
+        ctx.moveTo(legendX, legendY - 3);
+        ctx.lineTo(legendX + 14, legendY - 3);
+        ctx.stroke();
+        ctx.setLineDash([]);
+        ctx.fillStyle = textColor;
+        ctx.fillText('Desired Spending', legendX + 18, legendY);
+      }
+
+      function buildTable(years) {
+        if (years.length === 0) return;
+        var headerRow = document.getElementById('tableHeader');
+        var headerHtml = '<th>Age</th>';
+        var streamLabels = [];
+        years[0].streams.forEach(function(s) { streamLabels.push(s.label); });
+        streamLabels.forEach(function(l) { headerHtml += '<th>' + l + '</th>'; });
+        headerHtml += '<th>Total</th><th>Desired</th><th>Gap</th>';
+        headerRow.innerHTML = headerHtml;
+
+        var tbody = document.querySelector('#incomeTable tbody');
+        var html = '';
+        years.forEach(function(yr) {
+          html += '<tr><td>' + yr.age + '</td>';
+          yr.streams.forEach(function(s) {
+            html += '<td>' + (s.amount > 0 ? fmt(s.amount) : '—') + '</td>';
+          });
+          html += '<td style="font-weight: 600;">' + fmt(yr.total) + '</td>';
+          html += '<td>' + fmt(yr.spending) + '</td>';
+          var gapColor = yr.gap >= 0 ? '#34d399' : '#f87171';
+          html += '<td style="color: ' + gapColor + '; font-weight: 600;">' + (yr.gap >= 0 ? '+' : '') + fmt(yr.gap) + '</td>';
+          html += '</tr>';
+        });
+        tbody.innerHTML = html;
+      }
+
+      document.getElementById('calculateBtn').addEventListener('click', calculate);
+
+      // Add default streams
+      addStream('ss');
+      addStream('401k');
+    </script>
+
+    <style>
+      .input-group {
+        margin-bottom: 1.5rem;
+      }
+      .input-group label {
+        display: block;
+        margin-bottom: 0.5rem;
+        font-weight: 600;
+        color: var(--text-primary);
+        font-size: 0.9rem;
+      }
+      .input-wrapper {
+        position: relative;
+        display: flex;
+        align-items: center;
+      }
+      .suffix {
+        position: absolute;
+        right: 0;
+        color: var(--text-secondary);
+        padding: 0 0.75rem;
+        font-size: 1rem;
+      }
+      .input-group input, .input-group select {
+        width: 100%;
+        padding: 0.75rem;
+        background: var(--bg-color);
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        color: var(--text-primary);
+        font-size: 1rem;
+      }
+      .input-group input:focus, .input-group select:focus {
+        outline: none;
+        border-color: var(--accent-color);
+        box-shadow: 0 0 0 2px rgba(var(--accent-color-rgb), 0.2);
+      }
+      .stats-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 1rem;
+      }
+      .stat-card {
+        text-align: center;
+        padding: 1.25rem;
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+      }
+      .add-btn {
+        padding: 0.5rem 1rem;
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 6px;
+        color: var(--accent-color);
+        font-size: 0.9rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: background 0.15s;
+      }
+      .add-btn:hover {
+        background: var(--bg-color);
+      }
+      .stream-card {
+        padding: 1rem;
+        background: var(--card-bg);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        margin-bottom: 0.75rem;
+      }
+      .remove-btn {
+        background: none;
+        border: none;
+        color: var(--text-secondary);
+        font-size: 1.5rem;
+        cursor: pointer;
+        padding: 0 0.5rem;
+        line-height: 1;
+      }
+      .remove-btn:hover {
+        color: #f87171;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        text-align: right;
+        font-size: 0.85rem;
+      }
+      th, td {
+        padding: 0.6rem;
+        border-bottom: 1px solid var(--border-color);
+      }
+      th {
+        text-align: right;
+        color: var(--text-secondary);
+        font-weight: 600;
+        background: var(--card-bg);
+        font-size: 0.8rem;
+      }
+      th:first-child, td:first-child {
+        text-align: left;
+      }
+      .content-section h2 {
+        color: var(--accent-color);
+        margin-top: 2.5rem;
+        margin-bottom: 1rem;
+      }
+      .content-section h3 {
+        color: var(--text-primary);
+        margin-top: 2rem;
+        margin-bottom: 1rem;
+      }
+      .content-section p {
+        margin-bottom: 1.5rem;
+        line-height: 1.7;
+        color: var(--text-secondary);
+      }
+      .content-section ul {
+        margin-bottom: 1.5rem;
+        padding-left: 1.5rem;
+        color: var(--text-secondary);
+      }
+      .content-section li {
+        margin-bottom: 0.5rem;
+      }
+      .faq-section {
+        margin-top: 4rem;
+        border-top: 1px solid var(--border-color);
+        padding-top: 2rem;
+      }
+      .faq-item {
+        margin-bottom: 2rem;
+      }
+      .faq-item h3 {
+        font-size: 1.2rem;
+        color: var(--text-primary);
+        margin-bottom: 0.5rem;
+      }
+      .faq-item p {
+        color: var(--text-secondary);
+        line-height: 1.6;
+      }
+      a {
+        color: var(--accent-color);
+        text-decoration: underline;
+      }
+      a:hover {
+        text-decoration: none;
+      }
+    </style>
+
+    <section class="content-section" style="margin-top: 3rem;">
+      <h2>Retirement Income Planning: A Complete Guide</h2>
+      <p>Retirement income planning is fundamentally different from retirement savings. Saving is about accumulating a number; income planning is about turning that number into a reliable, tax-efficient paycheck that lasts for 25–35 years. The shift from accumulation to distribution is one of the most consequential financial transitions most people will make, and getting it wrong can mean running out of money in your 80s or leaving hundreds of thousands in unnecessary taxes on the table.</p>
+
+      <p>This <strong>retirement income planner</strong> lets you model multiple income streams — Social Security or CPP, pensions, 401k/RRSP withdrawals, rental income, part-time work, and annuities — and see how they combine year by year against your desired spending. It also compares Social Security/CPP claiming ages and suggests a tax-efficient withdrawal ordering strategy.</p>
+
+      <h3>The Income Floor Approach</h3>
+      <p>The most robust retirement income strategy is to first build an income floor — guaranteed income that covers your essential expenses no matter what happens in the market. Social Security/CPP and pensions form the foundation. If those don't cover the basics, a single premium immediate annuity (SPIA) can fill the gap. Once your essentials are covered by guaranteed income, the remaining portfolio can be invested more aggressively for discretionary spending, legacy goals, and inflation protection.</p>
+
+      <p>Use this planner to check whether your guaranteed sources (Social Security/CPP, pension, annuity) cover your non-negotiable expenses. If there's a gap, you know exactly how much guaranteed income you need to add.</p>
+
+      <h3>When to Claim Social Security or CPP</h3>
+      <p>The Social Security claiming decision is one of the highest-impact choices in retirement planning. Benefits increase by roughly 8% per year for every year you delay between 62 and 70. That means claiming at 70 gives you about 77% more monthly income than claiming at 62. For CPP, the range is 60 to 70, with similar proportional increases for delay.</p>
+
+      <p>The break-even age — when total lifetime benefits from delaying exceed total benefits from claiming early — is typically around 80–82. If you expect to live past that age (and actuarial tables suggest most healthy 62-year-olds will), delaying is almost always the better financial decision. The comparison section of this planner shows you the monthly benefit and cumulative lifetime income at each claiming age so you can make an informed choice.</p>
+
+      <h3>Tax-Efficient Withdrawal Ordering</h3>
+      <p>Not all retirement income is taxed equally. A dollar from a Roth IRA is worth more than a dollar from a traditional 401(k), because the Roth dollar is tax-free. The conventional withdrawal order — taxable accounts first, then tax-deferred (401k/RRSP), then tax-free (Roth/TFSA) last — generally minimizes lifetime taxes by letting tax-advantaged accounts compound longer.</p>
+
+      <p>However, the optimal strategy often involves Roth conversions during low-income years (especially between retirement and the start of Social Security/CPP). If you retire at 62 but don't claim Social Security until 67, those five years of lower income are an opportunity to convert traditional 401(k) balances to Roth at a low marginal rate, reducing future required minimum distributions and potentially keeping you in a lower tax bracket for life.</p>
+
+      <h3>The Inflation Problem</h3>
+      <p>At 3% annual inflation, $5,000 of purchasing power today requires $6,720 in 10 years and $9,030 in 20 years. Social Security and CPP include cost-of-living adjustments, but most pensions, annuities, and fixed withdrawals do not. This planner lets you flag each income stream as inflation-adjusted or not, so you can see how your real purchasing power evolves over a 25- or 30-year retirement. If your non-inflation-adjusted income makes up a large share of your total, your real income will erode significantly in later years — exactly when healthcare costs tend to spike.</p>
+
+      <h3>The 4% Rule and Beyond</h3>
+      <p>The traditional 4% withdrawal rule says you can withdraw 4% of your portfolio in the first year of retirement, then adjust for inflation each year, with a high probability of not running out of money over 30 years. This rule was developed using U.S. historical data and assumes a 50/50 stock/bond portfolio.</p>
+
+      <p>In practice, most retirees don't follow a rigid percentage. Spending tends to be higher in the early "go-go" years (travel, hobbies), lower in the "slow-go" years (staying closer to home), and then higher again in the "no-go" years (healthcare, assisted living). This planner's year-by-year view helps you model these phases by adjusting income sources and spending targets across different age ranges. For detailed projections on portfolio withdrawal rates, pair this planner with our <a href="/compound-interest-calculator">compound interest calculator</a>.</p>
+    </section>
+
+    <section class="faq-section">
+      <h2>Frequently Asked Questions</h2>
+      <div class="faq-item">
+        <h3>When should I start collecting Social Security or CPP?</h3>
+        <p>Delaying Social Security from 62 to 70 increases your benefit by roughly 77%. CPP can be taken as early as 60 or delayed to 70, with a similar trade-off. The optimal age depends on your health, other income sources, and whether you need the money immediately. This planner compares claiming ages side by side so you can see the cumulative impact.</p>
+      </div>
+      <div class="faq-item">
+        <h3>How much income do I need in retirement?</h3>
+        <p>A common rule of thumb is 70–80% of your pre-retirement income, but actual needs vary widely. Housing costs, healthcare, travel plans, and debt all affect the number. This planner lets you set your desired monthly spending and shows the gap between that target and your projected income sources year by year.</p>
+      </div>
+      <div class="faq-item">
+        <h3>What is a tax-efficient withdrawal strategy in retirement?</h3>
+        <p>Tax-efficient withdrawal ordering typically means drawing from taxable accounts first, then tax-deferred accounts (401k/RRSP), and finally tax-free accounts (Roth IRA/TFSA). This lets tax-advantaged accounts compound longer. However, Roth conversions in low-income years and managing tax brackets can further optimize your after-tax income.</p>
+      </div>
+      <div class="faq-item">
+        <h3>How does inflation affect retirement income?</h3>
+        <p>Inflation erodes purchasing power over time. At 3% inflation, $5,000 today buys only about $3,700 worth of goods in 10 years. Social Security and CPP include cost-of-living adjustments, but pensions and fixed annuities often do not. This planner lets you flag which income streams are inflation-adjusted so you can see the real value of your income over time.</p>
+      </div>
+      <div class="faq-item">
+        <h3>What is an income waterfall chart?</h3>
+        <p>An income waterfall chart stacks your retirement income sources by year, showing how each contributes to your total. It visually reveals when income streams start and stop, how your total changes as you age, and where gaps exist relative to your spending target. It is one of the most useful tools for retirement income planning.</p>
+      </div>
+    </section>
+
+  </div>
+</SiteLayout>
