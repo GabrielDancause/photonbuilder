@@ -165,8 +165,45 @@ def fix_html_redirects(site_id: str, actions: list, dry_run: bool) -> list:
 
 # ─── OPTIMIZE: Title/Description Rewrites ─────────────────────────────────
 
+def clean_query(query: str) -> str:
+    """Remove search operators, filters, and junk from a query."""
+    q = query
+    # Remove -site: filters
+    q = re.sub(r'\s*-site:\S+', '', q)
+    # Remove before:/after: date filters
+    q = re.sub(r'\s*before:\S+', '', q)
+    q = re.sub(r'\s*after:\S+', '', q)
+    # Remove quoted exact-match operators
+    q = q.replace('"', '')
+    # Remove OR operators
+    q = re.sub(r'\s+OR\s+', ' ', q, flags=re.IGNORECASE)
+    # Clean up extra whitespace
+    q = re.sub(r'\s+', ' ', q).strip()
+    return q
+
+
+def is_junk_query(query: str) -> bool:
+    """Detect queries that are too specific/noisy to base a title on."""
+    q = query.lower()
+    # Single stock ticker lookups
+    if re.match(r'^[a-z]{1,5}\s+(beta|volatility|price|stock)\b', q):
+        return True
+    # Very long queries (>10 words) are usually too specific
+    if len(q.split()) > 10:
+        return True
+    return False
+
+
 def optimize_meta(site_id: str, actions: list, dry_run: bool) -> list:
-    """Rewrite title and description based on top driving queries."""
+    """Rewrite title and description based on top driving queries.
+    
+    Rules:
+    - Never downgrade a good title (if current title already covers query intent, skip)
+    - Clean all search operators from queries before using them
+    - Skip junk queries (single ticker lookups, very long queries)
+    - Prefer incorporating query keywords INTO existing title structure
+    - Title must be human-readable, not a raw query
+    """
     results = []
     site_dir = PAGES_DIR / site_id
 
@@ -175,7 +212,6 @@ def optimize_meta(site_id: str, actions: list, dry_run: bool) -> list:
         astro_file = site_dir / f"{page_path}.astro"
 
         if not astro_file.exists():
-            # Try without trailing parts
             slug = page_path.split("/")[-1] if "/" in page_path else page_path
             astro_file = site_dir / f"{slug}.astro"
 
@@ -185,7 +221,6 @@ def optimize_meta(site_id: str, actions: list, dry_run: bool) -> list:
 
         content = astro_file.read_text()
 
-        # Extract current title and description
         title_match = re.search(r'title:\s*["\'](.+?)["\']', content)
         desc_match = re.search(r'description:\s*["\'](.+?)["\']', content)
 
@@ -196,66 +231,85 @@ def optimize_meta(site_id: str, actions: list, dry_run: bool) -> list:
         if not driving_queries:
             continue
 
-        # Generate optimized title based on top queries
-        top_query = driving_queries[0]["query"]
+        # Clean all queries and find the best one
+        clean_queries = []
+        for dq in driving_queries:
+            cleaned = clean_query(dq["query"])
+            if cleaned and not is_junk_query(cleaned):
+                clean_queries.append({**dq, "clean": cleaned})
+
+        if not clean_queries:
+            results.append({"action": "skip", "reason": "all driving queries are junk/noise", "page": page_path})
+            continue
+
+        top = clean_queries[0]
+        top_clean = top["clean"]
+
+        # Check if current title already covers query intent
+        title_lower = current_title.lower()
+        query_words = set(top_clean.lower().split()) - {"the", "a", "an", "in", "of", "for", "and", "or", "to", "by", "with", "on", "at", "is", "are"}
+        title_words = set(title_lower.split()) - {"the", "a", "an", "in", "of", "for", "and", "or", "to", "by", "with", "on", "at", "is", "are", "—", "|", ":", "-"}
+        overlap = query_words & title_words
         
-        # Clean up query (remove site: filters, prediction market filters)
-        clean_query = re.sub(r'\s*-site:\S+', '', top_query).strip()
-        clean_query = re.sub(r'\s*before:\S+', '', clean_query).strip()
-        
-        # Build new title incorporating the top query intent
-        # Rule: keep it under 60 chars, include the main keyword
-        query_words = clean_query.lower().split()
-        
-        # Check if current title already contains the main query words
-        title_words = current_title.lower().split()
-        overlap = set(query_words) & set(title_words)
-        
-        if len(overlap) >= len(query_words) * 0.7:
-            # Title already matches query reasonably well
+        if len(overlap) >= len(query_words) * 0.6:
             results.append({
                 "action": "skip",
-                "reason": "title already matches top query",
+                "reason": f"title already covers intent ({len(overlap)}/{len(query_words)} key words match)",
                 "page": page_path,
                 "current_title": current_title,
-                "top_query": clean_query,
+                "top_query": top_clean,
             })
             continue
 
-        # Generate new title suggestion
-        # Capitalize query and add site name
-        new_title = clean_query.title()
-        if len(new_title) > 50:
-            new_title = new_title[:47] + "..."
+        # Build improved title: keep the existing structure but inject key missing words
+        # Strategy: prepend the top query keyword phrase, append existing differentiator
+        missing_words = query_words - title_words
         
-        # Generate description from multiple queries
-        all_query_text = " ".join(q["query"] for q in driving_queries[:3])
-        all_query_text = re.sub(r'\s*-site:\S+', '', all_query_text)
-        all_query_text = re.sub(r'\s*before:\S+', '', all_query_text)
-        
-        new_desc = f"Free {clean_query} data and analysis. Updated regularly with the latest market data."
+        # If only 1-2 words are missing, the title is close enough
+        if len(missing_words) <= 1:
+            results.append({
+                "action": "skip",
+                "reason": f"title nearly matches (only missing: {missing_words})",
+                "page": page_path,
+                "current_title": current_title,
+                "top_query": top_clean,
+            })
+            continue
+
+        # Generate new title: use query as base, keep it natural
+        # Take the cleaned query and title-case it properly
+        new_title = top_clean.title()
+        # Keep the year if the original had it
+        if "2026" in current_title and "2026" not in new_title:
+            new_title += " (2026)"
+        # Cap at 60 chars
+        if len(new_title) > 60:
+            new_title = new_title[:57] + "..."
+
+        # Generate description using top 3 clean queries
+        desc_queries = [cq["clean"] for cq in clean_queries[:3]]
+        new_desc = f"Free {desc_queries[0]} data and analysis."
+        if len(desc_queries) > 1:
+            new_desc += f" Compare {desc_queries[1]} and more."
+        new_desc += " Updated regularly."
         if len(new_desc) > 155:
             new_desc = new_desc[:152] + "..."
 
         print(f"  📝 {page_path}")
         print(f"     OLD: {current_title[:60]}")
         print(f"     NEW: {new_title[:60]}")
-        print(f"     Query: {clean_query[:60]}")
+        print(f"     Top query: {top_clean[:60]}")
         print(f"     Impact: {action['impressions']} imp, pos {action['position']}")
 
         if not dry_run:
-            # Replace title
             if title_match:
-                old_title_line = title_match.group(0)
-                new_title_line = f'title: "{new_title}"'
-                content = content.replace(old_title_line, new_title_line)
-
-            # Replace description
+                old_line = title_match.group(0)
+                new_line = f'title: "{new_title}"'
+                content = content.replace(old_line, new_line)
             if desc_match:
-                old_desc_line = desc_match.group(0)
-                new_desc_line = f'description: "{new_desc}"'
-                content = content.replace(old_desc_line, new_desc_line)
-
+                old_line = desc_match.group(0)
+                new_line = f'description: "{new_desc}"'
+                content = content.replace(old_line, new_line)
             astro_file.write_text(content)
 
         results.append({
@@ -268,7 +322,7 @@ def optimize_meta(site_id: str, actions: list, dry_run: bool) -> list:
             "impressions": action["impressions"],
             "ctr": action["ctr"],
             "position": action["position"],
-            "top_query": clean_query,
+            "top_query": top_clean,
         })
 
     return results

@@ -133,6 +133,9 @@ def analyze_build(gsc_data: dict, site_id: str, existing_slugs: set) -> list:
         # Skip branded queries
         if any(brand in query_text for brand in ["westmount", "photonbuilder", "siliconbased", "firemaths"]):
             continue
+        # Skip queries with search operators (these are power-user queries, not page opportunities)
+        if "-site:" in query_text or "before:" in query_text or "after:" in query_text:
+            continue
 
         # Normalize to a slug-like key
         slug_key = re.sub(r'[^a-z0-9]+', '-', query_text).strip('-')
