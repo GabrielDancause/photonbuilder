@@ -8,7 +8,7 @@ const schema = {
   "@type": "WebApplication",
   "name": "BMR Calculator",
   "url": "https://photonbuilder.com/health/bmr-calculator.html",
-  "description": "Calculate your Basal Metabolic Rate (BMR) and Total Daily Energy Expenditure (TDEE) using Mifflin-St Jeor, Harris-Benedict, and Katch-McArdle formulas.",
+  "description": "Calculate your Basal Metabolic Rate (BMR) and Total Daily Energy Expenditure (TDEE) using Mifflin-St Jeor, Harris-Benedict, and Katch-McArdle formulas. Compare results and get metabolism tips.",
   "applicationCategory": "HealthAndFitnessApplication",
   "operatingSystem": "Any",
   "offers": {
@@ -32,10 +32,10 @@ const faqSchema = {
     },
     {
       "@type": "Question",
-      "name": "What is the difference between BMR and RMR?",
+      "name": "What is the difference between BMR, RMR, and TDEE?",
       "acceptedAnswer": {
         "@type": "Answer",
-        "text": "BMR (Basal Metabolic Rate) and RMR (Resting Metabolic Rate) are very similar but measured under slightly different conditions. BMR requires strict clinical conditions — 12 hours of fasting, 8 hours of sleep, and a thermoneutral environment. RMR is measured under less strict conditions and is typically 10-20% higher than BMR. For practical purposes, most calculators (including this one) use formulas that approximate RMR but call it BMR."
+        "text": "BMR (Basal Metabolic Rate) is measured under strict clinical conditions after 12 hours of fasting and 8 hours of sleep. RMR (Resting Metabolic Rate) is measured under less strict conditions and is typically 10-20% higher than BMR. TDEE (Total Daily Energy Expenditure) is your BMR multiplied by an activity factor, representing total calories burned in a day including exercise, digestion, and daily movement."
       }
     },
     {
@@ -113,6 +113,8 @@ const faqSchema = {
             --color-harris: #f59e0b;
             --color-katch: #a855f7;
             --color-tdee: #2DB89A;
+            --color-bmr-bar: #3b82f6;
+            --color-tdee-bar: #2DB89A;
         }
 
         * {
@@ -762,6 +764,124 @@ const faqSchema = {
         .formula-bar-fill.harris { background-color: var(--color-harris); }
         .formula-bar-fill.katch { background-color: var(--color-katch); }
 
+        /* Stacked bar chart for BMR vs TDEE */
+        .stacked-chart {
+            margin-bottom: 1.5rem;
+        }
+
+        .stacked-row {
+            display: flex;
+            align-items: center;
+            margin-bottom: 0.5rem;
+            gap: 0.75rem;
+        }
+
+        .stacked-label {
+            width: 90px;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+            flex-shrink: 0;
+            text-align: right;
+        }
+
+        .stacked-track {
+            flex: 1;
+            height: 32px;
+            background-color: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            overflow: hidden;
+            display: flex;
+            position: relative;
+        }
+
+        .stacked-segment {
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: var(--font-mono);
+            font-size: 0.7rem;
+            font-weight: 600;
+            transition: width 0.5s ease;
+            min-width: 0;
+            overflow: hidden;
+            white-space: nowrap;
+        }
+
+        .stacked-segment.bmr-seg {
+            background-color: var(--color-bmr-bar);
+            color: #000;
+        }
+
+        .stacked-segment.tdee-seg {
+            background-color: var(--color-tdee-bar);
+            color: #000;
+        }
+
+        .stacked-val {
+            width: 65px;
+            font-family: var(--font-mono);
+            font-size: 0.75rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            text-align: right;
+            flex-shrink: 0;
+        }
+
+        .stacked-legend {
+            display: flex;
+            gap: 1.5rem;
+            justify-content: center;
+            margin-top: 0.75rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .stacked-legend-item {
+            display: flex;
+            align-items: center;
+            gap: 0.4rem;
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        .stacked-legend-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 3px;
+        }
+
+        .stacked-legend-dot.bmr-dot { background-color: var(--color-bmr-bar); }
+        .stacked-legend-dot.tdee-dot { background-color: var(--color-tdee-bar); }
+
+        .tip-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 1rem;
+            margin-top: 1rem;
+        }
+
+        .tip-card {
+            background-color: var(--bg-color);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 1rem;
+        }
+
+        .tip-card h4 {
+            font-size: 0.85rem;
+            font-weight: 700;
+            color: var(--accent-color);
+            margin-bottom: 0.5rem;
+        }
+
+        .tip-card p {
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            line-height: 1.5;
+            margin-bottom: 0;
+        }
+
         .overflow-x {
             overflow-x: auto;
         }
@@ -770,6 +890,9 @@ const faqSchema = {
             h1 { font-size: 1.5rem; }
             .bmr-hero { flex-direction: column; }
             .formula-select-group { grid-template-columns: 1fr; }
+            .stacked-label { width: 70px; font-size: 0.65rem; }
+            .stacked-val { width: 55px; font-size: 0.7rem; }
+            .tip-grid { grid-template-columns: 1fr; }
         }
   </style>
 
@@ -900,6 +1023,16 @@ const faqSchema = {
         </div>
       </div>
 
+      <!-- Stacked Bar: BMR vs TDEE across activity levels -->
+      <div class="card">
+        <h2 class="section-title">BMR vs TDEE by Activity Level</h2>
+        <div class="stacked-legend">
+          <div class="stacked-legend-item"><div class="stacked-legend-dot bmr-dot"></div> BMR (base)</div>
+          <div class="stacked-legend-item"><div class="stacked-legend-dot tdee-dot"></div> Activity calories</div>
+        </div>
+        <div class="stacked-chart" id="stackedChart"></div>
+      </div>
+
       <!-- TDEE Activity Scale -->
       <div class="card">
         <h2 class="section-title">TDEE Activity Scale</h2>
@@ -953,12 +1086,13 @@ const faqSchema = {
         </div>
       </div>
 
-      <!-- What BMR Means + Factors -->
+      <!-- BMR vs RMR vs TDEE -->
       <div class="card">
         <div class="info-section">
-          <h3>What is Basal Metabolic Rate?</h3>
-          <p>Your Basal Metabolic Rate (BMR) is the number of calories your body needs to perform essential life functions while at complete rest. These functions include breathing, blood circulation, cell production, nutrient processing, and temperature regulation. BMR typically accounts for 60-75% of your total daily calorie expenditure.</p>
-          <p>BMR is measured under very strict conditions: after 12 hours of fasting, 8 hours of sleep, in a thermoneutral environment. What most calculators estimate (including this one) is technically closer to Resting Metabolic Rate (RMR), which is slightly higher but practically equivalent for daily use.</p>
+          <h3>BMR vs RMR vs TDEE — What's the Difference?</h3>
+          <p><strong style="color: var(--text-primary);">BMR (Basal Metabolic Rate)</strong> is the number of calories your body burns to maintain basic life functions — breathing, circulation, cell production, and temperature regulation — measured under strict clinical conditions: 12 hours fasted, 8 hours of sleep, in a thermoneutral environment. BMR accounts for roughly 60-75% of your total daily energy expenditure.</p>
+          <p><strong style="color: var(--text-primary);">RMR (Resting Metabolic Rate)</strong> measures the same thing as BMR but under less strict conditions. You don't need to sleep in a lab or fast for 12 hours. Because of the relaxed protocol, RMR is typically 10-20% higher than BMR. Most online "BMR calculators" (including this one) actually estimate RMR using equations like Mifflin-St Jeor, but the term "BMR" is used by convention.</p>
+          <p><strong style="color: var(--text-primary);">TDEE (Total Daily Energy Expenditure)</strong> is the total number of calories you burn in a day. It's your BMR multiplied by an activity factor that accounts for exercise, daily movement, and the thermic effect of food. TDEE is the number you need to know for weight management — eat below it to lose weight, above it to gain.</p>
 
           <h3>Factors That Affect BMR</h3>
           <ul>
@@ -971,6 +1105,37 @@ const faqSchema = {
             <li><strong>Temperature</strong> — Both cold exposure and fever increase metabolic rate</li>
             <li><strong>Crash dieting</strong> — Severe calorie restriction can lower BMR by 20% or more (metabolic adaptation)</li>
           </ul>
+        </div>
+      </div>
+
+      <!-- Tips to Boost Metabolism -->
+      <div class="card">
+        <h2 class="section-title">Tips to Boost Your Metabolism</h2>
+        <div class="tip-grid">
+          <div class="tip-card">
+            <h4>Build lean muscle</h4>
+            <p>Each pound of muscle burns 6-7 cal/day at rest vs 2-3 for fat. Resistance training 2-4x/week is the single most effective way to raise your BMR permanently.</p>
+          </div>
+          <div class="tip-card">
+            <h4>Eat enough protein</h4>
+            <p>Protein has a thermic effect of 20-30% — meaning your body burns 20-30% of protein calories just digesting it, compared to 5-10% for carbs and 0-3% for fat.</p>
+          </div>
+          <div class="tip-card">
+            <h4>Don't crash diet</h4>
+            <p>Severe calorie restriction triggers metabolic adaptation, lowering BMR by up to 20%. Keep deficits moderate (500-750 cal below TDEE) for sustainable results.</p>
+          </div>
+          <div class="tip-card">
+            <h4>Prioritize sleep</h4>
+            <p>Poor sleep (under 7 hours) disrupts hormones that regulate metabolism. Chronic sleep deprivation can reduce metabolic rate and increase hunger hormones.</p>
+          </div>
+          <div class="tip-card">
+            <h4>Stay hydrated</h4>
+            <p>Drinking 500ml of water can temporarily boost metabolic rate by 24-30% for about an hour. Cold water may have a slightly greater effect as your body warms it.</p>
+          </div>
+          <div class="tip-card">
+            <h4>Move throughout the day</h4>
+            <p>NEAT (Non-Exercise Activity Thermogenesis) — fidgeting, walking, standing — can vary by 500+ calories between individuals. Take stairs, walk during calls, use a standing desk.</p>
+          </div>
         </div>
       </div>
 
@@ -1016,8 +1181,8 @@ const faqSchema = {
           <div class="faq-answer">BMR (Basal Metabolic Rate) is the number of calories your body needs to perform basic life-sustaining functions like breathing, circulation, cell production, and nutrient processing while at complete rest. It represents the minimum energy your body requires to stay alive and accounts for about 60-75% of your total daily calorie expenditure.</div>
         </div>
         <div class="faq-item">
-          <div class="faq-question">What is the difference between BMR and RMR?</div>
-          <div class="faq-answer">BMR (Basal Metabolic Rate) and RMR (Resting Metabolic Rate) are very similar but measured under slightly different conditions. BMR requires strict clinical conditions — 12 hours of fasting, 8 hours of sleep, and a thermoneutral environment. RMR is measured under less strict conditions and is typically 10-20% higher than BMR. For practical purposes, most calculators (including this one) use formulas that approximate RMR but call it BMR.</div>
+          <div class="faq-question">What is the difference between BMR, RMR, and TDEE?</div>
+          <div class="faq-answer">BMR (Basal Metabolic Rate) is measured under strict clinical conditions after 12 hours of fasting and 8 hours of sleep. RMR (Resting Metabolic Rate) is measured under less strict conditions and is typically 10-20% higher than BMR. TDEE (Total Daily Energy Expenditure) is your BMR multiplied by an activity factor, representing total calories burned in a day including exercise, digestion, and daily movement. For practical purposes, most online calculators estimate RMR but label it as BMR.</div>
         </div>
         <div class="faq-item">
           <div class="faq-question">Which BMR formula is the most accurate?</div>
@@ -1171,6 +1336,28 @@ const faqSchema = {
         // TDEE detail
         const currentActivity = activities.find(a => Math.abs(a.mult - activity) < 0.01);
         document.getElementById('tdeeDetail').textContent = 'BMR \u00d7 ' + activity + ' (' + (currentActivity ? currentActivity.name : 'Custom') + ')';
+
+        // Stacked bar chart — BMR vs TDEE across activity levels
+        const stackedContainer = document.getElementById('stackedChart');
+        stackedContainer.innerHTML = '';
+        const maxTdee = Math.round(bmr * 1.9);
+        activities.forEach(a => {
+          const aTdee = Math.round(bmr * a.mult);
+          const activityCals = aTdee - bmr;
+          const bmrPct = (bmr / maxTdee) * 100;
+          const actPct = (activityCals / maxTdee) * 100;
+          const isCurrent = Math.abs(a.mult - activity) < 0.01;
+          const row = document.createElement('div');
+          row.className = 'stacked-row';
+          row.innerHTML =
+            '<div class="stacked-label"' + (isCurrent ? ' style="color:var(--accent-color);font-weight:600"' : '') + '>' + a.name + '</div>' +
+            '<div class="stacked-track">' +
+              '<div class="stacked-segment bmr-seg" style="width:' + bmrPct + '%">' + (bmrPct > 18 ? bmr.toLocaleString() : '') + '</div>' +
+              '<div class="stacked-segment tdee-seg" style="width:' + actPct + '%">' + (actPct > 10 ? '+' + activityCals.toLocaleString() : '') + '</div>' +
+            '</div>' +
+            '<div class="stacked-val"' + (isCurrent ? ' style="color:var(--accent-color)"' : '') + '>' + aTdee.toLocaleString() + '</div>';
+          stackedContainer.appendChild(row);
+        });
 
         // Activity scale visual
         const activityIndex = activities.findIndex(a => Math.abs(a.mult - activity) < 0.01);

@@ -7,9 +7,9 @@ const schema = {
     {
       "@context": "https://schema.org",
       "@type": "WebApplication",
-      "name": "JSONPath Tester — Query & Extract JSON Data Online",
+      "name": "JSONPath Tester & Query Tool",
       "url": "https://siliconbased.dev/json-path-tester",
-      "description": "Free online JSONPath tester and evaluator. Write JSONPath expressions, see matched results instantly, and click any value to auto-generate its path.",
+      "description": "Test JSONPath expressions against your JSON data in real time. Supports wildcards, recursive descent, array slicing, and filter expressions.",
       "applicationCategory": "DeveloperApplication",
       "operatingSystem": "Any",
       "offers": {
@@ -32,39 +32,39 @@ const schema = {
           "name": "What is JSONPath?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "JSONPath is a query language for JSON, similar to XPath for XML. It lets you navigate and extract specific values from complex JSON structures using expressions like $.store.book[0].title or $..price to find data without manually traversing nested objects."
+            "text": "JSONPath is a query language for JSON, similar to XPath for XML. It allows you to navigate and extract specific values from a JSON document using path expressions like $.store.book[0].title or $..author to find all authors recursively."
           }
         },
         {
           "@type": "Question",
-          "name": "How do I use a JSONPath tester?",
+          "name": "How do I use a JSONPath tester online?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Paste your JSON into the input panel, type a JSONPath expression (e.g., $.users[*].name), and the tester instantly shows all matching values in the results panel. You can also click any value in the JSON tree to auto-generate its JSONPath."
+            "text": "Paste your JSON data into the input field, type a JSONPath expression like $.store.book[*].title in the query box, and the tool instantly highlights and displays the matched values. You can also click nodes in the tree view to auto-generate the path."
           }
         },
         {
           "@type": "Question",
-          "name": "What does the $ symbol mean in JSONPath?",
+          "name": "What JSONPath syntax is supported?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "The $ symbol represents the root element of the JSON document. Every JSONPath expression starts with $. For example, $.name accesses the 'name' property at the root level, while $.store.book accesses the 'book' array inside the 'store' object."
+            "text": "Common JSONPath syntax includes: $ (root), .key (child), ..key (recursive descent), [*] (wildcard), [0] (array index), [0:3] (array slice), and [?(@.price<10)] (filter expressions). These cover the vast majority of real-world querying needs."
           }
         },
         {
           "@type": "Question",
-          "name": "What is the difference between dot notation and bracket notation in JSONPath?",
+          "name": "What is the difference between JSONPath and jq?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Dot notation ($.store.book) is a shorthand for accessing properties by name. Bracket notation ($['store']['book']) achieves the same result but is required when property names contain special characters, spaces, or start with a number."
+            "text": "JSONPath and jq both query JSON data but have different syntax. JSONPath uses dot notation like $.store.book[0], while jq uses pipe-based syntax like .store.book[0]. JSONPath is commonly used in REST APIs and testing tools, while jq is a command-line tool popular in shell scripts."
           }
         },
         {
           "@type": "Question",
-          "name": "How do I filter JSON arrays with JSONPath?",
+          "name": "Can JSONPath filter JSON arrays?",
           "acceptedAnswer": {
             "@type": "Answer",
-            "text": "Use filter expressions with the ?() syntax. For example, $.books[?(@.price<10)] returns all books with a price less than 10. The @ symbol refers to the current element being evaluated. You can use comparison operators like <, >, ==, !=, and logical operators."
+            "text": "Yes. JSONPath supports filter expressions with the syntax [?(@.field operator value)]. For example, $.store.book[?(@.price<10)] returns all books cheaper than 10, and $.users[?(@.active==true)] returns only active users."
           }
         }
       ]
@@ -72,8 +72,8 @@ const schema = {
     {
       "@context": "https://schema.org",
       "@type": "Article",
-      "headline": "JSONPath Tester — Query & Extract JSON Data Online",
-      "description": "Free online JSONPath tester and evaluator. Write JSONPath expressions, see matched results instantly, and click any value to auto-generate its path.",
+      "headline": "JSONPath Tester: Query & Extract JSON Data Online",
+      "description": "Test JSONPath expressions against your JSON data in real time. Supports wildcards, recursive descent, array slicing, and filter expressions.",
       "datePublished": "2026-03-21T00:00:00Z",
       "publisher": {
         "@type": "Organization",
@@ -87,38 +87,47 @@ const schema = {
 const htmlBody = `<div class="page-content">
 <div class="hero">
   <h1>JSONPath Tester</h1>
-  <p>Write JSONPath expressions and instantly see matched values from your JSON data.</p>
+  <p>Query and extract data from JSON using JSONPath expressions — live results as you type.</p>
 </div>
 
 <div class="main">
 
   <!-- Query Bar -->
   <div class="query-bar">
-    <label class="query-label" for="pathInput">JSONPath Expression</label>
-    <div class="query-row">
-      <input type="text" id="pathInput" class="path-input" value="$" placeholder="e.g. $.store.book[*].author" spellcheck="false" />
-      <button class="action-btn sample-btn" id="sampleBtn">Load Sample</button>
+    <div class="query-label">JSONPath</div>
+    <input type="text" id="pathInput" class="path-input" value="$.store.book[*].title" placeholder="Enter JSONPath expression, e.g. $.store.book[*]" spellcheck="false" />
+    <button class="action-btn" id="examplesToggle">Examples</button>
+  </div>
+
+  <!-- Example Queries Dropdown -->
+  <div class="examples-panel" id="examplesPanel">
+    <div class="examples-grid">
+      <button class="example-btn" data-path="$.store.book[*].title">$.store.book[*].title<span>All book titles</span></button>
+      <button class="example-btn" data-path="$..author">$..author<span>All authors (recursive)</span></button>
+      <button class="example-btn" data-path="$.store.book[0]">$.store.book[0]<span>First book</span></button>
+      <button class="example-btn" data-path="$.store.book[-1]">$.store.book[-1]<span>Last book</span></button>
+      <button class="example-btn" data-path="$.store.book[0:2]">$.store.book[0:2]<span>First two books</span></button>
+      <button class="example-btn" data-path="$.store.book[?(@.price<10)]">$.store.book[?(@.price&lt;10)]<span>Books under $10</span></button>
+      <button class="example-btn" data-path="$.store.book[?(@.isbn)]">$.store.book[?(@.isbn)]<span>Books with ISBN</span></button>
+      <button class="example-btn" data-path="$.store.*">$.store.*<span>All items in store</span></button>
+      <button class="example-btn" data-path="$..price">$..price<span>All prices</span></button>
+      <button class="example-btn" data-path="$.store.book.length">$.store.book.length<span>Book count</span></button>
     </div>
   </div>
 
   <div class="tool-grid">
-    <!-- JSON Input Pane -->
+    <!-- Input Pane -->
     <div class="pane">
       <div class="input-header">
         <div class="header-title">JSON Input</div>
         <div class="header-actions">
-          <button class="action-btn active" id="treeViewBtn">Tree</button>
-          <button class="action-btn" id="editViewBtn">Edit</button>
+          <button class="action-btn" id="formatBtn">Format</button>
+          <button class="action-btn" id="sampleBtn">Load Sample</button>
           <button class="action-btn" id="clearBtn">Clear</button>
         </div>
       </div>
-      <div class="tree-card" id="treeCard">
-        <div class="result-body">
-          <div class="line-numbers" id="inputLineNumbers">1</div>
-          <pre class="output-pre" id="jsonTree"></pre>
-        </div>
-      </div>
-      <textarea id="jsonInput" class="json-input" placeholder="Paste your JSON here..." spellcheck="false" style="display:none;"></textarea>
+      <textarea id="jsonInput" class="json-input" placeholder="Paste your JSON here..." spellcheck="false"></textarea>
+      <div class="error-bar" id="errorBar"></div>
     </div>
 
     <!-- Results Pane -->
@@ -130,172 +139,179 @@ const htmlBody = `<div class="page-content">
         </div>
       </div>
       <div class="output-card" id="outputCard">
-        <div class="error-msg" id="errorMsg">
-          <div style="display:flex; align-items:flex-start; gap:10px; flex:1;">
-            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="8" x2="12" y2="12"></line><line x1="12" y1="16" x2="12.01" y2="16"></line></svg>
-            <span id="errorText">Error</span>
-          </div>
-        </div>
         <div class="result-body">
-          <div class="line-numbers" id="lineNumbers">1</div>
-          <pre class="output-pre" id="resultOutput"></pre>
+          <pre class="output-pre" id="resultOutput"><span class="placeholder-text">Enter a JSONPath expression above to see matched values here.</span></pre>
         </div>
       </div>
     </div>
   </div>
 
-  <!-- Cheat Sheet -->
-  <div class="cheat-sheet">
-    <h2>JSONPath Cheat Sheet</h2>
-    <div class="cheat-grid">
-      <div class="cheat-item" data-expr="$">
-        <code>$</code>
-        <span>Root element</span>
-      </div>
-      <div class="cheat-item" data-expr="$.store">
-        <code>.property</code>
-        <span>Child property</span>
-      </div>
-      <div class="cheat-item" data-expr="$.store.book[*]">
-        <code>[*]</code>
-        <span>All elements in array</span>
-      </div>
-      <div class="cheat-item" data-expr="$..price">
-        <code>..property</code>
-        <span>Recursive descent (find anywhere)</span>
-      </div>
-      <div class="cheat-item" data-expr="$.store.book[0]">
-        <code>[n]</code>
-        <span>Array element by index</span>
-      </div>
-      <div class="cheat-item" data-expr="$.store.book[0:2]">
-        <code>[start:end]</code>
-        <span>Array slice</span>
-      </div>
-      <div class="cheat-item" data-expr="$.store.book[?(@.price<10)]">
-        <code>[?(@.price&lt;10)]</code>
-        <span>Filter expression</span>
-      </div>
-      <div class="cheat-item" data-expr="$.store.book[-1]">
-        <code>[-1]</code>
-        <span>Last element</span>
+  <!-- Tree View -->
+  <div class="tree-section">
+    <div class="input-header">
+      <div class="header-title">Tree View <span class="tree-hint">Click any node to copy its JSONPath</span></div>
+    </div>
+    <div class="tree-card" id="treeCard">
+      <div class="tree-body" id="treeBody">
+        <span class="placeholder-text">Paste valid JSON above to see the tree view.</span>
       </div>
     </div>
-    <div class="cheat-queries" id="sampleQueries" style="display:none;">
-      <h3>Try These Queries</h3>
-      <div class="query-chips">
-        <button class="query-chip" data-expr="$">$ &mdash; entire document</button>
-        <button class="query-chip" data-expr="$.store.book[*].author">$.store.book[*].author</button>
-        <button class="query-chip" data-expr="$..author">$..author &mdash; all authors</button>
-        <button class="query-chip" data-expr="$.store.*">$.store.* &mdash; all store items</button>
-        <button class="query-chip" data-expr="$..book[2]">$..book[2] &mdash; third book</button>
-        <button class="query-chip" data-expr="$..book[-1]">$..book[-1] &mdash; last book</button>
-        <button class="query-chip" data-expr="$..book[0:2]">$..book[0:2] &mdash; first two</button>
-        <button class="query-chip" data-expr="$..book[?(@.isbn)]">$..book[?(@.isbn)] &mdash; has ISBN</button>
-        <button class="query-chip" data-expr="$..book[?(@.price<10)]">$..book[?(@.price&lt;10)]</button>
-        <button class="query-chip" data-expr="$..*">$..* &mdash; all values</button>
+  </div>
+
+  <!-- Quick Reference -->
+  <div class="ref-section">
+    <h2>JSONPath Quick Reference</h2>
+    <div class="ref-grid">
+      <div class="ref-card">
+        <div class="ref-expr">$</div>
+        <div class="ref-desc">Root object</div>
+      </div>
+      <div class="ref-card">
+        <div class="ref-expr">.key</div>
+        <div class="ref-desc">Child property</div>
+      </div>
+      <div class="ref-card">
+        <div class="ref-expr">..key</div>
+        <div class="ref-desc">Recursive descent — find all</div>
+      </div>
+      <div class="ref-card">
+        <div class="ref-expr">[*]</div>
+        <div class="ref-desc">Wildcard — all elements</div>
+      </div>
+      <div class="ref-card">
+        <div class="ref-expr">[0]</div>
+        <div class="ref-desc">Array index (0-based)</div>
+      </div>
+      <div class="ref-card">
+        <div class="ref-expr">[-1]</div>
+        <div class="ref-desc">Last array element</div>
+      </div>
+      <div class="ref-card">
+        <div class="ref-expr">[0:3]</div>
+        <div class="ref-desc">Array slice (start:end)</div>
+      </div>
+      <div class="ref-card">
+        <div class="ref-expr">[0:5:2]</div>
+        <div class="ref-desc">Slice with step</div>
+      </div>
+      <div class="ref-card">
+        <div class="ref-expr">[?(@.price&lt;10)]</div>
+        <div class="ref-desc">Filter expression</div>
+      </div>
+      <div class="ref-card">
+        <div class="ref-expr">[?(@.isbn)]</div>
+        <div class="ref-desc">Existence check</div>
+      </div>
+      <div class="ref-card">
+        <div class="ref-expr">.length</div>
+        <div class="ref-desc">Array / string length</div>
+      </div>
+      <div class="ref-card">
+        <div class="ref-expr">.*</div>
+        <div class="ref-desc">All children of current node</div>
       </div>
     </div>
   </div>
 
   <div class="seo-content">
     <h2>What is JSONPath?</h2>
-    <p>JSONPath is a query language for JSON data, originally proposed by Stefan G&ouml;ssner in 2007. It works like XPath does for XML &mdash; you write expressions that navigate and extract specific pieces of data from a JSON document. JSONPath is widely used in API testing tools like Postman, data pipelines, and configuration systems to pull values out of complex nested structures without writing custom parsing code.</p>
+    <p>JSONPath is a query language for JSON data, originally proposed by Stefan Goessner as the JSON equivalent of XPath for XML. It lets you navigate deeply nested JSON structures and extract exactly the values you need using concise path expressions. JSONPath is widely supported in API testing tools like Postman, REST-assured, and Karate, as well as in programming languages through libraries like Jayway JSONPath (Java), jsonpath-ng (Python), and jsonpath-plus (JavaScript).</p>
 
-    <h2>JSONPath Syntax Reference</h2>
-    <p>JSONPath expressions always start with <code>$</code>, which represents the root of the JSON document. From there, you use operators to drill down into the data:</p>
+    <h2>JSONPath vs XPath vs jq</h2>
     <table class="seo-table">
       <thead>
         <tr>
-          <th>Operator</th>
-          <th>Description</th>
-          <th>Example</th>
+          <th>Feature</th>
+          <th>JSONPath</th>
+          <th>XPath</th>
+          <th>jq</th>
         </tr>
       </thead>
       <tbody>
         <tr>
+          <td><strong>Data format</strong></td>
+          <td>JSON</td>
+          <td>XML</td>
+          <td>JSON</td>
+        </tr>
+        <tr>
+          <td><strong>Root</strong></td>
           <td><code>$</code></td>
-          <td>Root object/element</td>
-          <td><code>$</code> &mdash; returns the entire document</td>
+          <td><code>/</code></td>
+          <td><code>.</code></td>
         </tr>
         <tr>
-          <td><code>.property</code></td>
-          <td>Dot-notated child</td>
-          <td><code>$.store.book</code></td>
+          <td><strong>Child access</strong></td>
+          <td><code>.key</code> or <code>['key']</code></td>
+          <td><code>/key</code></td>
+          <td><code>.key</code></td>
         </tr>
         <tr>
-          <td><code>['property']</code></td>
-          <td>Bracket-notated child</td>
-          <td><code>$['store']['book']</code></td>
+          <td><strong>Recursive</strong></td>
+          <td><code>..key</code></td>
+          <td><code>//key</code></td>
+          <td><code>.. | .key?</code></td>
         </tr>
         <tr>
-          <td><code>[n]</code></td>
-          <td>Array index (0-based)</td>
-          <td><code>$.book[0]</code> &mdash; first book</td>
-        </tr>
-        <tr>
-          <td><code>[*]</code></td>
-          <td>Wildcard (all elements)</td>
-          <td><code>$.book[*].title</code></td>
-        </tr>
-        <tr>
-          <td><code>..</code></td>
-          <td>Recursive descent</td>
-          <td><code>$..price</code> &mdash; all prices at any depth</td>
-        </tr>
-        <tr>
-          <td><code>[start:end]</code></td>
-          <td>Array slice</td>
-          <td><code>$.book[0:3]</code> &mdash; first three elements</td>
-        </tr>
-        <tr>
-          <td><code>[?()]</code></td>
-          <td>Filter expression</td>
-          <td><code>$.book[?(@.price<10)]</code></td>
+          <td><strong>Filters</strong></td>
+          <td><code>[?(@.x>1)]</code></td>
+          <td><code>[x>1]</code></td>
+          <td><code>select(.x>1)</code></td>
         </tr>
       </tbody>
     </table>
 
-    <h2>Common Use Cases for JSONPath</h2>
+    <h2>Common JSONPath Use Cases</h2>
     <ul>
-      <li><strong>API response parsing:</strong> Extract specific fields from large JSON responses returned by REST APIs.</li>
-      <li><strong>Configuration files:</strong> Query deeply nested YAML/JSON config files for specific settings.</li>
-      <li><strong>Data transformation:</strong> Pull values from JSON payloads for ETL pipelines and data processing workflows.</li>
-      <li><strong>Testing &amp; validation:</strong> Assert specific values in API responses using tools like Postman, REST Assured, or Karate.</li>
+      <li><strong>API response extraction:</strong> Pull specific fields from large REST API responses for testing or transformation.</li>
+      <li><strong>Configuration lookup:</strong> Navigate deep config files to find specific settings without writing custom parsing code.</li>
+      <li><strong>Data transformation:</strong> Select subsets of JSON data for ETL pipelines, reporting, or feeding into other tools.</li>
+      <li><strong>Automated testing:</strong> Assert specific values in API responses using JSONPath in test frameworks like Postman, REST-assured, or Cypress.</li>
+      <li><strong>Log analysis:</strong> Extract structured data from JSON-formatted application logs for debugging and monitoring.</li>
+    </ul>
+
+    <h2>JSONPath Syntax Guide</h2>
+    <h3>Basic Navigation</h3>
+    <p>Every JSONPath expression starts with <code>$</code> representing the root. Use dot notation (<code>$.store.name</code>) or bracket notation (<code>$['store']['name']</code>) to traverse objects. For arrays, use zero-based indices: <code>$.items[0]</code> gets the first element, <code>$.items[-1]</code> gets the last.</p>
+
+    <h3>Wildcards and Recursive Descent</h3>
+    <p>The wildcard <code>[*]</code> selects all elements in an array or all values of an object. The recursive descent operator <code>..</code> searches the entire tree: <code>$..name</code> finds every <code>name</code> property at any depth. Combine them for powerful queries like <code>$..*</code> to list every value in the document.</p>
+
+    <h3>Filter Expressions</h3>
+    <p>Filter expressions use <code>[?()]</code> syntax with <code>@</code> representing the current element. Supported operators include <code>==</code>, <code>!=</code>, <code>&lt;</code>, <code>&gt;</code>, <code>&lt;=</code>, <code>&gt;=</code>. You can check existence (<code>[?(@.isbn)]</code>) or compare values (<code>[?(@.price&lt;10)]</code>). String comparisons should use quotes: <code>[?(@.color=='red')]</code>.</p>
+
+    <h2>Related Tools</h2>
+    <ul>
+      <li><a href="/json-formatter">JSON Formatter & Validator</a> — Format, validate, minify, and fix JSON data.</li>
+      <li><a href="/regex-tester">Regex Tester</a> — Test and debug regular expressions with real-time matching.</li>
     </ul>
 
     <h2>Frequently Asked Questions</h2>
     <div style="margin-top: 24px;">
       <h3 style="margin: 16px 0 8px; font-size: 1.1rem; color: #e0e0e0;">What is JSONPath?</h3>
-      <p style="margin-bottom: 16px;">JSONPath is a query language for JSON, similar to XPath for XML. It lets you navigate and extract specific values from complex JSON structures using expressions like $.store.book[0].title or $..price to find data without manually traversing nested objects.</p>
+      <p style="margin-bottom: 16px;">JSONPath is a query language for JSON, similar to XPath for XML. It allows you to navigate and extract specific values from a JSON document using path expressions like $.store.book[0].title or $..author to find all authors recursively.</p>
 
-      <h3 style="margin: 16px 0 8px; font-size: 1.1rem; color: #e0e0e0;">How do I use a JSONPath tester?</h3>
-      <p style="margin-bottom: 16px;">Paste your JSON into the input panel, type a JSONPath expression (e.g., $.users[*].name), and the tester instantly shows all matching values in the results panel. You can also click any value in the JSON tree to auto-generate its JSONPath.</p>
+      <h3 style="margin: 16px 0 8px; font-size: 1.1rem; color: #e0e0e0;">How do I use a JSONPath tester online?</h3>
+      <p style="margin-bottom: 16px;">Paste your JSON data into the input field, type a JSONPath expression like $.store.book[*].title in the query box, and the tool instantly highlights and displays the matched values. You can also click nodes in the tree view to auto-generate the path.</p>
 
-      <h3 style="margin: 16px 0 8px; font-size: 1.1rem; color: #e0e0e0;">What does the $ symbol mean in JSONPath?</h3>
-      <p style="margin-bottom: 16px;">The $ symbol represents the root element of the JSON document. Every JSONPath expression starts with $. For example, $.name accesses the 'name' property at the root level, while $.store.book accesses the 'book' array inside the 'store' object.</p>
+      <h3 style="margin: 16px 0 8px; font-size: 1.1rem; color: #e0e0e0;">What JSONPath syntax is supported?</h3>
+      <p style="margin-bottom: 16px;">Common JSONPath syntax includes: $ (root), .key (child), ..key (recursive descent), [*] (wildcard), [0] (array index), [0:3] (array slice), and [?(@.price&lt;10)] (filter expressions). These cover the vast majority of real-world querying needs.</p>
 
-      <h3 style="margin: 16px 0 8px; font-size: 1.1rem; color: #e0e0e0;">What is the difference between dot notation and bracket notation in JSONPath?</h3>
-      <p style="margin-bottom: 16px;">Dot notation ($.store.book) is a shorthand for accessing properties by name. Bracket notation ($['store']['book']) achieves the same result but is required when property names contain special characters, spaces, or start with a number.</p>
+      <h3 style="margin: 16px 0 8px; font-size: 1.1rem; color: #e0e0e0;">What is the difference between JSONPath and jq?</h3>
+      <p style="margin-bottom: 16px;">JSONPath and jq both query JSON data but have different syntax. JSONPath uses dot notation like $.store.book[0], while jq uses pipe-based syntax like .store.book[0]. JSONPath is commonly used in REST APIs and testing tools, while jq is a command-line tool popular in shell scripts.</p>
 
-      <h3 style="margin: 16px 0 8px; font-size: 1.1rem; color: #e0e0e0;">How do I filter JSON arrays with JSONPath?</h3>
-      <p style="margin-bottom: 16px;">Use filter expressions with the ?() syntax. For example, $.books[?(@.price&lt;10)] returns all books with a price less than 10. The @ symbol refers to the current element being evaluated. You can use comparison operators like &lt;, &gt;, ==, !=, and logical operators.</p>
+      <h3 style="margin: 16px 0 8px; font-size: 1.1rem; color: #e0e0e0;">Can JSONPath filter JSON arrays?</h3>
+      <p style="margin-bottom: 16px;">Yes. JSONPath supports filter expressions with the syntax [?(@.field operator value)]. For example, $.store.book[?(@.price&lt;10)] returns all books cheaper than 10, and $.users[?(@.active==true)] returns only active users.</p>
     </div>
-
-    <h2>Related Tools</h2>
-    <ul>
-      <li><a href="/json-formatter" style="color:#818cf8;">JSON Formatter &amp; Validator</a> &mdash; Format, validate, minify and fix JSON online.</li>
-      <li><a href="/regex-tester" style="color:#818cf8;">Regex Tester</a> &mdash; Test regular expressions with real-time match highlighting.</li>
-    </ul>
   </div>
 
 </div>
 
-</div>`
+</div>`;
 
 export const meta = {
-  title: "JSONPath Tester — Query & Extract JSON Data Online",
-  description: "Free online JSONPath tester and json path finder. Write JSONPath expressions, see matched results instantly, and click values to auto-generate paths.",
+  title: "JSONPath Tester — Query, Extract & Test JSON Paths Online",
+  description: "Test JSONPath expressions against JSON data in real time. Supports wildcards, recursive descent, filters, array slicing, and click-to-copy path from tree view.",
   category: "tool",
   published: "2026-03-21",
 };
@@ -303,8 +319,8 @@ export const meta = {
 
 <SiteLayout
   site="siliconbased"
-  title="JSONPath Tester — Query & Extract JSON Data Online"
-  description="Free online JSONPath tester and json path finder. Write JSONPath expressions, see matched results instantly, and click values to auto-generate paths."
+  title="JSONPath Tester — Query, Extract & Test JSON Paths Online"
+  description="Test JSONPath expressions against JSON data in real time. Supports wildcards, recursive descent, filters, array slicing, and click-to-copy path from tree view."
   canonical="https://siliconbased.dev/json-path-tester"
   schema={schema}
 >
@@ -312,27 +328,17 @@ export const meta = {
 
   <script is:inline>
 const jsonInput = document.getElementById('jsonInput');
-const jsonTree = document.getElementById('jsonTree');
-const inputLineNumbers = document.getElementById('inputLineNumbers');
-const resultOutput = document.getElementById('resultOutput');
-const lineNumbers = document.getElementById('lineNumbers');
-const errorMsg = document.getElementById('errorMsg');
-const errorText = document.getElementById('errorText');
-const outputCard = document.getElementById('outputCard');
-const resultStatus = document.getElementById('resultStatus');
 const pathInput = document.getElementById('pathInput');
+const resultOutput = document.getElementById('resultOutput');
+const resultStatus = document.getElementById('resultStatus');
+const errorBar = document.getElementById('errorBar');
+const treeBody = document.getElementById('treeBody');
 const copyBtn = document.getElementById('copyBtn');
 const clearBtn = document.getElementById('clearBtn');
+const formatBtn = document.getElementById('formatBtn');
 const sampleBtn = document.getElementById('sampleBtn');
-const treeCard = document.getElementById('treeCard');
-const sampleQueries = document.getElementById('sampleQueries');
-const treeViewBtn = document.getElementById('treeViewBtn');
-const editViewBtn = document.getElementById('editViewBtn');
-
-let debounceTimer;
-let currentResults = '';
-let parsedData = null;
-let viewMode = 'tree';
+const examplesToggle = document.getElementById('examplesToggle');
+const examplesPanel = document.getElementById('examplesPanel');
 
 const SAMPLE_JSON = {
   "store": {
@@ -349,31 +355,255 @@ const SAMPLE_JSON = {
   }
 };
 
-function init() {
-  jsonInput.addEventListener('input', () => {
-    clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(evaluate, 200);
-  });
+let debounceTimer;
+let currentResults = '';
 
-  pathInput.addEventListener('input', () => {
-    clearTimeout(debounceTimer);
-    debounceTimer = setTimeout(evaluate, 200);
-  });
+// ─── JSONPath Engine ───────────────────────────────────────────
+function jsonpath(obj, expr) {
+  if (typeof expr !== 'string' || !expr.startsWith('$')) return [];
+  const results = [];
+  const tokens = tokenize(expr.substring(1));
+  resolve(obj, tokens, 0, results);
+  return results;
+}
+
+function tokenize(expr) {
+  const tokens = [];
+  let i = 0;
+  while (i < expr.length) {
+    if (expr[i] === '.') {
+      if (expr[i + 1] === '.') {
+        tokens.push({ type: 'recursive' });
+        i += 2;
+      } else {
+        i++;
+        if (expr[i] === '*') {
+          tokens.push({ type: 'wildcard' });
+          i++;
+        } else {
+          let key = '';
+          while (i < expr.length && expr[i] !== '.' && expr[i] !== '[') {
+            key += expr[i++];
+          }
+          if (key === 'length') {
+            tokens.push({ type: 'length' });
+          } else if (key) {
+            tokens.push({ type: 'child', key: key });
+          }
+        }
+      }
+    } else if (expr[i] === '[') {
+      i++;
+      let inner = '';
+      let depth = 1;
+      while (i < expr.length && depth > 0) {
+        if (expr[i] === '[') depth++;
+        else if (expr[i] === ']') { depth--; if (depth === 0) break; }
+        inner += expr[i++];
+      }
+      i++; // skip ]
+      inner = inner.trim();
+      if (inner === '*') {
+        tokens.push({ type: 'wildcard' });
+      } else if (inner.startsWith('?')) {
+        tokens.push({ type: 'filter', expr: inner.substring(1).trim() });
+      } else if (inner.includes(':')) {
+        const parts = inner.split(':').map(s => s.trim());
+        tokens.push({ type: 'slice', start: parts[0], end: parts[1], step: parts[2] || '' });
+      } else if (inner.startsWith("'") || inner.startsWith('"')) {
+        tokens.push({ type: 'child', key: inner.slice(1, -1) });
+      } else {
+        const idx = parseInt(inner, 10);
+        if (!isNaN(idx)) {
+          tokens.push({ type: 'index', index: idx });
+        } else {
+          tokens.push({ type: 'child', key: inner });
+        }
+      }
+    } else {
+      i++;
+    }
+  }
+  return tokens;
+}
+
+function resolve(obj, tokens, ti, results) {
+  if (ti >= tokens.length) {
+    results.push(obj);
+    return;
+  }
+  if (obj === null || obj === undefined) return;
+  const token = tokens[ti];
+
+  if (token.type === 'child') {
+    if (typeof obj === 'object' && obj !== null && token.key in obj) {
+      resolve(obj[token.key], tokens, ti + 1, results);
+    }
+  } else if (token.type === 'index') {
+    if (Array.isArray(obj)) {
+      const idx = token.index < 0 ? obj.length + token.index : token.index;
+      if (idx >= 0 && idx < obj.length) {
+        resolve(obj[idx], tokens, ti + 1, results);
+      }
+    }
+  } else if (token.type === 'wildcard') {
+    if (typeof obj === 'object' && obj !== null) {
+      const keys = Array.isArray(obj) ? obj.map((_, i) => i) : Object.keys(obj);
+      for (const k of keys) {
+        resolve(obj[k], tokens, ti + 1, results);
+      }
+    }
+  } else if (token.type === 'recursive') {
+    if (ti + 1 < tokens.length) {
+      const next = tokens[ti + 1];
+      if (next.type === 'wildcard') {
+        resolveRecursiveWild(obj, tokens, ti + 2, results);
+      } else {
+        resolveRecursive(obj, tokens, ti + 1, results);
+      }
+    } else {
+      descendAll(obj, results);
+    }
+  } else if (token.type === 'slice') {
+    if (Array.isArray(obj)) {
+      const len = obj.length;
+      let start = token.start === '' ? 0 : parseInt(token.start, 10);
+      let end = token.end === '' ? len : parseInt(token.end, 10);
+      let step = token.step === '' ? 1 : parseInt(token.step, 10);
+      if (start < 0) start = Math.max(0, len + start);
+      if (end < 0) end = Math.max(0, len + end);
+      if (end > len) end = len;
+      if (step < 1) step = 1;
+      for (let i = start; i < end; i += step) {
+        resolve(obj[i], tokens, ti + 1, results);
+      }
+    }
+  } else if (token.type === 'filter') {
+    if (Array.isArray(obj)) {
+      for (const item of obj) {
+        if (evalFilter(item, token.expr)) {
+          resolve(item, tokens, ti + 1, results);
+        }
+      }
+    }
+  } else if (token.type === 'length') {
+    if (Array.isArray(obj)) {
+      results.push(obj.length);
+    } else if (typeof obj === 'string') {
+      results.push(obj.length);
+    }
+  }
+}
+
+function resolveRecursive(obj, tokens, ti, results) {
+  resolve(obj, tokens, ti, results);
+  if (typeof obj === 'object' && obj !== null) {
+    const keys = Array.isArray(obj) ? obj.map((_, i) => i) : Object.keys(obj);
+    for (const k of keys) {
+      resolveRecursive(obj[k], tokens, ti, results);
+    }
+  }
+}
+
+function resolveRecursiveWild(obj, tokens, ti, results) {
+  if (typeof obj === 'object' && obj !== null) {
+    const keys = Array.isArray(obj) ? obj.map((_, i) => i) : Object.keys(obj);
+    for (const k of keys) {
+      resolve(obj[k], tokens, ti, results);
+      resolveRecursiveWild(obj[k], tokens, ti, results);
+    }
+  }
+}
+
+function descendAll(obj, results) {
+  if (typeof obj === 'object' && obj !== null) {
+    const keys = Array.isArray(obj) ? obj.map((_, i) => i) : Object.keys(obj);
+    for (const k of keys) {
+      results.push(obj[k]);
+      descendAll(obj[k], results);
+    }
+  }
+}
+
+function evalFilter(item, expr) {
+  let inner = expr.trim();
+  if (inner.startsWith('(') && inner.endsWith(')')) {
+    inner = inner.slice(1, -1).trim();
+  }
+  if (!inner.startsWith('@')) return false;
+
+  const opsRe = /^@\.([a-zA-Z0-9_]+)\s*(==|!=|<=|>=|<|>)\s*(.+)$/;
+  const match = inner.match(opsRe);
+  if (!match) {
+    const fieldMatch = inner.match(/^@\.([a-zA-Z0-9_]+)$/);
+    if (fieldMatch && typeof item === 'object' && item !== null) {
+      return fieldMatch[1] in item;
+    }
+    return false;
+  }
+
+  const field = match[1];
+  const op = match[2];
+  let value = match[3].trim();
+
+  if (typeof item !== 'object' || item === null || !(field in item)) return false;
+  const fieldVal = item[field];
+
+  let cmpVal;
+  if ((value.startsWith("'") && value.endsWith("'")) || (value.startsWith('"') && value.endsWith('"'))) {
+    cmpVal = value.slice(1, -1);
+  } else if (value === 'true') {
+    cmpVal = true;
+  } else if (value === 'false') {
+    cmpVal = false;
+  } else if (value === 'null') {
+    cmpVal = null;
+  } else {
+    cmpVal = parseFloat(value);
+    if (isNaN(cmpVal)) cmpVal = value;
+  }
+
+  switch (op) {
+    case '==': return fieldVal == cmpVal;
+    case '!=': return fieldVal != cmpVal;
+    case '<': return fieldVal < cmpVal;
+    case '>': return fieldVal > cmpVal;
+    case '<=': return fieldVal <= cmpVal;
+    case '>=': return fieldVal >= cmpVal;
+    default: return false;
+  }
+}
+
+// ─── UI Logic ──────────────────────────────────────────────────
+
+function init() {
+  jsonInput.value = JSON.stringify(SAMPLE_JSON, null, 2);
+
+  jsonInput.addEventListener('input', debounceRun);
+  pathInput.addEventListener('input', debounceRun);
 
   clearBtn.addEventListener('click', () => {
     jsonInput.value = '';
-    pathInput.value = '$';
-    parsedData = null;
-    clearOutput();
-    clearTree();
-    setViewMode('edit');
-    jsonInput.focus();
+    errorBar.style.display = 'none';
+    resultOutput.innerHTML = '<span class="placeholder-text">Enter JSON and a JSONPath expression to see results.</span>';
+    resultStatus.textContent = 'Results';
+    resultStatus.style.color = '#ccc';
+    treeBody.innerHTML = '<span class="placeholder-text">Paste valid JSON above to see the tree view.</span>';
+    currentResults = '';
   });
 
-  sampleBtn.addEventListener('click', loadSample);
+  formatBtn.addEventListener('click', () => {
+    try {
+      const parsed = JSON.parse(jsonInput.value);
+      jsonInput.value = JSON.stringify(parsed, null, 2);
+      errorBar.style.display = 'none';
+    } catch (e) { /* ignore */ }
+  });
 
-  treeViewBtn.addEventListener('click', () => setViewMode('tree'));
-  editViewBtn.addEventListener('click', () => setViewMode('edit'));
+  sampleBtn.addEventListener('click', () => {
+    jsonInput.value = JSON.stringify(SAMPLE_JSON, null, 2);
+    runQuery();
+  });
 
   copyBtn.addEventListener('click', () => {
     if (!currentResults) return;
@@ -387,232 +617,93 @@ function init() {
     });
   });
 
-  // Cheat sheet items
-  document.querySelectorAll('.cheat-item[data-expr]').forEach(el => {
-    el.style.cursor = 'pointer';
-    el.addEventListener('click', () => {
-      if (!parsedData) loadSample();
-      pathInput.value = el.dataset.expr;
-      evaluate();
+  examplesToggle.addEventListener('click', () => {
+    examplesPanel.classList.toggle('open');
+    examplesToggle.classList.toggle('active');
+  });
+
+  document.querySelectorAll('.example-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      pathInput.value = btn.dataset.path;
+      examplesPanel.classList.remove('open');
+      examplesToggle.classList.remove('active');
+      runQuery();
     });
   });
 
-  // Sample query chips
-  document.querySelectorAll('.query-chip[data-expr]').forEach(el => {
-    el.addEventListener('click', () => {
-      pathInput.value = el.dataset.expr;
-      evaluate();
-    });
-  });
-
-  // Load sample on first visit
-  loadSample();
+  runQuery();
 }
 
-function setViewMode(mode) {
-  viewMode = mode;
-  treeViewBtn.classList.toggle('active', mode === 'tree');
-  editViewBtn.classList.toggle('active', mode === 'edit');
-  if (mode === 'edit') {
-    treeCard.style.display = 'none';
-    jsonInput.style.display = '';
-    jsonInput.focus();
-  } else {
-    jsonInput.style.display = 'none';
-    if (parsedData) {
-      renderTree(parsedData);
-    } else {
-      // Try to parse current input
-      try {
-        const d = JSON.parse(jsonInput.value.trim());
-        parsedData = d;
-        renderTree(d);
-      } catch(e) {
-        // Can't show tree for invalid JSON, stay in edit
-        setViewMode('edit');
-        return;
-      }
-    }
-  }
+function debounceRun() {
+  clearTimeout(debounceTimer);
+  debounceTimer = setTimeout(runQuery, 200);
 }
 
-function loadSample() {
-  jsonInput.value = JSON.stringify(SAMPLE_JSON, null, 2);
-  pathInput.value = '$.store.book[*].author';
-  sampleQueries.style.display = 'block';
-  evaluate();
-  setViewMode('tree');
-}
-
-function evaluate() {
+function runQuery() {
   const raw = jsonInput.value.trim();
   if (!raw) {
-    clearOutput();
-    clearTree();
+    errorBar.style.display = 'none';
+    resultOutput.innerHTML = '<span class="placeholder-text">Enter JSON and a JSONPath expression to see results.</span>';
+    resultStatus.textContent = 'Results';
+    resultStatus.style.color = '#ccc';
+    treeBody.innerHTML = '<span class="placeholder-text">Paste valid JSON above to see the tree view.</span>';
+    currentResults = '';
     return;
   }
 
+  let parsed;
   try {
-    parsedData = JSON.parse(raw);
-  } catch (err) {
-    showError('Invalid JSON: ' + err.message);
-    clearTree();
+    parsed = JSON.parse(raw);
+    errorBar.style.display = 'none';
+    jsonInput.classList.remove('error-border');
+  } catch (e) {
+    errorBar.style.display = 'block';
+    errorBar.textContent = 'Invalid JSON: ' + e.message;
+    jsonInput.classList.add('error-border');
+    resultOutput.innerHTML = '<span class="placeholder-text">Fix the JSON errors to run queries.</span>';
+    resultStatus.textContent = 'Results';
+    resultStatus.style.color = '#ccc';
+    treeBody.innerHTML = '<span class="placeholder-text">Fix the JSON errors to see the tree view.</span>';
+    currentResults = '';
     return;
   }
 
-  // Render tree if in tree view
-  if (viewMode === 'tree') renderTree(parsedData);
+  buildTree(parsed);
 
   const expr = pathInput.value.trim();
   if (!expr) {
-    clearOutput();
+    resultOutput.innerHTML = '<span class="placeholder-text">Enter a JSONPath expression above to see matched values here.</span>';
+    resultStatus.textContent = 'Results';
+    resultStatus.style.color = '#ccc';
+    currentResults = '';
     return;
   }
 
   try {
-    const results = jsonPath(parsedData, expr);
-    if (results === false || results === null || results === undefined) {
-      showError('No matches found for: ' + expr);
-      return;
-    }
-    showResults(results);
-  } catch (err) {
-    showError('Invalid JSONPath: ' + err.message);
-  }
-}
-
-function clearOutput() {
-  resultOutput.innerHTML = '';
-  lineNumbers.innerHTML = '1';
-  errorMsg.style.display = 'none';
-  outputCard.classList.remove('error-state');
-  resultStatus.textContent = 'Results';
-  resultStatus.style.color = '#ccc';
-  currentResults = '';
-}
-
-function clearTree() {
-  jsonTree.innerHTML = '';
-  inputLineNumbers.innerHTML = '1';
-  treeCard.style.display = 'none';
-}
-
-function renderTree(obj) {
-  treeCard.style.display = 'flex';
-  jsonTree.innerHTML = '';
-  jsonTree.appendChild(buildTreeDOM(obj, '$', true, 0));
-  const text = jsonTree.textContent || '';
-  const count = text.split('\n').length || 1;
-  let html = '';
-  for (let i = 1; i <= count; i++) html += i + '<br>';
-  inputLineNumbers.innerHTML = html;
-}
-
-function buildTreeDOM(obj, path, isLast, indent) {
-  const container = document.createElement('span');
-  const indentStr = ' '.repeat(indent);
-
-  if (obj === null) {
-    const el = document.createElement('span');
-    el.className = 'hl-null tree-val';
-    el.textContent = 'null' + (isLast ? '' : ',');
-    el.dataset.path = path;
-    el.title = path;
-    el.onclick = (e) => { e.stopPropagation(); pathInput.value = path; evaluate(); };
-    container.appendChild(el);
-    return container;
-  }
-
-  if (typeof obj !== 'object') {
-    const el = document.createElement('span');
-    el.classList.add('tree-val');
-    if (typeof obj === 'string') {
-      el.className = 'hl-str tree-val';
-      el.textContent = '"' + obj.replace(/"/g, '\\"') + '"' + (isLast ? '' : ',');
-    } else if (typeof obj === 'boolean') {
-      el.className = 'hl-bool tree-val';
-      el.textContent = obj + (isLast ? '' : ',');
+    const matches = jsonpath(parsed, expr);
+    if (matches.length === 0) {
+      resultOutput.innerHTML = '<span class="no-match">No matches found for this expression.</span>';
+      resultStatus.textContent = '0 matches';
+      resultStatus.style.color = '#f87171';
+      currentResults = '';
     } else {
-      el.className = 'hl-num tree-val';
-      el.textContent = obj + (isLast ? '' : ',');
+      const formatted = JSON.stringify(matches.length === 1 ? matches[0] : matches, null, 2);
+      currentResults = formatted;
+      resultOutput.innerHTML = syntaxHighlight(formatted);
+      resultStatus.textContent = matches.length + ' match' + (matches.length === 1 ? '' : 'es');
+      resultStatus.style.color = '#4ade80';
     }
-    el.dataset.path = path;
-    el.title = 'Click to query: ' + path;
-    el.onclick = (e) => { e.stopPropagation(); pathInput.value = path; evaluate(); };
-    container.appendChild(el);
-    return container;
+  } catch (e) {
+    resultOutput.innerHTML = '<span class="no-match">Invalid JSONPath expression.</span>';
+    resultStatus.textContent = 'Error';
+    resultStatus.style.color = '#f87171';
+    currentResults = '';
   }
-
-  const isArray = Array.isArray(obj);
-  const keys = Object.keys(obj);
-
-  if (keys.length === 0) {
-    container.textContent = isArray ? '[]' + (isLast ? '' : ',') : '{}' + (isLast ? '' : ',');
-    return container;
-  }
-
-  const open = isArray ? '[' : '{';
-  const close = isArray ? ']' : '}';
-
-  container.appendChild(document.createTextNode(open + '\n'));
-
-  keys.forEach((key, i) => {
-    const childIsLast = i === keys.length - 1;
-    const childPath = isArray ? path + '[' + key + ']' : path + '.' + key;
-    const childIndent = ' '.repeat(indent + 2);
-
-    const line = document.createElement('span');
-    line.appendChild(document.createTextNode(childIndent));
-
-    if (!isArray) {
-      const keyNode = document.createElement('span');
-      keyNode.className = 'hl-key tree-val';
-      keyNode.textContent = '"' + key + '": ';
-      keyNode.dataset.path = childPath;
-      keyNode.title = 'Click to query: ' + childPath;
-      keyNode.onclick = (e) => { e.stopPropagation(); pathInput.value = childPath; evaluate(); };
-      line.appendChild(keyNode);
-    }
-
-    line.appendChild(buildTreeDOM(obj[key], childPath, childIsLast, indent + 2));
-    line.appendChild(document.createTextNode('\n'));
-    container.appendChild(line);
-  });
-
-  container.appendChild(document.createTextNode(indentStr + close + (isLast ? '' : ',')));
-  return container;
-}
-
-function showResults(results) {
-  errorMsg.style.display = 'none';
-  outputCard.classList.remove('error-state');
-  resultStatus.textContent = '\u2713 ' + results.length + ' match' + (results.length !== 1 ? 'es' : '');
-  resultStatus.style.color = '#4ade80';
-
-  const formatted = JSON.stringify(results, null, 2);
-  currentResults = formatted;
-
-  resultOutput.innerHTML = syntaxHighlight(formatted);
-  const count = formatted.split('\n').length || 1;
-  let html = '';
-  for (let i = 1; i <= count; i++) html += i + '<br>';
-  lineNumbers.innerHTML = html;
-}
-
-function showError(msg) {
-  errorMsg.style.display = 'flex';
-  errorText.textContent = msg;
-  outputCard.classList.add('error-state');
-  resultStatus.textContent = 'Error';
-  resultStatus.style.color = '#f87171';
-  resultOutput.innerHTML = '';
-  lineNumbers.innerHTML = '1';
-  currentResults = '';
 }
 
 function syntaxHighlight(json) {
-  json = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
-  return json.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
+  const escaped = json.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
+  return escaped.replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, function (match) {
     let cls = 'hl-num';
     if (/^"/.test(match)) {
       cls = /:$/.test(match) ? 'hl-key' : 'hl-str';
@@ -625,200 +716,109 @@ function syntaxHighlight(json) {
   });
 }
 
-// ── Minimal JSONPath implementation ──
-function jsonPath(obj, expr) {
-  if (!obj || !expr) return false;
+// ─── Tree View ─────────────────────────────────────────────────
 
-  const walk = function(obj, parts) {
-    if (parts.length === 0) return [obj];
+function buildTree(obj) {
+  treeBody.innerHTML = '';
+  const root = createTreeNode('$', obj, '$', true);
+  treeBody.appendChild(root);
+}
 
-    const part = parts[0];
-    const rest = parts.slice(1);
-    let results = [];
+function createTreeNode(key, value, path, isRoot) {
+  const node = document.createElement('div');
+  node.className = 'tree-node';
 
-    if (part === '$') {
-      return walk(obj, rest);
-    }
+  const row = document.createElement('div');
+  row.className = 'tree-row';
 
-    if (part === '..') {
-      // Recursive descent - next part is the property to find
-      if (rest.length === 0) return [obj];
-      const target = rest[0];
-      const afterTarget = rest.slice(1);
+  if (typeof value === 'object' && value !== null) {
+    const isArr = Array.isArray(value);
+    const keys = Object.keys(value);
+    const toggle = document.createElement('span');
+    toggle.className = 'tree-toggle open';
+    toggle.textContent = '\u25BE';
+    row.appendChild(toggle);
 
-      const recurse = function(current) {
-        if (current === null || typeof current !== 'object') return;
+    const keyEl = document.createElement('span');
+    keyEl.className = 'tree-key';
+    keyEl.textContent = isRoot ? '$' : key;
+    row.appendChild(keyEl);
 
-        // Handle wildcard after ..
-        if (target === '*') {
-          if (Array.isArray(current)) {
-            current.forEach(v => {
-              results = results.concat(walk(v, afterTarget));
-            });
-          } else {
-            Object.values(current).forEach(v => {
-              results = results.concat(walk(v, afterTarget));
-            });
-          }
-        }
-        // Handle filter after ..
-        else if (target.match(/^\[.*\]$/)) {
-          // Array or filter operation
-          const inner = target.slice(1, -1);
-          if (Array.isArray(current)) {
-            const matched = applyBracket(current, inner);
-            matched.forEach(v => {
-              results = results.concat(walk(v, afterTarget));
-            });
-          }
-        }
-        // Named property
-        else if (current.hasOwnProperty && current.hasOwnProperty(target)) {
-          results = results.concat(walk(current[target], afterTarget));
-        }
+    const badge = document.createElement('span');
+    badge.className = 'tree-badge';
+    badge.textContent = isArr ? '[' + keys.length + ']' : '{' + keys.length + '}';
+    row.appendChild(badge);
 
-        // Continue recursing
-        if (Array.isArray(current)) {
-          current.forEach(recurse);
-        } else if (typeof current === 'object' && current !== null) {
-          Object.values(current).forEach(recurse);
-        }
-      };
-      recurse(obj);
-      return results;
-    }
+    row.addEventListener('click', (e) => {
+      e.stopPropagation();
+      copyPathToClipboard(path, row);
+    });
 
-    if (obj === null || typeof obj !== 'object') return [];
+    node.appendChild(row);
 
-    // Wildcard
-    if (part === '*') {
-      const values = Array.isArray(obj) ? obj : Object.values(obj);
-      values.forEach(v => {
-        results = results.concat(walk(v, rest));
-      });
-      return results;
-    }
+    const children = document.createElement('div');
+    children.className = 'tree-children';
+    keys.forEach((k) => {
+      const childPath = isArr ? path + '[' + k + ']' : path + '.' + k;
+      children.appendChild(createTreeNode(k, value[k], childPath, false));
+    });
+    node.appendChild(children);
 
-    // Bracket expression: [n], [start:end], [*], [?(@...)]
-    const bracketMatch = part.match(/^\[(.+)\]$/);
-    if (bracketMatch) {
-      const inner = bracketMatch[1];
-      const matched = applyBracket(obj, inner);
-      matched.forEach(v => {
-        results = results.concat(walk(v, rest));
-      });
-      return results;
-    }
+    toggle.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const open = toggle.classList.toggle('open');
+      children.style.display = open ? 'block' : 'none';
+      toggle.textContent = open ? '\u25BE' : '\u25B8';
+    });
+  } else {
+    const spacer = document.createElement('span');
+    spacer.className = 'tree-spacer';
+    row.appendChild(spacer);
 
-    // Plain property or index
-    if (Array.isArray(obj)) {
-      const idx = parseInt(part, 10);
-      if (!isNaN(idx)) {
-        const realIdx = idx < 0 ? obj.length + idx : idx;
-        if (realIdx >= 0 && realIdx < obj.length) {
-          return walk(obj[realIdx], rest);
-        }
-      }
-      return [];
-    }
+    const keyEl = document.createElement('span');
+    keyEl.className = 'tree-key';
+    keyEl.textContent = key;
+    row.appendChild(keyEl);
 
-    if (obj.hasOwnProperty && obj.hasOwnProperty(part)) {
-      return walk(obj[part], rest);
-    }
+    const sep = document.createElement('span');
+    sep.className = 'tree-sep';
+    sep.textContent = ': ';
+    row.appendChild(sep);
 
-    return [];
-  };
-
-  const applyBracket = function(arr, inner) {
-    if (!Array.isArray(arr)) return [];
-
-    // Wildcard
-    if (inner === '*') return arr.slice();
-
-    // Filter: ?(@.price<10)
-    const filterMatch = inner.match(/^\?\(@\.(.+?)\s*(==|!=|<|>|<=|>=)\s*(.+)\)$/);
-    if (filterMatch) {
-      const prop = filterMatch[1];
-      const op = filterMatch[2];
-      let val = filterMatch[3].trim();
-      // Parse value
-      if (val === 'true') val = true;
-      else if (val === 'false') val = false;
-      else if (val === 'null') val = null;
-      else if (val.match(/^["'].*["']$/)) val = val.slice(1, -1);
-      else if (!isNaN(Number(val))) val = Number(val);
-
-      return arr.filter(item => {
-        if (item === null || typeof item !== 'object') return false;
-        const v = item[prop];
-        if (v === undefined) return false;
-        switch(op) {
-          case '==': return v == val;
-          case '!=': return v != val;
-          case '<': return v < val;
-          case '>': return v > val;
-          case '<=': return v <= val;
-          case '>=': return v >= val;
-        }
-        return false;
-      });
-    }
-
-    // Existence filter: ?(@.isbn)
-    const existsMatch = inner.match(/^\?\(@\.(.+)\)$/);
-    if (existsMatch) {
-      const prop = existsMatch[1];
-      return arr.filter(item => item !== null && typeof item === 'object' && item.hasOwnProperty(prop));
-    }
-
-    // Slice: start:end
-    const sliceMatch = inner.match(/^(-?\d*):(-?\d*)$/);
-    if (sliceMatch) {
-      const start = sliceMatch[1] === '' ? 0 : parseInt(sliceMatch[1], 10);
-      const end = sliceMatch[2] === '' ? arr.length : parseInt(sliceMatch[2], 10);
-      return arr.slice(start, end);
-    }
-
-    // Single index
-    const idx = parseInt(inner, 10);
-    if (!isNaN(idx)) {
-      const realIdx = idx < 0 ? arr.length + idx : idx;
-      if (realIdx >= 0 && realIdx < arr.length) return [arr[realIdx]];
-    }
-
-    return [];
-  };
-
-  // Preprocess expression: handle bracket expressions inline
-  // Convert [?(...)] and [n:m] and [*] into tokens
-  const tokens = [];
-  let i = 0;
-  const e = expr;
-  while (i < e.length) {
-    if (e[i] === '[') {
-      const end = e.indexOf(']', i);
-      if (end === -1) break;
-      tokens.push(e.substring(i, end + 1));
-      i = end + 1;
-      if (e[i] === '.') i++; // skip trailing dot
-    } else if (e[i] === '.') {
-      if (e[i+1] === '.') {
-        tokens.push('..');
-        i += 2;
-      } else {
-        i++;
-      }
+    const valEl = document.createElement('span');
+    if (value === null) {
+      valEl.className = 'hl-null';
+      valEl.textContent = 'null';
+    } else if (typeof value === 'string') {
+      valEl.className = 'hl-str';
+      valEl.textContent = '"' + value + '"';
+    } else if (typeof value === 'boolean') {
+      valEl.className = 'hl-bool';
+      valEl.textContent = String(value);
     } else {
-      let end = i;
-      while (end < e.length && e[end] !== '.' && e[end] !== '[') end++;
-      tokens.push(e.substring(i, end));
-      i = end;
+      valEl.className = 'hl-num';
+      valEl.textContent = String(value);
     }
+    row.appendChild(valEl);
+
+    row.addEventListener('click', (e) => {
+      e.stopPropagation();
+      copyPathToClipboard(path, row);
+    });
+
+    node.appendChild(row);
   }
 
-  const result = walk(obj, tokens);
-  if (!result || result.length === 0) return false;
-  return result;
+  return node;
+}
+
+function copyPathToClipboard(path, rowEl) {
+  pathInput.value = path;
+  navigator.clipboard.writeText(path).then(() => {
+    rowEl.classList.add('copied-flash');
+    setTimeout(() => rowEl.classList.remove('copied-flash'), 800);
+  });
+  runQuery();
 }
 
 init();
@@ -834,17 +834,24 @@ code, pre, .mono { font-family: 'JetBrains Mono', monospace; }
 .main { max-width: 1100px; margin: 0 auto; padding: 24px 20px 80px; flex: 1; width: 100%; }
 
 /* Query Bar */
-.query-bar { margin-bottom: 24px; }
-.query-label { font-size: 0.8rem; font-weight: 600; color: #888; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 8px; display: block; }
-.query-row { display: flex; gap: 10px; }
-.path-input { flex: 1; background: #0a1020; border: 2px solid #152040; border-radius: 10px; padding: 12px 16px; color: #818cf8; font-family: 'JetBrains Mono', monospace; font-size: 1rem; outline: none; transition: border-color 0.2s; }
-.path-input:focus { border-color: #818cf8; }
-.sample-btn { padding: 12px 20px; font-size: 0.85rem; white-space: nowrap; }
+.query-bar { display: flex; align-items: center; gap: 10px; margin-bottom: 16px; background: #0a1020; border: 2px solid #152040; border-radius: 12px; padding: 10px 16px; }
+.query-label { font-size: 0.78rem; font-weight: 700; color: #818cf8; text-transform: uppercase; letter-spacing: 0.5px; white-space: nowrap; }
+.path-input { flex: 1; background: transparent; border: none; color: #e0e0e0; font-family: 'JetBrains Mono', monospace; font-size: 0.92rem; outline: none; padding: 4px 0; }
+.path-input::placeholder { color: #555; }
 
-/* Input/Output Grid */
-.tool-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 40px; align-items: stretch; }
+/* Examples Panel */
+.examples-panel { max-height: 0; overflow: hidden; transition: max-height 0.3s ease; margin-bottom: 4px; }
+.examples-panel.open { max-height: 300px; margin-bottom: 16px; }
+.examples-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 8px; padding: 12px; background: #0d1225; border: 1px solid #152040; border-radius: 10px; }
+.example-btn { display: flex; flex-direction: column; text-align: left; background: #1e2030; border: 1px solid #2a2d40; color: #818cf8; padding: 10px 14px; border-radius: 8px; font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; cursor: pointer; transition: all 0.15s; }
+.example-btn span { font-family: 'Inter', sans-serif; color: #666; font-size: 0.72rem; margin-top: 4px; }
+.example-btn:hover { background: #2a2d40; border-color: #818cf8; }
+
+/* Grid */
+.tool-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; margin-bottom: 32px; align-items: stretch; }
 .pane { display: flex; flex-direction: column; }
 
+/* Headers */
 .input-header, .output-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
 .header-title { font-size: 0.85rem; font-weight: 600; color: #ccc; text-transform: uppercase; letter-spacing: 0.5px; }
 .header-actions { display: flex; gap: 8px; }
@@ -853,23 +860,23 @@ code, pre, .mono { font-family: 'JetBrains Mono', monospace; }
 .action-btn:hover { background: #2a2d40; color: #ccc; }
 .action-btn.active { background: #818cf8; color: #fff; border-color: #818cf8; }
 
-textarea.json-input { flex: 1; min-height: 400px; background: #0a1020; border: 2px solid #152040; border-radius: 12px; padding: 16px; color: #e0e0e0; font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; resize: vertical; outline: none; transition: border-color 0.2s; line-height: 1.6; white-space: pre; }
-textarea.json-input:focus { border-color: #818cf8; }
-
-/* Tree Card */
-.tree-card { display: none; flex-direction: column; min-height: 400px; background: #0a1020; border: 2px solid #152040; border-radius: 12px; overflow: hidden; flex: 1; }
-
-/* Output */
-.output-card { flex: 1; min-height: 400px; background: #0a1020; border: 2px solid #152040; border-radius: 12px; position: relative; display: flex; flex-direction: column; overflow: hidden; }
-.output-card.error-state { border-color: #f87171; background: rgba(248, 113, 113, 0.05); }
-
 .copy-btn { background: #1e2030; border: 1px solid #2a2d40; color: #888; padding: 6px 14px; border-radius: 8px; font-size: 0.75rem; font-weight: 500; cursor: pointer; font-family: 'Inter', sans-serif; transition: all 0.15s; }
 .copy-btn:hover { background: #2a2d40; color: #ccc; }
 .copy-btn.copied { background: #1a3a1a; color: #4ade80; border-color: #2d5a2d; }
 
-.result-body { flex: 1; padding: 0; display: flex; overflow: auto; background: #0a1020; position: relative; }
-.line-numbers { padding: 16px 10px; background: #0d0e14; color: #444; font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; line-height: 1.6; text-align: right; border-right: 1px solid #152040; user-select: none; position: sticky; left: 0; z-index: 5; min-width: 32px; }
-.output-pre { margin: 0; padding: 16px; font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; line-height: 1.6; color: #b0b8d0; white-space: pre; overflow: visible; flex: 1; tab-size: 2; }
+/* Input */
+textarea.json-input { flex: 1; min-height: 380px; background: #0a1020; border: 2px solid #152040; border-radius: 12px; padding: 16px; color: #e0e0e0; font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; resize: vertical; outline: none; transition: border-color 0.2s; line-height: 1.6; white-space: pre; }
+textarea.json-input:focus { border-color: #818cf8; }
+textarea.json-input.error-border { border-color: #f87171; }
+
+.error-bar { display: none; background: #f87171; color: #fff; padding: 8px 14px; border-radius: 8px; font-size: 0.78rem; font-weight: 500; margin-top: 8px; font-family: 'JetBrains Mono', monospace; word-break: break-word; }
+
+/* Output */
+.output-card { flex: 1; min-height: 380px; background: #0a1020; border: 2px solid #152040; border-radius: 12px; display: flex; flex-direction: column; overflow: hidden; }
+.result-body { flex: 1; padding: 0; display: flex; overflow: auto; }
+.output-pre { margin: 0; padding: 16px; font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; line-height: 1.6; color: #b0b8d0; white-space: pre-wrap; word-break: break-word; flex: 1; tab-size: 2; }
+.placeholder-text { color: #555; font-style: italic; }
+.no-match { color: #f87171; font-style: italic; }
 
 /* Syntax Highlighting */
 .hl-key { color: #818cf8; }
@@ -878,28 +885,32 @@ textarea.json-input:focus { border-color: #818cf8; }
 .hl-bool { color: #c084fc; }
 .hl-null { color: #f87171; }
 
-/* Tree clickable values */
-.tree-val { cursor: pointer; border-radius: 3px; transition: background 0.15s; padding: 0 2px; margin: 0 -2px; }
-.tree-val:hover { background: rgba(129, 140, 248, 0.15); }
+/* Tree Section */
+.tree-section { margin-bottom: 40px; }
+.tree-hint { font-weight: 400; color: #555; font-size: 0.75rem; text-transform: none; letter-spacing: 0; margin-left: 8px; }
+.tree-card { background: #0a1020; border: 2px solid #152040; border-radius: 12px; overflow: hidden; }
+.tree-body { padding: 16px; max-height: 400px; overflow: auto; font-family: 'JetBrains Mono', monospace; font-size: 0.82rem; line-height: 1.7; }
 
-/* Error Display */
-.error-msg { background: #f87171; color: #fff; padding: 12px 16px; font-size: 0.85rem; font-weight: 500; display: none; align-items: flex-start; gap: 10px; font-family: 'JetBrains Mono', monospace; word-break: break-word; border-bottom: 1px solid #dc2626; }
-.error-msg svg { width: 16px; height: 16px; flex-shrink: 0; margin-top: 2px; }
+.tree-node { padding-left: 18px; }
+.tree-node > .tree-row:first-child { padding-left: 0; }
+.tree-row { display: flex; align-items: center; gap: 6px; padding: 2px 6px; border-radius: 4px; cursor: pointer; transition: background 0.15s; }
+.tree-row:hover { background: #151d35; }
+.tree-row.copied-flash { background: rgba(129, 140, 248, 0.2); }
 
-/* Cheat Sheet */
-.cheat-sheet { margin-bottom: 48px; }
-.cheat-sheet h2 { color: #fff; font-size: 1.3rem; font-weight: 700; margin-bottom: 16px; }
-.cheat-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; }
-.cheat-item { background: #0d1220; border: 1px solid #1e2040; border-radius: 10px; padding: 14px; display: flex; flex-direction: column; gap: 6px; transition: all 0.15s; cursor: pointer; }
-.cheat-item:hover { border-color: #818cf8; background: #111830; }
-.cheat-item code { color: #818cf8; font-size: 0.9rem; font-weight: 600; }
-.cheat-item span { color: #888; font-size: 0.78rem; }
+.tree-toggle { width: 14px; text-align: center; color: #666; cursor: pointer; font-size: 0.75rem; user-select: none; flex-shrink: 0; }
+.tree-spacer { width: 14px; flex-shrink: 0; }
+.tree-key { color: #818cf8; }
+.tree-sep { color: #555; }
+.tree-badge { font-size: 0.7rem; color: #555; margin-left: 4px; }
+.tree-children { }
 
-.cheat-queries { margin-top: 20px; }
-.cheat-queries h3 { color: #ccc; font-size: 1rem; font-weight: 600; margin-bottom: 12px; }
-.query-chips { display: flex; flex-wrap: wrap; gap: 8px; }
-.query-chip { background: #0d1220; border: 1px solid #1e2040; border-radius: 8px; padding: 8px 14px; color: #b0b8d0; font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; cursor: pointer; transition: all 0.15s; }
-.query-chip:hover { border-color: #818cf8; color: #818cf8; background: #111830; }
+/* Reference Section */
+.ref-section { margin-bottom: 40px; }
+.ref-section h2 { color: #fff; font-size: 1.4rem; font-weight: 700; margin-bottom: 20px; }
+.ref-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 10px; }
+.ref-card { background: #0d1225; border: 1px solid #152040; border-radius: 10px; padding: 14px 16px; }
+.ref-expr { font-family: 'JetBrains Mono', monospace; color: #818cf8; font-size: 0.88rem; font-weight: 600; margin-bottom: 4px; }
+.ref-desc { color: #888; font-size: 0.78rem; }
 
 /* SEO Content */
 .seo-content { margin-top: 48px; border-top: 1px solid #1e2030; padding-top: 48px; color: #b0b8d0; font-size: 0.95rem; line-height: 1.6; }
@@ -918,10 +929,14 @@ textarea.json-input:focus { border-color: #818cf8; }
 /* Responsive */
 @media (max-width: 800px) {
   .tool-grid { grid-template-columns: 1fr; }
-  .cheat-grid { grid-template-columns: repeat(2, 1fr); }
-  textarea.json-input, .output-card, .tree-card { min-height: 300px; }
-  .query-chips { gap: 6px; }
-  .query-chip { font-size: 0.72rem; padding: 5px 10px; }
+  textarea.json-input, .output-card { min-height: 280px; }
+  .ref-grid { grid-template-columns: repeat(2, 1fr); }
+  .examples-grid { grid-template-columns: 1fr 1fr; }
+  .query-bar { flex-wrap: wrap; }
+}
+@media (max-width: 500px) {
+  .ref-grid { grid-template-columns: 1fr; }
+  .examples-grid { grid-template-columns: 1fr; }
 }
 
 </style>
