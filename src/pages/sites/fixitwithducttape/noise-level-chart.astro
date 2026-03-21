@@ -1,0 +1,437 @@
+---
+import SiteLayout from "../../../layouts/SiteLayout.astro";
+
+const sounds = [
+  { name: "Threshold of hearing", db: 0, category: "silence", icon: "🤫", description: "The faintest sound the average human ear can detect" },
+  { name: "Rustling leaves", db: 10, category: "silence", icon: "🍃", description: "Barely perceptible ambient outdoor sound" },
+  { name: "Quiet whisper", db: 20, category: "silence", icon: "🤫", description: "Whispering at arm's length in a quiet room" },
+  { name: "Quiet library", db: 30, category: "quiet", icon: "📚", description: "Background hum in a well-insulated library" },
+  { name: "Quiet bedroom at night", db: 35, category: "quiet", icon: "🛏️", description: "Typical ambient noise in a suburban bedroom" },
+  { name: "Refrigerator humming", db: 40, category: "quiet", icon: "🧊", description: "Constant low-frequency appliance hum" },
+  { name: "Moderate rainfall", db: 50, category: "moderate", icon: "🌧️", description: "Steady rain on a rooftop or window" },
+  { name: "Normal conversation", db: 60, category: "moderate", icon: "🗣️", description: "Two people talking at 3 feet apart" },
+  { name: "Vacuum cleaner", db: 70, category: "moderate", icon: "🧹", description: "Standard upright vacuum at operating distance" },
+  { name: "Busy city traffic", db: 80, category: "loud", icon: "🚗", description: "Standing on a busy urban street corner" },
+  { name: "Lawn mower", db: 85, category: "loud", icon: "🌿", description: "Gas-powered mower at operator position — hearing damage begins" },
+  { name: "Motorcycle (25 ft)", db: 90, category: "loud", icon: "🏍️", description: "Passing motorcycle at 25 feet away" },
+  { name: "Power drill", db: 95, category: "danger", icon: "🔧", description: "Handheld power drill during operation" },
+  { name: "Nightclub / concert", db: 100, category: "danger", icon: "🎸", description: "Average sound level on a nightclub dance floor" },
+  { name: "Car horn (3 ft)", db: 110, category: "danger", icon: "📯", description: "Vehicle horn at close range — pain threshold for some" },
+  { name: "Rock concert (front row)", db: 115, category: "extreme", icon: "🎤", description: "Standing at the speaker stack during a live show" },
+  { name: "Ambulance siren", db: 120, category: "extreme", icon: "🚑", description: "Emergency siren at close range — threshold of pain" },
+  { name: "Thunder clap (close)", db: 120, category: "extreme", icon: "⛈️", description: "Nearby lightning strike thunder" },
+  { name: "Jackhammer (3 ft)", db: 130, category: "extreme", icon: "⚒️", description: "Pneumatic hammer at operator distance" },
+  { name: "Jet engine (100 ft)", db: 140, category: "extreme", icon: "✈️", description: "Commercial jet at takeoff from 100 feet — instant hearing damage" },
+  { name: "Firecracker", db: 150, category: "extreme", icon: "🧨", description: "Firecracker or small explosive at close range" },
+  { name: "Gunshot", db: 160, category: "extreme", icon: "💥", description: "Rifle or shotgun blast — eardrum rupture risk" },
+  { name: "Rocket launch (pad)", db: 180, category: "extreme", icon: "🚀", description: "Saturn V / SLS at launch pad distance" },
+  { name: "Theoretical max in air", db: 194, category: "extreme", icon: "💀", description: "Loudest possible undistorted sound wave in Earth's atmosphere" },
+];
+
+const zones = [
+  { label: "Safe", range: "0–70 dB", color: "#22c55e", description: "No hearing damage risk at any exposure duration" },
+  { label: "Caution", range: "70–85 dB", color: "#eab308", description: "Prolonged exposure (8+ hours) may cause gradual hearing loss" },
+  { label: "Danger", range: "85–120 dB", color: "#f97316", description: "Hearing damage occurs — exposure time limits apply" },
+  { label: "Extreme / Pain", range: "120–194 dB", color: "#ef4444", description: "Immediate damage — even brief exposure causes permanent harm" },
+];
+
+const oshaLimits = [
+  { db: 85, hours: "8 hours", notes: "OSHA permissible exposure limit (PEL)" },
+  { db: 88, hours: "4 hours", notes: "Every 5 dB increase halves safe time (OSHA exchange rate)" },
+  { db: 91, hours: "2 hours", notes: "Common in manufacturing environments" },
+  { db: 94, hours: "1 hour", notes: "Equivalent to a loud factory floor" },
+  { db: 97, hours: "30 min", notes: "Nightclub DJ booth levels" },
+  { db: 100, hours: "15 min", notes: "Standing next to a subwoofer at a concert" },
+  { db: 103, hours: "7.5 min", notes: "Chainsaw at operator position" },
+  { db: 106, hours: "3.75 min", notes: "Approaching pain threshold" },
+  { db: 110, hours: "1.5 min", notes: "Risk of immediate permanent damage" },
+  { db: 115, hours: "< 1 min", notes: "OSHA maximum — no unprotected exposure allowed above this" },
+];
+
+const noiseCancelling = [
+  { type: "Foam earplugs", nrr: "22–33 dB", best: "Sleeping, concerts, power tools", notes: "Cheap and effective; real-world reduction ~50% of NRR" },
+  { type: "Over-ear passive muffs", nrr: "20–30 dB", best: "Construction, mowing, shooting range", notes: "Comfortable for long wear; combine with earplugs for max protection" },
+  { type: "ANC headphones (consumer)", nrr: "15–25 dB", best: "Commuting, office, flights", notes: "Best at low-frequency drone (planes, AC); less effective on sharp/sudden sounds" },
+  { type: "ANC earbuds (consumer)", nrr: "10–20 dB", best: "Gym, walking, light commute", notes: "Seal quality varies by ear tip; less isolation than over-ear" },
+  { type: "Custom-molded earplugs", nrr: "25–35 dB", best: "Musicians, motorsports, industrial", notes: "Flat attenuation preserves sound quality; expensive but durable" },
+  { type: "Double protection (plugs + muffs)", nrr: "30–40 dB", best: "Firearms, heavy machinery, aviation", notes: "Required for exposures above 105 dB in many workplaces" },
+];
+
+const faqs = [
+  {
+    q: "How does the decibel scale work?",
+    a: "The decibel scale is logarithmic, not linear. Every increase of 10 dB represents a sound that is 10 times more intense and perceived as roughly twice as loud. So 80 dB isn't slightly louder than 70 dB — it's 10 times more powerful and sounds about twice as loud to your ears."
+  },
+  {
+    q: "At what noise level does hearing damage begin?",
+    a: "Hearing damage can begin at 85 dB with prolonged exposure (8+ hours). Above 120 dB, damage can occur almost instantly. OSHA sets 85 dB as the permissible exposure limit for an 8-hour workday. The key factors are both volume AND duration — a 90 dB lawn mower for 2 hours is as damaging as 85 dB for 8 hours."
+  },
+  {
+    q: "Do noise-cancelling headphones protect hearing?",
+    a: "Consumer ANC headphones reduce ambient noise by 15–25 dB, which helps in moderate environments like offices and planes. However, they are NOT rated as hearing protection devices (HPDs) and should not replace proper earplugs or earmuffs in loud environments like construction sites or concerts above 100 dB."
+  },
+  {
+    q: "What's the difference between OSHA and NIOSH noise standards?",
+    a: "OSHA uses a 5 dB exchange rate (halving safe exposure time every 5 dB) and sets the action level at 85 dB. NIOSH uses a stricter 3 dB exchange rate and recommends a limit of 85 dB for 8 hours. In practice, NIOSH guidelines offer more conservative protection and are preferred by audiologists."
+  },
+  {
+    q: "How loud is too loud for headphone listening?",
+    a: "Most smartphones max out at about 100–115 dB through headphones. The WHO recommends limiting personal audio to 85 dB for no more than 1 hour per day. A good rule of thumb: if you can't hear someone talking at arm's length while wearing headphones, the volume is too high."
+  }
+];
+
+const schema = [
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "Noise Level Comparison Chart — Decibel (dB) Guide",
+    "description": "Interactive decibel comparison chart showing common sounds from 0 dB to 194 dB with hearing damage thresholds, OSHA exposure limits, and noise-cancelling headphone effectiveness ratings.",
+    "applicationCategory": "HealthApplication",
+    "operatingSystem": "Any",
+    "offers": { "@type": "Offer", "price": "0" },
+    "author": {
+      "@type": "Organization",
+      "name": "Fix It With Duct Tape"
+    }
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": faqs.map(f => ({
+      "@type": "Question",
+      "name": f.q,
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": f.a
+      }
+    }))
+  }
+];
+
+export const meta = {
+  title: "Noise Level Comparison Chart — Decibel (dB) Guide",
+  description: "Interactive decibel comparison chart showing common sounds from 0 dB to 194 dB with hearing damage thresholds, OSHA exposure limits, and noise-cancelling headphone effectiveness ratings.",
+  category: "tool",
+  published: "2026-03-21",
+};
+---
+
+<SiteLayout
+  site="fixitwithducttape"
+  title="Noise Level Comparison Chart — Decibel (dB) Guide"
+  description="Interactive decibel comparison chart showing common sounds from 0 dB to 194 dB with hearing damage thresholds, OSHA exposure limits, and noise-cancelling headphone effectiveness ratings."
+  canonical="https://fixitwithducttape.photonbuilder.com/noise-level-chart"
+  schema={schema}
+>
+  <div class="page-content">
+    <div class="hero">
+      <h1>Noise Level Comparison Chart</h1>
+      <p>How loud is that? An interactive decibel (dB) guide to common sounds, hearing damage thresholds, and protection recommendations.</p>
+    </div>
+
+    <section class="content-section">
+      <p>Sound is measured in decibels (dB) on a logarithmic scale — every 10 dB increase means the sound is 10× more intense and perceived as roughly twice as loud. This chart compares everyday sounds, shows when hearing damage begins, and explains how to protect yourself.</p>
+
+      <h2>Noise Zones</h2>
+      <div class="zones-grid">
+        {zones.map(z => (
+          <div class="zone-card" style={`border-left: 4px solid ${z.color}`}>
+            <div class="zone-header">
+              <span class="zone-dot" style={`background: ${z.color}`}></span>
+              <strong>{z.label}</strong>
+              <span class="zone-range">{z.range}</span>
+            </div>
+            <p>{z.description}</p>
+          </div>
+        ))}
+      </div>
+
+      <h2>How Loud Is That?</h2>
+      <div class="search-box">
+        <input type="text" id="sound-search" placeholder="Search sounds... (e.g. 'concert', 'lawn mower', 'whisper')" autocomplete="off" />
+      </div>
+      <div class="filter-buttons">
+        <button class="filter-btn active" data-filter="all">All</button>
+        <button class="filter-btn" data-filter="silence">Silence</button>
+        <button class="filter-btn" data-filter="quiet">Quiet</button>
+        <button class="filter-btn" data-filter="moderate">Moderate</button>
+        <button class="filter-btn" data-filter="loud">Loud</button>
+        <button class="filter-btn" data-filter="danger">Danger</button>
+        <button class="filter-btn" data-filter="extreme">Extreme</button>
+      </div>
+
+      <div class="sound-list" id="sound-list">
+        {sounds.map(s => (
+          <div class={`sound-row`} data-category={s.category} data-name={s.name.toLowerCase()} data-db={s.db}>
+            <div class="sound-info">
+              <span class="sound-icon">{s.icon}</span>
+              <div>
+                <strong class="sound-name">{s.name}</strong>
+                <span class="sound-desc">{s.description}</span>
+              </div>
+            </div>
+            <div class="sound-bar-wrapper">
+              <div class="sound-bar" data-db={s.db} style={`width: 0%`}></div>
+              <span class="sound-db">{s.db} dB</span>
+            </div>
+          </div>
+        ))}
+        <div class="no-results" id="no-results" style="display:none">No sounds match your search. Try a different term.</div>
+      </div>
+
+      <h2>OSHA Permissible Exposure Limits</h2>
+      <p>The Occupational Safety and Health Administration (OSHA) sets maximum daily noise exposure times for workers. For every 5 dB increase above 85 dB, the permissible exposure time is cut in half.</p>
+      <div class="table-wrapper">
+        <table id="osha-table">
+          <thead>
+            <tr>
+              <th>Noise Level</th>
+              <th>Max Exposure</th>
+              <th>Context</th>
+            </tr>
+          </thead>
+          <tbody>
+            {oshaLimits.map(o => (
+              <tr>
+                <td><strong>{o.db} dB</strong></td>
+                <td>{o.hours}</td>
+                <td>{o.notes}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <h2>Hearing Damage Thresholds</h2>
+      <div class="thresholds-grid">
+        <div class="threshold-card">
+          <span class="threshold-db">85 dB</span>
+          <strong>Damage Begins</strong>
+          <p>Prolonged exposure (8+ hours) starts causing irreversible cochlear hair cell death</p>
+        </div>
+        <div class="threshold-card">
+          <span class="threshold-db">100 dB</span>
+          <strong>15-Minute Limit</strong>
+          <p>Unprotected exposure for more than 15 minutes risks permanent hearing loss</p>
+        </div>
+        <div class="threshold-card">
+          <span class="threshold-db">120 dB</span>
+          <strong>Threshold of Pain</strong>
+          <p>Physical pain in the ear; immediate damage even with brief exposure</p>
+        </div>
+        <div class="threshold-card">
+          <span class="threshold-db">140 dB</span>
+          <strong>Instant Damage</strong>
+          <p>Eardrum perforation possible; single exposure causes permanent loss</p>
+        </div>
+      </div>
+
+      <h2>Noise-Cancelling & Hearing Protection Effectiveness</h2>
+      <p>Not all hearing protection is equal. The Noise Reduction Rating (NRR) indicates how many decibels a device can block — but real-world performance is typically 50–70% of the rated NRR due to fit and usage.</p>
+      <div class="table-wrapper">
+        <table>
+          <thead>
+            <tr>
+              <th>Protection Type</th>
+              <th>NRR</th>
+              <th>Best For</th>
+              <th>Notes</th>
+            </tr>
+          </thead>
+          <tbody>
+            {noiseCancelling.map(n => (
+              <tr>
+                <td><strong>{n.type}</strong></td>
+                <td>{n.nrr}</td>
+                <td>{n.best}</td>
+                <td>{n.notes}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+
+      <div class="tip-box">
+        <strong>Real-World NRR Tip:</strong> To estimate actual protection, subtract 7 from the NRR, then divide by 2. A 33 NRR earplug provides roughly (33 − 7) ÷ 2 = <strong>13 dB</strong> of real-world reduction. This is the OSHA derating formula.
+      </div>
+
+      <h2>Common Scenarios & Recommendations</h2>
+      <div class="scenarios-grid">
+        <div class="scenario-card">
+          <h3>Concerts & Festivals</h3>
+          <p><strong>Typical level:</strong> 100–120 dB</p>
+          <p>Use musician's earplugs (custom-molded or high-fidelity). They reduce volume 15–25 dB while preserving sound quality. Standard foam plugs muffle sound unevenly.</p>
+        </div>
+        <div class="scenario-card">
+          <h3>Power Tools & DIY</h3>
+          <p><strong>Typical level:</strong> 85–110 dB</p>
+          <p>Over-ear muffs are ideal — easy to put on/off between tasks. For extended work with circular saws or routers, combine foam plugs with muffs.</p>
+        </div>
+        <div class="scenario-card">
+          <h3>Open-Plan Office</h3>
+          <p><strong>Typical level:</strong> 50–70 dB</p>
+          <p>ANC headphones excel here. They neutralize the low-frequency HVAC and chatter hum. Not dangerous, but fatiguing — ANC reduces cognitive load.</p>
+        </div>
+        <div class="scenario-card">
+          <h3>Sleeping (Noisy Environment)</h3>
+          <p><strong>Typical level:</strong> 40–60 dB</p>
+          <p>Soft silicone or wax earplugs with NRR 22+ work best. White noise machines can also mask intrusive sounds without blocking them.</p>
+        </div>
+      </div>
+
+      <h2>Frequently Asked Questions</h2>
+      {faqs.map(f => (
+        <div class="faq-item">
+          <h3>{f.q}</h3>
+          <p>{f.a}</p>
+        </div>
+      ))}
+
+    </section>
+  </div>
+
+  <script is:inline>
+    (function() {
+      // Animate bars on load
+      function animateBars() {
+        document.querySelectorAll('.sound-bar').forEach(function(bar) {
+          var db = parseInt(bar.dataset.db);
+          var pct = Math.max(2, (db / 194) * 100);
+          bar.style.width = pct + '%';
+          if (db <= 70) bar.style.background = '#22c55e';
+          else if (db <= 85) bar.style.background = '#eab308';
+          else if (db <= 120) bar.style.background = '#f97316';
+          else bar.style.background = '#ef4444';
+        });
+      }
+      setTimeout(animateBars, 100);
+
+      // Search
+      var searchInput = document.getElementById('sound-search');
+      var soundList = document.getElementById('sound-list');
+      var noResults = document.getElementById('no-results');
+      var rows = soundList.querySelectorAll('.sound-row');
+
+      function filterSounds() {
+        var query = searchInput.value.toLowerCase().trim();
+        var activeFilter = document.querySelector('.filter-btn.active');
+        var cat = activeFilter ? activeFilter.dataset.filter : 'all';
+        var visible = 0;
+
+        rows.forEach(function(row) {
+          var matchesSearch = !query || row.dataset.name.indexOf(query) !== -1 || row.querySelector('.sound-desc').textContent.toLowerCase().indexOf(query) !== -1;
+          var matchesCat = cat === 'all' || row.dataset.category === cat;
+          if (matchesSearch && matchesCat) {
+            row.style.display = '';
+            visible++;
+          } else {
+            row.style.display = 'none';
+          }
+        });
+
+        noResults.style.display = visible === 0 ? 'block' : 'none';
+      }
+
+      searchInput.addEventListener('input', filterSounds);
+
+      // Filter buttons
+      document.querySelectorAll('.filter-btn').forEach(function(btn) {
+        btn.addEventListener('click', function() {
+          document.querySelectorAll('.filter-btn').forEach(function(b) { b.classList.remove('active'); });
+          btn.classList.add('active');
+          filterSounds();
+        });
+      });
+    })();
+  </script>
+
+  <style is:inline>
+    .page-content { max-width: 1000px; margin: 0 auto; padding: 2rem 1.5rem; }
+    .hero { text-align: center; padding: 3rem 0 2rem; }
+    .hero h1 { font-size: 2.2rem; font-weight: 800; margin-bottom: 0.5rem; color: var(--text-primary); }
+    .hero p { color: var(--text-secondary); font-size: 1.1rem; max-width: 650px; margin: 0 auto; line-height: 1.5; }
+
+    .content-section { margin-bottom: 3rem; }
+    .content-section h2 { font-size: 1.8rem; color: var(--text-primary); margin-bottom: 1rem; margin-top: 2.5rem; }
+    .content-section h3 { font-size: 1.3rem; color: var(--text-primary); margin-bottom: 0.5rem; margin-top: 1.5rem; }
+    .content-section p { color: var(--text-secondary); line-height: 1.6; margin-bottom: 1rem; }
+
+    a { color: var(--accent-color); text-decoration: none; }
+    a:hover { text-decoration: underline; }
+    strong { color: var(--text-primary); }
+
+    /* Zones */
+    .zones-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1rem; margin: 1.5rem 0; }
+    .zone-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 10px; padding: 1rem 1.2rem; }
+    .zone-header { display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.4rem; }
+    .zone-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+    .zone-header strong { font-size: 1rem; }
+    .zone-range { font-size: 0.85rem; color: var(--text-secondary); margin-left: auto; }
+    .zone-card p { margin: 0; font-size: 0.88rem; color: var(--text-secondary); line-height: 1.4; }
+
+    /* Search & Filter */
+    .search-box { margin: 1.5rem 0 1rem; }
+    .search-box input { width: 100%; padding: 0.75rem 1rem; font-size: 1rem; border: 1px solid var(--border-color); border-radius: 10px; background: var(--card-bg); color: var(--text-primary); outline: none; box-sizing: border-box; }
+    .search-box input:focus { border-color: var(--accent-color); box-shadow: 0 0 0 3px rgba(99,102,241,0.15); }
+    .search-box input::placeholder { color: var(--text-secondary); opacity: 0.6; }
+
+    .filter-buttons { display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1.5rem; }
+    .filter-btn { padding: 0.4rem 0.9rem; border: 1px solid var(--border-color); border-radius: 20px; background: var(--card-bg); color: var(--text-secondary); font-size: 0.85rem; cursor: pointer; transition: all 0.2s; }
+    .filter-btn:hover { border-color: var(--accent-color); color: var(--accent-color); }
+    .filter-btn.active { background: var(--accent-color); color: #000; border-color: var(--accent-color); font-weight: 600; }
+
+    /* Sound List */
+    .sound-list { display: flex; flex-direction: column; gap: 0.5rem; }
+    .sound-row { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 10px; padding: 0.85rem 1.1rem; display: flex; align-items: center; gap: 1rem; flex-wrap: wrap; transition: opacity 0.2s; }
+    .sound-row:hover { border-color: var(--accent-color); }
+    .sound-info { display: flex; align-items: center; gap: 0.7rem; min-width: 220px; flex: 0 0 260px; }
+    .sound-icon { font-size: 1.3rem; flex-shrink: 0; }
+    .sound-name { display: block; font-size: 0.95rem; }
+    .sound-desc { display: block; font-size: 0.78rem; color: var(--text-secondary); line-height: 1.3; }
+    .sound-bar-wrapper { flex: 1; display: flex; align-items: center; gap: 0.75rem; min-width: 200px; }
+    .sound-bar { height: 22px; border-radius: 6px; transition: width 0.8s ease-out; min-width: 4px; }
+    .sound-db { font-size: 0.9rem; font-weight: 700; color: var(--text-primary); white-space: nowrap; min-width: 55px; text-align: right; }
+    .no-results { text-align: center; padding: 2rem; color: var(--text-secondary); font-size: 0.95rem; }
+
+    /* Tables */
+    .table-wrapper { overflow-x: auto; margin: 1.5rem 0; border: 1px solid var(--border-color); border-radius: 12px; }
+    table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+    th { background: var(--card-bg); padding: 0.75rem 0.6rem; text-align: left; font-weight: 700; color: var(--text-primary); border-bottom: 2px solid var(--border-color); white-space: nowrap; }
+    td { padding: 0.65rem 0.6rem; border-bottom: 1px solid var(--border-color); color: var(--text-secondary); }
+    tr:last-child td { border-bottom: none; }
+    tr:hover td { background: var(--card-bg); }
+
+    /* Thresholds */
+    .thresholds-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1rem; margin: 1.5rem 0; }
+    .threshold-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 10px; padding: 1.2rem; text-align: center; }
+    .threshold-db { display: block; font-size: 2rem; font-weight: 800; color: var(--accent-color); margin-bottom: 0.3rem; }
+    .threshold-card strong { font-size: 1rem; display: block; margin-bottom: 0.5rem; }
+    .threshold-card p { margin: 0; font-size: 0.85rem; color: var(--text-secondary); line-height: 1.4; }
+
+    /* Scenarios */
+    .scenarios-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 1rem; margin: 1.5rem 0; }
+    .scenario-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 10px; padding: 1.2rem 1.4rem; }
+    .scenario-card h3 { margin-top: 0; font-size: 1.1rem; color: var(--text-primary); margin-bottom: 0.5rem; }
+    .scenario-card p { font-size: 0.9rem; margin-bottom: 0.5rem; }
+    .scenario-card p:last-child { margin-bottom: 0; }
+
+    /* Tip Box */
+    .tip-box { background: var(--card-bg); border: 1px solid var(--accent-color); border-radius: 10px; padding: 1rem 1.3rem; margin: 1.5rem 0; color: var(--text-secondary); line-height: 1.6; font-size: 0.95rem; }
+
+    /* FAQ */
+    .faq-item { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 10px; padding: 1.2rem 1.5rem; margin: 1rem 0; }
+    .faq-item h3 { margin-top: 0; font-size: 1.1rem; color: var(--text-primary); }
+    .faq-item p { margin-bottom: 0; }
+
+    @media (max-width: 600px) {
+      .hero h1 { font-size: 1.6rem; }
+      .sound-info { flex: 1 1 100%; min-width: auto; }
+      .sound-bar-wrapper { flex: 1 1 100%; }
+      .zones-grid { grid-template-columns: 1fr; }
+      .thresholds-grid { grid-template-columns: 1fr 1fr; }
+      .scenarios-grid { grid-template-columns: 1fr; }
+      .filter-buttons { gap: 0.35rem; }
+      .filter-btn { font-size: 0.78rem; padding: 0.35rem 0.7rem; }
+    }
+  </style>
+</SiteLayout>

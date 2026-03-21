@@ -1,0 +1,653 @@
+---
+import SiteLayout from "../../../layouts/SiteLayout.astro";
+
+const schema = {
+  "@context": "https://schema.org",
+  "@graph": [
+    {
+      "@type": "WebApplication",
+      "name": "Rent vs Buy Calculator",
+      "url": "https://ijustwantto.live/rent-vs-buy-calculator",
+      "description": "Compare the true cost of renting vs buying a home over time. Factor in mortgage payments, property taxes, maintenance, opportunity cost of down payment, and investment returns to find your breakeven year.",
+      "applicationCategory": "FinanceApplication",
+      "operatingSystem": "Any",
+      "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" }
+    },
+    {
+      "@type": "FAQPage",
+      "mainEntity": [
+        {
+          "@type": "Question",
+          "name": "Is it cheaper to rent or buy a home?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "It depends on your local market, how long you plan to stay, mortgage rates, and investment alternatives. In expensive markets with low rent-to-price ratios, renting and investing the difference often wins. In affordable markets or over long time horizons (7+ years), buying typically comes out ahead due to equity buildup and fixed housing costs."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What is the opportunity cost of a down payment?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "The opportunity cost is the return you could have earned by investing your down payment in the stock market or other assets instead of tying it up in a home. For example, a $60,000 down payment invested at 7% annual return would grow to about $118,000 in 10 years. This calculator factors in that opportunity cost when comparing renting vs buying."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "How long do I need to stay in a home for buying to make sense?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "Most financial experts suggest a minimum of 5-7 years to recoup closing costs and transaction fees. The exact breakeven point depends on your mortgage rate, home appreciation, rent costs in your area, and alternative investment returns. This calculator computes your specific breakeven year."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What costs does this calculator include for homeownership?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "This calculator includes mortgage principal and interest, property taxes, homeowners insurance (estimated at 0.5% of home value), maintenance costs, HOA fees, closing costs (estimated at 3% for buying and 6% for selling), and the opportunity cost of the down payment. It also accounts for the mortgage interest tax deduction."
+          }
+        },
+        {
+          "@type": "Question",
+          "name": "What is the 5% rule for rent vs buy?",
+          "acceptedAnswer": {
+            "@type": "Answer",
+            "text": "The 5% rule is a quick way to compare renting and buying. Multiply the home's value by 5% and divide by 12 to get a monthly breakeven rent. If your rent is below that number, renting may be cheaper. The 5% accounts for roughly 1% property tax, 1% maintenance, and 3% cost of capital (mortgage interest + opportunity cost). This calculator provides a more precise analysis."
+          }
+        }
+      ]
+    }
+  ]
+};
+
+export const meta = {
+  title: "Rent vs Buy Calculator — Should You Rent or Buy a Home?",
+  description: "Compare the true cost of renting vs buying a home. Factor in mortgage, taxes, maintenance, opportunity cost, and investment returns to find your breakeven year.",
+  category: "tool",
+  published: "2026-03-21",
+};
+---
+
+<SiteLayout
+  site="ijustwantto"
+  title="Rent vs Buy Calculator — Should You Rent or Buy a Home? | ijustwantto.live"
+  description="Compare the true cost of renting vs buying a home. Factor in mortgage, taxes, maintenance, opportunity cost, and investment returns to find your breakeven year."
+  canonical="https://ijustwantto.live/rent-vs-buy-calculator"
+  schema={schema}
+>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: var(--font-ui); background-color: var(--bg-color); color: var(--text-primary); line-height: 1.6; -webkit-font-smoothing: antialiased; }
+    .container { max-width: 800px; margin: 0 auto; padding: 2rem 1rem; }
+    h1 { font-size: 2rem; font-weight: 800; margin-bottom: 0.5rem; color: #ffffff; text-align: center; }
+    p.subtitle { color: var(--text-secondary); font-size: 1rem; text-align: center; margin-bottom: 2rem; }
+    .card { background-color: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem; margin-bottom: 2rem; }
+    .card h2 { font-size: 1.15rem; font-weight: 700; color: #ffffff; margin-bottom: 1rem; }
+    .form-group { margin-bottom: 1rem; }
+    label { display: block; font-size: 0.875rem; font-weight: 600; margin-bottom: 0.5rem; color: var(--text-primary); }
+    .form-row { display: flex; gap: 1rem; flex-wrap: wrap; }
+    .form-col { flex: 1; min-width: 140px; }
+    input[type="number"] {
+      width: 100%; background-color: var(--bg-color); border: 1px solid var(--border-color); color: var(--text-primary);
+      padding: 0.75rem; border-radius: 6px; font-family: var(--font-ui); font-size: 1rem; transition: border-color 0.2s; appearance: none;
+    }
+    input[type="number"]:focus { outline: none; border-color: var(--accent-color); }
+    button.calc-btn {
+      width: 100%; background-color: var(--accent-color); color: #000000; border: none; padding: 1rem; border-radius: 6px;
+      font-size: 1rem; font-weight: 600; cursor: pointer; transition: background-color 0.2s; margin-top: 1rem; font-family: var(--font-ui);
+    }
+    button.calc-btn:hover { background-color: var(--accent-hover); }
+    .results { display: none; margin-top: 2rem; animation: fadeIn 0.3s ease-in-out; }
+    @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    .results.active { display: block; }
+    .macros-grid { display: grid; grid-template-columns: 1fr; gap: 1rem; }
+    .macro-card {
+      background-color: var(--bg-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 1.25rem;
+      text-align: center; display: flex; flex-direction: column; align-items: center;
+    }
+    .macro-card h3 { font-size: 0.875rem; margin-bottom: 0.25rem; color: var(--text-secondary); font-weight: 500; }
+    .macro-card .value { font-family: var(--font-mono); font-size: 1.5rem; color: var(--accent-color); font-weight: 600; }
+    .macro-card .desc { font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.15rem; }
+    .macro-card.winner { border-color: var(--accent-color); }
+    .macro-card.winner .value { color: #4ade80; }
+
+    .section-label { font-size: 0.75rem; font-weight: 700; color: var(--accent-color); text-transform: uppercase; letter-spacing: 0.05em; margin-bottom: 0.75rem; }
+
+    /* Chart */
+    .chart-container { position: relative; width: 100%; height: 320px; margin-top: 1rem; }
+    canvas { width: 100% !important; height: 100% !important; }
+    .chart-legend { display: flex; gap: 1.5rem; justify-content: center; margin-top: 0.75rem; flex-wrap: wrap; }
+    .legend-item { display: flex; align-items: center; gap: 0.4rem; font-size: 0.8rem; color: var(--text-secondary); }
+    .legend-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+
+    /* Breakdown table */
+    .breakdown-table { width: 100%; border-collapse: collapse; margin-top: 0.5rem; }
+    .breakdown-table th, .breakdown-table td { padding: 0.6rem 0.75rem; text-align: left; font-size: 0.85rem; border-bottom: 1px solid var(--border-color); }
+    .breakdown-table th { color: var(--text-secondary); font-weight: 600; font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.03em; }
+    .breakdown-table td { color: var(--text-primary); }
+    .breakdown-table td:last-child { text-align: right; font-family: var(--font-mono); }
+    .breakdown-table tr:last-child td { border-bottom: none; font-weight: 700; color: var(--accent-color); }
+
+    .seo-content { margin-top: 3rem; }
+    .seo-content h2 { font-size: 1.5rem; font-weight: 700; margin-bottom: 1rem; color: #ffffff; }
+    .seo-content h3 { font-size: 1.1rem; font-weight: 600; margin: 1.5rem 0 0.5rem; color: #ffffff; }
+    .seo-content p { margin-bottom: 1rem; color: var(--text-secondary); }
+    .seo-content ul { margin-bottom: 1rem; padding-left: 1.5rem; color: var(--text-secondary); }
+    .seo-content li { margin-bottom: 0.5rem; }
+
+    .formula-box {
+      background-color: var(--bg-color); border: 1px solid var(--border-color); border-radius: 8px; padding: 1rem; margin: 1rem 0;
+      font-family: var(--font-mono); font-size: 0.9rem; color: var(--accent-color); text-align: center;
+    }
+
+    @media (min-width: 640px) {
+      .macros-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+
+  <div class="container">
+    <h1>Rent vs Buy Calculator</h1>
+    <p class="subtitle">Compare the true cost of renting vs buying a home over time — including opportunity cost, equity buildup, and investment growth</p>
+
+    <main>
+      <div class="card">
+        <h2>Home Purchase Details</h2>
+        <div class="form-row">
+          <div class="form-group form-col">
+            <label for="homePrice">Home Price ($)</label>
+            <input type="number" id="homePrice" min="10000" step="1000" value="350000">
+          </div>
+          <div class="form-group form-col">
+            <label for="downPct">Down Payment (%)</label>
+            <input type="number" id="downPct" min="0" max="100" step="0.5" value="20">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group form-col">
+            <label for="mortgageRate">Mortgage Rate (%)</label>
+            <input type="number" id="mortgageRate" min="0" max="20" step="0.125" value="6.5">
+          </div>
+          <div class="form-group form-col">
+            <label for="loanTerm">Loan Term (years)</label>
+            <input type="number" id="loanTerm" min="5" max="40" step="1" value="30">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group form-col">
+            <label for="propTaxRate">Property Tax Rate (%)</label>
+            <input type="number" id="propTaxRate" min="0" max="5" step="0.1" value="1.2">
+          </div>
+          <div class="form-group form-col">
+            <label for="maintPct">Maintenance (%/yr)</label>
+            <input type="number" id="maintPct" min="0" max="5" step="0.1" value="1.0">
+          </div>
+        </div>
+        <div class="form-row">
+          <div class="form-group form-col">
+            <label for="hoa">HOA ($/mo)</label>
+            <input type="number" id="hoa" min="0" step="10" value="0">
+          </div>
+          <div class="form-group form-col">
+            <label for="homeAppreciation">Home Appreciation (%/yr)</label>
+            <input type="number" id="homeAppreciation" min="-5" max="15" step="0.1" value="3.0">
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Renting Details</h2>
+        <div class="form-row">
+          <div class="form-group form-col">
+            <label for="rentAmt">Monthly Rent ($)</label>
+            <input type="number" id="rentAmt" min="100" step="50" value="1800">
+          </div>
+          <div class="form-group form-col">
+            <label for="rentIncrease">Rent Increase (%/yr)</label>
+            <input type="number" id="rentIncrease" min="0" max="15" step="0.1" value="3.0">
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h2>Investment & Time</h2>
+        <div class="form-row">
+          <div class="form-group form-col">
+            <label for="investReturn">Investment Return (%/yr)</label>
+            <input type="number" id="investReturn" min="0" max="20" step="0.1" value="7.0">
+          </div>
+          <div class="form-group form-col">
+            <label for="horizon">Time Horizon (years)</label>
+            <input type="number" id="horizon" min="1" max="40" step="1" value="10">
+          </div>
+        </div>
+        <button type="button" class="calc-btn" id="calcBtn">Compare Rent vs Buy</button>
+      </div>
+
+      <div id="results" class="results">
+        <!-- Summary cards -->
+        <div class="card">
+          <h2>Summary</h2>
+          <div class="macros-grid" id="summaryGrid">
+            <div class="macro-card" id="cardBuyCost">
+              <h3>Total Cost of Buying</h3>
+              <div class="value" id="rBuyCost">$0</div>
+              <div class="desc">over <span id="rYears">0</span> years</div>
+            </div>
+            <div class="macro-card" id="cardRentCost">
+              <h3>Total Cost of Renting</h3>
+              <div class="value" id="rRentCost">$0</div>
+              <div class="desc">over <span id="rYears2">0</span> years</div>
+            </div>
+            <div class="macro-card" id="cardBuyWealth">
+              <h3>Net Worth — Buying</h3>
+              <div class="value" id="rBuyWealth">$0</div>
+              <div class="desc">equity + remaining investments</div>
+            </div>
+            <div class="macro-card" id="cardRentWealth">
+              <h3>Net Worth — Renting</h3>
+              <div class="value" id="rRentWealth">$0</div>
+              <div class="desc">investment portfolio value</div>
+            </div>
+          </div>
+          <div class="macro-card" style="margin-top:1rem;" id="cardVerdict">
+            <h3>Verdict</h3>
+            <div class="value" id="rVerdict" style="font-size:1.2rem;">—</div>
+            <div class="desc" id="rBreakeven"></div>
+          </div>
+        </div>
+
+        <!-- Chart -->
+        <div class="card">
+          <h2>Net Worth Over Time</h2>
+          <div class="chart-container">
+            <canvas id="chartCanvas"></canvas>
+          </div>
+          <div class="chart-legend">
+            <div class="legend-item"><div class="legend-dot" style="background:#4ade80;"></div>Buying</div>
+            <div class="legend-item"><div class="legend-dot" style="background:#60a5fa;"></div>Renting &amp; Investing</div>
+          </div>
+        </div>
+
+        <!-- Cost breakdown -->
+        <div class="card">
+          <h2>Buying Cost Breakdown</h2>
+          <table class="breakdown-table" id="buyBreakdown"></table>
+        </div>
+
+        <div class="card">
+          <h2>Renting Cost Breakdown</h2>
+          <table class="breakdown-table" id="rentBreakdown"></table>
+        </div>
+      </div>
+
+      <!-- SEO Content -->
+      <div class="seo-content">
+        <h2>How the Rent vs Buy Calculator Works</h2>
+        <p>This calculator compares two parallel scenarios over your chosen time horizon: (1) buying a home with a mortgage and (2) renting while investing the money you would have spent on a down payment and the monthly cost difference.</p>
+        <div class="formula-box">Net Worth (Buying) = Home Equity − Remaining Mortgage − Selling Costs<br>Net Worth (Renting) = Investment Portfolio from Down Payment + Monthly Savings</div>
+        <p>The key insight is <strong>opportunity cost</strong>. Your down payment could be invested in the stock market. Monthly ownership costs above your rent could also be invested. Conversely, the equity you build and home appreciation work in your favor as a buyer.</p>
+
+        <h2>What Costs Are Included?</h2>
+        <p>For <strong>buying</strong>, the calculator factors in: mortgage principal &amp; interest (amortized monthly), property taxes, homeowners insurance (0.5% of home value annually), maintenance, HOA fees, closing costs (3% at purchase), and selling costs (6% of future home value). It also credits you for the mortgage interest tax deduction (estimated at a 24% marginal rate on interest above the standard deduction).</p>
+        <p>For <strong>renting</strong>, costs include monthly rent with annual increases and renters insurance (~$15/mo). The down payment plus any monthly savings (when renting is cheaper than owning) are invested at your specified return rate.</p>
+
+        <h2>The 5% Rule</h2>
+        <p>A popular quick rule: multiply the home price by 5% and divide by 12. If your monthly rent is below that number, renting is likely cheaper. For a $350,000 home, the threshold is $1,458/mo. The 5% accounts for ~1% property tax, ~1% maintenance, and ~3% cost of capital. This calculator provides a much more detailed analysis that accounts for your specific numbers.</p>
+
+        <h2>Frequently Asked Questions</h2>
+
+        <h3>Is it cheaper to rent or buy a home?</h3>
+        <p>It depends on local housing costs, how long you'll stay, mortgage rates, and what you'd earn investing elsewhere. In high-cost cities with low rent-to-price ratios, renting and investing the difference often wins. In affordable markets or over 7+ years, buying typically wins due to equity buildup and fixed payments.</p>
+
+        <h3>What is the opportunity cost of a down payment?</h3>
+        <p>It's the return you could earn by investing your down payment instead. A $70,000 down payment at 7% annual returns grows to about $137,000 in 10 years. This calculator includes that opportunity cost in the renting scenario.</p>
+
+        <h3>How long do I need to stay for buying to make sense?</h3>
+        <p>Typically 5–7 years to recoup closing costs and transaction fees. Your specific breakeven depends on mortgage rate, appreciation, local rent, and investment returns. This calculator computes your exact breakeven year.</p>
+
+        <h3>What is the 5% rule for rent vs buy?</h3>
+        <p>Multiply home value by 5%, divide by 12. If rent is below that monthly number, renting is probably cheaper. For a $400,000 home, the threshold is ~$1,667/mo. This is a rough heuristic — use the full calculator for an accurate comparison.</p>
+
+        <h3>Should I put more or less money down?</h3>
+        <p>A larger down payment reduces your mortgage interest but increases opportunity cost (that money can't be invested). If investment returns exceed your mortgage rate, a smaller down payment may be mathematically optimal — though a larger down payment reduces monthly cash flow requirements and avoids PMI (typically required under 20%).</p>
+      </div>
+    </main>
+  </div>
+
+  <script is:inline>
+    function fmt(n) {
+      if (Math.abs(n) >= 1000) return (n < 0 ? '-' : '') + '$' + Math.abs(Math.round(n)).toLocaleString('en-US');
+      return (n < 0 ? '-' : '') + '$' + Math.abs(n).toFixed(0);
+    }
+
+    document.getElementById('calcBtn').addEventListener('click', function() {
+      var homePrice = parseFloat(document.getElementById('homePrice').value);
+      var downPct = parseFloat(document.getElementById('downPct').value) / 100;
+      var mortgageRate = parseFloat(document.getElementById('mortgageRate').value) / 100;
+      var loanTerm = parseInt(document.getElementById('loanTerm').value);
+      var propTaxRate = parseFloat(document.getElementById('propTaxRate').value) / 100;
+      var maintPct = parseFloat(document.getElementById('maintPct').value) / 100;
+      var hoaMonthly = parseFloat(document.getElementById('hoa').value);
+      var homeAppreciation = parseFloat(document.getElementById('homeAppreciation').value) / 100;
+      var rentMonthly = parseFloat(document.getElementById('rentAmt').value);
+      var rentIncrease = parseFloat(document.getElementById('rentIncrease').value) / 100;
+      var investReturn = parseFloat(document.getElementById('investReturn').value) / 100;
+      var horizon = parseInt(document.getElementById('horizon').value);
+
+      // Derived values
+      var downPayment = homePrice * downPct;
+      var loanAmount = homePrice - downPayment;
+      var closingCostBuy = homePrice * 0.03;
+      var monthlyRate = mortgageRate / 12;
+      var totalPayments = loanTerm * 12;
+      var insuranceRate = 0.005; // homeowners insurance
+      var renterInsurance = 15; // $/mo
+      var marginalTaxRate = 0.24;
+      var standardDeduction = 14600; // single filer 2024
+
+      // Monthly mortgage payment (P&I)
+      var monthlyMortgage;
+      if (monthlyRate === 0) {
+        monthlyMortgage = loanAmount / totalPayments;
+      } else {
+        monthlyMortgage = loanAmount * (monthlyRate * Math.pow(1 + monthlyRate, totalPayments)) / (Math.pow(1 + monthlyRate, totalPayments) - 1);
+      }
+
+      // Year-by-year simulation
+      var buyWealth = []; // net worth if buying
+      var rentWealth = []; // net worth if renting
+      var loanBalance = loanAmount;
+      var homeValue = homePrice;
+
+      // Renter invests down payment + closing costs upfront
+      var renterPortfolio = downPayment + closingCostBuy;
+
+      // Buying: track cumulative costs
+      var totalBuyCost = downPayment + closingCostBuy;
+      var totalRentCost = 0;
+      var totalMortgageInterest = 0;
+      var totalPropTax = 0;
+      var totalInsurance = 0;
+      var totalMaintenance = 0;
+      var totalHoa = 0;
+      var totalPrincipal = 0;
+      var totalRentPaid = 0;
+      var totalRenterInsurance = 0;
+
+      var currentRent = rentMonthly;
+      var breakeven = -1;
+
+      for (var y = 1; y <= horizon; y++) {
+        var yearInterest = 0;
+        var yearPrincipal = 0;
+        var yearMortgage = 0;
+
+        // Monthly calculations for this year
+        for (var m = 0; m < 12; m++) {
+          // Mortgage payment
+          if (loanBalance > 0 && (y - 1) * 12 + m < totalPayments) {
+            var interestPayment = loanBalance * monthlyRate;
+            var principalPayment = monthlyMortgage - interestPayment;
+            if (principalPayment > loanBalance) principalPayment = loanBalance;
+            loanBalance -= principalPayment;
+            yearInterest += interestPayment;
+            yearPrincipal += principalPayment;
+            yearMortgage += monthlyMortgage;
+          }
+        }
+
+        // Annual ownership costs
+        var yearPropTax = homeValue * propTaxRate;
+        var yearInsurance = homeValue * insuranceRate;
+        var yearMaint = homeValue * maintPct;
+        var yearHoa = hoaMonthly * 12;
+        var yearBuyCost = yearMortgage + yearPropTax + yearInsurance + yearMaint + yearHoa;
+
+        // Mortgage interest tax deduction (itemized vs standard)
+        var itemizedDeductions = yearInterest + yearPropTax; // simplified
+        var taxSavings = 0;
+        if (itemizedDeductions > standardDeduction) {
+          taxSavings = (itemizedDeductions - standardDeduction) * marginalTaxRate;
+        }
+        yearBuyCost -= taxSavings;
+
+        totalBuyCost += yearBuyCost;
+        totalMortgageInterest += yearInterest;
+        totalPropTax += yearPropTax;
+        totalInsurance += yearInsurance;
+        totalMaintenance += yearMaint;
+        totalHoa += yearHoa;
+        totalPrincipal += yearPrincipal;
+
+        // Home appreciation
+        homeValue *= (1 + homeAppreciation);
+
+        // Buying net worth: home equity minus selling costs
+        var sellingCosts = homeValue * 0.06;
+        var buyEquity = homeValue - loanBalance - sellingCosts;
+        buyWealth.push(buyEquity);
+
+        // Renting: pay rent, invest the difference
+        var yearRent = currentRent * 12;
+        var yearRenterIns = renterInsurance * 12;
+        var yearRentTotal = yearRent + yearRenterIns;
+        totalRentCost += yearRentTotal;
+        totalRentPaid += yearRent;
+        totalRenterInsurance += yearRenterIns;
+
+        // Monthly savings invested: if buying costs more, renter invests the difference
+        var monthlyBuyCost = yearBuyCost / 12;
+        var monthlyRentCost = yearRentTotal / 12;
+        var monthlySavings = monthlyBuyCost - monthlyRentCost;
+
+        // Grow portfolio monthly
+        var monthlyInvestReturn = investReturn / 12;
+        for (var m2 = 0; m2 < 12; m2++) {
+          renterPortfolio *= (1 + monthlyInvestReturn);
+          if (monthlySavings > 0) {
+            renterPortfolio += monthlySavings;
+          }
+        }
+
+        // If renting is more expensive, buyer could invest the difference — but we keep it simple:
+        // buyer has no separate investment portfolio, just home equity
+        rentWealth.push(renterPortfolio);
+
+        // Breakeven: year when buying net worth exceeds renting net worth
+        if (breakeven === -1 && buyEquity >= renterPortfolio) {
+          breakeven = y;
+        }
+
+        // Next year's rent
+        currentRent *= (1 + rentIncrease);
+      }
+
+      // Display results
+      var finalBuyWealth = buyWealth[buyWealth.length - 1];
+      var finalRentWealth = rentWealth[rentWealth.length - 1];
+
+      document.getElementById('rBuyCost').textContent = fmt(totalBuyCost);
+      document.getElementById('rRentCost').textContent = fmt(totalRentCost);
+      document.getElementById('rYears').textContent = horizon;
+      document.getElementById('rYears2').textContent = horizon;
+      document.getElementById('rBuyWealth').textContent = fmt(finalBuyWealth);
+      document.getElementById('rRentWealth').textContent = fmt(finalRentWealth);
+
+      // Highlight winner
+      var cards = ['cardBuyWealth', 'cardRentWealth'];
+      cards.forEach(function(id) { document.getElementById(id).classList.remove('winner'); });
+      if (finalBuyWealth > finalRentWealth) {
+        document.getElementById('cardBuyWealth').classList.add('winner');
+        document.getElementById('rVerdict').textContent = 'Buying wins by ' + fmt(finalBuyWealth - finalRentWealth);
+        document.getElementById('rVerdict').style.color = '#4ade80';
+      } else {
+        document.getElementById('cardRentWealth').classList.add('winner');
+        document.getElementById('rVerdict').textContent = 'Renting wins by ' + fmt(finalRentWealth - finalBuyWealth);
+        document.getElementById('rVerdict').style.color = '#60a5fa';
+      }
+
+      if (breakeven > 0) {
+        document.getElementById('rBreakeven').textContent = 'Buying breaks even at year ' + breakeven;
+      } else if (finalBuyWealth > finalRentWealth) {
+        document.getElementById('rBreakeven').textContent = 'Buying is ahead from year 1';
+      } else {
+        document.getElementById('rBreakeven').textContent = 'Buying does not break even within ' + horizon + ' years';
+      }
+
+      // Cost breakdowns
+      var buyTable = document.getElementById('buyBreakdown');
+      var sellingCostsFinal = homeValue * 0.06;
+      buyTable.innerHTML =
+        '<tr><th>Category</th><th style="text-align:right">Amount</th></tr>' +
+        '<tr><td>Down Payment</td><td>' + fmt(downPayment) + '</td></tr>' +
+        '<tr><td>Closing Costs (purchase)</td><td>' + fmt(closingCostBuy) + '</td></tr>' +
+        '<tr><td>Mortgage Principal</td><td>' + fmt(totalPrincipal) + '</td></tr>' +
+        '<tr><td>Mortgage Interest</td><td>' + fmt(totalMortgageInterest) + '</td></tr>' +
+        '<tr><td>Property Taxes</td><td>' + fmt(totalPropTax) + '</td></tr>' +
+        '<tr><td>Homeowners Insurance</td><td>' + fmt(totalInsurance) + '</td></tr>' +
+        '<tr><td>Maintenance</td><td>' + fmt(totalMaintenance) + '</td></tr>' +
+        (totalHoa > 0 ? '<tr><td>HOA Fees</td><td>' + fmt(totalHoa) + '</td></tr>' : '') +
+        '<tr><td>Selling Costs (6%)</td><td>' + fmt(sellingCostsFinal) + '</td></tr>' +
+        '<tr><td>Home Value at Sale</td><td style="color:#4ade80">' + fmt(homeValue) + '</td></tr>' +
+        '<tr><td><strong>Net Wealth (Buying)</strong></td><td>' + fmt(finalBuyWealth) + '</td></tr>';
+
+      var rentTable = document.getElementById('rentBreakdown');
+      rentTable.innerHTML =
+        '<tr><th>Category</th><th style="text-align:right">Amount</th></tr>' +
+        '<tr><td>Total Rent Paid</td><td>' + fmt(totalRentPaid) + '</td></tr>' +
+        '<tr><td>Renters Insurance</td><td>' + fmt(totalRenterInsurance) + '</td></tr>' +
+        '<tr><td>Down Payment Invested</td><td style="color:#4ade80">' + fmt(downPayment + closingCostBuy) + '</td></tr>' +
+        '<tr><td><strong>Net Wealth (Renting)</strong></td><td>' + fmt(finalRentWealth) + '</td></tr>';
+
+      // Draw chart
+      drawChart(buyWealth, rentWealth, horizon);
+
+      document.getElementById('results').classList.add('active');
+    });
+
+    function drawChart(buyData, rentData, years) {
+      var canvas = document.getElementById('chartCanvas');
+      var ctx = canvas.getContext('2d');
+      var dpr = window.devicePixelRatio || 1;
+      var rect = canvas.parentElement.getBoundingClientRect();
+      canvas.width = rect.width * dpr;
+      canvas.height = rect.height * dpr;
+      ctx.scale(dpr, dpr);
+      var W = rect.width;
+      var H = rect.height;
+
+      ctx.clearRect(0, 0, W, H);
+
+      var allVals = buyData.concat(rentData);
+      var minVal = Math.min(0, Math.min.apply(null, allVals));
+      var maxVal = Math.max.apply(null, allVals);
+      var range = maxVal - minVal || 1;
+      var pad = { top: 30, right: 20, bottom: 40, left: 70 };
+      var cW = W - pad.left - pad.right;
+      var cH = H - pad.top - pad.bottom;
+
+      function x(i) { return pad.left + (i / (years - 1 || 1)) * cW; }
+      function y(v) { return pad.top + cH - ((v - minVal) / range) * cH; }
+
+      // Grid lines
+      ctx.strokeStyle = 'rgba(255,255,255,0.08)';
+      ctx.lineWidth = 1;
+      var gridLines = 5;
+      for (var i = 0; i <= gridLines; i++) {
+        var val = minVal + (range * i / gridLines);
+        var yy = y(val);
+        ctx.beginPath();
+        ctx.moveTo(pad.left, yy);
+        ctx.lineTo(W - pad.right, yy);
+        ctx.stroke();
+
+        ctx.fillStyle = 'rgba(255,255,255,0.4)';
+        ctx.font = '11px system-ui, sans-serif';
+        ctx.textAlign = 'right';
+        ctx.fillText(fmtShort(val), pad.left - 8, yy + 4);
+      }
+
+      // X-axis labels
+      ctx.textAlign = 'center';
+      ctx.fillStyle = 'rgba(255,255,255,0.4)';
+      for (var j = 0; j < years; j++) {
+        if (years <= 15 || j % Math.ceil(years / 10) === 0 || j === years - 1) {
+          ctx.fillText('Yr ' + (j + 1), x(j), H - pad.bottom + 20);
+        }
+      }
+
+      // Zero line
+      if (minVal < 0) {
+        ctx.strokeStyle = 'rgba(255,255,255,0.2)';
+        ctx.setLineDash([4, 4]);
+        ctx.beginPath();
+        ctx.moveTo(pad.left, y(0));
+        ctx.lineTo(W - pad.right, y(0));
+        ctx.stroke();
+        ctx.setLineDash([]);
+      }
+
+      // Draw lines
+      function drawLine(data, color) {
+        ctx.strokeStyle = color;
+        ctx.lineWidth = 2.5;
+        ctx.lineJoin = 'round';
+        ctx.beginPath();
+        for (var k = 0; k < data.length; k++) {
+          if (k === 0) ctx.moveTo(x(k), y(data[k]));
+          else ctx.lineTo(x(k), y(data[k]));
+        }
+        ctx.stroke();
+
+        // Fill area
+        ctx.fillStyle = color.replace('1)', '0.08)');
+        ctx.beginPath();
+        ctx.moveTo(x(0), y(0));
+        for (var k2 = 0; k2 < data.length; k2++) {
+          ctx.lineTo(x(k2), y(data[k2]));
+        }
+        ctx.lineTo(x(data.length - 1), y(0));
+        ctx.closePath();
+        ctx.fill();
+      }
+
+      drawLine(buyData, 'rgba(74, 222, 128, 1)');
+      drawLine(rentData, 'rgba(96, 165, 250, 1)');
+
+      // End value dots
+      function drawDot(idx, data, color) {
+        var cx = x(data.length - 1);
+        var cy = y(data[data.length - 1]);
+        ctx.fillStyle = color;
+        ctx.beginPath();
+        ctx.arc(cx, cy, 4, 0, Math.PI * 2);
+        ctx.fill();
+      }
+      drawDot(0, buyData, '#4ade80');
+      drawDot(1, rentData, '#60a5fa');
+    }
+
+    function fmtShort(n) {
+      if (Math.abs(n) >= 1000000) return (n < 0 ? '-' : '') + '$' + (Math.abs(n) / 1000000).toFixed(1) + 'M';
+      if (Math.abs(n) >= 1000) return (n < 0 ? '-' : '') + '$' + (Math.abs(n) / 1000).toFixed(0) + 'k';
+      return '$' + n.toFixed(0);
+    }
+  </script>
+
+  <div class="max-w-3xl mx-auto px-5 pt-8 pb-12">
+    <div class="border-t border-[var(--border-color)] pt-8">
+      <p class="text-xs font-bold text-[var(--accent-color)] tracking-wide uppercase mb-2">Related Tools</p>
+      <div class="grid gap-3">
+        <a href="/mortgage-calculator" class="block bg-[var(--card-bg)] border border-[var(--border-color)] rounded-xl p-5 hover:border-[var(--accent-color)] hover:-translate-y-0.5 transition-all">
+          <h3 class="text-base font-bold text-white">Mortgage Calculator</h3>
+          <p class="text-sm text-[var(--text-secondary)] mt-1">Calculate monthly payments, amortization, and total interest →</p>
+        </a>
+        <a href="/electricity-cost-calculator" class="block bg-[var(--card-bg)] border border-[var(--border-color)] rounded-xl p-5 hover:border-[var(--accent-color)] hover:-translate-y-0.5 transition-all">
+          <h3 class="text-base font-bold text-white">Electricity Cost Calculator</h3>
+          <p class="text-sm text-[var(--text-secondary)] mt-1">Estimate your monthly electricity costs by appliance →</p>
+        </a>
+      </div>
+    </div>
+  </div>
+</SiteLayout>
