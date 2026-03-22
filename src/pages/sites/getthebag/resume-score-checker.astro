@@ -1,0 +1,614 @@
+---
+import SiteLayout from '../../../layouts/SiteLayout.astro';
+
+export const meta = {
+  title: 'Resume Score Checker | Instant Free Feedback & ATS Scan',
+  description: '75% of resumes are rejected by ATS before a human sees them. Paste your resume for an instant score on action verbs, quantified achievements, and ATS compatibility.',
+  category: 'calculator',
+  keywords: ['resume score checker', 'ats score', 'resume feedback', 'resume scanner', 'power words suggester']
+};
+
+const schema = [
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": meta.title,
+    "description": meta.description,
+    "author": { "@type": "Organization", "name": "Get The Bag" },
+    "publisher": { "@type": "Organization", "name": "Get The Bag" }
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "How is the resume score calculated?",
+        "acceptedAnswer": { "@type": "Answer", "text": "We analyze your resume across five key dimensions: use of strong action verbs, presence of quantified achievements (numbers/metrics), keyword density, optimal length, and ATS-friendly formatting." }
+      },
+      {
+        "@type": "Question",
+        "name": "What is an ATS compatibility score?",
+        "acceptedAnswer": { "@type": "Answer", "text": "An Applicant Tracking System (ATS) score estimates how well software can parse your resume. It looks for standard headers, simple formatting without complex tables, and proper keyword usage." }
+      },
+      {
+        "@type": "Question",
+        "name": "Why are quantified achievements important?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Hiring managers want to see the impact of your work, not just your responsibilities. Saying 'Increased sales by 15%' is much stronger than simply stating 'Responsible for increasing sales'." }
+      },
+      {
+        "@type": "Question",
+        "name": "What are resume power words?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Power words are strong action verbs like 'Spearheaded', 'Optimized', and 'Engineered' that demonstrate leadership and initiative, replacing weak phrases like 'Helped with' or 'Responsible for'." }
+      },
+      {
+        "@type": "Question",
+        "name": "How long should a good resume be?",
+        "acceptedAnswer": { "@type": "Answer", "text": "For most professionals, a 1-2 page resume is ideal. Entry-level candidates should stick to one page, while those with 10+ years of experience may need two pages to adequately detail their career progression." }
+      }
+    ]
+  }
+];
+---
+
+<SiteLayout site="getthebag" title={meta.title} description={meta.description} canonical="https://getthebag.photonbuilder.com/resume-score-checker" schema={JSON.stringify(schema)}>
+  <!-- HERO -->
+  <section class="resc-hero">
+    <div class="resc-hero-badge">FREE INSTANT ANALYSIS</div>
+    <h1>Is Your Resume Holding You Back?</h1>
+    <p class="resc-hero-hook"><em>75% of resumes are rejected by ATS before a human sees them.</em> <br/>Paste your resume below for an instant score and actionable feedback.</p>
+  </section>
+
+  <!-- CALCULATOR -->
+  <section class="resc-section">
+    <div class="resc-calc-container">
+      <div class="resc-calc-inputs">
+        <div class="resc-input-group">
+          <label for="input-resume">Paste your resume text</label>
+          <textarea id="input-resume" placeholder="John Doe&#10;Software Engineer&#10;&#10;Experience&#10;Spearheaded the development of..." rows="12"></textarea>
+        </div>
+        <button id="analyze-btn" class="resc-btn">Analyze My Resume</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- RESULTS (Hidden initially) -->
+  <section id="results-section" class="resc-section" style="display:none;">
+    <h2 class="resc-section-title">Your Resume Score</h2>
+
+    <div class="resc-score-hero">
+      <div class="resc-score-circle-wrap">
+        <svg viewBox="0 0 120 120" class="resc-score-circle">
+          <circle cx="60" cy="60" r="52" fill="none" stroke="var(--border-color, #152040)" stroke-width="8"/>
+          <circle id="overall-score-ring" cx="60" cy="60" r="52" fill="none" stroke="var(--accent, #10b981)" stroke-width="8" stroke-linecap="round" stroke-dasharray="326.73" stroke-dashoffset="326.73" transform="rotate(-90 60 60)"/>
+        </svg>
+        <div class="resc-score-value">
+          <span id="overall-score-num">0</span>
+          <span class="resc-score-label">/ 100</span>
+        </div>
+      </div>
+      <div class="resc-score-verdict" id="overall-verdict">Needs Work</div>
+    </div>
+
+    <!-- METRICS GRID -->
+    <div class="resc-metrics-grid">
+      <div class="resc-metric-card">
+        <h3>Action Verbs</h3>
+        <div class="resc-metric-bar"><div class="resc-metric-fill" id="fill-verbs"></div></div>
+        <p id="feedback-verbs">Checking...</p>
+      </div>
+      <div class="resc-metric-card">
+        <h3>Quantified Achievements</h3>
+        <div class="resc-metric-bar"><div class="resc-metric-fill" id="fill-quant"></div></div>
+        <p id="feedback-quant">Checking...</p>
+      </div>
+      <div class="resc-metric-card">
+        <h3>Length & Density</h3>
+        <div class="resc-metric-bar"><div class="resc-metric-fill" id="fill-length"></div></div>
+        <p id="feedback-length">Checking...</p>
+      </div>
+      <div class="resc-metric-card">
+        <h3>ATS Compatibility</h3>
+        <div class="resc-metric-bar"><div class="resc-metric-fill" id="fill-ats"></div></div>
+        <p id="feedback-ats">Checking...</p>
+      </div>
+    </div>
+
+    <!-- POWER WORDS SUGGESTER -->
+    <div class="resc-insight-box">
+      <h3>Power Words Suggester</h3>
+      <p>Upgrade weak words to power words to make your bullet points stand out.</p>
+      <div id="power-words-list" class="resc-power-words"></div>
+    </div>
+
+    <!-- BEFORE / AFTER -->
+    <div class="resc-insight-box">
+      <h3>Before & After Example</h3>
+      <div class="resc-ba-grid">
+        <div class="resc-ba-card bad">
+          <div class="resc-ba-badge">Weak</div>
+          <p>"Responsible for managing the sales team and increasing revenue over the year."</p>
+        </div>
+        <div class="resc-ba-card good">
+          <div class="resc-ba-badge">Strong</div>
+          <p>"Spearheaded a 12-person sales team, driving a 24% YoY revenue increase to $1.2M."</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- INDUSTRY TIPS -->
+    <div class="resc-insight-box">
+      <h3>Industry-Specific Tips</h3>
+      <ul class="resc-tips-list">
+        <li><strong>Tech:</strong> List your programming languages and frameworks immediately after your summary.</li>
+        <li><strong>Sales/Marketing:</strong> Emphasize revenue numbers, ROI, and campaign scale in every bullet point.</li>
+        <li><strong>Finance:</strong> Use precise financial modeling jargon and deal sizes.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section class="resc-section">
+    <h2 class="resc-section-title">Frequently Asked Questions</h2>
+    <div class="resc-faq">
+      <details class="resc-faq-item">
+        <summary>How is the resume score calculated?</summary>
+        <p>We analyze your resume across five key dimensions: use of strong action verbs, presence of quantified achievements (numbers/metrics), keyword density, optimal length, and ATS-friendly formatting.</p>
+      </details>
+      <details class="resc-faq-item">
+        <summary>What is an ATS compatibility score?</summary>
+        <p>An Applicant Tracking System (ATS) score estimates how well software can parse your resume. It looks for standard headers, simple formatting without complex tables, and proper keyword usage.</p>
+      </details>
+      <details class="resc-faq-item">
+        <summary>Why are quantified achievements important?</summary>
+        <p>Hiring managers want to see the impact of your work, not just your responsibilities. Saying 'Increased sales by 15%' is much stronger than simply stating 'Responsible for increasing sales'.</p>
+      </details>
+      <details class="resc-faq-item">
+        <summary>What are resume power words?</summary>
+        <p>Power words are strong action verbs like 'Spearheaded', 'Optimized', and 'Engineered' that demonstrate leadership and initiative, replacing weak phrases like 'Helped with' or 'Responsible for'.</p>
+      </details>
+      <details class="resc-faq-item">
+        <summary>How long should a good resume be?</summary>
+        <p>For most professionals, a 1-2 page resume is ideal. Entry-level candidates should stick to one page, while those with 10+ years of experience may need two pages to adequately detail their career progression.</p>
+      </details>
+    </div>
+  </section>
+</SiteLayout>
+
+<style is:global>
+  .resc-hero {
+    text-align: center;
+    padding: 3rem 1.5rem;
+    background: linear-gradient(135deg, rgba(16,185,129,0.1) 0%, rgba(16,185,129,0.02) 100%);
+    border-bottom: 1px solid var(--border-color, #152040);
+  }
+  .resc-hero-badge {
+    display: inline-block;
+    font-size: 0.75rem;
+    letter-spacing: 0.1em;
+    padding: 0.4rem 1rem;
+    border: 1px solid var(--accent, #10b981);
+    border-radius: 100px;
+    color: var(--accent, #10b981);
+    margin-bottom: 1.5rem;
+    font-weight: 600;
+  }
+  .resc-hero h1 {
+    font-size: clamp(2rem, 4vw, 3rem);
+    color: var(--text-primary, #c8d0de);
+    margin-bottom: 1rem;
+  }
+  .resc-hero-hook {
+    font-size: 1.2rem;
+    color: var(--text-secondary, #94a3b8);
+    max-width: 600px;
+    margin: 0 auto;
+    line-height: 1.6;
+  }
+  .resc-hero-hook em {
+    color: #ef4444;
+    font-style: normal;
+    font-weight: 600;
+  }
+  .resc-section {
+    padding: 3rem 1.5rem;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+  .resc-section-title {
+    font-size: 1.8rem;
+    text-align: center;
+    margin-bottom: 2rem;
+    color: var(--text-primary, #c8d0de);
+  }
+  .resc-calc-inputs {
+    background: var(--card-bg, #0a1020);
+    border: 1px solid var(--border-color, #152040);
+    border-radius: 12px;
+    padding: 2rem;
+  }
+  .resc-input-group {
+    margin-bottom: 1.5rem;
+  }
+  .resc-input-group label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: var(--text-primary, #c8d0de);
+  }
+  .resc-input-group textarea {
+    width: 100%;
+    padding: 1rem;
+    background: var(--bg-color, #060a12);
+    border: 1px solid var(--border-color, #152040);
+    border-radius: 8px;
+    color: var(--text-primary, #c8d0de);
+    font-family: inherit;
+    resize: vertical;
+  }
+  .resc-btn {
+    width: 100%;
+    padding: 1rem;
+    background: var(--accent, #10b981);
+    color: #fff;
+    border: none;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: opacity 0.2s;
+  }
+  .resc-btn:hover {
+    opacity: 0.9;
+  }
+  .resc-score-hero {
+    text-align: center;
+    margin-bottom: 3rem;
+  }
+  .resc-score-circle-wrap {
+    position: relative;
+    width: 120px;
+    height: 120px;
+    margin: 0 auto 1rem;
+  }
+  .resc-score-value {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+  }
+  #overall-score-num {
+    font-size: 2.5rem;
+    font-weight: 700;
+    color: var(--text-primary, #c8d0de);
+    line-height: 1;
+  }
+  .resc-score-label {
+    font-size: 0.8rem;
+    color: var(--text-secondary, #94a3b8);
+  }
+  .resc-score-verdict {
+    font-size: 1.2rem;
+    font-weight: 600;
+    color: var(--accent, #10b981);
+  }
+  .resc-metrics-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 1.5rem;
+    margin-bottom: 3rem;
+  }
+  .resc-metric-card {
+    background: var(--card-bg, #0a1020);
+    border: 1px solid var(--border-color, #152040);
+    border-radius: 12px;
+    padding: 1.5rem;
+  }
+  .resc-metric-card h3 {
+    font-size: 1rem;
+    margin-bottom: 1rem;
+    color: var(--text-primary, #c8d0de);
+  }
+  .resc-metric-bar {
+    height: 8px;
+    background: var(--border-color, #152040);
+    border-radius: 4px;
+    margin-bottom: 1rem;
+    overflow: hidden;
+  }
+  .resc-metric-fill {
+    height: 100%;
+    background: var(--accent, #10b981);
+    width: 0%;
+    transition: width 1s ease-out;
+  }
+  .resc-metric-card p {
+    font-size: 0.85rem;
+    color: var(--text-secondary, #94a3b8);
+    line-height: 1.4;
+  }
+  .resc-insight-box {
+    background: var(--card-bg, #0a1020);
+    border: 1px solid var(--border-color, #152040);
+    border-radius: 12px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+  }
+  .resc-insight-box h3 {
+    font-size: 1.2rem;
+    margin-bottom: 0.5rem;
+    color: var(--text-primary, #c8d0de);
+  }
+  .resc-insight-box > p {
+    color: var(--text-secondary, #94a3b8);
+    margin-bottom: 1.5rem;
+  }
+  .resc-power-words {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+  }
+  .resc-pw-chip {
+    padding: 0.4rem 0.8rem;
+    background: rgba(16,185,129,0.1);
+    color: var(--accent, #10b981);
+    border-radius: 100px;
+    font-size: 0.85rem;
+    font-weight: 500;
+  }
+  .resc-pw-chip.missing {
+    background: rgba(239,68,68,0.1);
+    color: #ef4444;
+    text-decoration: line-through;
+  }
+  .resc-ba-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+  }
+  @media (max-width: 600px) {
+    .resc-ba-grid { grid-template-columns: 1fr; }
+  }
+  .resc-ba-card {
+    padding: 1.5rem;
+    border-radius: 8px;
+    position: relative;
+  }
+  .resc-ba-card.bad {
+    background: rgba(239,68,68,0.05);
+    border: 1px solid rgba(239,68,68,0.2);
+  }
+  .resc-ba-card.good {
+    background: rgba(16,185,129,0.05);
+    border: 1px solid rgba(16,185,129,0.2);
+  }
+  .resc-ba-badge {
+    position: absolute;
+    top: -10px;
+    left: 1rem;
+    font-size: 0.7rem;
+    text-transform: uppercase;
+    font-weight: 700;
+    padding: 0.2rem 0.6rem;
+    border-radius: 4px;
+  }
+  .resc-ba-card.bad .resc-ba-badge {
+    background: #ef4444;
+    color: #fff;
+  }
+  .resc-ba-card.good .resc-ba-badge {
+    background: var(--accent, #10b981);
+    color: #fff;
+  }
+  .resc-ba-card p {
+    font-size: 0.95rem;
+    line-height: 1.5;
+    color: var(--text-primary, #c8d0de);
+    margin-top: 0.5rem;
+  }
+  .resc-tips-list {
+    list-style: none;
+    padding: 0;
+  }
+  .resc-tips-list li {
+    padding-left: 1.5rem;
+    position: relative;
+    margin-bottom: 1rem;
+    color: var(--text-secondary, #94a3b8);
+    line-height: 1.5;
+  }
+  .resc-tips-list li::before {
+    content: '→';
+    position: absolute;
+    left: 0;
+    color: var(--accent, #10b981);
+  }
+  .resc-faq {
+    display: grid;
+    gap: 1rem;
+  }
+  .resc-faq-item {
+    background: var(--card-bg, #0a1020);
+    border: 1px solid var(--border-color, #152040);
+    border-radius: 8px;
+    padding: 1rem 1.5rem;
+  }
+  .resc-faq-item summary {
+    font-weight: 600;
+    cursor: pointer;
+    color: var(--text-primary, #c8d0de);
+    list-style-position: inside;
+  }
+  .resc-faq-item p {
+    margin-top: 1rem;
+    color: var(--text-secondary, #94a3b8);
+    line-height: 1.6;
+  }
+</style>
+
+<script>
+  const powerWords = [
+    'Spearheaded', 'Optimized', 'Engineered', 'Streamlined', 'Pioneered',
+    'Accelerated', 'Overhauled', 'Transformed', 'Generated', 'Executed',
+    'Implemented', 'Negotiated', 'Maximized', 'Mentored', 'Revamped'
+  ];
+
+  const weakWords = ['Helped', 'Responsible for', 'Worked on', 'Assisted', 'Handled', 'Managed'];
+
+  const analyzeBtn = document.getElementById('analyze-btn');
+  const inputResume = document.getElementById('input-resume') as HTMLTextAreaElement;
+  const resultsSection = document.getElementById('results-section');
+
+  const ring = document.getElementById('overall-score-ring') as SVGCircleElement;
+  const scoreNum = document.getElementById('overall-score-num');
+  const verdict = document.getElementById('overall-verdict');
+  const powerWordsList = document.getElementById('power-words-list');
+
+  const metricFills = {
+    verbs: document.getElementById('fill-verbs'),
+    quant: document.getElementById('fill-quant'),
+    length: document.getElementById('fill-length'),
+    ats: document.getElementById('fill-ats')
+  };
+
+  const metricFeedback = {
+    verbs: document.getElementById('feedback-verbs'),
+    quant: document.getElementById('feedback-quant'),
+    length: document.getElementById('feedback-length'),
+    ats: document.getElementById('feedback-ats')
+  };
+
+  function animateScore(targetScore: number) {
+    let currentScore = 0;
+    const duration = 1500;
+    const interval = 20;
+    const step = (targetScore / duration) * interval;
+
+    const circumference = 2 * Math.PI * 52; // r=52
+
+    const timer = setInterval(() => {
+      currentScore += step;
+      if (currentScore >= targetScore) {
+        currentScore = targetScore;
+        clearInterval(timer);
+      }
+      if(scoreNum) scoreNum.textContent = Math.round(currentScore).toString();
+
+      if(ring) {
+        const offset = circumference - (currentScore / 100) * circumference;
+        ring.style.strokeDashoffset = offset.toString();
+
+        if (currentScore < 40) ring.style.stroke = '#ef4444';
+        else if (currentScore < 70) ring.style.stroke = '#f59e0b';
+        else ring.style.stroke = 'var(--accent, #10b981)';
+      }
+
+      if(verdict) {
+        if (currentScore < 40) { verdict.textContent = "Needs Major Revision"; verdict.style.color = "#ef4444"; }
+        else if (currentScore < 70) { verdict.textContent = "Good, but could be better"; verdict.style.color = "#f59e0b"; }
+        else { verdict.textContent = "Excellent!"; verdict.style.color = "var(--accent, #10b981)"; }
+      }
+    }, interval);
+  }
+
+  function analyzeResume() {
+    const text = inputResume.value.trim();
+    if (!text) return alert("Please paste your resume text first.");
+
+    if(resultsSection) resultsSection.style.display = 'block';
+    resultsSection?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+    // Reset fills
+    Object.values(metricFills).forEach(fill => { if(fill) fill.style.width = '0%'; });
+    if(ring) ring.style.strokeDashoffset = "326.73";
+
+    setTimeout(() => {
+      const lowerText = text.toLowerCase();
+
+      // 1. Action Verbs (25 pts)
+      let foundVerbs = 0;
+      let usedPowerWords: string[] = [];
+      let missedPowerWords: string[] = [];
+
+      powerWords.forEach(word => {
+        if (lowerText.includes(word.toLowerCase())) {
+          foundVerbs++;
+          usedPowerWords.push(word);
+        } else {
+          missedPowerWords.push(word);
+        }
+      });
+
+      const verbsScore = Math.min(25, foundVerbs * 5);
+      if(metricFills.verbs) metricFills.verbs.style.width = `${(verbsScore/25)*100}%`;
+      if(metricFeedback.verbs) metricFeedback.verbs.textContent = `Found ${foundVerbs} power verbs. Aim for at least 5 to maximize impact.`;
+
+      // 2. Quantified Achievements (25 pts)
+      const numberMatches = text.match(/\b\d+(\.\d+)?%?|\b(one|two|three|four|five|six|seven|eight|nine|ten)\b/gi) || [];
+      const dollarMatches = text.match(/\$\d+/g) || [];
+      const quantCount = numberMatches.length + dollarMatches.length;
+
+      const quantScore = Math.min(25, quantCount * 2);
+      if(metricFills.quant) metricFills.quant.style.width = `${(quantScore/25)*100}%`;
+      if(metricFeedback.quant) metricFeedback.quant.textContent = `Found ${quantCount} metrics/numbers. Quantifying achievements is crucial.`;
+
+      // 3. Length & Density (25 pts)
+      const wordCount = text.split(/\s+/).length;
+      let lengthScore = 25;
+      let lengthFeedback = "Perfect length. Your resume is dense and readable.";
+
+      if (wordCount < 150) {
+        lengthScore = 10;
+        lengthFeedback = "Too short. Add more detail to your experience.";
+      } else if (wordCount > 1000) {
+        lengthScore = 15;
+        lengthFeedback = "Too long. Consider trimming to keep it concise.";
+      }
+
+      if(metricFills.length) metricFills.length.style.width = `${(lengthScore/25)*100}%`;
+      if(metricFeedback.length) metricFeedback.length.textContent = lengthFeedback;
+
+      // 4. ATS Compatibility (25 pts)
+      let atsScore = 25;
+      const hasEducation = /education/i.test(lowerText);
+      const hasExperience = /experience|history/i.test(lowerText);
+      const hasSkills = /skills/i.test(lowerText);
+
+      let missingHeaders = [];
+      if (!hasEducation) missingHeaders.push("Education");
+      if (!hasExperience) missingHeaders.push("Experience");
+      if (!hasSkills) missingHeaders.push("Skills");
+
+      let atsFeedback = "Standard sections found. Looks ATS friendly!";
+      if (missingHeaders.length > 0) {
+        atsScore -= missingHeaders.length * 5;
+        atsFeedback = `Missing standard headers: ${missingHeaders.join(', ')}. ATS might fail to parse your sections.`;
+      }
+
+      if(metricFills.ats) metricFills.ats.style.width = `${(atsScore/25)*100}%`;
+      if(metricFeedback.ats) metricFeedback.ats.textContent = atsFeedback;
+
+      // OVERALL SCORE
+      const totalScore = verbsScore + quantScore + lengthScore + atsScore;
+      animateScore(totalScore);
+
+      // Render Power Words
+      if(powerWordsList) {
+        powerWordsList.innerHTML = '';
+        usedPowerWords.slice(0, 5).forEach(w => {
+          powerWordsList.innerHTML += `<span class="resc-pw-chip">${w} ✓</span>`;
+        });
+        missedPowerWords.slice(0, 8).forEach(w => {
+          powerWordsList.innerHTML += `<span class="resc-pw-chip missing">${w}</span>`;
+        });
+      }
+
+    }, 100);
+  }
+
+  if (analyzeBtn) {
+    analyzeBtn.addEventListener('click', analyzeResume);
+  }
+</script>
