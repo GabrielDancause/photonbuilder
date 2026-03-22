@@ -1,0 +1,1413 @@
+---
+import SiteLayout from '../../../layouts/SiteLayout.astro';
+
+export const meta = {
+  title: 'How Long It Actually Takes to Become a Millionaire (By Profession)',
+  description: 'Interactive calculator showing how long it takes to reach $1M by profession. Compare a plumber vs surgeon, adjust savings rates, and see real projections with BLS salary data.',
+  category: 'calculator',
+  keywords: ['millionaire calculator', 'wealth calculator', 'time to millionaire', 'profession salary comparison', 'compound interest calculator', 'savings rate calculator'],
+};
+
+const schema = JSON.stringify([
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": meta.title,
+    "description": meta.description,
+    "datePublished": "2026-03-22",
+    "dateModified": "2026-03-22",
+    "publisher": {
+      "@type": "Organization",
+      "name": "Westmount Fundamentals"
+    }
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "How long does it take to become a millionaire?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "It depends on income, savings rate, and investment returns. A software engineer saving 20% at a 10% return reaches $1M in about 17 years. A teacher saving 20% takes about 24 years. Starting early is the biggest factor — a plumber who starts investing at 19 can reach $1M before a surgeon who starts at 30, despite earning far less."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Can a plumber really become a millionaire before a doctor?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes. A plumber starts earning at 19 with almost no student debt. A doctor doesn't start earning until around 30 and carries $215,000 in student debt. With equal savings rates and market returns, the plumber's 11-year head start with compound interest can offset the doctor's higher salary. The plumber reaches $1M around age 42, while the doctor reaches it around age 48."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "What savings rate do I need to become a millionaire?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "At the average American savings rate of 5.8%, it takes most people 35-40 years to reach $1M. At the recommended 20% savings rate, it takes 15-25 years depending on income. Increasing your savings rate from 10% to 20% can cut 8-12 years off your timeline. The 50/30/20 rule (50% needs, 30% wants, 20% savings) is a proven framework."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "What is the fastest profession to become a millionaire?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Among common W-2 professions with a 20% savings rate: Marketing Managers and Lawyers reach $1M fastest (around 16-17 years from career start) due to high salaries. However, trades like electricians and plumbers reach $1M at a younger age (early 40s) because they start earning much earlier with minimal student debt."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Why is getting to $100K the hardest milestone?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Getting from $0 to $100K takes 7-10 years because you're relying almost entirely on savings — your investments aren't generating meaningful returns yet. But $100K to $200K takes only 3-4 years because compound interest accelerates. Charlie Munger famously said 'The first $100,000 is a b****, but you gotta do it.' Each subsequent $100K comes faster than the last."
+        }
+      }
+    ]
+  }
+]);
+---
+
+<SiteLayout
+  site="westmount"
+  title={meta.title}
+  description={meta.description}
+  canonical="https://westmountfundamentals.com/millionaire-calculator"
+>
+  <Fragment slot="head">
+    <script type="application/ld+json" set:html={schema} />
+  </Fragment>
+
+  <h1>How Long It Actually Takes to Become a Millionaire</h1>
+
+  <p>Here's a counterintuitive truth: <strong>a plumber who starts at 19 can become a millionaire before a surgeon who starts at 30 — by 6 years</strong>. Income matters, but <em>time in the market</em> matters more.</p>
+  <p>Use the calculator below with <strong>real BLS salary data</strong> for 14 professions. Adjust your savings rate, see projected milestones, and compare any two careers side-by-side.</p>
+
+  <div class="calculator-hero" id="calculator">
+    <h2>💰 The Millionaire Timeline Calculator</h2>
+    <p class="calc-subtitle">Pick a profession or enter your own numbers</p>
+
+    <div class="mode-tabs">
+      <button class="mode-tab active" id="tab-profession" onclick="switchMode('profession')">By Profession</button>
+      <button class="mode-tab" id="tab-custom" onclick="switchMode('custom')">Custom Input</button>
+    </div>
+
+    <div class="calc-inputs" id="profession-mode">
+      <div class="input-group" style="min-width:200px">
+        <label for="prof-select">Profession</label>
+        <select id="prof-select" onchange="fillFromProfession()">
+          <option value="">— Choose —</option>
+          <option value="software_engineer">Software Engineer</option>
+          <option value="doctor">Doctor (MD)</option>
+          <option value="nurse">Nurse (RN)</option>
+          <option value="teacher">Teacher</option>
+          <option value="electrician">Electrician</option>
+          <option value="plumber">Plumber</option>
+          <option value="accountant">Accountant</option>
+          <option value="marketing_manager">Marketing Manager</option>
+          <option value="pharmacist">Pharmacist</option>
+          <option value="real_estate_agent">Real Estate Agent</option>
+          <option value="lawyer">Lawyer</option>
+          <option value="data_scientist">Data Scientist</option>
+          <option value="mechanic">Mechanic</option>
+          <option value="dental_hygienist">Dental Hygienist</option>
+        </select>
+      </div>
+      <div class="input-group">
+        <label>Salary</label>
+        <input type="text" id="prof-salary" readonly />
+      </div>
+      <div class="input-group">
+        <label>Student Debt</label>
+        <input type="text" id="prof-debt" readonly />
+      </div>
+      <div class="input-group">
+        <label>Career Start</label>
+        <input type="text" id="prof-start" readonly />
+      </div>
+    </div>
+
+    <div class="calc-inputs" id="custom-mode" style="display:none">
+      <div class="input-group">
+        <label for="custom-salary">Annual Salary ($)</label>
+        <input type="number" id="custom-salary" min="20000" step="1000" value="75000" />
+      </div>
+      <div class="input-group">
+        <label for="custom-age">Current Age</label>
+        <input type="number" id="custom-age" min="16" max="70" value="25" />
+      </div>
+      <div class="input-group">
+        <label for="custom-savings">Current Savings ($)</label>
+        <input type="number" id="custom-savings" min="0" step="1000" value="10000" />
+      </div>
+      <div class="input-group">
+        <label for="custom-debt">Student Debt ($)</label>
+        <input type="number" id="custom-debt" min="0" step="1000" value="30000" />
+      </div>
+    </div>
+
+    <div class="slider-section">
+      <div class="slider-group">
+        <label>Savings Rate: <strong id="rate-display">20%</strong></label>
+        <input type="range" id="savings-rate" min="5" max="50" value="20" oninput="updateRateDisplay()" />
+        <div class="slider-labels"><span>5%</span><span>Average: 5.8%</span><span>50%</span></div>
+      </div>
+      <div class="slider-group">
+        <label>Expected Return: <strong id="return-display">10.3% (S&P 500)</strong></label>
+        <select id="return-rate" onchange="updateReturnDisplay()">
+          <option value="0.103">S&P 500 — 10.3%</option>
+          <option value="0.085">60/40 Portfolio — 8.5%</option>
+          <option value="0.05">Conservative (Bonds) — 5%</option>
+          <option value="0.045">Savings Account — 4.5%</option>
+        </select>
+      </div>
+    </div>
+
+    <button id="calc-btn" onclick="runCalculation()">Calculate My Timeline →</button>
+  </div>
+
+  <!-- Results Section -->
+  <div id="results-section" style="display:none">
+    <div class="result-summary" id="result-summary"></div>
+
+    <div class="milestones-row" id="milestones-row"></div>
+
+    <h3>Projected Wealth Over Time</h3>
+    <div class="chart-container" id="chart-container"></div>
+    <div class="chart-legend">
+      <span class="legend-item"><span class="legend-dot" style="background:#4a8fe7"></span> Total Net Worth</span>
+      <span class="legend-item"><span class="legend-dot" style="background:#10b981"></span> Contributions</span>
+      <span class="legend-item"><span class="legend-dot" style="background:rgba(74,143,231,0.3)"></span> Investment Growth</span>
+    </div>
+  </div>
+
+  <!-- Comparison Mode -->
+  <div class="comparison-section" id="comparison-section">
+    <h2>⚔️ Compare Two Professions</h2>
+    <p class="calc-subtitle">The classic showdown — see how starting age and debt change the race to $1M</p>
+
+    <div class="compare-selectors">
+      <div class="compare-col">
+        <select id="compare-a" onchange="runComparison()">
+          <option value="plumber">Plumber</option>
+          <option value="software_engineer">Software Engineer</option>
+          <option value="doctor">Doctor (MD)</option>
+          <option value="nurse">Nurse (RN)</option>
+          <option value="teacher">Teacher</option>
+          <option value="electrician">Electrician</option>
+          <option value="accountant">Accountant</option>
+          <option value="marketing_manager">Marketing Manager</option>
+          <option value="pharmacist">Pharmacist</option>
+          <option value="real_estate_agent">Real Estate Agent</option>
+          <option value="lawyer">Lawyer</option>
+          <option value="data_scientist">Data Scientist</option>
+          <option value="mechanic">Mechanic</option>
+          <option value="dental_hygienist">Dental Hygienist</option>
+        </select>
+      </div>
+      <div class="compare-vs">VS</div>
+      <div class="compare-col">
+        <select id="compare-b" onchange="runComparison()">
+          <option value="doctor">Doctor (MD)</option>
+          <option value="plumber">Plumber</option>
+          <option value="software_engineer">Software Engineer</option>
+          <option value="nurse">Nurse (RN)</option>
+          <option value="teacher">Teacher</option>
+          <option value="electrician">Electrician</option>
+          <option value="accountant">Accountant</option>
+          <option value="marketing_manager">Marketing Manager</option>
+          <option value="pharmacist">Pharmacist</option>
+          <option value="real_estate_agent">Real Estate Agent</option>
+          <option value="lawyer">Lawyer</option>
+          <option value="data_scientist">Data Scientist</option>
+          <option value="mechanic">Mechanic</option>
+          <option value="dental_hygienist">Dental Hygienist</option>
+        </select>
+      </div>
+    </div>
+    <div class="compare-results" id="compare-results"></div>
+    <div class="compare-chart" id="compare-chart"></div>
+  </div>
+
+  <!-- Data Table -->
+  <h2>All 14 Professions Ranked: Years to $1 Million</h2>
+  <p>Assumptions: 20% savings rate, S&P 500 returns (10.3%), student loan payments at 6.5% over 10 years.</p>
+
+  <div class="table-wrapper">
+    <table class="prof-table" id="prof-table">
+      <thead>
+        <tr>
+          <th>Rank</th>
+          <th>Profession</th>
+          <th>Salary</th>
+          <th>Start Age</th>
+          <th>Student Debt</th>
+          <th>Years to $1M</th>
+          <th>Millionaire Age</th>
+        </tr>
+      </thead>
+      <tbody id="prof-tbody"></tbody>
+    </table>
+  </div>
+
+  <!-- Three Levers -->
+  <h2>The 3 Levers: Income × Savings Rate × Time</h2>
+
+  <p>Becoming a millionaire is a math problem with three variables. Understanding their relative power changes everything.</p>
+
+  <div class="levers-grid">
+    <div class="lever-card">
+      <div class="lever-icon">💵</div>
+      <h3>Income</h3>
+      <div class="lever-power">Power: Medium</div>
+      <p>Doubling your income from $65K to $130K saves ~7 years. But income has diminishing returns — lifestyle inflation erodes gains. The jump from $130K to $260K only saves ~4 more years.</p>
+    </div>
+    <div class="lever-card accent-lever">
+      <div class="lever-icon">📊</div>
+      <h3>Savings Rate</h3>
+      <div class="lever-power">Power: High</div>
+      <p>Going from 10% to 20% savings rate cuts <strong>10+ years</strong> off your timeline. It's a double win — you invest more AND need less to retire. This is the lever most people underestimate.</p>
+    </div>
+    <div class="lever-card">
+      <div class="lever-icon">⏰</div>
+      <h3>Time (Compound Interest)</h3>
+      <div class="lever-power">Power: Exponential</div>
+      <p>Starting at 20 vs. 30 is worth roughly <strong>$500,000+</strong> by age 60. Time is the only lever you can never get back. Every year you wait costs more than the last.</p>
+    </div>
+  </div>
+
+  <div class="callout-box">
+    <h3>📐 The Compound Interest Visualization</h3>
+    <p>$10,000 invested at age 20 at 10% annual return:</p>
+    <div class="compound-visual" id="compound-visual">
+      <div class="compound-row"><span class="cv-age">Age 30</span><div class="cv-bar" style="width:15%"></div><span class="cv-val">$25,937</span></div>
+      <div class="compound-row"><span class="cv-age">Age 40</span><div class="cv-bar" style="width:30%"></div><span class="cv-val">$67,275</span></div>
+      <div class="compound-row"><span class="cv-age">Age 50</span><div class="cv-bar" style="width:52%"></div><span class="cv-val">$174,494</span></div>
+      <div class="compound-row"><span class="cv-age">Age 60</span><div class="cv-bar" style="width:78%"></div><span class="cv-val">$452,593</span></div>
+      <div class="compound-row"><span class="cv-age">Age 70</span><div class="cv-bar" style="width:100%"></div><span class="cv-val">$1,173,909</span></div>
+    </div>
+    <p><em>$10,000 becomes $1.17 million with zero additional contributions. That's the power of time.</em></p>
+  </div>
+
+  <!-- $0 to $100K section -->
+  <h2>$0 to $100K Is the Hardest Part</h2>
+
+  <p>Charlie Munger famously said: <em>"The first $100,000 is a b****, but you gotta do it."</em> He was right. Here's why the first milestone takes the longest — and why every one after it is faster.</p>
+
+  <div class="milestones-explained">
+    <div class="milestone-card">
+      <div class="m-header">
+        <span class="m-range">$0 → $100K</span>
+        <span class="m-years">~7-10 years</span>
+      </div>
+      <div class="m-bar-track"><div class="m-bar-fill" style="width:100%"></div></div>
+      <p>At a $75K salary with 20% savings rate ($15K/yr), your investments earn only $750-$3,000/yr in returns. You're doing almost all the heavy lifting yourself.</p>
+    </div>
+    <div class="milestone-card">
+      <div class="m-header">
+        <span class="m-range">$100K → $250K</span>
+        <span class="m-years">~3-4 years</span>
+      </div>
+      <div class="m-bar-track"><div class="m-bar-fill" style="width:50%"></div></div>
+      <p>Now your portfolio earns $10K-$25K/yr. Compound interest is pulling its weight. Momentum builds.</p>
+    </div>
+    <div class="milestone-card">
+      <div class="m-header">
+        <span class="m-range">$250K → $500K</span>
+        <span class="m-years">~2-3 years</span>
+      </div>
+      <div class="m-bar-track"><div class="m-bar-fill" style="width:35%"></div></div>
+      <p>Your money earns more than a part-time job. Returns start outpacing your contributions.</p>
+    </div>
+    <div class="milestone-card">
+      <div class="m-header">
+        <span class="m-range">$500K → $1M</span>
+        <span class="m-years">~2-3 years</span>
+      </div>
+      <div class="m-bar-track"><div class="m-bar-fill" style="width:30%"></div></div>
+      <p>At 10% return, your portfolio generates $50K-$100K/year. The second half-million comes far faster than the first.</p>
+    </div>
+  </div>
+
+  <p>This pattern is why <a href="/net-worth-by-age">net worth accelerates so dramatically after age 45</a>. The first decade of investing feels slow, but it's building the foundation for exponential growth.</p>
+
+  <!-- Methodology -->
+  <h2>Methodology &amp; Assumptions</h2>
+
+  <div class="method-box">
+    <h3>Data Sources</h3>
+    <ul>
+      <li><strong>Salaries:</strong> Bureau of Labor Statistics (BLS) Occupational Employment &amp; Wage Statistics, 2024 median pay</li>
+      <li><strong>Student Debt:</strong> Federal Reserve Bank of New York &amp; Education Data Initiative, by degree type</li>
+      <li><strong>Investment Returns:</strong> S&P 500 historical average 10.3% nominal (1926-2024), NYU Stern data</li>
+      <li><strong>Savings Rate:</strong> Bureau of Economic Analysis, Personal Saving Rate, 2024</li>
+    </ul>
+
+    <h3>Key Assumptions</h3>
+    <ul>
+      <li>Salary remains constant (no raises, promotions, or inflation adjustment — this simplifies comparison)</li>
+      <li>Student loans paid at 6.5% interest over 10 years (reducing savings capacity during that period)</li>
+      <li>All savings invested in chosen portfolio from career start</li>
+      <li>No employer match included (would accelerate all timelines by 1-3 years)</li>
+      <li>No taxes on investment gains (using tax-advantaged accounts like 401k/IRA)</li>
+      <li>No windfalls, inheritance, or real estate appreciation included</li>
+    </ul>
+
+    <h3>Limitations</h3>
+    <p>This calculator provides simplified projections for comparison purposes. Real-world outcomes vary based on raises, career changes, market volatility, geographic cost of living, tax situations, and life events. Past market returns don't guarantee future results. Use this as a directional guide, not a financial plan.</p>
+  </div>
+
+  <!-- FAQ -->
+  <h2>Frequently Asked Questions</h2>
+
+  <div class="faq-section">
+    <details class="faq-item">
+      <summary>How long does it take to become a millionaire?</summary>
+      <p>It depends on income, savings rate, and investment returns. A software engineer saving 20% at a 10% return reaches $1M in about 17 years. A teacher saving 20% takes about 24 years. Starting early is the biggest factor — a plumber who starts investing at 19 can reach $1M before a surgeon who starts at 30, despite earning far less.</p>
+    </details>
+    <details class="faq-item">
+      <summary>Can a plumber really become a millionaire before a doctor?</summary>
+      <p>Yes. A plumber starts earning at 19 with almost no student debt ($3,000). A doctor doesn't start earning a full salary until around 30 and carries $215,000 in student debt. With equal 20% savings rates and S&P 500 returns, the plumber's 11-year head start with compound interest can offset the doctor's higher salary. The plumber reaches $1M around age 42, while the doctor reaches it around age 48.</p>
+    </details>
+    <details class="faq-item">
+      <summary>What savings rate do I need to become a millionaire?</summary>
+      <p>At the average American savings rate of 5.8%, it takes most people 35-40 years to reach $1M. At the recommended 20% savings rate, it takes 15-25 years depending on income. Increasing your savings rate from 10% to 20% can cut 8-12 years off your timeline. The 50/30/20 rule (50% needs, 30% wants, 20% savings) is a proven framework.</p>
+    </details>
+    <details class="faq-item">
+      <summary>What is the fastest profession to become a millionaire?</summary>
+      <p>Among common W-2 professions with a 20% savings rate: Marketing Managers and Software Engineers reach $1M fastest in terms of total years working (around 16-17 years). However, tradespeople like electricians and plumbers reach $1M at a younger absolute age (early 40s) because they start earning much earlier with minimal student debt.</p>
+    </details>
+    <details class="faq-item">
+      <summary>Why is getting to $100K the hardest milestone?</summary>
+      <p>Getting from $0 to $100K takes 7-10 years because you're relying almost entirely on savings — your investments aren't generating meaningful returns yet. But $100K to $200K takes only 3-4 years because compound interest accelerates. Each subsequent $100K comes faster than the last. This is why <a href="/net-worth-by-age">net worth by age</a> curves are exponential, not linear.</p>
+    </details>
+  </div>
+
+</SiteLayout>
+
+<style is:global>
+  .calculator-hero {
+    background: linear-gradient(135deg, rgba(74,143,231,0.1) 0%, rgba(74,143,231,0.03) 100%);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 2rem;
+    margin: 2rem 0;
+    text-align: center;
+  }
+  .calc-subtitle {
+    color: var(--text-secondary);
+    margin-top: -0.5rem;
+  }
+  .mode-tabs {
+    display: flex;
+    justify-content: center;
+    gap: 0;
+    margin: 1.5rem auto 1rem;
+    max-width: 320px;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .mode-tab {
+    flex: 1;
+    padding: 0.6rem 1rem;
+    border: none;
+    background: var(--card-bg);
+    color: var(--text-secondary);
+    font-weight: 600;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .mode-tab.active {
+    background: var(--accent-color);
+    color: white;
+  }
+  .calc-inputs {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    margin: 1rem 0;
+  }
+  .input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.4rem;
+  }
+  .input-group label {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .input-group input, .input-group select {
+    padding: 0.6rem 0.8rem;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--card-bg);
+    color: inherit;
+    font-size: 1rem;
+    width: 150px;
+    text-align: center;
+    font-weight: 600;
+  }
+  .input-group select {
+    width: 220px;
+    text-align: left;
+    cursor: pointer;
+  }
+  .input-group input:focus, .input-group select:focus {
+    outline: none;
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 3px rgba(74,143,231,0.2);
+  }
+  .input-group input[readonly] {
+    opacity: 0.7;
+    cursor: default;
+  }
+
+  .slider-section {
+    display: flex;
+    gap: 2rem;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin: 1.5rem 0;
+    text-align: left;
+  }
+  .slider-group {
+    min-width: 250px;
+    max-width: 320px;
+    flex: 1;
+  }
+  .slider-group label {
+    font-size: 0.9rem;
+    display: block;
+    margin-bottom: 0.5rem;
+  }
+  .slider-group input[type="range"] {
+    width: 100%;
+    accent-color: var(--accent-color);
+    height: 6px;
+    cursor: pointer;
+  }
+  .slider-group select {
+    width: 100%;
+    padding: 0.5rem;
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    background: var(--card-bg);
+    color: inherit;
+    font-size: 0.9rem;
+    cursor: pointer;
+  }
+  .slider-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.7rem;
+    color: var(--text-secondary);
+    margin-top: 0.25rem;
+  }
+  #calc-btn {
+    padding: 0.85rem 2.5rem;
+    background: var(--accent-color);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1.05rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+    margin-top: 0.5rem;
+  }
+  #calc-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(74,143,231,0.4);
+  }
+
+  /* Results */
+  .result-summary {
+    background: linear-gradient(135deg, rgba(74,143,231,0.12), rgba(99,102,241,0.06));
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 2rem;
+    margin: 2rem 0;
+    text-align: center;
+    animation: slideUp 0.6s ease;
+  }
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  .result-summary .big-number {
+    font-size: 3.5rem;
+    font-weight: 900;
+    color: var(--accent-color);
+    line-height: 1;
+  }
+  .result-summary .big-label {
+    font-size: 1.1rem;
+    color: var(--text-secondary);
+    margin-top: 0.25rem;
+  }
+  .result-summary .sub-stats {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    flex-wrap: wrap;
+    margin-top: 1.5rem;
+  }
+  .result-summary .sub-stat {
+    text-align: center;
+  }
+  .result-summary .sub-stat .ss-val {
+    font-size: 1.4rem;
+    font-weight: 800;
+  }
+  .result-summary .sub-stat .ss-label {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  /* Milestones Row */
+  .milestones-row {
+    display: flex;
+    gap: 1rem;
+    overflow-x: auto;
+    padding: 0.5rem 0 1rem;
+    margin: 1rem 0;
+  }
+  .ms-card {
+    min-width: 160px;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.25rem 1rem;
+    text-align: center;
+    flex-shrink: 0;
+    transition: transform 0.3s, border-color 0.3s;
+    position: relative;
+    overflow: hidden;
+  }
+  .ms-card.reached {
+    border-color: var(--accent-color);
+  }
+  .ms-card .ms-amount {
+    font-weight: 800;
+    font-size: 1.1rem;
+    color: var(--accent-color);
+  }
+  .ms-card .ms-age {
+    font-size: 1.6rem;
+    font-weight: 900;
+    margin: 0.3rem 0;
+  }
+  .ms-card .ms-years {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+  }
+  .ms-card .ms-confetti {
+    position: absolute;
+    top: 0; left: 0; right: 0; bottom: 0;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.5s;
+  }
+  .ms-card.celebrate .ms-confetti {
+    opacity: 1;
+    animation: confettiFade 2s ease forwards;
+  }
+  @keyframes confettiFade {
+    0% { opacity: 1; }
+    100% { opacity: 0; }
+  }
+
+  /* Chart */
+  .chart-container {
+    position: relative;
+    height: 300px;
+    margin: 1rem 0;
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.5rem 1rem 2.5rem 3.5rem;
+    background: var(--card-bg);
+    overflow: hidden;
+  }
+  .chart-bars {
+    display: flex;
+    align-items: flex-end;
+    gap: 2px;
+    height: 100%;
+    position: relative;
+  }
+  .chart-bar-group {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: 100%;
+    justify-content: flex-end;
+    position: relative;
+  }
+  .chart-bar {
+    width: 100%;
+    max-width: 40px;
+    border-radius: 4px 4px 0 0;
+    transition: height 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+    position: relative;
+    min-height: 2px;
+  }
+  .chart-bar .contrib-fill {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: #10b981;
+    border-radius: 0 0 0 0;
+    transition: height 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .chart-bar .growth-fill {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(74,143,231,0.4);
+    border-radius: 4px 4px 0 0;
+    transition: height 0.8s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .chart-bar-label {
+    font-size: 0.6rem;
+    color: var(--text-secondary);
+    margin-top: 4px;
+    text-align: center;
+    white-space: nowrap;
+  }
+  .chart-y-axis {
+    position: absolute;
+    left: 0;
+    top: 1.5rem;
+    bottom: 2.5rem;
+    width: 3.5rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding-right: 0.5rem;
+    text-align: right;
+  }
+  .chart-y-label {
+    font-size: 0.65rem;
+    color: var(--text-secondary);
+    line-height: 1;
+  }
+  .chart-million-line {
+    position: absolute;
+    left: 3.5rem;
+    right: 1rem;
+    border-top: 2px dashed #f59e0b;
+    opacity: 0.6;
+    z-index: 1;
+  }
+  .chart-million-label {
+    position: absolute;
+    right: 0;
+    top: -16px;
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: #f59e0b;
+  }
+  .chart-legend {
+    display: flex;
+    justify-content: center;
+    gap: 1.5rem;
+    margin-top: 0.5rem;
+    flex-wrap: wrap;
+  }
+  .legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.4rem;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+  }
+  .legend-dot {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    display: inline-block;
+  }
+
+  /* Comparison */
+  .comparison-section {
+    margin: 3rem 0;
+    text-align: center;
+  }
+  .compare-selectors {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin: 1.5rem 0;
+  }
+  .compare-col select {
+    padding: 0.7rem 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--card-bg);
+    color: inherit;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    min-width: 180px;
+  }
+  .compare-col select:focus {
+    border-color: var(--accent-color);
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(74,143,231,0.2);
+  }
+  .compare-vs {
+    font-weight: 900;
+    font-size: 1.2rem;
+    color: var(--accent-color);
+  }
+  .compare-results {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin: 1rem 0;
+    text-align: left;
+  }
+  .compare-card {
+    flex: 1;
+    min-width: 260px;
+    max-width: 380px;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.5rem;
+  }
+  .compare-card h4 {
+    margin: 0 0 1rem;
+    color: var(--accent-color);
+    font-size: 1.1rem;
+  }
+  .compare-card .cc-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.4rem 0;
+    border-bottom: 1px solid var(--border-color);
+    font-size: 0.9rem;
+  }
+  .compare-card .cc-row:last-child { border-bottom: none; }
+  .compare-card .cc-val { font-weight: 700; }
+  .compare-card .cc-highlight { color: var(--accent-color); font-size: 1.2rem; font-weight: 800; }
+  .compare-verdict {
+    max-width: 600px;
+    margin: 1.5rem auto;
+    padding: 1.25rem;
+    background: linear-gradient(135deg, rgba(74,143,231,0.1), rgba(16,185,129,0.05));
+    border-left: 4px solid #10b981;
+    border-radius: 0 10px 10px 0;
+    text-align: left;
+    font-size: 0.95rem;
+    line-height: 1.6;
+  }
+
+  .compare-chart {
+    max-width: 600px;
+    margin: 1rem auto;
+  }
+  .compare-bar-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+  }
+  .compare-bar-label {
+    width: 130px;
+    text-align: right;
+    font-size: 0.85rem;
+    font-weight: 600;
+    flex-shrink: 0;
+  }
+  .compare-bar-track {
+    flex: 1;
+    height: 32px;
+    background: var(--border-color);
+    border-radius: 6px;
+    position: relative;
+    overflow: hidden;
+  }
+  .compare-bar-fill {
+    height: 100%;
+    border-radius: 6px;
+    transition: width 1s ease;
+    display: flex;
+    align-items: center;
+    padding-left: 0.5rem;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: white;
+    white-space: nowrap;
+  }
+
+  /* Professions Table */
+  .table-wrapper {
+    overflow-x: auto;
+    margin: 1.5rem 0;
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+  }
+  .prof-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.9rem;
+  }
+  .prof-table th {
+    background: rgba(74,143,231,0.1);
+    padding: 0.75rem 1rem;
+    text-align: left;
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-secondary);
+    font-weight: 700;
+    white-space: nowrap;
+  }
+  .prof-table td {
+    padding: 0.75rem 1rem;
+    border-top: 1px solid var(--border-color);
+  }
+  .prof-table tr:hover td {
+    background: rgba(74,143,231,0.04);
+  }
+  .prof-table .rank-cell {
+    font-weight: 800;
+    color: var(--accent-color);
+    text-align: center;
+  }
+  .prof-table .highlight-cell {
+    font-weight: 700;
+    color: #10b981;
+  }
+
+  /* Three Levers */
+  .levers-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.25rem;
+    margin: 1.5rem 0;
+  }
+  .lever-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.5rem;
+    transition: transform 0.2s;
+  }
+  .lever-card:hover { transform: translateY(-2px); }
+  .accent-lever {
+    border-color: var(--accent-color);
+    background: linear-gradient(135deg, rgba(74,143,231,0.08), transparent);
+  }
+  .lever-icon { font-size: 2rem; margin-bottom: 0.5rem; }
+  .lever-card h3 { margin-top: 0.25rem; font-size: 1.1rem; }
+  .lever-power {
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--accent-color);
+    margin-bottom: 0.5rem;
+  }
+  .lever-card p { font-size: 0.9rem; color: var(--text-secondary); line-height: 1.6; }
+
+  /* Callout */
+  .callout-box {
+    background: linear-gradient(135deg, rgba(74,143,231,0.1), rgba(99,102,241,0.05));
+    border-left: 4px solid var(--accent-color);
+    border-radius: 0 12px 12px 0;
+    padding: 1.5rem;
+    margin: 2rem 0;
+  }
+  .callout-box h3 { margin-top: 0; color: var(--accent-color); }
+
+  /* Compound Visual */
+  .compound-visual { margin: 1rem 0; }
+  .compound-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin-bottom: 0.5rem;
+  }
+  .cv-age {
+    width: 55px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    text-align: right;
+    flex-shrink: 0;
+  }
+  .cv-bar {
+    height: 24px;
+    background: linear-gradient(90deg, var(--accent-color), #6366f1);
+    border-radius: 4px;
+    transition: width 1.5s ease;
+  }
+  .cv-val {
+    font-size: 0.85rem;
+    font-weight: 700;
+    white-space: nowrap;
+  }
+
+  /* Milestones Explained */
+  .milestones-explained { margin: 1.5rem 0; }
+  .milestone-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1rem;
+    transition: transform 0.2s;
+  }
+  .milestone-card:hover { transform: translateX(4px); }
+  .m-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+  }
+  .m-range { font-weight: 800; font-size: 1.1rem; color: var(--accent-color); }
+  .m-years { font-weight: 700; color: #10b981; font-size: 0.9rem; }
+  .m-bar-track {
+    height: 6px;
+    background: var(--border-color);
+    border-radius: 3px;
+    margin-bottom: 0.75rem;
+    overflow: hidden;
+  }
+  .m-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #f59e0b, #ef4444);
+    border-radius: 3px;
+    transition: width 1s ease;
+  }
+  .milestone-card p { font-size: 0.9rem; color: var(--text-secondary); line-height: 1.5; margin: 0; }
+
+  /* Methodology */
+  .method-box {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.5rem 2rem;
+    margin: 1.5rem 0;
+  }
+  .method-box h3 { color: var(--accent-color); font-size: 1rem; margin-top: 1.5rem; }
+  .method-box h3:first-child { margin-top: 0; }
+  .method-box ul { padding-left: 1.25rem; }
+  .method-box li { font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 0.5rem; line-height: 1.5; }
+  .method-box p { font-size: 0.85rem; color: var(--text-secondary); line-height: 1.5; }
+
+  /* FAQ */
+  .faq-section { margin: 1.5rem 0; }
+  .faq-item {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    margin-bottom: 0.75rem;
+    overflow: hidden;
+    transition: border-color 0.2s;
+  }
+  .faq-item[open] { border-color: var(--accent-color); }
+  .faq-item summary {
+    padding: 1rem 1.25rem;
+    font-weight: 700;
+    cursor: pointer;
+    list-style: none;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    transition: background 0.2s;
+  }
+  .faq-item summary::-webkit-details-marker { display: none; }
+  .faq-item summary::after {
+    content: '+';
+    font-size: 1.3rem;
+    font-weight: 300;
+    color: var(--accent-color);
+    transition: transform 0.3s;
+  }
+  .faq-item[open] summary::after { transform: rotate(45deg); }
+  .faq-item summary:hover { background: rgba(74,143,231,0.05); }
+  .faq-item p, .faq-item a {
+    padding: 0 1.25rem 1rem;
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    line-height: 1.6;
+    margin: 0;
+  }
+
+  @media (max-width: 640px) {
+    .calc-inputs { flex-direction: column; align-items: center; }
+    .input-group input, .input-group select { width: 220px; }
+    .slider-section { flex-direction: column; align-items: center; }
+    .compare-selectors { flex-direction: column; }
+    .result-summary .big-number { font-size: 2.5rem; }
+    .levers-grid { grid-template-columns: 1fr; }
+    .chart-container { padding: 1rem 0.5rem 2rem 2.5rem; }
+    .chart-y-axis { width: 2.5rem; }
+    .compare-bar-label { width: 90px; font-size: 0.75rem; }
+    .milestones-row { gap: 0.75rem; }
+  }
+</style>
+
+<script is:inline>
+  const PROFESSIONS = {
+    software_engineer: { name: 'Software Engineer', salary: 130000, debt: 37000, startAge: 22 },
+    doctor: { name: 'Doctor (MD)', salary: 229000, debt: 215000, startAge: 30 },
+    nurse: { name: 'Nurse (RN)', salary: 86000, debt: 47000, startAge: 24 },
+    teacher: { name: 'Teacher', salary: 62000, debt: 55000, startAge: 23 },
+    electrician: { name: 'Electrician', salary: 65000, debt: 5000, startAge: 20 },
+    plumber: { name: 'Plumber', salary: 63000, debt: 3000, startAge: 19 },
+    accountant: { name: 'Accountant', salary: 83000, debt: 42000, startAge: 22 },
+    marketing_manager: { name: 'Marketing Manager', salary: 140000, debt: 45000, startAge: 23 },
+    pharmacist: { name: 'Pharmacist', salary: 132000, debt: 170000, startAge: 26 },
+    real_estate_agent: { name: 'Real Estate Agent', salary: 56000, debt: 30000, startAge: 25 },
+    lawyer: { name: 'Lawyer', salary: 145000, debt: 165000, startAge: 26 },
+    data_scientist: { name: 'Data Scientist', salary: 108000, debt: 40000, startAge: 23 },
+    mechanic: { name: 'Mechanic', salary: 48000, debt: 5000, startAge: 19 },
+    dental_hygienist: { name: 'Dental Hygienist', salary: 87000, debt: 55000, startAge: 22 }
+  };
+
+  let currentMode = 'profession';
+
+  function switchMode(mode) {
+    currentMode = mode;
+    document.getElementById('tab-profession').classList.toggle('active', mode === 'profession');
+    document.getElementById('tab-custom').classList.toggle('active', mode === 'custom');
+    document.getElementById('profession-mode').style.display = mode === 'profession' ? 'flex' : 'none';
+    document.getElementById('custom-mode').style.display = mode === 'custom' ? 'flex' : 'none';
+  }
+
+  function fillFromProfession() {
+    const key = document.getElementById('prof-select').value;
+    if (!key) return;
+    const p = PROFESSIONS[key];
+    document.getElementById('prof-salary').value = '$' + p.salary.toLocaleString();
+    document.getElementById('prof-debt').value = '$' + p.debt.toLocaleString();
+    document.getElementById('prof-start').value = 'Age ' + p.startAge;
+  }
+
+  function updateRateDisplay() {
+    document.getElementById('rate-display').textContent = document.getElementById('savings-rate').value + '%';
+  }
+
+  function updateReturnDisplay() {
+    const sel = document.getElementById('return-rate');
+    document.getElementById('return-display').textContent = sel.options[sel.selectedIndex].text;
+  }
+
+  function fmt(n) {
+    if (n >= 1000000) return '$' + (n / 1000000).toFixed(1) + 'M';
+    if (n >= 1000) return '$' + Math.round(n / 1000).toLocaleString() + 'K';
+    return '$' + Math.round(n).toLocaleString();
+  }
+
+  function simulate(salary, startAge, debt, savingsRate, annualReturn, maxYears) {
+    const loanRate = 0.065;
+    const loanTerm = 10;
+    const monthlyLoanPayment = debt > 0 ? (debt * (loanRate/12)) / (1 - Math.pow(1 + loanRate/12, -loanTerm*12)) : 0;
+    const annualLoanPayment = monthlyLoanPayment * 12;
+
+    let balance = -debt;
+    const data = [{ age: startAge, balance: balance, contributed: 0, year: 0 }];
+    let totalContributed = 0;
+    const milestones = {};
+    const targets = [100000, 250000, 500000, 1000000];
+
+    for (let yr = 1; yr <= maxYears; yr++) {
+      const age = startAge + yr;
+      let annualSavings = salary * savingsRate;
+      if (yr <= loanTerm && debt > 0) {
+        annualSavings = Math.max(0, annualSavings - annualLoanPayment);
+      }
+      // Debt payoff: after loan term, balance gets a boost
+      if (yr <= loanTerm && debt > 0) {
+        // Still paying off loan, invest what's left
+      }
+
+      balance = balance + annualSavings;
+      if (balance > 0) {
+        balance = balance * (1 + annualReturn);
+      }
+      totalContributed += annualSavings;
+
+      data.push({ age, balance: Math.round(balance), contributed: Math.round(totalContributed), year: yr });
+
+      for (const t of targets) {
+        if (!milestones[t] && balance >= t) {
+          milestones[t] = { age, years: yr };
+        }
+      }
+      if (balance >= 1000000 && !milestones['done']) {
+        milestones['done'] = true;
+      }
+    }
+    return { data, milestones, totalContributed };
+  }
+
+  function runCalculation() {
+    let salary, startAge, debt, currentSavings = 0;
+
+    if (currentMode === 'profession') {
+      const key = document.getElementById('prof-select').value;
+      if (!key) { alert('Please select a profession first.'); return; }
+      const p = PROFESSIONS[key];
+      salary = p.salary;
+      startAge = p.startAge;
+      debt = p.debt;
+    } else {
+      salary = parseInt(document.getElementById('custom-salary').value) || 75000;
+      startAge = parseInt(document.getElementById('custom-age').value) || 25;
+      debt = parseInt(document.getElementById('custom-debt').value) || 0;
+      currentSavings = parseInt(document.getElementById('custom-savings').value) || 0;
+    }
+
+    const savingsRate = parseInt(document.getElementById('savings-rate').value) / 100;
+    const annualReturn = parseFloat(document.getElementById('return-rate').value);
+    const maxYears = 45;
+
+    const result = simulate(salary, startAge, debt, savingsRate, annualReturn, maxYears);
+
+    // Show results
+    document.getElementById('results-section').style.display = 'block';
+
+    // Summary
+    const ms1M = result.milestones[1000000];
+    const summaryEl = document.getElementById('result-summary');
+    if (ms1M) {
+      summaryEl.innerHTML = `
+        <div class="big-number">Age ${ms1M.age}</div>
+        <div class="big-label">You'll hit $1,000,000 in <strong>${ms1M.years} years</strong></div>
+        <div class="sub-stats">
+          <div class="sub-stat"><div class="ss-val">${fmt(salary)}</div><div class="ss-label">Annual Salary</div></div>
+          <div class="sub-stat"><div class="ss-val">${Math.round(savingsRate*100)}%</div><div class="ss-label">Savings Rate</div></div>
+          <div class="sub-stat"><div class="ss-val">${fmt(salary * savingsRate)}/yr</div><div class="ss-label">Annual Investment</div></div>
+          <div class="sub-stat"><div class="ss-val">${(annualReturn*100).toFixed(1)}%</div><div class="ss-label">Annual Return</div></div>
+        </div>`;
+    } else {
+      const finalBal = result.data[result.data.length - 1].balance;
+      summaryEl.innerHTML = `
+        <div class="big-number">${fmt(finalBal)}</div>
+        <div class="big-label">Projected net worth after ${maxYears} years (age ${startAge + maxYears})</div>
+        <div class="sub-stats">
+          <div class="sub-stat"><div class="ss-val">${fmt(salary)}</div><div class="ss-label">Annual Salary</div></div>
+          <div class="sub-stat"><div class="ss-val">${Math.round(savingsRate*100)}%</div><div class="ss-label">Savings Rate</div></div>
+          <div class="sub-stat"><div class="ss-val">${fmt(salary * savingsRate)}/yr</div><div class="ss-label">Annual Investment</div></div>
+          <div class="sub-stat"><div class="ss-val">${(annualReturn*100).toFixed(1)}%</div><div class="ss-label">Annual Return</div></div>
+        </div>
+        <p style="margin-top:1rem;color:var(--text-secondary);font-size:0.9rem">With these parameters, $1M isn't reached within ${maxYears} years. Try increasing your savings rate!</p>`;
+    }
+
+    // Milestones
+    const msRow = document.getElementById('milestones-row');
+    const msTargets = [
+      { amount: 100000, label: '$100K', emoji: '🎯' },
+      { amount: 250000, label: '$250K', emoji: '🔥' },
+      { amount: 500000, label: '$500K', emoji: '🚀' },
+      { amount: 1000000, label: '$1M', emoji: '🏆' }
+    ];
+    msRow.innerHTML = msTargets.map(t => {
+      const ms = result.milestones[t.amount];
+      const reached = !!ms;
+      return `<div class="ms-card ${reached ? 'reached celebrate' : ''}">
+        <div class="ms-confetti">${reached ? t.emoji : ''}</div>
+        <div class="ms-amount">${t.label}</div>
+        <div class="ms-age">${ms ? 'Age ' + ms.age : '—'}</div>
+        <div class="ms-years">${ms ? ms.years + ' years' : 'Not reached'}</div>
+      </div>`;
+    }).join('');
+
+    // Chart
+    renderChart(result.data);
+
+    // Scroll to results
+    document.getElementById('results-section').scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+
+  function renderChart(data) {
+    const container = document.getElementById('chart-container');
+    // Sample data points (show every 2-3 years for readability)
+    const step = data.length > 30 ? 3 : data.length > 20 ? 2 : 1;
+    const sampled = data.filter((d, i) => i === 0 || i === data.length - 1 || i % step === 0);
+
+    const maxVal = Math.max(...sampled.map(d => Math.max(d.balance, 0)));
+    const chartMax = Math.max(maxVal * 1.1, 100000);
+
+    // Y-axis labels
+    const yLabels = [];
+    const ySteps = 5;
+    for (let i = ySteps; i >= 0; i--) {
+      yLabels.push(fmt(Math.round(chartMax * i / ySteps)));
+    }
+
+    // $1M line position
+    const millionPct = Math.min((1000000 / chartMax) * 100, 100);
+    const showMillionLine = chartMax >= 1000000;
+
+    let html = `<div class="chart-y-axis">${yLabels.map(l => `<span class="chart-y-label">${l}</span>`).join('')}</div>`;
+
+    if (showMillionLine) {
+      html += `<div class="chart-million-line" style="bottom:calc(2.5rem + ${millionPct}% * (100% - 4rem) / 100)"><span class="chart-million-label">$1M</span></div>`;
+    }
+
+    html += '<div class="chart-bars" style="margin-left:3.5rem">';
+    sampled.forEach((d, i) => {
+      const totalH = Math.max((Math.max(d.balance, 0) / chartMax) * 100, 0.5);
+      const contribH = Math.max((Math.max(d.contributed, 0) / chartMax) * 100, 0);
+      const growthH = totalH;
+      html += `<div class="chart-bar-group">
+        <div class="chart-bar" style="height:${totalH}%;background:rgba(74,143,231,0.15)">
+          <div class="growth-fill" style="height:100%"></div>
+          <div class="contrib-fill" style="height:${contribH > 0 ? (contribH/totalH)*100 : 0}%"></div>
+        </div>
+        <div class="chart-bar-label">${d.age}</div>
+      </div>`;
+    });
+    html += '</div>';
+    container.innerHTML = html;
+
+    // Re-apply million line position using actual pixel math
+    if (showMillionLine) {
+      requestAnimationFrame(() => {
+        const chartBars = container.querySelector('.chart-bars');
+        if (chartBars) {
+          const barsHeight = chartBars.offsetHeight;
+          const linePos = (1000000 / chartMax) * barsHeight;
+          const line = container.querySelector('.chart-million-line');
+          if (line) {
+            line.style.bottom = '';
+            line.style.top = (container.offsetHeight - 40 - linePos) + 'px';
+          }
+        }
+      });
+    }
+  }
+
+  // Comparison
+  function runComparison() {
+    const keyA = document.getElementById('compare-a').value;
+    const keyB = document.getElementById('compare-b').value;
+    const pA = PROFESSIONS[keyA];
+    const pB = PROFESSIONS[keyB];
+    const savingsRate = 0.20;
+    const annualReturn = 0.103;
+
+    const resA = simulate(pA.salary, pA.startAge, pA.debt, savingsRate, annualReturn, 45);
+    const resB = simulate(pB.salary, pB.startAge, pB.debt, savingsRate, annualReturn, 45);
+
+    const msA = resA.milestones[1000000];
+    const msB = resB.milestones[1000000];
+
+    const resultsEl = document.getElementById('compare-results');
+    resultsEl.innerHTML = `
+      <div class="compare-card">
+        <h4>${pA.name}</h4>
+        <div class="cc-row"><span>Salary</span><span class="cc-val">${fmt(pA.salary)}</span></div>
+        <div class="cc-row"><span>Start Age</span><span class="cc-val">${pA.startAge}</span></div>
+        <div class="cc-row"><span>Student Debt</span><span class="cc-val">${fmt(pA.debt)}</span></div>
+        <div class="cc-row"><span>Annual Investment</span><span class="cc-val">${fmt(pA.salary * savingsRate)}/yr</span></div>
+        <div class="cc-row"><span>Millionaire At</span><span class="cc-highlight">${msA ? 'Age ' + msA.age : 'Not in 45yr'}</span></div>
+      </div>
+      <div class="compare-card">
+        <h4>${pB.name}</h4>
+        <div class="cc-row"><span>Salary</span><span class="cc-val">${fmt(pB.salary)}</span></div>
+        <div class="cc-row"><span>Start Age</span><span class="cc-val">${pB.startAge}</span></div>
+        <div class="cc-row"><span>Student Debt</span><span class="cc-val">${fmt(pB.debt)}</span></div>
+        <div class="cc-row"><span>Annual Investment</span><span class="cc-val">${fmt(pB.salary * savingsRate)}/yr</span></div>
+        <div class="cc-row"><span>Millionaire At</span><span class="cc-highlight">${msB ? 'Age ' + msB.age : 'Not in 45yr'}</span></div>
+      </div>`;
+
+    // Verdict
+    let verdict = '';
+    if (msA && msB) {
+      const diff = msB.age - msA.age;
+      if (diff > 0) {
+        verdict = `<strong>${pA.name}</strong> reaches $1M <strong>${diff} years earlier</strong> (age ${msA.age} vs ${msB.age}). ${pA.salary < pB.salary ? `Despite earning ${fmt(pB.salary - pA.salary)} less per year, starting ${pB.startAge - pA.startAge} years earlier ${pA.debt < pB.debt ? 'with far less debt ' : ''}gives compound interest more time to work.` : `Higher salary and ${pA.debt < pB.debt ? 'lower debt' : 'similar debt'} means faster accumulation.`}`;
+      } else if (diff < 0) {
+        verdict = `<strong>${pB.name}</strong> reaches $1M <strong>${Math.abs(diff)} years earlier</strong> (age ${msB.age} vs ${msA.age}). ${pB.salary < pA.salary ? `Despite earning less, starting earlier gives compound interest more time.` : `Higher salary overcomes the late start.`}`;
+      } else {
+        verdict = `Both reach $1M at <strong>age ${msA.age}</strong> — a dead heat! Different paths, same destination.`;
+      }
+    } else {
+      verdict = 'One or both professions don\'t reach $1M within 45 years at these parameters. Try adjusting the savings rate.';
+    }
+
+    resultsEl.innerHTML += `<div class="compare-verdict">${verdict}</div>`;
+
+    // Bar chart
+    const chartEl = document.getElementById('compare-chart');
+    const maxAge = Math.max(msA ? msA.age : 70, msB ? msB.age : 70);
+    const barMaxAge = maxAge + 5;
+    chartEl.innerHTML = `
+      <div class="compare-bar-row">
+        <span class="compare-bar-label">${pA.name}</span>
+        <div class="compare-bar-track">
+          <div class="compare-bar-fill" style="width:${msA ? (msA.age/barMaxAge)*100 : 100}%;background:linear-gradient(90deg,#4a8fe7,#6366f1)">${msA ? 'Age ' + msA.age + ' (' + msA.years + 'yr)' : 'Not reached'}</div>
+        </div>
+      </div>
+      <div class="compare-bar-row">
+        <span class="compare-bar-label">${pB.name}</span>
+        <div class="compare-bar-track">
+          <div class="compare-bar-fill" style="width:${msB ? (msB.age/barMaxAge)*100 : 100}%;background:linear-gradient(90deg,#10b981,#059669)">${msB ? 'Age ' + msB.age + ' (' + msB.years + 'yr)' : 'Not reached'}</div>
+        </div>
+      </div>`;
+  }
+
+  // Build professions table
+  function buildTable() {
+    const savingsRate = 0.20;
+    const annualReturn = 0.103;
+    const rows = [];
+
+    for (const [key, p] of Object.entries(PROFESSIONS)) {
+      const res = simulate(p.salary, p.startAge, p.debt, savingsRate, annualReturn, 50);
+      const ms = res.milestones[1000000];
+      rows.push({
+        name: p.name,
+        salary: p.salary,
+        startAge: p.startAge,
+        debt: p.debt,
+        years: ms ? ms.years : 999,
+        millionaireAge: ms ? ms.age : null
+      });
+    }
+
+    rows.sort((a, b) => a.years - b.years);
+
+    const tbody = document.getElementById('prof-tbody');
+    tbody.innerHTML = rows.map((r, i) => `
+      <tr>
+        <td class="rank-cell">${r.years < 999 ? i + 1 : '—'}</td>
+        <td><strong>${r.name}</strong></td>
+        <td>${fmt(r.salary)}</td>
+        <td>${r.startAge}</td>
+        <td>${fmt(r.debt)}</td>
+        <td class="highlight-cell">${r.years < 999 ? r.years + ' years' : '50+ years'}</td>
+        <td><strong>${r.millionaireAge ? 'Age ' + r.millionaireAge : '—'}</strong></td>
+      </tr>`).join('');
+  }
+
+  // Initialize
+  document.addEventListener('DOMContentLoaded', function() {
+    buildTable();
+    runComparison();
+  });
+</script>
