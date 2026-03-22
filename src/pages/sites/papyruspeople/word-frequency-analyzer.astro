@@ -1,0 +1,796 @@
+---
+import SiteLayout from '../../../layouts/SiteLayout.astro';
+
+export const meta = {
+  title: 'Word Frequency Analyzer & Text Statistics',
+  description: 'Interactive text analyzer showing word frequencies, reading level, sentence length distribution, and vocabulary diversity. Instantly analyze your writing.',
+  category: 'calculator',
+  keywords: ['word frequency analyzer', 'text analyzer', 'reading level calculator', 'vocabulary diversity score', 'word cloud generator', 'writing analysis tool']
+};
+
+const schema = JSON.stringify([
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": meta.title,
+    "description": meta.description,
+    "author": { "@type": "Organization", "name": "Papyrus People" },
+    "publisher": { "@type": "Organization", "name": "Papyrus People" },
+    "datePublished": "2026-03-22",
+    "dateModified": "2026-03-22"
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "How does the Word Frequency Analyzer work?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Simply paste your text into the input field. The analyzer immediately processes it to calculate word frequencies, reading level (Flesch-Kincaid), vocabulary diversity, and generates a visual word cloud." }
+      },
+      {
+        "@type": "Question",
+        "name": "What is vocabulary diversity?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Vocabulary diversity (also known as lexical richness) is the ratio of unique words to the total number of words. A higher percentage indicates a more varied and richer vocabulary." }
+      },
+      {
+        "@type": "Question",
+        "name": "How is reading level calculated?",
+        "acceptedAnswer": { "@type": "Answer", "text": "We use the Flesch-Kincaid Grade Level formula, which evaluates the average number of words per sentence and the average number of syllables per word to estimate the US school grade level required to understand the text." }
+      },
+      {
+        "@type": "Question",
+        "name": "Can I export the analysis results?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Yes, you can export the word frequency table and other key statistics as a CSV file for further analysis in spreadsheet software like Excel or Google Sheets." }
+      },
+      {
+        "@type": "Question",
+        "name": "Are common words like 'the' and 'and' ignored?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Yes, by default, common English stop words are filtered out from the word cloud and frequency table to highlight the most meaningful words in your text, though you can toggle this setting." }
+      }
+    ]
+  }
+]);
+---
+
+<SiteLayout site="papyruspeople" title={meta.title} description={meta.description}>
+  <Fragment slot="head">
+    <script type="application/ld+json" set:html={schema} />
+  </Fragment>
+
+  <!-- HERO -->
+  <section class="freq-hero">
+    <div class="freq-hero-badge">INTERACTIVE ANALYZER</div>
+    <h1>Word Frequency <em>Analyzer</em> & Statistics</h1>
+    <p class="freq-hero-hook">The average novel uses only <strong>10,000 unique words</strong>. <br/>How diverse is your vocabulary?</p>
+  </section>
+
+  <!-- ANALYZER -->
+  <section class="freq-section">
+    <div class="freq-container">
+      <div class="freq-input-area">
+        <label for="text-input" class="freq-label">Paste Your Text Here</label>
+        <textarea id="text-input" class="freq-textarea" placeholder="Start typing or paste your text here to analyze word frequency, reading level, and more..."></textarea>
+
+        <div class="freq-controls">
+          <label class="freq-checkbox">
+            <input type="checkbox" id="remove-stopwords" checked>
+            <span>Remove Common Words (the, and, etc.)</span>
+          </label>
+          <button id="analyze-btn" class="freq-btn">Analyze Text</button>
+        </div>
+      </div>
+
+      <!-- RESULTS -->
+      <div id="results-panel" class="freq-results" style="display:none;">
+
+        <!-- TOP STATS -->
+        <div class="freq-stats-grid">
+          <div class="freq-stat-card">
+            <div class="freq-stat-val" id="stat-words">0</div>
+            <div class="freq-stat-label">Total Words</div>
+          </div>
+          <div class="freq-stat-card">
+            <div class="freq-stat-val" id="stat-unique">0</div>
+            <div class="freq-stat-label">Unique Words</div>
+          </div>
+          <div class="freq-stat-card">
+            <div class="freq-stat-val" id="stat-chars">0</div>
+            <div class="freq-stat-label">Characters</div>
+          </div>
+          <div class="freq-stat-card">
+            <div class="freq-stat-val" id="stat-sentences">0</div>
+            <div class="freq-stat-label">Sentences</div>
+          </div>
+        </div>
+
+        <!-- ADVANCED STATS -->
+        <div class="freq-advanced-stats">
+          <div class="freq-adv-card">
+            <h3>Reading Level</h3>
+            <div class="freq-adv-val" id="stat-grade">0</div>
+            <p>Flesch-Kincaid Grade Level</p>
+          </div>
+          <div class="freq-adv-card">
+            <h3>Vocabulary Diversity</h3>
+            <div class="freq-adv-val" id="stat-diversity">0%</div>
+            <p>Ratio of unique to total words</p>
+          </div>
+        </div>
+
+        <!-- WORD CLOUD -->
+        <div class="freq-panel">
+          <h2 class="freq-panel-title">Word Cloud Visualization</h2>
+          <div id="word-cloud" class="freq-word-cloud"></div>
+        </div>
+
+        <!-- SENTENCE LENGTH & OVERUSED -->
+        <div class="freq-grid-2">
+          <div class="freq-panel">
+            <h2 class="freq-panel-title">Sentence Length Distribution</h2>
+            <div id="sentence-chart" class="freq-chart"></div>
+          </div>
+          <div class="freq-panel">
+            <h2 class="freq-panel-title">Potentially Overused Words</h2>
+            <ul id="overused-list" class="freq-list"></ul>
+          </div>
+        </div>
+
+        <!-- FREQUENCY TABLE -->
+        <div class="freq-panel">
+          <div class="freq-table-header">
+            <h2 class="freq-panel-title">Word Frequency Table</h2>
+            <button id="export-btn" class="freq-btn-outline">Export CSV</button>
+          </div>
+          <div class="freq-table-wrap">
+            <table class="freq-table">
+              <thead>
+                <tr>
+                  <th>Word</th>
+                  <th>Count</th>
+                  <th>% of Text</th>
+                </tr>
+              </thead>
+              <tbody id="frequency-body"></tbody>
+            </table>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section class="freq-section">
+    <h2 class="freq-section-title">Frequently Asked Questions</h2>
+    <div class="freq-faq">
+      <details class="freq-faq-item">
+        <summary>How does the Word Frequency Analyzer work?</summary>
+        <p>Simply paste your text into the input field. The analyzer immediately processes it to calculate word frequencies, reading level (Flesch-Kincaid), vocabulary diversity, and generates a visual word cloud.</p>
+      </details>
+      <details class="freq-faq-item">
+        <summary>What is vocabulary diversity?</summary>
+        <p>Vocabulary diversity (also known as lexical richness) is the ratio of unique words to the total number of words. A higher percentage indicates a more varied and richer vocabulary.</p>
+      </details>
+      <details class="freq-faq-item">
+        <summary>How is reading level calculated?</summary>
+        <p>We use the Flesch-Kincaid Grade Level formula, which evaluates the average number of words per sentence and the average number of syllables per word to estimate the US school grade level required to understand the text.</p>
+      </details>
+      <details class="freq-faq-item">
+        <summary>Can I export the analysis results?</summary>
+        <p>Yes, you can export the word frequency table and other key statistics as a CSV file for further analysis in spreadsheet software like Excel or Google Sheets.</p>
+      </details>
+      <details class="freq-faq-item">
+        <summary>Are common words like 'the' and 'and' ignored?</summary>
+        <p>Yes, by default, common English stop words are filtered out from the word cloud and frequency table to highlight the most meaningful words in your text, though you can toggle this setting.</p>
+      </details>
+    </div>
+  </section>
+
+</SiteLayout>
+
+<style is:global>
+  /* ===== WORD FREQUENCY ANALYZER ===== */
+  .freq-page { max-width: 1100px; margin: 0 auto; }
+  .freq-hero {
+    text-align: center;
+    padding: 2.5rem 1.5rem 2rem;
+    background: linear-gradient(135deg, rgba(212,165,116,0.12) 0%, rgba(212,165,116,0.02) 60%, rgba(212,165,116,0.08) 100%);
+    border-bottom: 1px solid var(--border-color, #2a2418);
+    position: relative;
+    overflow: hidden;
+  }
+  .freq-hero::before {
+    content: '';
+    position: absolute;
+    top: -120px;
+    right: -120px;
+    width: 450px;
+    height: 450px;
+    background: radial-gradient(circle, rgba(212,165,116,0.1) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .freq-hero::after {
+    content: '';
+    position: absolute;
+    bottom: -80px;
+    left: -80px;
+    width: 300px;
+    height: 300px;
+    background: radial-gradient(circle, rgba(212,165,116,0.06) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .freq-hero-badge {
+    display: inline-block;
+    font-size: 0.7rem;
+    letter-spacing: 0.15em;
+    padding: 0.35rem 1rem;
+    border: 1px solid var(--accent-color, #D4A574);
+    border-radius: 100px;
+    color: var(--accent-color, #D4A574);
+    margin-bottom: 1.5rem;
+    font-weight: 600;
+    animation: freq-fadeUp 0.6s ease both;
+  }
+  .freq-hero h1 {
+    font-size: 2.5rem;
+    font-weight: 800;
+    margin: 0 0 1rem;
+    line-height: 1.1;
+    color: var(--text-primary, #e8e0d0);
+    animation: freq-fadeUp 0.6s ease 0.1s both;
+  }
+  .freq-hero h1 em {
+    font-style: normal;
+    color: var(--accent-color, #D4A574);
+  }
+  .freq-hero-hook {
+    font-size: 1.15rem;
+    color: var(--text-secondary, #a09880);
+    margin: 0 auto 2rem;
+    max-width: 600px;
+    line-height: 1.5;
+    animation: freq-fadeUp 0.6s ease 0.2s both;
+  }
+  .freq-hero-hook strong { color: var(--text-primary, #e8e0d0); }
+
+  .freq-section {
+    padding: 4rem 1.5rem;
+    max-width: 1000px;
+    margin: 0 auto;
+  }
+  .freq-section-title {
+    font-size: 1.8rem;
+    margin: 0 0 2rem;
+    text-align: center;
+    color: var(--text-primary, #e8e0d0);
+  }
+
+  .freq-container {
+    background: var(--card-bg, #12100c);
+    border: 1px solid var(--border-color, #2a2418);
+    border-radius: 16px;
+    padding: 2rem;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+  }
+
+  .freq-input-area { margin-bottom: 2rem; }
+  .freq-label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 0.75rem;
+    color: var(--text-primary, #e8e0d0);
+  }
+  .freq-textarea {
+    width: 100%;
+    min-height: 250px;
+    padding: 1.2rem;
+    background: rgba(0,0,0,0.3);
+    border: 1px solid var(--border-color, #2a2418);
+    border-radius: 12px;
+    color: var(--text-primary, #e8e0d0);
+    font-family: inherit;
+    font-size: 1.05rem;
+    line-height: 1.6;
+    resize: vertical;
+    transition: border-color 0.2s;
+  }
+  .freq-textarea:focus {
+    outline: none;
+    border-color: var(--accent-color, #D4A574);
+  }
+
+  .freq-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 1rem;
+    flex-wrap: wrap;
+    gap: 1rem;
+  }
+
+  .freq-checkbox {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    color: var(--text-secondary, #a09880);
+  }
+  .freq-checkbox input { accent-color: var(--accent-color, #D4A574); }
+
+  .freq-btn {
+    background: var(--accent-color, #D4A574);
+    color: #000;
+    border: none;
+    padding: 0.8rem 2rem;
+    font-size: 1.05rem;
+    font-weight: 700;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: transform 0.2s, background 0.2s;
+  }
+  .freq-btn:hover {
+    transform: translateY(-2px);
+    background: #e6b986;
+  }
+  .freq-btn-outline {
+    background: transparent;
+    color: var(--accent-color, #D4A574);
+    border: 1px solid var(--accent-color, #D4A574);
+    padding: 0.5rem 1rem;
+    font-size: 0.9rem;
+    font-weight: 600;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .freq-btn-outline:hover {
+    background: rgba(212,165,116,0.1);
+  }
+
+  /* Stats */
+  .freq-stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+    animation: freq-fadeUp 0.6s ease both;
+  }
+  .freq-stat-card {
+    background: rgba(0,0,0,0.2);
+    border: 1px solid var(--border-color, #2a2418);
+    border-radius: 12px;
+    padding: 1.5rem;
+    text-align: center;
+  }
+  .freq-stat-val {
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--accent-color, #D4A574);
+    margin-bottom: 0.25rem;
+  }
+  .freq-stat-label {
+    font-size: 0.9rem;
+    color: var(--text-secondary, #a09880);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+
+  /* Advanced Stats */
+  .freq-advanced-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+  }
+  .freq-adv-card {
+    background: linear-gradient(135deg, rgba(212,165,116,0.08), transparent);
+    border: 1px solid var(--border-color, #2a2418);
+    border-radius: 12px;
+    padding: 1.5rem;
+  }
+  .freq-adv-card h3 {
+    margin: 0 0 0.5rem;
+    font-size: 1.1rem;
+    color: var(--text-primary, #e8e0d0);
+  }
+  .freq-adv-val {
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: var(--accent-color, #D4A574);
+    margin-bottom: 0.5rem;
+  }
+  .freq-adv-card p {
+    margin: 0;
+    color: var(--text-secondary, #a09880);
+    font-size: 0.9rem;
+  }
+
+  /* Panels */
+  .freq-panel {
+    background: rgba(0,0,0,0.2);
+    border: 1px solid var(--border-color, #2a2418);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+  }
+  .freq-panel-title {
+    font-size: 1.2rem;
+    margin: 0 0 1.5rem;
+    color: var(--text-primary, #e8e0d0);
+    border-bottom: 1px solid var(--border-color, #2a2418);
+    padding-bottom: 0.75rem;
+  }
+  .freq-grid-2 {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+  }
+
+  /* Word Cloud */
+  .freq-word-cloud {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    gap: 15px;
+    padding: 2rem;
+    min-height: 250px;
+  }
+  .cloud-word {
+    transition: transform 0.2s;
+    line-height: 1;
+    color: var(--text-primary, #e8e0d0);
+  }
+  .cloud-word:hover {
+    transform: scale(1.1);
+    color: var(--accent-color, #D4A574);
+  }
+
+  /* Sentence Chart */
+  .freq-chart {
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+    height: 180px;
+    padding-top: 20px;
+    border-bottom: 1px solid var(--border-color, #2a2418);
+  }
+  .chart-bar-wrap {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    align-items: center;
+    height: 100%;
+    position: relative;
+  }
+  .chart-bar {
+    width: 100%;
+    background: var(--accent-color, #D4A574);
+    border-radius: 4px 4px 0 0;
+    min-height: 2px;
+    transition: height 0.5s ease;
+    opacity: 0.8;
+  }
+  .chart-bar:hover { opacity: 1; }
+  .chart-label {
+    margin-top: 8px;
+    font-size: 0.8rem;
+    color: var(--text-secondary, #a09880);
+  }
+  .chart-tooltip {
+    position: absolute;
+    top: -30px;
+    background: #000;
+    color: #fff;
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.2s;
+    white-space: nowrap;
+  }
+  .chart-bar-wrap:hover .chart-tooltip { opacity: 1; }
+
+  /* Lists & Tables */
+  .freq-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+  .freq-list li {
+    padding: 0.75rem 0;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    display: flex;
+    justify-content: space-between;
+    color: var(--text-secondary, #a09880);
+  }
+  .freq-list li strong { color: var(--text-primary, #e8e0d0); }
+
+  .freq-table-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .freq-table-header .freq-panel-title { border: none; margin: 0; padding: 0; }
+
+  .freq-table-wrap {
+    margin-top: 1.5rem;
+    max-height: 400px;
+    overflow-y: auto;
+    border: 1px solid var(--border-color, #2a2418);
+    border-radius: 8px;
+  }
+  .freq-table {
+    width: 100%;
+    border-collapse: collapse;
+    text-align: left;
+  }
+  .freq-table th, .freq-table td {
+    padding: 1rem;
+    border-bottom: 1px solid var(--border-color, #2a2418);
+  }
+  .freq-table th {
+    background: rgba(0,0,0,0.4);
+    color: var(--text-primary, #e8e0d0);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  .freq-table tr:hover { background: rgba(255,255,255,0.02); }
+  .freq-table td { color: var(--text-secondary, #a09880); }
+  .freq-table td strong { color: var(--text-primary, #e8e0d0); }
+
+  .freq-bar-bg {
+    width: 100px;
+    height: 8px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 4px;
+    display: inline-block;
+    vertical-align: middle;
+    margin-left: 10px;
+  }
+  .freq-bar-fill {
+    height: 100%;
+    background: var(--accent-color, #D4A574);
+    border-radius: 4px;
+  }
+
+  /* FAQ */
+  .freq-faq {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  .freq-faq-item {
+    background: var(--card-bg, #12100c);
+    border: 1px solid var(--border-color, #2a2418);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .freq-faq-item summary {
+    padding: 1.2rem 1.5rem;
+    font-weight: 600;
+    cursor: pointer;
+    color: var(--text-primary, #e8e0d0);
+    list-style: none;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .freq-faq-item summary::-webkit-details-marker { display: none; }
+  .freq-faq-item summary::after {
+    content: '+';
+    font-size: 1.5rem;
+    color: var(--accent-color, #D4A574);
+    line-height: 1;
+  }
+  .freq-faq-item[open] summary::after { content: '−'; }
+  .freq-faq-item p {
+    padding: 0 1.5rem 1.2rem;
+    margin: 0;
+    color: var(--text-secondary, #a09880);
+    line-height: 1.6;
+  }
+
+  @keyframes freq-fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  @media (max-width: 768px) {
+    .freq-grid-2 { grid-template-columns: 1fr; }
+    .freq-advanced-stats { grid-template-columns: 1fr; }
+  }
+</style>
+
+<script>
+(function() {
+  var STOP_WORDS = new Set(["a", "about", "above", "after", "again", "against", "all", "am", "an", "and", "any", "are", "aren't", "as", "at", "be", "because", "been", "before", "being", "below", "between", "both", "but", "by", "can't", "cannot", "could", "couldn't", "did", "didn't", "do", "does", "doesn't", "doing", "don't", "down", "during", "each", "few", "for", "from", "further", "had", "hadn't", "has", "hasn't", "have", "haven't", "having", "he", "he'd", "he'll", "he's", "her", "here", "here's", "hers", "herself", "him", "himself", "his", "how", "how's", "i", "i'd", "i'll", "i'm", "i've", "if", "in", "into", "is", "isn't", "it", "it's", "its", "itself", "let's", "me", "more", "most", "mustn't", "my", "myself", "no", "nor", "not", "of", "off", "on", "once", "only", "or", "other", "ought", "our", "ours", "ourselves", "out", "over", "own", "same", "shan't", "she", "she'd", "she'll", "she's", "should", "shouldn't", "so", "some", "such", "than", "that", "that's", "the", "their", "theirs", "them", "themselves", "then", "there", "there's", "these", "they", "they'd", "they'll", "they're", "they've", "this", "those", "through", "to", "too", "under", "until", "up", "very", "was", "wasn't", "we", "we'd", "we'll", "we're", "we've", "were", "weren't", "what", "what's", "when", "when's", "where", "where's", "which", "while", "who", "who's", "whom", "why", "why's", "with", "won't", "would", "wouldn't", "you", "you'd", "you'll", "you're", "you've", "your", "yours", "yourself", "yourselves"]);
+
+  var btn = document.getElementById('analyze-btn');
+  var input = document.getElementById('text-input');
+  var removeStopwords = document.getElementById('remove-stopwords');
+  var resultsPanel = document.getElementById('results-panel');
+  var exportBtn = document.getElementById('export-btn');
+
+  var currentCsvData = "";
+
+  function countSyllables(word) {
+    word = word.toLowerCase();
+    if (word.length <= 3) return 1;
+    word = word.replace(/(?:[^laeiouy]es|ed|[^laeiouy]e)$/, '');
+    word = word.replace(/^y/, '');
+    var syllables = word.match(/[aeiouy]{1,2}/g);
+    return syllables ? syllables.length : 1;
+  }
+
+  function getFleschKincaid(words, sentences, syllables) {
+    if (words === 0 || sentences === 0) return 0;
+    var score = 0.39 * (words / sentences) + 11.8 * (syllables / words) - 15.59;
+    return Math.max(0, Math.round(score * 10) / 10);
+  }
+
+  btn.addEventListener('click', function() {
+    var text = input.value.trim();
+    if (!text) return;
+
+    // Show panel
+    resultsPanel.style.display = 'block';
+    resultsPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+    // Basic Stats
+    var chars = text.length;
+    var wordsRaw = text.match(/\b\w+('\w+)?\b/g) || [];
+    var sentencesRaw = text.match(/[^\.!\?]+[\.!\?]+/g) || [];
+    if (sentencesRaw.length === 0 && wordsRaw.length > 0) sentencesRaw = [text]; // Assume 1 sentence if no punctuation
+
+    var totalWords = wordsRaw.length;
+    var totalSentences = sentencesRaw.length;
+
+    // Syllable count for reading level
+    var totalSyllables = 0;
+    wordsRaw.forEach(function(w) { totalSyllables += countSyllables(w); });
+
+    var gradeLevel = getFleschKincaid(totalWords, totalSentences, totalSyllables);
+
+    // Frequencies
+    var freqs = {};
+    var filterStop = removeStopwords.checked;
+
+    wordsRaw.forEach(function(w) {
+      var lw = w.toLowerCase();
+      if (filterStop && STOP_WORDS.has(lw)) return;
+      freqs[lw] = (freqs[lw] || 0) + 1;
+    });
+
+    var sortedWords = Object.keys(freqs).map(function(k) {
+      return { word: k, count: freqs[k] };
+    }).sort(function(a, b) { return b.count - a.count; });
+
+    var uniqueWords = sortedWords.length;
+    var diversity = totalWords > 0 ? Math.round((uniqueWords / totalWords) * 100) : 0;
+
+    // Update Top Stats
+    document.getElementById('stat-words').textContent = totalWords.toLocaleString();
+    document.getElementById('stat-unique').textContent = uniqueWords.toLocaleString();
+    document.getElementById('stat-chars').textContent = chars.toLocaleString();
+    document.getElementById('stat-sentences').textContent = totalSentences.toLocaleString();
+
+    document.getElementById('stat-grade').textContent = gradeLevel;
+    document.getElementById('stat-diversity').textContent = diversity + '%';
+
+    // Sentence Lengths
+    var lenFreqs = { '1-5':0, '6-10':0, '11-15':0, '16-20':0, '21+':0 };
+    sentencesRaw.forEach(function(s) {
+      var wc = (s.match(/\b\w+('\w+)?\b/g) || []).length;
+      if (wc <= 5) lenFreqs['1-5']++;
+      else if (wc <= 10) lenFreqs['6-10']++;
+      else if (wc <= 15) lenFreqs['11-15']++;
+      else if (wc <= 20) lenFreqs['16-20']++;
+      else lenFreqs['21+']++;
+    });
+
+    var maxLenFreq = Math.max(lenFreqs['1-5'], lenFreqs['6-10'], lenFreqs['11-15'], lenFreqs['16-20'], lenFreqs['21+'], 1);
+
+    var chart = document.getElementById('sentence-chart');
+    chart.innerHTML = '';
+    var labels = ['1-5', '6-10', '11-15', '16-20', '21+'];
+    labels.forEach(function(lbl) {
+      var val = lenFreqs[lbl];
+      var h = Math.max((val / maxLenFreq) * 150, 4);
+      var wrap = document.createElement('div');
+      wrap.className = 'chart-bar-wrap';
+      wrap.innerHTML =
+        '<div class="chart-tooltip">' + val + ' sentences</div>' +
+        '<div class="chart-bar" style="height:0px" data-h="' + h + '"></div>' +
+        '<div class="chart-label">' + lbl + ' wds</div>';
+      chart.appendChild(wrap);
+    });
+
+    // Animate bars
+    setTimeout(function() {
+      var bars = chart.querySelectorAll('.chart-bar');
+      bars.forEach(function(b) { b.style.height = b.getAttribute('data-h') + 'px'; });
+    }, 100);
+
+    // Overused Words (excluding extremely common structural words even if stopwords are off, to make it useful)
+    var overused = sortedWords.filter(function(item) {
+      return !STOP_WORDS.has(item.word) && item.word.length > 3 && item.count >= 3 && (item.count / totalWords) > 0.01;
+    }).slice(0, 5);
+
+    var overusedList = document.getElementById('overused-list');
+    if (overused.length > 0) {
+      overusedList.innerHTML = overused.map(function(item) {
+        return '<li><strong>"' + item.word + '"</strong> <span>Used ' + item.count + ' times</span></li>';
+      }).join('');
+    } else {
+      overusedList.innerHTML = '<li><span style="opacity:0.7">No obviously overused words detected. Good job!</span></li>';
+    }
+
+    // Word Cloud (Top 30)
+    var cloudData = sortedWords.slice(0, 30);
+    var cloudMaxCount = cloudData.length > 0 ? cloudData[0].count : 1;
+    var cloudMinCount = cloudData.length > 0 ? cloudData[cloudData.length-1].count : 1;
+
+    // Shuffle array for cloud
+    var shuffledCloud = cloudData.slice().sort(function() { return 0.5 - Math.random(); });
+
+    var cloudContainer = document.getElementById('word-cloud');
+    cloudContainer.innerHTML = '';
+
+    shuffledCloud.forEach(function(item) {
+      // Font size between 14px and 48px
+      var ratio = cloudMaxCount > cloudMinCount ? (item.count - cloudMinCount) / (cloudMaxCount - cloudMinCount) : 0.5;
+      var fontSize = 14 + (ratio * 34);
+
+      var span = document.createElement('span');
+      span.className = 'cloud-word';
+      span.textContent = item.word;
+      span.style.fontSize = fontSize + 'px';
+
+      // Random opacity for visual interest
+      var opacity = 0.5 + (ratio * 0.5);
+      span.style.opacity = opacity;
+
+      cloudContainer.appendChild(span);
+    });
+
+    // Frequency Table
+    var tbody = document.getElementById('frequency-body');
+    tbody.innerHTML = '';
+    currentCsvData = "Word,Count,Percentage\n";
+
+    var wordsToCountForTable = filterStop ? sortedWords.reduce(function(sum, item) { return sum + item.count; }, 0) : totalWords;
+    if (wordsToCountForTable === 0) wordsToCountForTable = 1;
+
+    sortedWords.slice(0, 100).forEach(function(item) {
+      var pct = ((item.count / wordsToCountForTable) * 100).toFixed(1);
+      currentCsvData += item.word + "," + item.count + "," + pct + "%\n";
+
+      var tr = document.createElement('tr');
+      tr.innerHTML =
+        '<td><strong>' + item.word + '</strong></td>' +
+        '<td>' + item.count + '</td>' +
+        '<td>' + pct + '% <div class="freq-bar-bg"><div class="freq-bar-fill" style="width:' + pct + '%"></div></div></td>';
+      tbody.appendChild(tr);
+    });
+  });
+
+  exportBtn.addEventListener('click', function() {
+    if (!currentCsvData) return;
+    var blob = new Blob([currentCsvData], { type: 'text/csv;charset=utf-8;' });
+    var link = document.createElement("a");
+    var url = URL.createObjectURL(blob);
+    link.setAttribute("href", url);
+    link.setAttribute("download", "word_frequency_analysis.csv");
+    link.style.visibility = 'hidden';
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  });
+
+})();
+</script>
