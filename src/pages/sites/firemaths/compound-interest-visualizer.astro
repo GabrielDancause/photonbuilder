@@ -1,0 +1,1053 @@
+---
+import SiteLayout from '../../../layouts/SiteLayout.astro';
+
+export const meta = {
+  title: 'Compound Interest Visualizer',
+  description: 'Interactive compound interest calculator and visualizer. See how initial investments and monthly contributions grow over time with compound interest.',
+  category: 'calculator',
+  keywords: ['compound interest calculator', 'investment growth visualizer', 'compound interest chart', 'savings calculator', 'rule of 72 calculator']
+};
+
+const schema = JSON.stringify([
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": meta.title,
+    "description": meta.description,
+    "author": { "@type": "Organization", "name": "Firemaths" },
+    "publisher": { "@type": "Organization", "name": "Firemaths" },
+    "datePublished": "2026-03-22",
+    "dateModified": "2026-03-22"
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "How does compound interest work?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Compound interest is the interest on savings calculated on both the initial principal and the accumulated interest from previous periods. It allows your wealth to grow exponentially over time." }
+      },
+      {
+        "@type": "Question",
+        "name": "What is the Rule of 72?",
+        "acceptedAnswer": { "@type": "Answer", "text": "The Rule of 72 is a simple formula to estimate how long it will take for an investment to double. You divide 72 by the annual rate of return. For example, at a 10% return, your money doubles in about 7.2 years." }
+      },
+      {
+        "@type": "Question",
+        "name": "Why is starting early important for compound interest?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Time is the most crucial factor in compound interest. Because your money grows exponentially, starting to invest in your 20s instead of your 30s can double your final retirement balance, even if you invest less money overall." }
+      },
+      {
+        "@type": "Question",
+        "name": "How often should interest compound?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Interest can compound daily, monthly, or annually. The more frequently it compounds, the faster your money grows. Most investment returns are typically calculated on an annual compounding basis for simplicity." }
+      },
+      {
+        "@type": "Question",
+        "name": "What is a good rate of return?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Historically, the stock market (like the S&P 500) has returned an average of around 10% per year before inflation. A conservative portfolio might return 5-7%, while high-yield savings accounts typically offer 4-5%." }
+      }
+    ]
+  }
+]);
+---
+
+<SiteLayout site="firemaths" title={meta.title} description={meta.description}>
+  <Fragment slot="head">
+    <script type="application/ld+json" set:html={schema} />
+  </Fragment>
+
+  <!-- HERO -->
+  <section class="comp-hero">
+    <div class="comp-hero-badge">INTERACTIVE VISUALIZER</div>
+    <h1>The Power of <em>Compound Interest</em></h1>
+    <p class="comp-hero-hook"><strong>$200/month at 10% = $1.3M in 40 years.</strong> <br/>See how your money works for you.</p>
+    <div class="comp-hero-stats">
+      <div class="comp-stat">
+        <span class="comp-stat-num">Time</span>
+        <span class="comp-stat-label">The Greatest Asset</span>
+      </div>
+      <div class="comp-stat">
+        <span class="comp-stat-num">Consistency</span>
+        <span class="comp-stat-label">The Strategy</span>
+      </div>
+      <div class="comp-stat">
+        <span class="comp-stat-num">Patience</span>
+        <span class="comp-stat-label">The Requirement</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- CALCULATOR -->
+  <section class="comp-section">
+    <h2 class="comp-section-title">Your Wealth Growth</h2>
+    <p class="comp-section-sub">Adjust the inputs to visualize your compounding timeline.</p>
+
+    <div class="comp-calc-container">
+      <div class="comp-calc-inputs">
+        <div class="comp-input-group">
+          <label for="input-initial">Initial Investment</label>
+          <div class="comp-input-wrap"><span class="comp-input-prefix">$</span><input type="number" id="input-initial" min="0" max="10000000" step="100" value="1000" /></div>
+        </div>
+
+        <div class="comp-input-group">
+          <label for="input-monthly">Monthly Contribution</label>
+          <div class="comp-input-wrap"><span class="comp-input-prefix">$</span><input type="number" id="input-monthly" min="0" max="100000" step="50" value="200" /></div>
+        </div>
+
+        <div class="comp-input-group">
+          <label for="slider-years">Years to Grow: <strong id="display-years">40</strong></label>
+          <input type="range" id="slider-years" min="1" max="60" value="40" />
+          <div class="comp-slider-labels"><span>1 yr</span><span>60 yrs</span></div>
+        </div>
+
+        <div class="comp-input-group">
+          <label for="slider-rate">Estimated Annual Return: <strong id="display-rate">10%</strong></label>
+          <input type="range" id="slider-rate" min="0" max="20" step="0.1" value="10.0" />
+          <div class="comp-slider-labels"><span>0%</span><span>10% Avg</span><span>20%</span></div>
+        </div>
+
+        <button id="calc-btn" class="comp-btn">Calculate Growth</button>
+      </div>
+
+      <!-- RESULTS -->
+      <div class="comp-calc-results" id="results-panel">
+        <div class="comp-result-header">
+          <div class="comp-result-title">Future Value</div>
+          <div class="comp-result-total" id="result-total">$1,318,311</div>
+          <div class="comp-result-breakdown">
+            <div>Principal: <strong id="result-principal">$97,000</strong></div>
+            <div>Interest: <strong id="result-interest">$1,221,311</strong></div>
+          </div>
+        </div>
+
+        <!-- MILESTONES -->
+        <div class="comp-milestones" id="milestones-container"></div>
+
+        <!-- ANIMATED BAR CHART -->
+        <div class="comp-chart-wrap">
+          <div class="comp-chart-title">Growth Over Time</div>
+          <div class="comp-chart" id="wealth-chart"></div>
+          <div class="comp-chart-legend">
+            <span><i class="comp-legend-dot contributions"></i> Total Contributions</span>
+            <span><i class="comp-legend-dot growth"></i> Total Interest</span>
+          </div>
+        </div>
+
+        <div class="comp-insight" id="result-insight"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- COMPARISON -->
+  <section class="comp-section">
+    <h2 class="comp-section-title">Compare Return Rates</h2>
+    <p class="comp-section-sub">See how different interest rates affect your timeline.</p>
+
+    <div class="comp-compare-controls">
+      <div class="comp-input-group">
+        <label for="compare-rate-a">Rate A (%)</label>
+        <input type="number" id="compare-rate-a" min="0" max="30" step="0.1" value="5" />
+      </div>
+      <div class="comp-vs">VS</div>
+      <div class="comp-input-group">
+        <label for="compare-rate-b">Rate B (%)</label>
+        <input type="number" id="compare-rate-b" min="0" max="30" step="0.1" value="10" />
+      </div>
+      <button id="compare-btn" class="comp-btn">Compare Rates</button>
+    </div>
+
+    <div class="comp-compare-results" id="compare-results" style="display:none;">
+      <div class="comp-compare-cards">
+        <div class="comp-compare-card" id="compare-card-a"></div>
+        <div class="comp-compare-card" id="compare-card-b"></div>
+      </div>
+      <div class="comp-compare-race" id="compare-race"></div>
+    </div>
+  </section>
+
+  <!-- RULE OF 72 -->
+  <section class="comp-section">
+    <h2 class="comp-section-title">The Rule of 72</h2>
+    <p class="comp-section-sub">How long does it take for your money to double?</p>
+
+    <div class="comp-rule72-container">
+      <div class="comp-rule72-formula">
+        <span class="num">72</span> &divide; <span class="rate" id="rule72-rate">10</span>% = <strong class="years" id="rule72-years">7.2</strong> Years
+      </div>
+      <p>At a <strong id="rule72-text-rate">10</strong>% annual return, your initial investment of <strong id="rule72-text-initial">$1,000</strong> will double to <strong id="rule72-text-double">$2,000</strong> in roughly <strong id="rule72-text-years">7.2</strong> years without any additional contributions.</p>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section class="comp-section">
+    <h2 class="comp-section-title">Frequently Asked Questions</h2>
+    <div class="comp-faq">
+      <details class="comp-faq-item">
+        <summary>How does compound interest work?</summary>
+        <p>Compound interest is the interest on savings calculated on both the initial principal and the accumulated interest from previous periods. It allows your wealth to grow exponentially over time.</p>
+      </details>
+      <details class="comp-faq-item">
+        <summary>What is the Rule of 72?</summary>
+        <p>The Rule of 72 is a simple formula to estimate how long it will take for an investment to double. You divide 72 by the annual rate of return. For example, at a 10% return, your money doubles in about 7.2 years.</p>
+      </details>
+      <details class="comp-faq-item">
+        <summary>Why is starting early important for compound interest?</summary>
+        <p>Time is the most crucial factor in compound interest. Because your money grows exponentially, starting to invest in your 20s instead of your 30s can double your final retirement balance, even if you invest less money overall.</p>
+      </details>
+      <details class="comp-faq-item">
+        <summary>How often should interest compound?</summary>
+        <p>Interest can compound daily, monthly, or annually. The more frequently it compounds, the faster your money grows. Most investment returns are typically calculated on an annual compounding basis for simplicity.</p>
+      </details>
+      <details class="comp-faq-item">
+        <summary>What is a good rate of return?</summary>
+        <p>Historically, the stock market (like the S&P 500) has returned an average of around 10% per year before inflation. A conservative portfolio might return 5-7%, while high-yield savings accounts typically offer 4-5%.</p>
+      </details>
+    </div>
+  </section>
+</SiteLayout>
+
+<style is:global>
+  /* ===== COMPOUND INTEREST VISUALIZER ===== */
+  .comp-page { max-width: 1100px; margin: 0 auto; }
+  .comp-hero {
+    text-align: center;
+    padding: 2.5rem 1.5rem 2rem;
+    background: linear-gradient(135deg, rgba(212,160,23,0.12) 0%, rgba(212,160,23,0.02) 60%, rgba(212,160,23,0.08) 100%);
+    border-bottom: 1px solid var(--border-color, #152040);
+    position: relative;
+    overflow: hidden;
+  }
+  .comp-hero::before {
+    content: '';
+    position: absolute;
+    top: -120px;
+    right: -120px;
+    width: 450px;
+    height: 450px;
+    background: radial-gradient(circle, rgba(212,160,23,0.1) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .comp-hero::after {
+    content: '';
+    position: absolute;
+    bottom: -80px;
+    left: -80px;
+    width: 300px;
+    height: 300px;
+    background: radial-gradient(circle, rgba(212,160,23,0.06) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .comp-hero-badge {
+    display: inline-block;
+    font-size: 0.7rem;
+    letter-spacing: 0.15em;
+    padding: 0.35rem 1rem;
+    border: 1px solid var(--accent-color, #D4A017);
+    border-radius: 100px;
+    color: var(--accent-color, #D4A017);
+    margin-bottom: 1.5rem;
+    font-weight: 600;
+    animation: comp-fadeUp 0.6s ease both;
+  }
+  .comp-hero h1 {
+    font-size: clamp(1.6rem, 3.5vw, 2.2rem);
+    line-height: 1.15;
+    margin: 0 auto 1rem;
+    max-width: 700px;
+    color: var(--text-primary, #c8d0de);
+    animation: comp-fadeUp 0.6s 0.1s ease both;
+  }
+  .comp-hero h1 em {
+    color: var(--accent-color, #D4A017);
+    font-style: italic;
+  }
+  .comp-hero-hook {
+    font-size: 1.15rem;
+    color: var(--text-secondary, #94a3b8);
+    max-width: 600px;
+    margin: 0 auto 2.5rem;
+    line-height: 1.6;
+    animation: comp-fadeUp 0.6s 0.2s ease both;
+  }
+  .comp-hero-stats {
+    display: flex;
+    justify-content: center;
+    gap: 3rem;
+    flex-wrap: wrap;
+    animation: comp-fadeUp 0.6s 0.3s ease both;
+  }
+  .comp-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+  }
+  .comp-stat-num {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--accent-color, #D4A017);
+    white-space: nowrap;
+  }
+  .comp-stat-label {
+    font-size: 0.7rem;
+    color: var(--text-secondary, #94a3b8);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  /* SECTIONS */
+  .comp-section {
+    padding: 2.5rem 1.5rem;
+    max-width: 800px;
+    margin: 0 auto;
+    border-bottom: 1px solid var(--border-color, #152040);
+  }
+  .comp-section:last-child {
+    border-bottom: none;
+  }
+  .comp-section-title {
+    font-size: 1.8rem;
+    margin-bottom: 0.5rem;
+    text-align: center;
+    color: var(--text-primary, #c8d0de);
+  }
+  .comp-section-sub {
+    text-align: center;
+    color: var(--text-secondary, #94a3b8);
+    margin-bottom: 2.5rem;
+  }
+
+  /* CALCULATOR */
+  .comp-calc-container {
+    display: flex;
+    flex-direction: column;
+    gap: 2rem;
+  }
+  .comp-calc-inputs {
+    background: var(--bg-surface, #0f172a);
+    border: 1px solid var(--border-color, #1e293b);
+    border-radius: 12px;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
+  }
+  .comp-input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .comp-input-group label {
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--text-primary, #c8d0de);
+    display: flex;
+    justify-content: space-between;
+  }
+  .comp-input-group label strong {
+    color: var(--accent-color, #D4A017);
+  }
+  .comp-input-wrap {
+    display: flex;
+    align-items: center;
+    background: var(--bg-body, #020617);
+    border: 1px solid var(--border-color, #1e293b);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+  .comp-input-wrap:focus-within {
+    border-color: var(--accent-color, #D4A017);
+  }
+  .comp-input-prefix {
+    padding: 0.6rem 0.8rem;
+    background: var(--bg-surface, #0f172a);
+    color: var(--text-secondary, #94a3b8);
+    border-right: 1px solid var(--border-color, #1e293b);
+    font-weight: 600;
+  }
+  .comp-input-group input[type="number"], .comp-input-group select {
+    flex: 1;
+    width: 100%;
+    padding: 0.6rem;
+    background: transparent;
+    border: none;
+    color: var(--text-primary, #c8d0de);
+    font-size: 1rem;
+    outline: none;
+  }
+  .comp-input-group input[type="number"] {
+    width: 100%;
+    padding: 0.6rem;
+    background: var(--bg-body, #020617);
+    border: 1px solid var(--border-color, #1e293b);
+    border-radius: 6px;
+    color: var(--text-primary, #c8d0de);
+    font-size: 1rem;
+    outline: none;
+  }
+  .comp-input-wrap input[type="number"] {
+    border: none;
+    border-radius: 0;
+  }
+  .comp-input-group input[type="range"] {
+    width: 100%;
+    accent-color: var(--accent-color, #D4A017);
+    cursor: pointer;
+  }
+  .comp-slider-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.75rem;
+    color: var(--text-secondary, #94a3b8);
+  }
+
+  .comp-btn {
+    background: var(--accent-color, #D4A017);
+    color: #fff;
+    border: none;
+    padding: 0.8rem;
+    font-size: 1rem;
+    font-weight: 600;
+    border-radius: 6px;
+    cursor: pointer;
+    transition: filter 0.2s ease, transform 0.1s;
+    margin-top: 0.5rem;
+  }
+  .comp-btn:hover {
+    filter: brightness(1.1);
+  }
+  .comp-btn:active {
+    transform: scale(0.98);
+  }
+
+  /* RESULTS */
+  .comp-calc-results {
+    background: var(--bg-surface, #0f172a);
+    border: 1px solid var(--border-color, #1e293b);
+    border-radius: 12px;
+    padding: 1.5rem;
+    animation: comp-fadeIn 0.4s ease;
+  }
+  .comp-result-header {
+    text-align: center;
+    margin-bottom: 2rem;
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--border-color, #1e293b);
+  }
+  .comp-result-title {
+    font-size: 0.9rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-secondary, #94a3b8);
+    margin-bottom: 0.5rem;
+  }
+  .comp-result-total {
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: var(--accent-color, #D4A017);
+    margin-bottom: 0.8rem;
+  }
+  .comp-result-breakdown {
+    display: flex;
+    justify-content: center;
+    gap: 2rem;
+    font-size: 0.95rem;
+    color: var(--text-secondary, #94a3b8);
+  }
+  .comp-result-breakdown strong {
+    color: var(--text-primary, #c8d0de);
+  }
+
+  /* MILESTONES */
+  .comp-milestones {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(130px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2.5rem;
+  }
+  .comp-milestone {
+    background: var(--bg-body, #020617);
+    border: 1px solid var(--border-color, #1e293b);
+    border-radius: 8px;
+    padding: 1rem 0.5rem;
+    text-align: center;
+    opacity: 0;
+    transform: translateY(10px);
+    transition: all 0.4s ease;
+  }
+  .comp-milestone.show {
+    opacity: 1;
+    transform: translateY(0);
+  }
+  .comp-milestone.reached {
+    border-color: rgba(212,160,23,0.3);
+    background: rgba(212,160,23,0.03);
+  }
+  .comp-milestone.celebrate {
+    animation: comp-pop 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275) both;
+  }
+  .comp-milestone-icon {
+    margin-bottom: 0.5rem;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+  }
+  .comp-milestone-amt {
+    font-weight: 700;
+    font-size: 1.1rem;
+    color: var(--text-primary, #c8d0de);
+    margin-bottom: 0.2rem;
+  }
+  .comp-milestone-age {
+    font-size: 0.8rem;
+    color: var(--text-secondary, #94a3b8);
+  }
+  .comp-milestone.reached .comp-milestone-amt {
+    color: var(--accent-color, #D4A017);
+  }
+
+  /* CHART */
+  .comp-chart-wrap {
+    margin-bottom: 1.5rem;
+  }
+  .comp-chart-title {
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-bottom: 1rem;
+    color: var(--text-primary, #c8d0de);
+  }
+  .comp-chart {
+    height: 240px;
+    display: flex;
+    align-items: flex-end;
+    gap: 4px;
+    padding-bottom: 26px;
+    position: relative;
+    border-bottom: 1px solid var(--border-color, #1e293b);
+  }
+  .comp-chart-million-line {
+    position: absolute;
+    left: 0;
+    right: 0;
+    border-top: 1px dashed rgba(212,160,23,0.4);
+    pointer-events: none;
+    z-index: 1;
+  }
+  .comp-chart-million-label {
+    position: absolute;
+    right: 0;
+    top: -20px;
+    font-size: 0.7rem;
+    color: var(--accent-color, #D4A017);
+    background: var(--bg-surface, #0f172a);
+    padding: 0 4px;
+  }
+  .comp-chart-bar-group {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+  }
+  .comp-chart-bar {
+    width: 100%;
+    max-width: 24px;
+    background: transparent;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    transition: height 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+    position: relative;
+    z-index: 2;
+  }
+  .comp-chart-bar .growth-part {
+    background: var(--accent-color, #D4A017);
+    width: 100%;
+    border-radius: 3px 3px 0 0;
+    transition: height 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  .comp-chart-bar .contrib-part {
+    background: rgba(212,160,23,0.3);
+    width: 100%;
+    transition: height 0.6s cubic-bezier(0.2, 0.8, 0.2, 1);
+    border-radius: 3px 3px 0 0;
+  }
+  .comp-chart-bar:hover {
+    filter: brightness(1.2);
+  }
+  .comp-chart-bar-label {
+    position: absolute;
+    bottom: -22px;
+    font-size: 0.7rem;
+    color: var(--text-secondary, #94a3b8);
+  }
+  .comp-chart-tooltip {
+    position: absolute;
+    top: -40px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: #000;
+    color: #fff;
+    font-size: 0.75rem;
+    padding: 4px 8px;
+    border-radius: 4px;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.2s;
+    z-index: 10;
+  }
+  .comp-chart-bar-group:hover .comp-chart-tooltip {
+    opacity: 1;
+  }
+  .comp-chart-legend {
+    display: flex;
+    justify-content: center;
+    gap: 1.5rem;
+    margin-top: 1rem;
+    font-size: 0.8rem;
+    color: var(--text-secondary, #94a3b8);
+  }
+  .comp-legend-dot {
+    display: inline-block;
+    width: 10px;
+    height: 10px;
+    border-radius: 2px;
+    margin-right: 6px;
+  }
+  .comp-legend-dot.contributions { background: rgba(212,160,23,0.3); }
+  .comp-legend-dot.growth { background: var(--accent-color, #D4A017); }
+
+  .comp-insight {
+    padding: 1rem;
+    background: rgba(212,160,23,0.05);
+    border-left: 3px solid var(--accent-color, #D4A017);
+    border-radius: 0 6px 6px 0;
+    font-size: 0.95rem;
+    line-height: 1.5;
+    color: var(--text-primary, #c8d0de);
+  }
+
+  /* COMPARISON */
+  .comp-compare-controls {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 1rem;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+  }
+  .comp-vs {
+    font-weight: 800;
+    color: var(--text-secondary, #94a3b8);
+    font-size: 1.2rem;
+  }
+  .comp-compare-cards {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    margin-bottom: 2rem;
+  }
+  .comp-compare-card {
+    background: var(--bg-surface, #0f172a);
+    border: 1px solid var(--border-color, #1e293b);
+    border-radius: 12px;
+    padding: 1.5rem;
+  }
+  .comp-compare-card h3 {
+    margin: 0 0 1rem;
+    font-size: 1.2rem;
+    color: var(--text-primary, #c8d0de);
+    border-bottom: 1px solid var(--border-color, #1e293b);
+    padding-bottom: 0.5rem;
+  }
+  .comp-compare-stat {
+    display: flex;
+    justify-content: space-between;
+    margin-bottom: 0.5rem;
+    font-size: 0.95rem;
+  }
+  .comp-compare-stat-label { color: var(--text-secondary, #94a3b8); }
+  .comp-compare-stat-val { font-weight: 600; color: var(--text-primary, #c8d0de); }
+
+  .comp-compare-winner {
+    margin-top: 1rem;
+    padding: 0.8rem;
+    border-radius: 6px;
+    text-align: center;
+    font-weight: 700;
+  }
+  .comp-compare-winner.is-winner {
+    background: rgba(212,160,23,0.1);
+    color: var(--accent-color, #D4A017);
+  }
+  .comp-compare-winner.is-loser {
+    background: rgba(148,163,184,0.1);
+    color: var(--text-secondary, #94a3b8);
+  }
+  .comp-compare-race {
+    background: var(--bg-surface, #0f172a);
+    border: 1px solid var(--border-color, #1e293b);
+    border-radius: 12px;
+    padding: 1.5rem;
+  }
+  .comp-race-label {
+    font-size: 0.9rem;
+    color: var(--text-secondary, #94a3b8);
+    margin-bottom: 1rem;
+    text-align: center;
+  }
+  .comp-race-track {
+    background: var(--bg-body, #020617);
+    height: 36px;
+    border-radius: 18px;
+    margin-bottom: 1rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .comp-race-bar {
+    height: 100%;
+    background: var(--accent-color, #D4A017);
+    border-radius: 18px;
+    display: flex;
+    align-items: center;
+    padding: 0 1rem;
+    color: #fff;
+    font-weight: 600;
+    font-size: 0.85rem;
+    white-space: nowrap;
+    transition: width 0.8s cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  .comp-race-bar.bar-b {
+    background: #64748b;
+  }
+
+  /* RULE OF 72 */
+  .comp-rule72-container {
+    background: var(--bg-surface, #0f172a);
+    border: 1px solid var(--border-color, #1e293b);
+    border-radius: 12px;
+    padding: 2rem;
+    text-align: center;
+  }
+  .comp-rule72-formula {
+    font-size: 2.5rem;
+    font-weight: 800;
+    margin-bottom: 1rem;
+    color: var(--text-primary, #c8d0de);
+  }
+  .comp-rule72-formula .num { color: var(--accent-color, #D4A017); }
+  .comp-rule72-formula .rate { color: #64748b; }
+  .comp-rule72-formula .years { color: var(--accent-color, #D4A017); }
+  .comp-rule72-container p {
+    font-size: 1.1rem;
+    color: var(--text-secondary, #94a3b8);
+    max-width: 600px;
+    margin: 0 auto;
+    line-height: 1.6;
+  }
+  .comp-rule72-container p strong {
+    color: var(--text-primary, #c8d0de);
+  }
+
+  /* FAQ */
+  .comp-faq {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  .comp-faq-item {
+    background: var(--bg-surface, #0f172a);
+    border: 1px solid var(--border-color, #1e293b);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .comp-faq-item summary {
+    padding: 1.2rem 1.5rem;
+    font-weight: 600;
+    cursor: pointer;
+    color: var(--text-primary, #c8d0de);
+    list-style: none;
+    position: relative;
+  }
+  .comp-faq-item summary::-webkit-details-marker { display: none; }
+  .comp-faq-item summary::after {
+    content: '+';
+    position: absolute;
+    right: 1.5rem;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 1.5rem;
+    color: var(--accent-color, #D4A017);
+    transition: transform 0.2s;
+  }
+  .comp-faq-item[open] summary::after { transform: translateY(-50%) rotate(45deg); }
+  .comp-faq-item p {
+    padding: 0 1.5rem 1.2rem;
+    color: var(--text-secondary, #94a3b8);
+    margin: 0;
+    line-height: 1.6;
+  }
+
+  /* ANIMATIONS */
+  @keyframes comp-fadeUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes comp-fadeIn {
+    from { opacity: 0; }
+    to { opacity: 1; }
+  }
+  @keyframes comp-pop {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.05); }
+    100% { transform: scale(1); }
+  }
+
+  @media (max-width: 768px) {
+    .comp-calc-container { flex-direction: column; }
+    .comp-compare-cards { grid-template-columns: 1fr; }
+    .comp-rule72-formula { font-size: 1.8rem; }
+  }
+</style>
+
+<script is:inline>
+(function() {
+  function fmt(num) {
+    return '$' + Math.round(num).toLocaleString();
+  }
+
+  // DOM Elements
+  var initInp = document.getElementById('input-initial');
+  var moInp = document.getElementById('input-monthly');
+  var yrSld = document.getElementById('slider-years');
+  var yrDisp = document.getElementById('display-years');
+  var rtSld = document.getElementById('slider-rate');
+  var rtDisp = document.getElementById('display-rate');
+  var calcBtn = document.getElementById('calc-btn');
+
+  var compareRateA = document.getElementById('compare-rate-a');
+  var compareRateB = document.getElementById('compare-rate-b');
+  var compareBtn = document.getElementById('compare-btn');
+
+  // Listeners
+  yrSld.addEventListener('input', function() { yrDisp.textContent = yrSld.value; });
+  rtSld.addEventListener('input', function() { rtDisp.textContent = rtSld.value + '%'; });
+
+  function calculateData(principal, monthly, years, rate) {
+    var data = [];
+    var balance = principal;
+    var totalContrib = principal;
+    var r = rate / 100;
+
+    data.push({ year: 0, balance: balance, contrib: totalContrib });
+
+    for (var i = 1; i <= years; i++) {
+      for (var m = 0; m < 12; m++) {
+        balance += monthly;
+        totalContrib += monthly;
+        balance *= (1 + (r / 12));
+      }
+      data.push({ year: i, balance: balance, contrib: totalContrib });
+    }
+    return data;
+  }
+
+  // MAIN CALCULATOR
+  calcBtn.addEventListener('click', function() {
+    var p = parseFloat(initInp.value) || 0;
+    var m = parseFloat(moInp.value) || 0;
+    var y = parseInt(yrSld.value) || 1;
+    var r = parseFloat(rtSld.value) || 0;
+
+    var data = calculateData(p, m, y, r);
+    var finalData = data[data.length - 1];
+
+    document.getElementById('result-total').textContent = fmt(finalData.balance);
+    document.getElementById('result-principal').textContent = fmt(finalData.contrib);
+    document.getElementById('result-interest').textContent = fmt(finalData.balance - finalData.contrib);
+
+    // Milestones
+    var milestones = [
+      { amt: 100000, icon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" stroke="var(--accent-color, #D4A017)" stroke-width="1.5"/><path d="M12 6v6l4 2" stroke="var(--accent-color, #D4A017)" stroke-width="1.5" stroke-linecap="round"/></svg>', label: '$100K' },
+      { amt: 500000, icon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none"><path d="M4 20L12 4L20 20" stroke="var(--accent-color, #D4A017)" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/><line x1="7" y1="14" x2="17" y2="14" stroke="var(--accent-color, #D4A017)" stroke-width="1.5"/></svg>', label: '$500K' },
+      { amt: 1000000, icon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none"><circle cx="12" cy="12" r="10" fill="#D4A017" opacity="0.15" stroke="#D4A017" stroke-width="1.5"/><path d="M12 7v2m0 6v2m-3-7h1.5c.83 0 1.5.67 1.5 1.5S11.33 13 10.5 13H12h1.5c.83 0 1.5.67 1.5 1.5s-.67 1.5-1.5 1.5H12" stroke="#D4A017" stroke-width="1.3" stroke-linecap="round"/></svg>', label: '$1M' }
+    ];
+
+    var mc = document.getElementById('milestones-container');
+    mc.innerHTML = '';
+    milestones.forEach(function(mst, mi) {
+      var hit = null;
+      for (var j = 0; j < data.length; j++) {
+        if (data[j].balance >= mst.amt) { hit = data[j]; break; }
+      }
+      var div = document.createElement('div');
+      div.className = 'comp-milestone' + (hit ? ' reached' : '');
+      div.innerHTML = '<div class="comp-milestone-icon">' + mst.icon + '</div>' +
+        '<div class="comp-milestone-amt">' + mst.label + '</div>' +
+        '<div class="comp-milestone-age">' + (hit ? 'Year ' + hit.year : 'Not reached') + '</div>';
+      mc.appendChild(div);
+      setTimeout(function() { div.classList.add('show'); }, 50 + mi * 100);
+      if (hit) {
+        setTimeout(function() { div.classList.add('celebrate'); }, 300 + mi * 150);
+      }
+    });
+
+    renderChart(data);
+
+    // Insight
+    var insightEl = document.getElementById('result-insight');
+    var growthPct = finalData.balance > 0 ? Math.round(((finalData.balance - finalData.contrib) / finalData.balance) * 100) : 0;
+    insightEl.innerHTML = '<strong>' + growthPct + '% of your final wealth comes from compound interest</strong>, while only ' + (100 - growthPct) + '% comes from your actual contributions. This is the power of time and consistent returns.';
+
+    // Update Rule of 72
+    updateRuleOf72(r, p);
+  });
+
+  function renderChart(data) {
+    var chart = document.getElementById('wealth-chart');
+    chart.innerHTML = '';
+
+    // Limit to max ~30 bars for visual clarity
+    var maxBars = 30;
+    var step = Math.max(1, Math.floor(data.length / maxBars));
+    var filtered = [];
+    for (var i = 0; i < data.length; i++) {
+      if (i % step === 0 || i === data.length - 1) {
+        if (filtered.length === 0 || filtered[filtered.length - 1].year !== data[i].year) {
+            filtered.push(data[i]);
+        }
+      }
+    }
+
+    var maxVal = 0;
+    for (var k = 0; k < filtered.length; k++) {
+      if (filtered[k].balance > maxVal) maxVal = filtered[k].balance;
+    }
+    maxVal = Math.max(maxVal, 1000000); // at least scale to 1M if small
+
+    var chartH = 214; // match css height minus padding
+
+    // Million line if applicable
+    if (maxVal >= 1000000) {
+      var linePos = Math.min((1000000 / maxVal) * chartH, chartH);
+      var line = document.createElement('div');
+      line.className = 'comp-chart-million-line';
+      line.style.bottom = (26 + linePos) + 'px';
+      line.innerHTML = '<span class="comp-chart-million-label">$1M</span>';
+      chart.appendChild(line);
+    }
+
+    filtered.forEach(function(d, idx) {
+      var group = document.createElement('div');
+      group.className = 'comp-chart-bar-group';
+
+      var h = Math.max((d.balance / maxVal) * chartH, 2);
+      var contribH = d.contrib > 0 ? Math.max((d.contrib / maxVal) * chartH, 1) : 0;
+      var growthH = Math.max(h - contribH, 0);
+
+      var bar = document.createElement('div');
+      bar.className = 'comp-chart-bar';
+      bar.style.height = '0px';
+
+      var contribPart = document.createElement('div');
+      contribPart.className = 'contrib-part';
+      contribPart.style.height = '0px';
+
+      var growthPart = document.createElement('div');
+      growthPart.className = 'growth-part';
+      growthPart.style.height = '0px';
+
+      bar.appendChild(growthPart);
+      bar.appendChild(contribPart);
+
+      // Label (show every few)
+      var showLabel = idx === 0 || idx === filtered.length - 1 || idx % Math.ceil(filtered.length / 8) === 0;
+      if (showLabel) {
+        var label = document.createElement('div');
+        label.className = 'comp-chart-bar-label';
+        label.textContent = 'Yr ' + d.year;
+        group.appendChild(label);
+      }
+
+      var tooltip = document.createElement('div');
+      tooltip.className = 'comp-chart-tooltip';
+      tooltip.textContent = 'Year ' + d.year + ': ' + fmt(d.balance);
+
+      group.appendChild(tooltip);
+      group.appendChild(bar);
+      chart.appendChild(group);
+
+      setTimeout(function() {
+        bar.style.height = h + 'px';
+        contribPart.style.height = Math.min(contribH, h) + 'px';
+        growthPart.style.height = growthH + 'px';
+      }, 50 + idx * 25);
+    });
+  }
+
+  // COMPARISON
+  compareBtn.addEventListener('click', function() {
+    var rA = parseFloat(compareRateA.value) || 0;
+    var rB = parseFloat(compareRateB.value) || 0;
+    var p = parseFloat(initInp.value) || 0;
+    var m = parseFloat(moInp.value) || 0;
+    var y = parseInt(yrSld.value) || 1;
+
+    var dataA = calculateData(p, m, y, rA);
+    var dataB = calculateData(p, m, y, rB);
+
+    var finalA = dataA[dataA.length - 1].balance;
+    var finalB = dataB[dataB.length - 1].balance;
+
+    document.getElementById('compare-results').style.display = 'block';
+
+    function renderCard(id, rate, finalBal, isWinner, diff) {
+      var card = document.getElementById(id);
+      card.innerHTML =
+        '<h3>' + rate + '% Annual Return</h3>' +
+        '<div class="comp-compare-stat"><span class="comp-compare-stat-label">Final Balance</span><span class="comp-compare-stat-val">' + fmt(finalBal) + '</span></div>' +
+        '<div class="comp-compare-winner ' + (isWinner ? 'is-winner' : 'is-loser') + '">' +
+        (isWinner ? '+$' + Math.round(diff).toLocaleString() + ' more wealth' : 'Lower final balance') + '</div>';
+    }
+
+    var diff = Math.abs(finalA - finalB);
+    renderCard('compare-card-a', rA, finalA, finalA >= finalB, diff);
+    renderCard('compare-card-b', rB, finalB, finalB > finalA, diff);
+
+    // Race bars
+    var race = document.getElementById('compare-race');
+    var maxBal = Math.max(finalA, finalB, 1);
+    race.innerHTML =
+      '<div class="comp-race-label">Final Wealth Comparison</div>' +
+      '<div class="comp-race-track"><div class="comp-race-bar bar-a" style="width: 0%">' + rA + '% — ' + fmt(finalA) + '</div></div>' +
+      '<div class="comp-race-track"><div class="comp-race-bar bar-b" style="width: 0%">' + rB + '% — ' + fmt(finalB) + '</div></div>';
+
+    setTimeout(function() {
+      race.querySelector('.bar-a').style.width = Math.max(Math.round((finalA / maxBal) * 100), 20) + '%';
+      race.querySelector('.bar-b').style.width = Math.max(Math.round((finalB / maxBal) * 100), 20) + '%';
+    }, 100);
+  });
+
+  // RULE OF 72
+  function updateRuleOf72(rate, init) {
+    var r = rate > 0 ? rate : 10;
+    var i = init > 0 ? init : 1000;
+    var yrs = (72 / r).toFixed(1);
+
+    document.getElementById('rule72-rate').textContent = r;
+    document.getElementById('rule72-years').textContent = yrs;
+    document.getElementById('rule72-text-rate').textContent = r;
+    document.getElementById('rule72-text-initial').textContent = fmt(i);
+    document.getElementById('rule72-text-double').textContent = fmt(i * 2);
+    document.getElementById('rule72-text-years').textContent = yrs;
+  }
+
+  // Trigger initial calc
+  calcBtn.click();
+  compareBtn.click();
+})();
+</script>
