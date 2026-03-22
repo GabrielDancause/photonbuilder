@@ -1,0 +1,722 @@
+---
+import SiteLayout from '../../../layouts/SiteLayout.astro';
+
+export const meta = {
+  title: 'Study Time Calculator & Schedule Planner',
+  description: 'Interactive calculator to generate optimal study schedules, spaced repetition, and Pomodoro timers based on exam dates and topic difficulty.',
+  category: 'calculator',
+  keywords: ['study time calculator', 'study schedule generator', 'pomodoro study planner', 'spaced repetition calculator', 'exam prep calculator']
+};
+
+const schema = JSON.stringify([
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": meta.title,
+    "description": meta.description,
+    "author": { "@type": "Organization", "name": "Sendnerds" },
+    "publisher": { "@type": "Organization", "name": "Sendnerds" },
+    "datePublished": "2026-03-22",
+    "dateModified": "2026-03-22"
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "How many hours should I study per day?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Science suggests 4-6 hours of highly focused, active recall study per day is the cognitive limit for learning new, complex information. Pushing beyond this often leads to diminishing returns and burnout." }
+      },
+      {
+        "@type": "Question",
+        "name": "What is the Pomodoro technique?",
+        "acceptedAnswer": { "@type": "Answer", "text": "The Pomodoro technique is a time management method where you study for a focused block of time (e.g., 25 or 50 minutes) followed by a short break (5 or 10 minutes). It helps maintain focus and prevent mental fatigue." }
+      },
+      {
+        "@type": "Question",
+        "name": "How does spaced repetition work?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Spaced repetition involves reviewing information at gradually increasing intervals (e.g., 1 day, 3 days, 1 week) to exploit the psychological spacing effect, moving knowledge from short-term to long-term memory." }
+      },
+      {
+        "@type": "Question",
+        "name": "Should I study hard topics first or last?",
+        "acceptedAnswer": { "@type": "Answer", "text": "It's generally best to tackle the hardest topics first when your mental energy and willpower are highest (often called 'eating the frog'). Save easier review tasks for later in your study session." }
+      },
+      {
+        "@type": "Question",
+        "name": "Is it better to cram or plan my study time?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Planning is vastly superior. Studies show students who plan their study time and distribute it over weeks score up to 23% higher than those who cram at the last minute." }
+      }
+    ]
+  }
+]);
+---
+
+<SiteLayout site="sendnerds" title={meta.title} description={meta.description}>
+  <Fragment slot="head">
+    <script type="application/ld+json" set:html={schema} />
+  </Fragment>
+
+  <!-- HERO -->
+  <section class="study-hero">
+    <div class="study-hero-badge">INTERACTIVE CALCULATOR</div>
+    <h1>Study Time <em>Calculator</em> & Planner</h1>
+    <p class="study-hero-hook">Students who plan study time <strong>score 23% higher</strong>. <br/>Generate your science-backed study schedule.</p>
+    <div class="study-hero-stats">
+      <div class="study-stat">
+        <span class="study-stat-num">4-6 Hrs</span>
+        <span class="study-stat-label">Optimal Daily Max</span>
+      </div>
+      <div class="study-stat">
+        <span class="study-stat-num">25/5 or 50/10</span>
+        <span class="study-stat-label">Pomodoro Cycles</span>
+      </div>
+      <div class="study-stat">
+        <span class="study-stat-num">+23%</span>
+        <span class="study-stat-label">Score Increase</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- CALCULATOR -->
+  <section class="study-section">
+    <h2 class="study-section-title">Configure Your Study Plan</h2>
+    <p class="study-section-sub">Enter your exam date and topics to distribute your workload.</p>
+
+    <div class="study-calc-container">
+      <div class="study-calc-inputs">
+        <div class="study-input-group">
+          <label for="exam-date">Exam Date</label>
+          <input type="date" id="exam-date" />
+        </div>
+
+        <div class="study-input-group">
+          <label for="hours-per-day">Hours Available Per Day</label>
+          <input type="number" id="hours-per-day" value="4" min="1" max="12" />
+        </div>
+
+        <div class="study-topics-header">
+          <label>Subjects / Topics</label>
+          <button id="add-topic-btn" class="study-small-btn">+ Add Topic</button>
+        </div>
+
+        <div id="topics-container">
+          <div class="study-topic-row">
+            <input type="text" class="topic-name" placeholder="Topic name (e.g. Calculus Ch 1)" value="Math: Integration" />
+            <select class="topic-difficulty">
+              <option value="1">Easy (1x time)</option>
+              <option value="2">Medium (1.5x time)</option>
+              <option value="3" selected>Hard (2x time)</option>
+            </select>
+            <button class="remove-topic-btn" title="Remove Topic">✕</button>
+          </div>
+          <div class="study-topic-row">
+            <input type="text" class="topic-name" placeholder="Topic name (e.g. Calculus Ch 1)" value="History: WW2" />
+            <select class="topic-difficulty">
+              <option value="1" selected>Easy (1x time)</option>
+              <option value="2">Medium (1.5x time)</option>
+              <option value="3">Hard (2x time)</option>
+            </select>
+            <button class="remove-topic-btn" title="Remove Topic">✕</button>
+          </div>
+        </div>
+
+        <button id="calc-btn" class="study-btn">Generate Study Plan</button>
+      </div>
+
+      <!-- RESULTS -->
+      <div class="study-calc-results" id="results-panel" style="display:none;">
+        <div class="study-result-header">
+          <div class="study-result-title">Your Study Strategy</div>
+          <div class="study-result-stat"><strong id="res-days">0</strong> Days until Exam</div>
+          <div class="study-result-stat"><span id="res-total-hours">0</span> Total Study Hours</div>
+        </div>
+
+        <!-- PROGRESS BAR -->
+        <div class="study-progress-wrap">
+          <div class="study-progress-labels">
+            <span>Workload Distribution</span>
+            <span id="res-daily-avg">0 hrs/day</span>
+          </div>
+          <div class="study-progress-bar">
+            <div class="study-progress-fill" id="workload-fill" style="width: 0%"></div>
+          </div>
+          <div class="study-progress-note" id="workload-note"></div>
+        </div>
+
+        <!-- RECOMMENDATIONS -->
+        <div class="study-recs-grid">
+          <div class="study-rec-card">
+            <h4>Pomodoro Strategy</h4>
+            <div class="study-rec-val" id="rec-pomodoro">50 / 10</div>
+            <p id="rec-pomodoro-desc">50 min study, 10 min break. Best for deep focus on hard topics.</p>
+          </div>
+          <div class="study-rec-card">
+            <h4>Spaced Repetition</h4>
+            <div class="study-rec-val">1 - 3 - 7</div>
+            <p>Review topics 1 day, 3 days, and 7 days after initial study.</p>
+          </div>
+        </div>
+
+        <!-- SCHEDULE BREAKDOWN -->
+        <h3 class="study-subhead">Recommended Topic Breakdown</h3>
+        <div class="study-schedule" id="schedule-container"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section class="study-section">
+    <h2 class="study-section-title">Study Science FAQ</h2>
+    <div class="study-faq">
+      <details class="study-faq-item">
+        <summary>How many hours should I study per day?</summary>
+        <p>Science suggests 4-6 hours of highly focused, active recall study per day is the cognitive limit for learning new, complex information. Pushing beyond this often leads to diminishing returns and burnout.</p>
+      </details>
+      <details class="study-faq-item">
+        <summary>What is the Pomodoro technique?</summary>
+        <p>The Pomodoro technique is a time management method where you study for a focused block of time (e.g., 25 or 50 minutes) followed by a short break (5 or 10 minutes). It helps maintain focus and prevent mental fatigue.</p>
+      </details>
+      <details class="study-faq-item">
+        <summary>How does spaced repetition work?</summary>
+        <p>Spaced repetition involves reviewing information at gradually increasing intervals (e.g., 1 day, 3 days, 1 week) to exploit the psychological spacing effect, moving knowledge from short-term to long-term memory.</p>
+      </details>
+      <details class="study-faq-item">
+        <summary>Should I study hard topics first or last?</summary>
+        <p>It's generally best to tackle the hardest topics first when your mental energy and willpower are highest (often called "eating the frog"). Save easier review tasks for later in your study session.</p>
+      </details>
+      <details class="study-faq-item">
+        <summary>Is it better to cram or plan my study time?</summary>
+        <p>Planning is vastly superior. Studies show students who plan their study time and distribute it over weeks score up to 23% higher than those who cram at the last minute.</p>
+      </details>
+    </div>
+  </section>
+</SiteLayout>
+
+<style is:global>
+  /* ===== STUDY CALCULATOR ===== */
+  .study-page { max-width: 1100px; margin: 0 auto; }
+  .study-hero {
+    text-align: center;
+    padding: 2.5rem 1.5rem 2rem;
+    background: linear-gradient(135deg, rgba(59,130,246,0.12) 0%, rgba(59,130,246,0.02) 60%, rgba(59,130,246,0.08) 100%);
+    border-bottom: 1px solid var(--border-color, #152040);
+    position: relative;
+    overflow: hidden;
+  }
+  .study-hero-badge {
+    display: inline-block;
+    font-size: 0.7rem;
+    letter-spacing: 0.15em;
+    padding: 0.35rem 1rem;
+    background: rgba(59,130,246,0.15);
+    color: var(--accent-color, #3B82F6);
+    border: 1px solid rgba(59,130,246,0.3);
+    border-radius: 20px;
+    margin-bottom: 1.5rem;
+    font-weight: 700;
+  }
+  .study-hero h1 {
+    font-size: clamp(1.6rem, 3.5vw, 2.2rem);
+    line-height: 1.15;
+    margin: 0 auto 1rem;
+    max-width: 700px;
+    color: var(--text-primary, #c8d0de);
+  }
+  .study-hero h1 em {
+    color: var(--accent-color, #3B82F6);
+    font-style: italic;
+  }
+  .study-hero-hook {
+    font-size: 1.15rem;
+    color: var(--text-secondary, #94a3b8);
+    max-width: 600px;
+    margin: 0 auto 2.5rem;
+    line-height: 1.6;
+  }
+  .study-hero-stats {
+    display: flex;
+    justify-content: center;
+    gap: 3rem;
+    flex-wrap: wrap;
+  }
+  .study-stat {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+  }
+  .study-stat-num {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--accent-color, #3B82F6);
+    white-space: nowrap;
+  }
+  .study-stat-label {
+    font-size: 0.7rem;
+    color: var(--text-secondary, #94a3b8);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+  }
+
+  /* SECTION */
+  .study-section {
+    padding: 4rem 1.5rem;
+    max-width: 900px;
+    margin: 0 auto;
+  }
+  .study-section-title {
+    font-size: 1.8rem;
+    text-align: center;
+    margin: 0 0 0.5rem;
+    color: var(--text-primary, #c8d0de);
+  }
+  .study-section-sub {
+    text-align: center;
+    color: var(--text-secondary, #94a3b8);
+    margin: 0 auto 2.5rem;
+    max-width: 600px;
+  }
+
+  /* CALCULATOR CONTAINER */
+  .study-calc-container {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 2rem;
+    background: var(--card-bg, #0a1020);
+    border: 1px solid var(--border-color, #152040);
+    border-radius: 16px;
+    box-shadow: 0 20px 40px rgba(0,0,0,0.2);
+    overflow: hidden;
+  }
+  @media (max-width: 850px) {
+    .study-calc-container { grid-template-columns: 1fr; }
+  }
+
+  /* INPUTS */
+  .study-calc-inputs {
+    padding: 2rem;
+    background: rgba(255,255,255,0.01);
+    border-right: 1px solid var(--border-color, #152040);
+  }
+  .study-input-group {
+    margin-bottom: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .study-input-group label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-secondary, #94a3b8);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .study-calc-inputs input, .study-calc-inputs select {
+    background: var(--input-bg, #0f172a);
+    border: 1px solid var(--border-color, #152040);
+    color: var(--text-primary, #c8d0de);
+    padding: 0.85rem 1rem;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-family: inherit;
+    width: 100%;
+    transition: all 0.2s;
+  }
+  .study-calc-inputs input:focus, .study-calc-inputs select:focus {
+    outline: none;
+    border-color: var(--accent-color, #3B82F6);
+    box-shadow: 0 0 0 2px rgba(59,130,246,0.2);
+  }
+
+  /* TOPICS */
+  .study-topics-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.75rem;
+  }
+  .study-topics-header label {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--text-secondary, #94a3b8);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .study-small-btn {
+    background: rgba(59,130,246,0.15);
+    color: var(--accent-color, #3B82F6);
+    border: 1px solid rgba(59,130,246,0.3);
+    padding: 0.3rem 0.6rem;
+    border-radius: 4px;
+    font-size: 0.75rem;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s;
+  }
+  .study-small-btn:hover {
+    background: rgba(59,130,246,0.25);
+  }
+  .study-topic-row {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    gap: 0.5rem;
+    margin-bottom: 0.75rem;
+    align-items: center;
+  }
+  .study-topic-row input { width: 100%; }
+  .study-topic-row select { width: auto; padding: 0.85rem 0.5rem; }
+  .remove-topic-btn {
+    background: rgba(239,68,68,0.1);
+    color: #ef4444;
+    border: 1px solid rgba(239,68,68,0.2);
+    width: 38px;
+    height: 38px;
+    border-radius: 8px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+  }
+  .remove-topic-btn:hover { background: rgba(239,68,68,0.2); }
+
+  /* BUTTON */
+  .study-btn {
+    width: 100%;
+    background: var(--accent-color, #3B82F6);
+    color: #fff;
+    border: none;
+    padding: 1.1rem;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s;
+    margin-top: 1.5rem;
+    position: relative;
+    overflow: hidden;
+  }
+  .study-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(59,130,246,0.3);
+  }
+
+  /* RESULTS */
+  .study-calc-results {
+    padding: 2rem;
+  }
+  .study-result-header {
+    text-align: center;
+    padding: 1.5rem;
+    background: linear-gradient(135deg, rgba(59,130,246,0.12), rgba(59,130,246,0.03));
+    border: 1px solid var(--border-color, #152040);
+    border-radius: 12px;
+    margin-bottom: 1.5rem;
+  }
+  .study-result-title {
+    font-size: 0.8rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-secondary, #94a3b8);
+    margin-bottom: 0.5rem;
+  }
+  .study-result-stat {
+    font-size: 1.2rem;
+    color: var(--text-primary, #c8d0de);
+    margin: 0.25rem 0;
+  }
+  .study-result-stat strong {
+    font-size: 2rem;
+    color: var(--accent-color, #3B82F6);
+  }
+
+  /* PROGRESS BAR */
+  .study-progress-wrap {
+    margin-bottom: 1.5rem;
+    background: rgba(255,255,255,0.02);
+    border: 1px solid var(--border-color, #152040);
+    padding: 1rem;
+    border-radius: 8px;
+  }
+  .study-progress-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.85rem;
+    color: var(--text-secondary, #94a3b8);
+    margin-bottom: 0.5rem;
+  }
+  .study-progress-bar {
+    height: 12px;
+    background: var(--input-bg, #0f172a);
+    border-radius: 6px;
+    overflow: hidden;
+  }
+  .study-progress-fill {
+    height: 100%;
+    background: var(--accent-color, #3B82F6);
+    border-radius: 6px;
+    transition: width 1s ease-out;
+  }
+  .study-progress-fill.warning { background: #f59e0b; }
+  .study-progress-fill.danger { background: #ef4444; }
+  .study-progress-note {
+    font-size: 0.8rem;
+    margin-top: 0.5rem;
+    color: var(--text-secondary, #94a3b8);
+    text-align: right;
+  }
+
+  /* GRID RECS */
+  .study-recs-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1rem;
+    margin-bottom: 1.5rem;
+  }
+  .study-rec-card {
+    background: rgba(255,255,255,0.02);
+    border: 1px solid var(--border-color, #152040);
+    padding: 1rem;
+    border-radius: 8px;
+    text-align: center;
+  }
+  .study-rec-card h4 {
+    margin: 0 0 0.5rem;
+    font-size: 0.8rem;
+    color: var(--text-secondary, #94a3b8);
+    text-transform: uppercase;
+  }
+  .study-rec-val {
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--accent-color, #3B82F6);
+    margin-bottom: 0.5rem;
+  }
+  .study-rec-card p {
+    margin: 0;
+    font-size: 0.8rem;
+    color: var(--text-secondary, #94a3b8);
+  }
+
+  /* SCHEDULE */
+  .study-subhead {
+    font-size: 1.1rem;
+    color: var(--text-primary, #c8d0de);
+    margin: 0 0 1rem;
+    border-bottom: 1px solid var(--border-color, #152040);
+    padding-bottom: 0.5rem;
+  }
+  .study-schedule-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+  }
+  .study-schedule-item:last-child { border-bottom: none; }
+  .study-schedule-topic {
+    font-weight: 600;
+    color: var(--text-primary, #c8d0de);
+  }
+  .study-schedule-time {
+    color: var(--accent-color, #3B82F6);
+    font-family: monospace;
+    font-size: 1.1rem;
+  }
+
+  /* FAQ */
+  .study-faq {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  .study-faq-item {
+    background: var(--card-bg, #0a1020);
+    border: 1px solid var(--border-color, #152040);
+    border-radius: 8px;
+    overflow: hidden;
+  }
+  .study-faq-item summary {
+    padding: 1.2rem 1.5rem;
+    font-weight: 600;
+    cursor: pointer;
+    list-style: none;
+    position: relative;
+    color: var(--text-primary, #c8d0de);
+  }
+  .study-faq-item summary::-webkit-details-marker { display: none; }
+  .study-faq-item summary::after {
+    content: '+';
+    position: absolute;
+    right: 1.5rem;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--accent-color, #3B82F6);
+    font-size: 1.5rem;
+  }
+  .study-faq-item[open] summary::after { content: '−'; }
+  .study-faq-item p {
+    padding: 0 1.5rem 1.2rem;
+    margin: 0;
+    color: var(--text-secondary, #94a3b8);
+    line-height: 1.6;
+  }
+</style>
+
+<script>
+  // DOM Elements
+  const examDateInput = document.getElementById('exam-date');
+  const hoursPerDayInput = document.getElementById('hours-per-day');
+  const topicsContainer = document.getElementById('topics-container');
+  const addTopicBtn = document.getElementById('add-topic-btn');
+  const calcBtn = document.getElementById('calc-btn');
+  const resultsPanel = document.getElementById('results-panel');
+
+  // Set default exam date to 14 days from now
+  const today = new Date();
+  const defaultDate = new Date(today);
+  defaultDate.setDate(defaultDate.getDate() + 14);
+  examDateInput.valueAsDate = defaultDate;
+
+  // Add Topic Row
+  addTopicBtn.addEventListener('click', () => {
+    const row = document.createElement('div');
+    row.className = 'study-topic-row';
+    row.innerHTML = `
+      <input type="text" class="topic-name" placeholder="Topic name (e.g. Calculus Ch 1)" />
+      <select class="topic-difficulty">
+        <option value="1">Easy (1x time)</option>
+        <option value="2" selected>Medium (1.5x time)</option>
+        <option value="3">Hard (2x time)</option>
+      </select>
+      <button class="remove-topic-btn" title="Remove Topic">✕</button>
+    `;
+    topicsContainer.appendChild(row);
+
+    row.querySelector('.remove-topic-btn').addEventListener('click', () => {
+      row.remove();
+    });
+  });
+
+  // Attach remove events to existing rows
+  document.querySelectorAll('.remove-topic-btn').forEach(btn => {
+    btn.addEventListener('click', (e) => {
+      e.target.closest('.study-topic-row').remove();
+    });
+  });
+
+  // Calculate Logic
+  calcBtn.addEventListener('click', () => {
+    // 1. Get Days
+    const examDate = new Date(examDateInput.value);
+    if (isNaN(examDate.getTime())) {
+      alert("Please enter a valid exam date.");
+      return;
+    }
+    const now = new Date();
+    // Normalize to start of day
+    now.setHours(0,0,0,0);
+    examDate.setHours(0,0,0,0);
+
+    let days = Math.round((examDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24));
+    if (days < 1) days = 1;
+
+    // 2. Get Topics
+    const topicRows = document.querySelectorAll('.study-topic-row');
+    let topics = [];
+    let totalWeight = 0;
+    let avgDifficulty = 0;
+
+    topicRows.forEach(row => {
+      const name = row.querySelector('.topic-name').value.trim() || 'Untitled Topic';
+      const diff = parseFloat(row.querySelector('.topic-difficulty').value);
+      let weight = diff;
+      if (diff === 2) weight = 1.5;
+      if (diff === 3) weight = 2.0;
+
+      totalWeight += weight;
+      avgDifficulty += diff;
+
+      topics.push({ name, weight, diff });
+    });
+
+    if (topics.length === 0) return;
+    avgDifficulty = avgDifficulty / topics.length;
+
+    // 3. Math Time
+    const maxHoursPerDay = parseFloat(hoursPerDayInput.value) || 4;
+    const availableTotalHours = days * maxHoursPerDay;
+
+    // Assume baseline: 1 weight unit = 2 hours of study
+    const baselineHoursPerWeight = 2;
+    let neededTotalHours = totalWeight * baselineHoursPerWeight;
+
+    // Calculate avg hours per day needed
+    const hoursPerDayNeeded = neededTotalHours / days;
+
+    // 4. Update UI
+    document.getElementById('res-days').textContent = days;
+    document.getElementById('res-total-hours').textContent = neededTotalHours.toFixed(1);
+    document.getElementById('res-daily-avg').textContent = hoursPerDayNeeded.toFixed(1) + ' hrs / day';
+
+    // Progress Bar
+    const fill = document.getElementById('workload-fill');
+    const note = document.getElementById('workload-note');
+    let percent = (hoursPerDayNeeded / maxHoursPerDay) * 100;
+
+    fill.className = 'study-progress-fill';
+    if (percent > 100) {
+      fill.classList.add('danger');
+      percent = 100;
+      note.textContent = "Warning: Exceeds available time! Need more days or hours.";
+      note.style.color = "#ef4444";
+    } else if (percent > 80) {
+      fill.classList.add('warning');
+      note.textContent = "Heavy workload. Strict adherence to schedule required.";
+      note.style.color = "#f59e0b";
+    } else {
+      note.textContent = "Healthy workload. Very manageable.";
+      note.style.color = "#10b981";
+    }
+    fill.style.width = percent + '%';
+
+    // Pomodoro Recs
+    const pomodoroVal = document.getElementById('rec-pomodoro');
+    const pomodoroDesc = document.getElementById('rec-pomodoro-desc');
+    if (avgDifficulty > 2.2) {
+      pomodoroVal.textContent = "50 / 10";
+      pomodoroDesc.textContent = "50 min study, 10 min break. Best for deep focus on hard, complex topics.";
+    } else {
+      pomodoroVal.textContent = "25 / 5";
+      pomodoroDesc.textContent = "25 min study, 5 min break. High frequency Pomodoro for maintaining energy on easier review.";
+    }
+
+    // Schedule Breakdown
+    const scheduleContainer = document.getElementById('schedule-container');
+    scheduleContainer.innerHTML = '';
+
+    // Sort topics by weight descending (Eat the frog)
+    topics.sort((a, b) => b.weight - a.weight);
+
+    topics.forEach(t => {
+      const topicHours = t.weight * baselineHoursPerWeight;
+      const el = document.createElement('div');
+      el.className = 'study-schedule-item';
+
+      const nameSpan = document.createElement('span');
+      nameSpan.className = 'study-schedule-topic';
+      nameSpan.textContent = t.name;
+
+      const timeSpan = document.createElement('span');
+      timeSpan.className = 'study-schedule-time';
+      timeSpan.textContent = topicHours.toFixed(1) + ' hrs';
+
+      el.appendChild(nameSpan);
+      el.appendChild(timeSpan);
+      scheduleContainer.appendChild(el);
+    });
+
+    resultsPanel.style.display = 'block';
+    resultsPanel.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  });
+</script>
