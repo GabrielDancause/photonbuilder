@@ -16,6 +16,16 @@
   };
   const cfg = Object.assign({}, defaults, window.NAV_CONFIG || {});
 
+  window.escapeHTML = window.escapeHTML || function(str) {
+    if (!str) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  };
+
   const nav = document.createElement('nav');
   nav.className = 'site-nav';
   nav.innerHTML = `

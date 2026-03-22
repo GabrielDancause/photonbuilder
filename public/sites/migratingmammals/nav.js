@@ -4,6 +4,15 @@
     accent: '#C4956A',
     sections: [{"label": "Tools", "href": "/tools/"}, {"label": "Guides", "href": "/guides/"}, {"label": "Lists", "href": "/lists/"}]
   };
+  window.escapeHTML = window.escapeHTML || function(str) {
+    if (!str) return '';
+    return String(str)
+      .replace(/&/g, '&amp;')
+      .replace(/</g, '&lt;')
+      .replace(/>/g, '&gt;')
+      .replace(/"/g, '&quot;')
+      .replace(/'/g, '&#039;');
+  };
   var nav = document.createElement('nav');
   nav.className = 'site-nav';
   nav.innerHTML = '<div class="nav-inner"><a href="/" class="nav-brand">' + cfg.siteName + '</a><button class="nav-toggle" aria-label="Menu" aria-expanded="false"><span></span><span></span><span></span></button><div class="nav-links">' + cfg.sections.map(function(s) { return '<a href="' + s.href + '" class="nav-link">' + s.label + '</a>'; }).join('') + '</div></div>';
