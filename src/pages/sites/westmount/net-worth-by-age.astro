@@ -1,0 +1,915 @@
+---
+import SiteLayout from '../../../layouts/SiteLayout.astro';
+
+export const meta = {
+  title: 'Average Net Worth by Age in 2026 — Where Do You Stand?',
+  description: 'Compare your net worth to the national average by age group. Interactive percentile calculator with real Federal Reserve data. See exactly where you rank.',
+  category: 'guide',
+};
+
+const schema = JSON.stringify([
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": meta.title,
+    "description": meta.description,
+    "datePublished": "2026-03-22",
+    "dateModified": "2026-03-22",
+    "publisher": {
+      "@type": "Organization",
+      "name": "Westmount Fundamentals"
+    }
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "What is the average net worth by age in America?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Under 35: $183,500 average ($39,000 median). 35-44: $549,600 average ($135,600 median). 45-54: $975,800 average ($247,200 median). 55-64: $1,566,900 average ($364,500 median). 65-74: $1,794,600 average ($409,900 median). 75+: $1,624,100 average ($335,600 median). Source: Federal Reserve Survey of Consumer Finances."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "What net worth is considered rich?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "In the United States, a net worth of $1 million puts you in approximately the top 10% of all households. A net worth of $2.6 million puts you in the top 5%, and $11.1 million puts you in the top 1%. However, 'rich' is relative — cost of living, age, and financial goals all matter."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Why is the average net worth so much higher than the median?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "The average (mean) is pulled up by ultra-wealthy households. A single billionaire in a group of 1,000 people would dramatically raise the average but barely move the median. The median is a better representation of a 'typical' household — it means exactly half of households have more and half have less."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How do I calculate my net worth?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Net worth = Total Assets minus Total Liabilities. Assets include: home equity, retirement accounts (401k, IRA), investment accounts, savings, vehicles, and other property. Liabilities include: mortgage balance, student loans, credit card debt, car loans, and other debts."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "What is a good net worth at 30?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "A common rule of thumb is to have 1x your annual salary saved by age 30. The median net worth for Americans under 35 is $39,000. If you have a positive net worth at 30 (especially with student loans), you're doing better than many. Having $50,000-$100,000 puts you well above the median for your age group."
+        }
+      }
+    ]
+  }
+]);
+---
+
+<SiteLayout
+  site="westmount"
+  title={meta.title}
+  description={meta.description}
+  canonical="https://westmountfundamentals.com/net-worth-by-age"
+>
+  <Fragment slot="head">
+    <script type="application/ld+json" set:html={schema} />
+  </Fragment>
+
+  <h1>Average Net Worth by Age — Where Do You Stand?</h1>
+  
+  <p>How does your net worth compare to the rest of America? Below you'll find the <strong>latest data from the Federal Reserve's Survey of Consumer Finances</strong>, an interactive percentile calculator, and a breakdown of what drives wealth at every age.</p>
+  <p>Spoiler: the gap between <em>average</em> and <em>median</em> is staggering — and understanding why is the first step to building real wealth.</p>
+
+  <div class="calculator-hero" id="calculator">
+    <h2>📊 Where Do You Rank?</h2>
+    <p class="calc-subtitle">Enter your details to see your net worth percentile</p>
+    
+    <div class="calc-inputs">
+      <div class="input-group">
+        <label for="age-input">Your Age</label>
+        <input type="number" id="age-input" min="18" max="100" value="30" />
+      </div>
+      <div class="input-group">
+        <label for="nw-input">Your Net Worth ($)</label>
+        <input type="number" id="nw-input" min="-500000" step="1000" value="50000" />
+      </div>
+      <button id="calc-btn" onclick="calculatePercentile()">See My Ranking →</button>
+    </div>
+
+    <div class="result-panel" id="result-panel" style="display:none;">
+      <div class="percentile-display">
+        <div class="percentile-ring" id="percentile-ring">
+          <svg viewBox="0 0 120 120">
+            <circle cx="60" cy="60" r="52" fill="none" stroke="var(--border-color)" stroke-width="8" />
+            <circle cx="60" cy="60" r="52" fill="none" stroke="var(--accent-color)" stroke-width="8" 
+                    stroke-dasharray="327" stroke-dashoffset="327" stroke-linecap="round"
+                    transform="rotate(-90 60 60)" id="progress-circle" />
+          </svg>
+          <div class="percentile-number" id="percentile-number">0</div>
+          <div class="percentile-label">percentile</div>
+        </div>
+      </div>
+      
+      <div class="result-details" id="result-details"></div>
+      
+      <div class="comparison-bar" id="comparison-bar">
+        <div class="bar-track">
+          <div class="bar-fill" id="bar-fill"></div>
+          <div class="bar-marker" id="bar-marker">
+            <div class="marker-label" id="marker-label">You</div>
+          </div>
+          <div class="bar-median-marker" id="bar-median-marker">
+            <div class="marker-label">Median</div>
+          </div>
+        </div>
+        <div class="bar-labels">
+          <span>$0</span>
+          <span id="bar-max-label">$500K</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h2>Net Worth by Age: The Complete Breakdown</h2>
+  
+  <p>The difference between <strong>average</strong> and <strong>median</strong> tells the real story of wealth inequality in America.</p>
+
+  <div class="data-grid">
+    <div class="data-card">
+      <div class="age-badge">Under 35</div>
+      <div class="data-row">
+        <span class="data-label">Average</span>
+        <span class="data-value highlight">$183,500</span>
+      </div>
+      <div class="data-row">
+        <span class="data-label">Median</span>
+        <span class="data-value">$39,000</span>
+      </div>
+      <div class="data-row">
+        <span class="data-label">Gap</span>
+        <span class="data-value gap">4.7x</span>
+      </div>
+      <div class="data-insight">💡 Student loans keep median low. The average is inflated by tech/finance earners and inherited wealth.</div>
+    </div>
+
+    <div class="data-card">
+      <div class="age-badge">35 — 44</div>
+      <div class="data-row">
+        <span class="data-label">Average</span>
+        <span class="data-value highlight">$549,600</span>
+      </div>
+      <div class="data-row">
+        <span class="data-label">Median</span>
+        <span class="data-value">$135,600</span>
+      </div>
+      <div class="data-row">
+        <span class="data-label">Gap</span>
+        <span class="data-value gap">4.1x</span>
+      </div>
+      <div class="data-insight">💡 Peak earning + home equity years. This is where consistent investing starts showing compound growth.</div>
+    </div>
+
+    <div class="data-card">
+      <div class="age-badge">45 — 54</div>
+      <div class="data-row">
+        <span class="data-label">Average</span>
+        <span class="data-value highlight">$975,800</span>
+      </div>
+      <div class="data-row">
+        <span class="data-label">Median</span>
+        <span class="data-value">$247,200</span>
+      </div>
+      <div class="data-row">
+        <span class="data-label">Gap</span>
+        <span class="data-value gap">3.9x</span>
+      </div>
+      <div class="data-insight">💡 Peak career earnings. 401(k) balances accelerate. Home equity significant. Kids' college costs hit many families.</div>
+    </div>
+
+    <div class="data-card">
+      <div class="age-badge">55 — 64</div>
+      <div class="data-row">
+        <span class="data-label">Average</span>
+        <span class="data-value highlight">$1,566,900</span>
+      </div>
+      <div class="data-row">
+        <span class="data-label">Median</span>
+        <span class="data-value">$364,500</span>
+      </div>
+      <div class="data-row">
+        <span class="data-label">Gap</span>
+        <span class="data-value gap">4.3x</span>
+      </div>
+      <div class="data-insight">💡 Pre-retirement accumulation peak. Mortgage often paid off. Catch-up 401(k) contributions ($30,500/yr) help.</div>
+    </div>
+
+    <div class="data-card">
+      <div class="age-badge">65 — 74</div>
+      <div class="data-row">
+        <span class="data-label">Average</span>
+        <span class="data-value highlight">$1,794,600</span>
+      </div>
+      <div class="data-row">
+        <span class="data-label">Median</span>
+        <span class="data-value">$409,900</span>
+      </div>
+      <div class="data-row">
+        <span class="data-label">Gap</span>
+        <span class="data-value gap">4.4x</span>
+      </div>
+      <div class="data-insight">💡 Highest wealth age group. Social Security begins. RMDs from retirement accounts start at 73. Healthcare costs rise.</div>
+    </div>
+
+    <div class="data-card">
+      <div class="age-badge">75+</div>
+      <div class="data-row">
+        <span class="data-label">Average</span>
+        <span class="data-value highlight">$1,624,100</span>
+      </div>
+      <div class="data-row">
+        <span class="data-label">Median</span>
+        <span class="data-value">$335,600</span>
+      </div>
+      <div class="data-row">
+        <span class="data-label">Gap</span>
+        <span class="data-value gap">4.8x</span>
+      </div>
+      <div class="data-insight">💡 Drawdown phase. Healthcare and long-term care costs can rapidly erode savings. Estate planning becomes critical.</div>
+    </div>
+  </div>
+
+  <h2>Why Average vs. Median Matters So Much</h2>
+  
+  <p>Imagine 10 people in a room. Nine have a net worth of $50,000. One has $10 million. The <strong>average</strong> net worth of that room is $1,045,000. The <strong>median</strong> is $50,000. Which number better describes a "typical" person?</p>
+
+  <p>This is exactly what happens with national wealth data. The top 1% of Americans hold <strong>31.4% of all wealth</strong> — roughly $44.6 trillion. They pull the average up dramatically while the median stays grounded in reality.</p>
+
+  <div class="callout-box">
+    <h3>🎯 Rule of Thumb: Use the Median</h3>
+    <p>When comparing yourself to national data, <strong>always use the median</strong>. If you're above the median for your age group, you're doing better than half of American households. The average is useful for understanding total wealth, but misleading for personal benchmarking.</p>
+  </div>
+
+  <h2>The Wealth Percentile Ladder</h2>
+
+  <p>Where do you need to be to reach each major wealth threshold?</p>
+
+  <div class="percentile-ladder">
+    <div class="ladder-rung">
+      <div class="ladder-pct">Top 50%</div>
+      <div class="ladder-amount">$192,700</div>
+      <div class="ladder-desc">Above the national median household net worth</div>
+    </div>
+    <div class="ladder-rung">
+      <div class="ladder-pct">Top 25%</div>
+      <div class="ladder-amount">$656,500</div>
+      <div class="ladder-desc">Solidly upper-middle class territory</div>
+    </div>
+    <div class="ladder-rung">
+      <div class="ladder-pct">Top 10%</div>
+      <div class="ladder-amount">$1,900,000</div>
+      <div class="ladder-desc">Two-comma club — millionaire status</div>
+    </div>
+    <div class="ladder-rung highlight-rung">
+      <div class="ladder-pct">Top 5%</div>
+      <div class="ladder-amount">$3,800,000</div>
+      <div class="ladder-desc">Wealth that generates meaningful passive income</div>
+    </div>
+    <div class="ladder-rung">
+      <div class="ladder-pct">Top 1%</div>
+      <div class="ladder-amount">$13,700,000</div>
+      <div class="ladder-desc">Ultra-high net worth — generational wealth territory</div>
+    </div>
+  </div>
+
+  <h2>What Drives Net Worth at Each Age</h2>
+
+  <h3>🎓 Under 35 — The Foundation Years</h3>
+  <p>The biggest drag on net worth for young Americans is <strong>student loan debt</strong>. The average borrower under 35 carries $33,500 in student loans. Meanwhile, the biggest wealth builder is starting to invest early — even small amounts.</p>
+  <ul>
+    <li><strong>$100/month invested at 22</strong> = $380,000 by 65 (at 8% return)</li>
+    <li><strong>$100/month invested at 32</strong> = $166,000 by 65</li>
+    <li>That 10-year head start is worth <strong>$214,000</strong></li>
+  </ul>
+
+  <h3>🏠 35-44 — The Acceleration Phase</h3>
+  <p>Home equity becomes the single largest asset for most Americans in this bracket. The median homeowner's home equity is roughly $200,000. Combined with growing 401(k) balances and peak earning years, this decade is where compounding really kicks in.</p>
+
+  <h3>📈 45-54 — The Compounding Decade</h3>
+  <p>This is where disciplined investors see exponential growth. A 401(k) started at 25 with consistent contributions would have roughly <strong>$750,000-$1.2M</strong> by this age. College costs for children can be a significant setback — averaging $35,000/year for private universities.</p>
+
+  <h3>🎯 55-64 — The Final Push</h3>
+  <p>Catch-up contributions kick in at 50: an extra $7,500/year in 401(k) and $1,000 in IRA. Mortgages are often paid off. This decade typically sees the fastest net worth growth as major expenses wind down and savings accelerate.</p>
+
+  <h3>🌅 65+ — The Harvest</h3>
+  <p>Social Security replaces income. Required Minimum Distributions (RMDs) begin at 73. The focus shifts from accumulation to <strong>sustainable withdrawal</strong>. The 4% rule suggests you can safely withdraw 4% of your portfolio per year — a $1M portfolio generates $40,000/year.</p>
+
+  <h2>How to Build Net Worth Faster</h2>
+
+  <p>Regardless of where you stand today, these principles drive wealth at every age:</p>
+
+  <div class="strategy-grid">
+    <div class="strategy-card">
+      <div class="strategy-icon">📊</div>
+      <h3>Track Everything</h3>
+      <p>You can't improve what you don't measure. Calculate your net worth monthly. Use a spreadsheet or app like Mint, Personal Capital, or YNAB. The act of tracking alone changes behavior.</p>
+    </div>
+    <div class="strategy-card">
+      <div class="strategy-icon">💰</div>
+      <h3>Increase Your Savings Rate</h3>
+      <p>The average American saves 4.6% of income. Bump to 15% and the math changes dramatically. Every 1% increase in savings rate can shave <strong>2-3 years off your retirement date</strong>.</p>
+    </div>
+    <div class="strategy-card">
+      <div class="strategy-icon">🏠</div>
+      <h3>Build Home Equity</h3>
+      <p>For most Americans, their home is their largest asset. A 30-year mortgage is a forced savings plan. But don't over-leverage — keep housing costs under 28% of gross income.</p>
+    </div>
+    <div class="strategy-card">
+      <div class="strategy-icon">📈</div>
+      <h3>Invest in Index Funds</h3>
+      <p>The S&P 500 has returned ~10% annually since 1926. A simple three-fund portfolio (US stocks, international stocks, bonds) beats 85% of professional fund managers over 20 years.</p>
+    </div>
+    <div class="strategy-card">
+      <div class="strategy-icon">🚫</div>
+      <h3>Eliminate High-Interest Debt</h3>
+      <p>Credit card debt at 24% APR is a guaranteed negative return. Pay it off before investing. Student loans and mortgages at lower rates can coexist with investing.</p>
+    </div>
+    <div class="strategy-card">
+      <div class="strategy-icon">💼</div>
+      <h3>Maximize Tax-Advantaged Accounts</h3>
+      <p>401(k) limit: $23,500/year (2026). IRA: $7,000. HSA: $4,300 individual. These accounts grow tax-free or tax-deferred — that's an instant 25-35% boost on your effective returns.</p>
+    </div>
+  </div>
+
+  <h2>Net Worth Milestones: The Psychological Journey</h2>
+
+  <p>Building wealth isn't linear — it's exponential. And the hardest part is the beginning.</p>
+
+  <div class="milestones">
+    <div class="milestone">
+      <div class="milestone-amount">$0 → $100K</div>
+      <div class="milestone-time">The hardest milestone</div>
+      <div class="milestone-desc">Takes 7-10 years of disciplined saving. Feels painfully slow. Most people give up here. The key: automate and forget.</div>
+    </div>
+    <div class="milestone">
+      <div class="milestone-amount">$100K → $250K</div>
+      <div class="milestone-time">~3-4 years</div>
+      <div class="milestone-desc">Compounding starts becoming visible. Your money earns $8,000-$20,000/year in returns alone. Momentum builds.</div>
+    </div>
+    <div class="milestone">
+      <div class="milestone-amount">$250K → $500K</div>
+      <div class="milestone-time">~2-3 years</div>
+      <div class="milestone-desc">Your investments now earn as much as a part-time job. Returns start outpacing contributions. The flywheel spins.</div>
+    </div>
+    <div class="milestone">
+      <div class="milestone-amount">$500K → $1M</div>
+      <div class="milestone-time">~2-3 years</div>
+      <div class="milestone-desc">Your money works harder than you do. At 8% returns, $500K generates $40,000/year. The second $500K comes faster than the first.</div>
+    </div>
+    <div class="milestone accent-milestone">
+      <div class="milestone-amount">$1M → $2M</div>
+      <div class="milestone-time">~2 years</div>
+      <div class="milestone-desc">Compounding goes exponential. Your portfolio gains $80,000-$160,000/year. At this point, time is your greatest asset.</div>
+    </div>
+  </div>
+
+  <h2>The Bottom Line</h2>
+
+  <p>If you're reading this and feeling behind, remember: <strong>the median net worth for Americans under 35 is just $39,000</strong>. If you have a positive net worth, no credit card debt, and a growing retirement account — you're already ahead of millions of Americans.</p>
+
+  <p>The game isn't about keeping up with the average (which is skewed by billionaires). It's about consistently building, investing, and letting compound interest do the heavy lifting. Start where you are. Use the calculator above to benchmark yourself, and come back in a year to see your progress.</p>
+
+  <p><em>Data sourced from the Federal Reserve's Survey of Consumer Finances (2022, inflation-adjusted to 2026 dollars). Percentile calculations are interpolated estimates.</em></p>
+
+</SiteLayout>
+
+<style is:global>
+  .calculator-hero {
+    background: linear-gradient(135deg, rgba(74,143,231,0.1) 0%, rgba(74,143,231,0.05) 100%);
+    border: 1px solid var(--border-color);
+    border-radius: 16px;
+    padding: 2rem;
+    margin: 2rem 0;
+    text-align: center;
+  }
+  .calc-subtitle {
+    color: var(--text-secondary);
+    margin-top: -0.5rem;
+  }
+  .calc-inputs {
+    display: flex;
+    gap: 1rem;
+    justify-content: center;
+    align-items: flex-end;
+    flex-wrap: wrap;
+    margin: 1.5rem 0;
+  }
+  .input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+  }
+  .input-group label {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .input-group input {
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    background: var(--card-bg);
+    color: inherit;
+    font-size: 1.1rem;
+    width: 160px;
+    text-align: center;
+    font-weight: 600;
+  }
+  .input-group input:focus {
+    outline: none;
+    border-color: var(--accent-color);
+    box-shadow: 0 0 0 3px rgba(74,143,231,0.2);
+  }
+  #calc-btn {
+    padding: 0.75rem 2rem;
+    background: var(--accent-color);
+    color: white;
+    border: none;
+    border-radius: 8px;
+    font-size: 1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: transform 0.15s, box-shadow 0.15s;
+  }
+  #calc-btn:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(74,143,231,0.4);
+  }
+
+  .result-panel {
+    margin-top: 2rem;
+    animation: fadeIn 0.5s ease;
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+  }
+
+  .percentile-display {
+    display: flex;
+    justify-content: center;
+    margin-bottom: 1.5rem;
+  }
+  .percentile-ring {
+    position: relative;
+    width: 150px;
+    height: 150px;
+  }
+  .percentile-ring svg {
+    width: 100%;
+    height: 100%;
+  }
+  .percentile-number {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -60%);
+    font-size: 2.5rem;
+    font-weight: 800;
+    color: var(--accent-color);
+  }
+  .percentile-label {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, 50%);
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: var(--text-secondary);
+  }
+
+  .result-details {
+    font-size: 1.1rem;
+    line-height: 1.8;
+    margin-bottom: 1.5rem;
+  }
+  .result-details strong {
+    color: var(--accent-color);
+  }
+
+  .comparison-bar {
+    max-width: 500px;
+    margin: 0 auto;
+  }
+  .bar-track {
+    height: 24px;
+    background: var(--border-color);
+    border-radius: 12px;
+    position: relative;
+    overflow: visible;
+  }
+  .bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, var(--accent-color), #6366f1);
+    border-radius: 12px;
+    transition: width 1s ease;
+    width: 0;
+  }
+  .bar-marker, .bar-median-marker {
+    position: absolute;
+    top: -8px;
+    transform: translateX(-50%);
+    transition: left 1s ease;
+  }
+  .bar-marker {
+    width: 3px;
+    height: 40px;
+    background: #10b981;
+    border-radius: 2px;
+  }
+  .bar-median-marker {
+    width: 2px;
+    height: 40px;
+    background: #f59e0b;
+    border-radius: 2px;
+    opacity: 0.7;
+  }
+  .marker-label {
+    position: absolute;
+    top: -22px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 0.7rem;
+    font-weight: 700;
+    white-space: nowrap;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+  }
+  .bar-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    margin-top: 0.5rem;
+  }
+
+  .data-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.25rem;
+    margin: 1.5rem 0;
+  }
+  .data-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.5rem;
+    transition: transform 0.2s, box-shadow 0.2s;
+  }
+  .data-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+  }
+  .age-badge {
+    display: inline-block;
+    background: var(--accent-color);
+    color: white;
+    padding: 0.25rem 0.75rem;
+    border-radius: 20px;
+    font-weight: 700;
+    font-size: 0.85rem;
+    margin-bottom: 1rem;
+  }
+  .data-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid var(--border-color);
+  }
+  .data-row:last-of-type {
+    border-bottom: none;
+  }
+  .data-label {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+  }
+  .data-value {
+    font-weight: 700;
+    font-size: 1.1rem;
+  }
+  .data-value.highlight {
+    color: var(--accent-color);
+  }
+  .data-value.gap {
+    color: #f59e0b;
+  }
+  .data-insight {
+    margin-top: 0.75rem;
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+  }
+
+  .callout-box {
+    background: linear-gradient(135deg, rgba(74,143,231,0.1), rgba(99,102,241,0.05));
+    border-left: 4px solid var(--accent-color);
+    border-radius: 0 12px 12px 0;
+    padding: 1.5rem;
+    margin: 2rem 0;
+  }
+  .callout-box h3 {
+    margin-top: 0;
+    color: var(--accent-color);
+  }
+
+  .percentile-ladder {
+    margin: 1.5rem 0;
+  }
+  .ladder-rung {
+    display: grid;
+    grid-template-columns: 100px 160px 1fr;
+    gap: 1rem;
+    align-items: center;
+    padding: 1rem;
+    border-bottom: 1px solid var(--border-color);
+    transition: background 0.2s;
+  }
+  .ladder-rung:hover {
+    background: rgba(74,143,231,0.05);
+  }
+  .highlight-rung {
+    background: rgba(74,143,231,0.08);
+    border-radius: 8px;
+  }
+  .ladder-pct {
+    font-weight: 700;
+    color: var(--accent-color);
+    font-size: 0.9rem;
+  }
+  .ladder-amount {
+    font-weight: 800;
+    font-size: 1.15rem;
+  }
+  .ladder-desc {
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+  }
+
+  .strategy-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 1.25rem;
+    margin: 1.5rem 0;
+  }
+  .strategy-card {
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    padding: 1.5rem;
+    transition: transform 0.2s;
+  }
+  .strategy-card:hover {
+    transform: translateY(-2px);
+  }
+  .strategy-icon {
+    font-size: 2rem;
+    margin-bottom: 0.5rem;
+  }
+  .strategy-card h3 {
+    margin-top: 0.5rem;
+    font-size: 1rem;
+  }
+  .strategy-card p {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+  }
+
+  .milestones {
+    margin: 1.5rem 0;
+  }
+  .milestone {
+    position: relative;
+    padding: 1.25rem 1.5rem;
+    margin-bottom: 1rem;
+    background: var(--card-bg);
+    border: 1px solid var(--border-color);
+    border-radius: 12px;
+    border-left: 4px solid var(--border-color);
+    transition: transform 0.2s;
+  }
+  .milestone:hover {
+    transform: translateX(4px);
+  }
+  .accent-milestone {
+    border-left-color: var(--accent-color);
+    background: linear-gradient(135deg, rgba(74,143,231,0.08), transparent);
+  }
+  .milestone-amount {
+    font-weight: 800;
+    font-size: 1.2rem;
+    color: var(--accent-color);
+  }
+  .milestone-time {
+    font-weight: 600;
+    font-size: 0.85rem;
+    color: #10b981;
+    margin: 0.25rem 0;
+  }
+  .milestone-desc {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    line-height: 1.5;
+  }
+
+  @media (max-width: 600px) {
+    .calc-inputs {
+      flex-direction: column;
+      align-items: center;
+    }
+    .input-group input {
+      width: 200px;
+    }
+    .ladder-rung {
+      grid-template-columns: 1fr;
+      gap: 0.25rem;
+    }
+    .data-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
+
+<script is:inline>
+  // Net worth percentile data by age group (interpolated from Fed SCF data, inflation-adjusted to 2026)
+  const DATA = {
+    'under35': {
+      label: 'Under 35',
+      median: 39000,
+      mean: 183500,
+      percentiles: {
+        10: -27000, 20: 3200, 25: 8200, 30: 14000, 40: 26000,
+        50: 39000, 60: 63000, 70: 105000, 75: 140000, 80: 190000,
+        90: 380000, 95: 680000, 99: 2400000
+      }
+    },
+    '35to44': {
+      label: '35-44',
+      median: 135600,
+      mean: 549600,
+      percentiles: {
+        10: -7000, 20: 18000, 25: 38000, 30: 62000, 40: 98000,
+        50: 135600, 60: 210000, 70: 340000, 75: 430000, 80: 570000,
+        90: 1100000, 95: 2000000, 99: 6500000
+      }
+    },
+    '45to54': {
+      label: '45-54',
+      median: 247200,
+      mean: 975800,
+      percentiles: {
+        10: 2000, 20: 42000, 25: 75000, 30: 115000, 40: 180000,
+        50: 247200, 60: 380000, 70: 580000, 75: 720000, 80: 950000,
+        90: 1900000, 95: 3400000, 99: 11000000
+      }
+    },
+    '55to64': {
+      label: '55-64',
+      median: 364500,
+      mean: 1566900,
+      percentiles: {
+        10: 7000, 20: 60000, 25: 110000, 30: 165000, 40: 260000,
+        50: 364500, 60: 540000, 70: 830000, 75: 1050000, 80: 1400000,
+        90: 2800000, 95: 5200000, 99: 16000000
+      }
+    },
+    '65to74': {
+      label: '65-74',
+      median: 409900,
+      mean: 1794600,
+      percentiles: {
+        10: 18000, 20: 80000, 25: 130000, 30: 195000, 40: 300000,
+        50: 409900, 60: 610000, 70: 920000, 75: 1150000, 80: 1500000,
+        90: 3200000, 95: 5800000, 99: 18000000
+      }
+    },
+    '75plus': {
+      label: '75+',
+      median: 335600,
+      mean: 1624100,
+      percentiles: {
+        10: 12000, 20: 62000, 25: 100000, 30: 155000, 40: 240000,
+        50: 335600, 60: 500000, 70: 760000, 75: 950000, 80: 1250000,
+        90: 2700000, 95: 4900000, 99: 15000000
+      }
+    }
+  };
+
+  function getAgeGroup(age) {
+    if (age < 35) return 'under35';
+    if (age < 45) return '35to44';
+    if (age < 55) return '45to54';
+    if (age < 65) return '55to64';
+    if (age < 75) return '65to74';
+    return '75plus';
+  }
+
+  function interpolatePercentile(nw, percentiles) {
+    const pcts = Object.keys(percentiles).map(Number).sort((a, b) => a - b);
+    
+    if (nw <= percentiles[pcts[0]]) return Math.max(1, pcts[0] * (nw / percentiles[pcts[0]]));
+    if (nw >= percentiles[pcts[pcts.length - 1]]) return Math.min(99, pcts[pcts.length - 1]);
+    
+    for (let i = 0; i < pcts.length - 1; i++) {
+      const lowPct = pcts[i], highPct = pcts[i + 1];
+      const lowVal = percentiles[lowPct], highVal = percentiles[highPct];
+      
+      if (nw >= lowVal && nw <= highVal) {
+        const ratio = (nw - lowVal) / (highVal - lowVal);
+        return Math.round(lowPct + ratio * (highPct - lowPct));
+      }
+    }
+    return 50;
+  }
+
+  function formatMoney(n) {
+    if (n < 0) return '-$' + Math.abs(n).toLocaleString();
+    if (n >= 1000000) return '$' + (n / 1000000).toFixed(1) + 'M';
+    if (n >= 1000) return '$' + Math.round(n / 1000) + 'K';
+    return '$' + n.toLocaleString();
+  }
+
+  function calculatePercentile() {
+    const age = parseInt(document.getElementById('age-input').value);
+    const nw = parseInt(document.getElementById('nw-input').value);
+    
+    if (isNaN(age) || isNaN(nw)) return;
+    
+    const group = getAgeGroup(age);
+    const data = DATA[group];
+    const pct = interpolatePercentile(nw, data.percentiles);
+    
+    // Show result panel
+    document.getElementById('result-panel').style.display = 'block';
+    
+    // Animate percentile ring
+    const circle = document.getElementById('progress-circle');
+    const circumference = 327;
+    const offset = circumference - (pct / 100) * circumference;
+    circle.style.transition = 'stroke-dashoffset 1.5s ease';
+    circle.style.strokeDashoffset = offset;
+    
+    // Animate number
+    const numEl = document.getElementById('percentile-number');
+    let current = 0;
+    const step = Math.max(1, Math.floor(pct / 30));
+    const interval = setInterval(() => {
+      current = Math.min(current + step, pct);
+      numEl.textContent = current + 'th';
+      if (current >= pct) clearInterval(interval);
+    }, 40);
+    
+    // Result text
+    const details = document.getElementById('result-details');
+    const aboveBelow = nw >= data.median ? 'above' : 'below';
+    const diff = Math.abs(nw - data.median);
+    
+    let verdict = '';
+    if (pct >= 90) verdict = "🏆 You're in the top 10% for your age group. Exceptional wealth building.";
+    else if (pct >= 75) verdict = "🌟 You're well above average. Strong financial position.";
+    else if (pct >= 50) verdict = "👍 You're above the median. Better than half of your peers.";
+    else if (pct >= 25) verdict = "📈 Room to grow, but you're building. Keep investing consistently.";
+    else verdict = "🚀 Starting point identified. Small, consistent steps compound dramatically over time.";
+    
+    details.innerHTML = `
+      <p>At age <strong>${age}</strong> with a net worth of <strong>${formatMoney(nw)}</strong>, you rank higher than <strong>${pct}%</strong> of American households in the ${data.label} age group.</p>
+      <p>You're <strong>${formatMoney(diff)} ${aboveBelow}</strong> the median of ${formatMoney(data.median)}. The average (skewed by ultra-wealthy) is ${formatMoney(data.mean)}.</p>
+      <p>${verdict}</p>
+    `;
+    
+    // Comparison bar
+    const maxVal = data.percentiles[95] || data.mean * 2;
+    const barFill = document.getElementById('bar-fill');
+    const barMarker = document.getElementById('bar-marker');
+    const barMedian = document.getElementById('bar-median-marker');
+    const barMaxLabel = document.getElementById('bar-max-label');
+    
+    barMaxLabel.textContent = formatMoney(maxVal);
+    
+    const yourPct = Math.min(Math.max(nw / maxVal * 100, 2), 98);
+    const medPct = Math.min(data.median / maxVal * 100, 98);
+    
+    barFill.style.width = yourPct + '%';
+    barMarker.style.left = yourPct + '%';
+    barMedian.style.left = medPct + '%';
+    
+    // Smooth scroll to results
+    document.getElementById('result-panel').scrollIntoView({ behavior: 'smooth', block: 'center' });
+  }
+</script>
