@@ -44,31 +44,79 @@ SUB_SITES = {"bodycount", "sendnerds", "justonemoment", "getthebag",
 TODAY = datetime.now().strftime("%Y-%m-%d")
 
 
+def _collect_dynamic_pages(site_id, domain):
+    """Collect URLs from JSON-driven dynamic routes (IV & prospect pages)."""
+    data_dir = PHOTON_DIR / "src" / "data"
+    page_data = []
+
+    for kind in ("iv", "prospect"):
+        json_dir = data_dir / kind
+        if not json_dir.is_dir():
+            continue
+        for json_file in sorted(json_dir.glob("*.json")):
+            try:
+                data = json.loads(json_file.read_text())
+            except (json.JSONDecodeError, OSError):
+                continue
+            slug = data.get("slug")
+            if not slug:
+                continue
+            mtime = datetime.fromtimestamp(json_file.stat().st_mtime).strftime("%Y-%m-%d")
+            page_data.append((f"https://{domain}/{slug}", mtime))
+
+    return page_data
+
+
 def generate_sitemap(site_id):
     site_dir = SITES_DIR / site_id
     domain = SITE_DOMAINS.get(site_id)
     if not domain or not site_dir.is_dir():
         return 0
 
-    pages = sorted(site_dir.glob("*.astro"))
-    urls = []
+    # Recursively find all .astro pages, skip dynamic route templates
+    pages = sorted(site_dir.rglob("*.astro"))
 
     page_data = []  # (url, lastmod)
     for page in pages:
-        slug = page.stem
+        stem = page.stem
+        # Skip dynamic route files like [...ivslug].astro
+        if stem.startswith("["):
+            continue
+
         # Use file's actual modification time for lastmod
         mtime = datetime.fromtimestamp(page.stat().st_mtime).strftime("%Y-%m-%d")
 
-        if slug == "index":
+        # Build the URL path from the file's relative position
+        rel = page.relative_to(site_dir).with_suffix("")
+        parts = list(rel.parts)
+
+        if parts[-1] == "index":
+            # index.astro → directory URL with trailing slash
+            parts.pop()
+            url_path = "/".join(parts)
             if site_id in SUB_SITES:
-                page_data.append((f"https://{domain}/{site_id}/", mtime))
+                page_data.append((f"https://{domain}/{site_id}/{url_path}{'/' if url_path else ''}", mtime))
             else:
-                page_data.append((f"https://{domain}/", mtime))
+                page_data.append((f"https://{domain}/{url_path}{'/' if url_path else ''}", mtime))
         else:
+            url_path = "/".join(parts)
             if site_id in SUB_SITES:
-                page_data.append((f"https://{domain}/{site_id}/{slug}", mtime))
+                page_data.append((f"https://{domain}/{site_id}/{url_path}", mtime))
             else:
-                page_data.append((f"https://{domain}/{slug}", mtime))
+                page_data.append((f"https://{domain}/{url_path}", mtime))
+
+    # Add dynamic pages from JSON data (IV & prospect for westmount)
+    if site_id == "westmount":
+        page_data.extend(_collect_dynamic_pages(site_id, domain))
+
+    # Deduplicate by URL (keep first occurrence)
+    seen = set()
+    unique_data = []
+    for url, lastmod in page_data:
+        if url not in seen:
+            seen.add(url)
+            unique_data.append((url, lastmod))
+    page_data = sorted(unique_data, key=lambda x: x[0])
 
     # Build XML
     xml_lines = [
