@@ -138,7 +138,7 @@ export const sites: Record<string, SiteConfig> = {
     theme: { bg: '#060c0a', cardBg: '#0c1410', border: '#1a2a24', textPrimary: '#c8e0d8', textSecondary: '#888888' },
     gaId: 'G-PRHBMYEWQC',
   tagline: 'Practical Home & DIY Calculators',
-  description: 'Concrete, paint, flooring, BTU, and renovation calculators. Get the numbers right before you build.',
+  description: 'Free home renovation calculators for concrete, paint, flooring, BTU, and more. Get accurate numbers before you start your next project.',
     nav: [
       { label: 'Tools', href: '/#tools' },
       { label: 'Guides', href: '/#guides' },
@@ -194,7 +194,7 @@ sites['getthebag'] = {
   theme: { bg: '#060a12', cardBg: '#0a1020', border: '#152040', textPrimary: '#e2e8f0', textSecondary: '#94a3b8' },
   gaId: 'G-52ZPK1JZ45',
   tagline: 'Career Tools & Job Resources',
-  description: 'Salary calculators, resume tips, interview prep, and job search tools. Level up your career.',
+  description: 'Free salary calculators, resume tips, interview prep guides, and job search tools to help you level up your career and earn more.',
   nav: [
     { label: 'Tools', href: '/#tools' },
     { label: 'Guides', href: '/#guides' },
@@ -226,7 +226,7 @@ sites['justonemoment'] = {
   theme: { bg: '#060812', cardBg: '#0a1020', border: '#152040', textPrimary: '#e2e8f0', textSecondary: '#94a3b8' },
   gaId: 'G-PNBZ1VJM9R',
   tagline: 'Free Online Timers & Countdowns',
-  description: 'Pomodoro, meditation, workout, and custom timers. Simple, fast, no distractions.',
+  description: 'Free online Pomodoro, meditation, workout, and custom timers plus time calculators. Simple, fast, and distraction-free productivity tools.',
   nav: [
     { label: 'Timers', href: '/#tools' },
     { label: 'Calculators', href: '/#calculators' },
@@ -258,7 +258,7 @@ sites['papyruspeople'] = {
   theme: { bg: '#0a0806', cardBg: '#12100c', border: '#2a2418', textPrimary: '#e8e0d0', textSecondary: '#a09880' },
   gaId: 'G-26Z3FPWKM6',
   tagline: 'Text Tools & Character Generators',
-  description: 'Font generators, binary translators, morse code, and text formatters. Transform text instantly.',
+  description: 'Free online font generators, binary and morse code translators, character counters, and text formatting tools. Transform, analyze, and style text instantly.',
   nav: [
     { label: 'Translators', href: '/#tools' },
     { label: 'Fonts', href: '/#guides' },
