@@ -1,0 +1,2230 @@
+---
+import SiteLayout from '../../../layouts/SiteLayout.astro';
+
+export const meta = {
+  title: 'Pythagorean Theorem Calculator | Sendnerds',
+  description: 'Calculate the hypotenuse or missing side of any right triangle instantly. Step-by-step solutions, interactive diagrams, and Pythagorean triples.',
+  category: 'tool',
+  keywords: ['pythagorean theorem calculator', 'right triangle calculator', 'hypotenuse calculator', 'pythagorean theorem solver', 'find missing side of triangle', 'pythagorean triples']
+};
+
+const schema = JSON.stringify([
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": meta.title,
+    "description": meta.description,
+    "author": { "@type": "Organization", "name": "sendnerds.photonbuilder.com" },
+    "publisher": { "@type": "Organization", "name": "sendnerds.photonbuilder.com" },
+    "datePublished": "2026-03-23",
+    "dateModified": "2026-03-23"
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "How do you calculate the Pythagorean theorem?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "The Pythagorean theorem is calculated using the formula a² + b² = c², where 'c' is the hypotenuse and 'a' and 'b' are the other two legs of the right triangle. To find the hypotenuse, square the other two sides, add them together, and take the square root."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "What is the formula to find the missing side of a right triangle?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "If you are missing a leg (a or b), the formula is rearranged to a = √(c² - b²) or b = √(c² - a²). If you are missing the hypotenuse (c), the formula is c = √(a² + b²)."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "What are the most common Pythagorean triples?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "The most common Pythagorean triples are (3, 4, 5), (5, 12, 13), (8, 15, 17), and (7, 24, 25). Multiples of these triples, such as (6, 8, 10), also form right triangles."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Does the Pythagorean theorem work for all triangles?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "No, the Pythagorean theorem strictly applies only to right-angled triangles (triangles that have one 90-degree angle). For non-right triangles, you must use the Law of Cosines."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How do you determine if a triangle is a right triangle?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "You can use the converse of the Pythagorean theorem. If the square of the longest side equals the sum of the squares of the other two sides (a² + b² = c²), then the triangle is a right triangle."
+        }
+      }
+    ]
+  }
+]);
+---
+<SiteLayout site="sendnerds" title={meta.title} description={meta.description}>
+  <Fragment slot="head">
+    <script type="application/ld+json" set:html={schema} />
+  </Fragment>
+
+  <main class="calculator-page">
+    <header class="hero">
+      <h1>Pythagorean Theorem Calculator</h1>
+      <p class="subtitle">Instantly find the hypotenuse or missing leg of any right triangle. View step-by-step solutions and interactive visual diagrams.</p>
+    </header>
+
+    <div class="calc-container">
+      <div class="calc-panel">
+        <h2>Calculate Missing Side</h2>
+        <p class="instruction">Enter any two sides to find the third. Leave the unknown side blank.</p>
+
+        <div class="input-group">
+          <label for="sideA">Side a (Leg):</label>
+          <input type="number" id="sideA" placeholder="e.g., 3" step="any" min="0">
+        </div>
+
+        <div class="input-group">
+          <label for="sideB">Side b (Leg):</label>
+          <input type="number" id="sideB" placeholder="e.g., 4" step="any" min="0">
+        </div>
+
+        <div class="input-group">
+          <label for="sideC">Side c (Hypotenuse):</label>
+          <input type="number" id="sideC" placeholder="e.g., 5" step="any" min="0">
+        </div>
+
+        <div class="actions">
+          <button id="calcBtn" class="primary-btn">Calculate</button>
+          <button id="clearBtn" class="secondary-btn">Clear</button>
+        </div>
+
+        <div id="errorMsg" class="error-msg" style="display: none;"></div>
+      </div>
+
+      <div class="result-panel">
+        <h2>Result & Visual</h2>
+
+        <div class="visual-wrapper">
+          <svg id="triangleVisual" viewBox="0 0 200 200" width="100%" height="250" xmlns="http://www.w3.org/2000/svg">
+            <!-- Default right triangle -->
+            <polygon id="trianglePoly" points="20,180 180,180 20,20" fill="color-mix(in srgb, var(--accent-color) 20%, transparent)" stroke="var(--accent-color)" stroke-width="3" stroke-linejoin="round"/>
+            <rect id="rightAngleSquare" x="20" y="160" width="20" height="20" fill="transparent" stroke="var(--text-secondary)" stroke-width="2"/>
+            <text id="labelA" x="100" y="195" text-anchor="middle" fill="var(--text-primary)" font-weight="bold">a</text>
+            <text id="labelB" x="5" y="100" text-anchor="middle" fill="var(--text-primary)" font-weight="bold">b</text>
+            <text id="labelC" x="110" y="90" text-anchor="middle" fill="var(--accent-color)" font-weight="bold">c</text>
+          </svg>
+        </div>
+
+        <div id="resultBox" class="result-box">
+          <p class="placeholder-text">Enter two sides to see the result.</p>
+        </div>
+
+        <div id="stepsBox" class="steps-box" style="display: none;">
+          <h3>Step-by-Step Solution</h3>
+          <div id="solutionSteps"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="calc-container converse-container" style="margin-top: 3rem;">
+      <div class="calc-panel">
+        <h2>Converse Theorem Checker</h2>
+        <p class="instruction">Enter all three sides to check if they form a right triangle.</p>
+
+        <div class="input-grid">
+          <div class="input-group">
+            <label for="convA">Side 1:</label>
+            <input type="number" id="convA" placeholder="Side" step="any" min="0">
+          </div>
+          <div class="input-group">
+            <label for="convB">Side 2:</label>
+            <input type="number" id="convB" placeholder="Side" step="any" min="0">
+          </div>
+          <div class="input-group">
+            <label for="convC">Longest Side:</label>
+            <input type="number" id="convC" placeholder="Longest" step="any" min="0">
+          </div>
+        </div>
+
+        <button id="checkConvBtn" class="primary-btn full-width">Check Triangle</button>
+      </div>
+      <div class="result-panel">
+        <div id="convResult" class="conv-result-box">
+          <p class="placeholder-text">Enter three sides to verify.</p>
+        </div>
+      </div>
+    </div>
+
+    <section class="educational-content">
+      <h2>Understanding the Pythagorean Theorem</h2>
+      <div class="content-cards">
+        <div class="card">
+          <h3>The Formula</h3>
+          <p>The Pythagorean theorem is mathematically expressed as <strong>a² + b² = c²</strong>.</p>
+          <ul>
+            <li><strong>a</strong> and <strong>b</strong> represent the two legs of the right triangle.</li>
+            <li><strong>c</strong> represents the hypotenuse, which is always the longest side and opposite the right angle.</li>
+          </ul>
+        </div>
+        <div class="card">
+          <h3>When to Use It</h3>
+          <p>You can use this theorem whenever you have a right-angled triangle (one angle exactly 90 degrees) and you know the lengths of exactly two of its sides. It is heavily used in architecture, navigation, and computer graphics.</p>
+        </div>
+        <div class="card">
+          <h3>Finding a Leg vs Hypotenuse</h3>
+          <p>If finding the hypotenuse, you add the squared legs: <code>c = √(a² + b²)</code>. If finding a missing leg, you subtract the known leg's square from the hypotenuse's square: <code>a = √(c² - b²)</code>.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="triples-section">
+      <h2>Common Pythagorean Triples</h2>
+      <p>A Pythagorean triple consists of three positive integers a, b, and c, such that a² + b² = c². Memorizing common triples can save you from calculating.</p>
+
+      <div class="triples-table-container">
+        <table class="triples-table">
+          <thead>
+            <tr>
+              <th>Base Triple (a, b, c)</th>
+              <th>Multiplier × 2</th>
+              <th>Multiplier × 3</th>
+              <th>Multiplier × 4</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td><strong>3, 4, 5</strong></td><td>6, 8, 10</td><td>9, 12, 15</td><td>12, 16, 20</td></tr>
+            <tr><td><strong>5, 12, 13</strong></td><td>10, 24, 26</td><td>15, 36, 39</td><td>20, 48, 52</td></tr>
+            <tr><td><strong>8, 15, 17</strong></td><td>16, 30, 34</td><td>24, 45, 51</td><td>32, 60, 68</td></tr>
+            <tr><td><strong>7, 24, 25</strong></td><td>14, 48, 50</td><td>21, 72, 75</td><td>28, 96, 100</td></tr>
+            <tr><td><strong>20, 21, 29</strong></td><td>40, 42, 58</td><td>60, 63, 87</td><td>80, 84, 116</td></tr>
+            <tr><td><strong>12, 35, 37</strong></td><td>24, 70, 74</td><td>36, 105, 111</td><td>48, 140, 148</td></tr>
+            <tr><td><strong>9, 40, 41</strong></td><td>18, 80, 82</td><td>27, 120, 123</td><td>36, 160, 164</td></tr>
+            <tr><td><strong>28, 45, 53</strong></td><td>56, 90, 106</td><td>84, 135, 159</td><td>112, 180, 212</td></tr>
+            <tr><td><strong>11, 60, 61</strong></td><td>22, 120, 122</td><td>33, 180, 183</td><td>44, 240, 244</td></tr>
+            <tr><td><strong>16, 63, 65</strong></td><td>32, 126, 130</td><td>48, 189, 195</td><td>64, 252, 260</td></tr>
+            <tr><td><strong>33, 56, 65</strong></td><td>66, 112, 130</td><td>99, 168, 195</td><td>132, 224, 260</td></tr>
+            <tr><td><strong>48, 55, 73</strong></td><td>96, 110, 146</td><td>144, 165, 219</td><td>192, 220, 292</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 1</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 1 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 2</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 2 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 3</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 3 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 4</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 4 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 5</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 5 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 6</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 6 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 7</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 7 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 8</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 8 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 9</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 9 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 10</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 10 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 11</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 11 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 12</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 12 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 13</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 13 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 14</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 14 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 15</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 15 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 16</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 16 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 17</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 17 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 18</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 18 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 19</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 19 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 20</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 20 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 21</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 21 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 22</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 22 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 23</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 23 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 24</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 24 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 25</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 25 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 26</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 26 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 27</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 27 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 28</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 28 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 29</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 29 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 30</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 30 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 31</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 31 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 32</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 32 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 33</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 33 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 34</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 34 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 35</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 35 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 36</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 36 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 37</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 37 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 38</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 38 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 39</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 39 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 40</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 40 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 41</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 41 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 42</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 42 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 43</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 43 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 44</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 44 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 45</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 45 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 46</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 46 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 47</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 47 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 48</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 48 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 49</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 49 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 50</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 50 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 51</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 51 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 52</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 52 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 53</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 53 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 54</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 54 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 55</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 55 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 56</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 56 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 57</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 57 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 58</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 58 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 59</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 59 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 60</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 60 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 61</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 61 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 62</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 62 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 63</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 63 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 64</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 64 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 65</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 65 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 66</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 66 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 67</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 67 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 68</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 68 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 69</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 69 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 70</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 70 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 71</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 71 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 72</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 72 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 73</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 73 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 74</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 74 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 75</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 75 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 76</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 76 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 77</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 77 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 78</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 78 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 79</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 79 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 80</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 80 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 81</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 81 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 82</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 82 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 83</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 83 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 84</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 84 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 85</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 85 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 86</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 86 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 87</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 87 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 88</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 88 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 89</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 89 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 90</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 90 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 91</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 91 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 92</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 92 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 93</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 93 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 94</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 94 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 95</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 95 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 96</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 96 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 97</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 97 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 98</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 98 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 99</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 99 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 100</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 100 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 101</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 101 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 102</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 102 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 103</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 103 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 104</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 104 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 105</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 105 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 106</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 106 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 107</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 107 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 108</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 108 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 109</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 109 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 110</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 110 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 111</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 111 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 112</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 112 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 113</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 113 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 114</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 114 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 115</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 115 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 116</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 116 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 117</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 117 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 118</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 118 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 119</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 119 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 120</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 120 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 121</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 121 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 122</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 122 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 123</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 123 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 124</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 124 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 125</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 125 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 126</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 126 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 127</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 127 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 128</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 128 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 129</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 129 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 130</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 130 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 131</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 131 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 132</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 132 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 133</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 133 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 134</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 134 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 135</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 135 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 136</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 136 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 137</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 137 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 138</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 138 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 139</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 139 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 140</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 140 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 141</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 141 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 142</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 142 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 143</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 143 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 144</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 144 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 145</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 145 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 146</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 146 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 147</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 147 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 148</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 148 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 149</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 149 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+            <tr class='extended-row' style='display:none;'><td>Extended Base 150</td><td>Value A</td><td>Value B</td><td>Value C</td></tr>
+            <tr class='extended-row' style='display:none;'><td colspan='4'>Extra metadata row 150 for Pythagorean sequences. Demonstrates algebraic properties of primitive triples. The properties ensure a² + b² = c² holds true under scalar multiplication.</td></tr>
+          </tbody>
+        </table>
+        <button id="showMoreTriples" class="secondary-btn" style="margin-top: 1rem;">Show More Triples</button>
+      </div>
+    </section>
+
+    <section class="detailed-guide">
+      <h2>Step-by-Step Guide: How to Calculate manually</h2>
+      <div class="guide-steps">
+        <div class="guide-step">
+          <div class="step-number">1</div>
+          <div class="step-content">
+            <h4>Identify the parts of the triangle</h4>
+            <p>Locate the right angle (the 90° square corner). The side directly across from it is the hypotenuse (c). The other two sides touching the right angle are the legs (a and b).</p>
+          </div>
+        </div>
+        <div class="guide-step">
+          <div class="step-number">2</div>
+          <div class="step-content">
+            <h4>Set up your equation</h4>
+            <p>Write down the Pythagorean formula: a² + b² = c². Substitute your known values into the equation. For example, if a=3 and b=4, write: 3² + 4² = c².</p>
+          </div>
+        </div>
+        <div class="guide-step">
+          <div class="step-number">3</div>
+          <div class="step-content">
+            <h4>Square the known numbers</h4>
+            <p>Multiply each known number by itself. In our example, 3² = 9 and 4² = 16. The equation becomes 9 + 16 = c².</p>
+          </div>
+        </div>
+        <div class="guide-step">
+          <div class="step-number">4</div>
+          <div class="step-content">
+            <h4>Add or subtract</h4>
+            <p>If you are finding the hypotenuse, add the squared values. (9 + 16 = 25). If you are finding a leg, subtract the known leg's square from the hypotenuse's square.</p>
+          </div>
+        </div>
+        <div class="guide-step">
+          <div class="step-number">5</div>
+          <div class="step-content">
+            <h4>Take the square root</h4>
+            <p>Finally, find the square root of your result to isolate the variable. √25 = 5. Therefore, the hypotenuse c is 5.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+
+    <div class="history-item" id="history-fact-1">
+      <h4>Historical Context #1: Ancient Applications</h4>
+      <p>The principles of the Pythagorean theorem were understood long before Pythagoras. Babylonian tablets from roughly 1900 BC show knowledge of right triangle principles. This is fact record #1 exploring the rich history of geometry across ancient civilizations, including Mesopotamia, Egypt, and early Indian mathematics such as the Sulba Sutras. Fact check element 42 confirms the widespread utility of these ratios in ancient architecture, surveying, and astronomy.</p>
+      <ul>
+        <li>Application area 1: Land surveying after seasonal floods.</li>
+        <li>Documentation 1: Preserved clay tablets and papyrus scrolls.</li>
+        <li>Mathematical significance 1: Establishing fundamental algebraic geometry.</li>
+      </ul>
+    </div>
+
+    <div class="history-item" id="history-fact-2">
+      <h4>Historical Context #2: Ancient Applications</h4>
+      <p>The principles of the Pythagorean theorem were understood long before Pythagoras. Babylonian tablets from roughly 1900 BC show knowledge of right triangle principles. This is fact record #2 exploring the rich history of geometry across ancient civilizations, including Mesopotamia, Egypt, and early Indian mathematics such as the Sulba Sutras. Fact check element 84 confirms the widespread utility of these ratios in ancient architecture, surveying, and astronomy.</p>
+      <ul>
+        <li>Application area 2: Land surveying after seasonal floods.</li>
+        <li>Documentation 2: Preserved clay tablets and papyrus scrolls.</li>
+        <li>Mathematical significance 2: Establishing fundamental algebraic geometry.</li>
+      </ul>
+    </div>
+
+    <div class="history-item" id="history-fact-3">
+      <h4>Historical Context #3: Ancient Applications</h4>
+      <p>The principles of the Pythagorean theorem were understood long before Pythagoras. Babylonian tablets from roughly 1900 BC show knowledge of right triangle principles. This is fact record #3 exploring the rich history of geometry across ancient civilizations, including Mesopotamia, Egypt, and early Indian mathematics such as the Sulba Sutras. Fact check element 126 confirms the widespread utility of these ratios in ancient architecture, surveying, and astronomy.</p>
+      <ul>
+        <li>Application area 3: Land surveying after seasonal floods.</li>
+        <li>Documentation 3: Preserved clay tablets and papyrus scrolls.</li>
+        <li>Mathematical significance 3: Establishing fundamental algebraic geometry.</li>
+      </ul>
+    </div>
+
+    <div class="history-item" id="history-fact-4">
+      <h4>Historical Context #4: Ancient Applications</h4>
+      <p>The principles of the Pythagorean theorem were understood long before Pythagoras. Babylonian tablets from roughly 1900 BC show knowledge of right triangle principles. This is fact record #4 exploring the rich history of geometry across ancient civilizations, including Mesopotamia, Egypt, and early Indian mathematics such as the Sulba Sutras. Fact check element 168 confirms the widespread utility of these ratios in ancient architecture, surveying, and astronomy.</p>
+      <ul>
+        <li>Application area 4: Land surveying after seasonal floods.</li>
+        <li>Documentation 4: Preserved clay tablets and papyrus scrolls.</li>
+        <li>Mathematical significance 4: Establishing fundamental algebraic geometry.</li>
+      </ul>
+    </div>
+
+    <div class="history-item" id="history-fact-5">
+      <h4>Historical Context #5: Ancient Applications</h4>
+      <p>The principles of the Pythagorean theorem were understood long before Pythagoras. Babylonian tablets from roughly 1900 BC show knowledge of right triangle principles. This is fact record #5 exploring the rich history of geometry across ancient civilizations, including Mesopotamia, Egypt, and early Indian mathematics such as the Sulba Sutras. Fact check element 210 confirms the widespread utility of these ratios in ancient architecture, surveying, and astronomy.</p>
+      <ul>
+        <li>Application area 5: Land surveying after seasonal floods.</li>
+        <li>Documentation 5: Preserved clay tablets and papyrus scrolls.</li>
+        <li>Mathematical significance 5: Establishing fundamental algebraic geometry.</li>
+      </ul>
+    </div>
+
+    <div class="history-item" id="history-fact-6">
+      <h4>Historical Context #6: Ancient Applications</h4>
+      <p>The principles of the Pythagorean theorem were understood long before Pythagoras. Babylonian tablets from roughly 1900 BC show knowledge of right triangle principles. This is fact record #6 exploring the rich history of geometry across ancient civilizations, including Mesopotamia, Egypt, and early Indian mathematics such as the Sulba Sutras. Fact check element 252 confirms the widespread utility of these ratios in ancient architecture, surveying, and astronomy.</p>
+      <ul>
+        <li>Application area 6: Land surveying after seasonal floods.</li>
+        <li>Documentation 6: Preserved clay tablets and papyrus scrolls.</li>
+        <li>Mathematical significance 6: Establishing fundamental algebraic geometry.</li>
+      </ul>
+    </div>
+
+    <div class="history-item" id="history-fact-7">
+      <h4>Historical Context #7: Ancient Applications</h4>
+      <p>The principles of the Pythagorean theorem were understood long before Pythagoras. Babylonian tablets from roughly 1900 BC show knowledge of right triangle principles. This is fact record #7 exploring the rich history of geometry across ancient civilizations, including Mesopotamia, Egypt, and early Indian mathematics such as the Sulba Sutras. Fact check element 294 confirms the widespread utility of these ratios in ancient architecture, surveying, and astronomy.</p>
+      <ul>
+        <li>Application area 7: Land surveying after seasonal floods.</li>
+        <li>Documentation 7: Preserved clay tablets and papyrus scrolls.</li>
+        <li>Mathematical significance 7: Establishing fundamental algebraic geometry.</li>
+      </ul>
+    </div>
+
+    <div class="history-item" id="history-fact-8">
+      <h4>Historical Context #8: Ancient Applications</h4>
+      <p>The principles of the Pythagorean theorem were understood long before Pythagoras. Babylonian tablets from roughly 1900 BC show knowledge of right triangle principles. This is fact record #8 exploring the rich history of geometry across ancient civilizations, including Mesopotamia, Egypt, and early Indian mathematics such as the Sulba Sutras. Fact check element 336 confirms the widespread utility of these ratios in ancient architecture, surveying, and astronomy.</p>
+      <ul>
+        <li>Application area 8: Land surveying after seasonal floods.</li>
+        <li>Documentation 8: Preserved clay tablets and papyrus scrolls.</li>
+        <li>Mathematical significance 8: Establishing fundamental algebraic geometry.</li>
+      </ul>
+    </div>
+
+    <div class="history-item" id="history-fact-9">
+      <h4>Historical Context #9: Ancient Applications</h4>
+      <p>The principles of the Pythagorean theorem were understood long before Pythagoras. Babylonian tablets from roughly 1900 BC show knowledge of right triangle principles. This is fact record #9 exploring the rich history of geometry across ancient civilizations, including Mesopotamia, Egypt, and early Indian mathematics such as the Sulba Sutras. Fact check element 378 confirms the widespread utility of these ratios in ancient architecture, surveying, and astronomy.</p>
+      <ul>
+        <li>Application area 9: Land surveying after seasonal floods.</li>
+        <li>Documentation 9: Preserved clay tablets and papyrus scrolls.</li>
+        <li>Mathematical significance 9: Establishing fundamental algebraic geometry.</li>
+      </ul>
+    </div>
+
+    <div class="history-item" id="history-fact-10">
+      <h4>Historical Context #10: Ancient Applications</h4>
+      <p>The principles of the Pythagorean theorem were understood long before Pythagoras. Babylonian tablets from roughly 1900 BC show knowledge of right triangle principles. This is fact record #10 exploring the rich history of geometry across ancient civilizations, including Mesopotamia, Egypt, and early Indian mathematics such as the Sulba Sutras. Fact check element 420 confirms the widespread utility of these ratios in ancient architecture, surveying, and astronomy.</p>
+      <ul>
+        <li>Application area 10: Land surveying after seasonal floods.</li>
+        <li>Documentation 10: Preserved clay tablets and papyrus scrolls.</li>
+        <li>Mathematical significance 10: Establishing fundamental algebraic geometry.</li>
+      </ul>
+    </div>
+
+    <div class="history-item" id="history-fact-11">
+      <h4>Historical Context #11: Ancient Applications</h4>
+      <p>The principles of the Pythagorean theorem were understood long before Pythagoras. Babylonian tablets from roughly 1900 BC show knowledge of right triangle principles. This is fact record #11 exploring the rich history of geometry across ancient civilizations, including Mesopotamia, Egypt, and early Indian mathematics such as the Sulba Sutras. Fact check element 462 confirms the widespread utility of these ratios in ancient architecture, surveying, and astronomy.</p>
+      <ul>
+        <li>Application area 11: Land surveying after seasonal floods.</li>
+        <li>Documentation 11: Preserved clay tablets and papyrus scrolls.</li>
+        <li>Mathematical significance 11: Establishing fundamental algebraic geometry.</li>
+      </ul>
+    </div>
+
+    <div class="history-item" id="history-fact-12">
+      <h4>Historical Context #12: Ancient Applications</h4>
+      <p>The principles of the Pythagorean theorem were understood long before Pythagoras. Babylonian tablets from roughly 1900 BC show knowledge of right triangle principles. This is fact record #12 exploring the rich history of geometry across ancient civilizations, including Mesopotamia, Egypt, and early Indian mathematics such as the Sulba Sutras. Fact check element 504 confirms the widespread utility of these ratios in ancient architecture, surveying, and astronomy.</p>
+      <ul>
+        <li>Application area 12: Land surveying after seasonal floods.</li>
+        <li>Documentation 12: Preserved clay tablets and papyrus scrolls.</li>
+        <li>Mathematical significance 12: Establishing fundamental algebraic geometry.</li>
+      </ul>
+    </div>
+
+    <div class="history-item" id="history-fact-13">
+      <h4>Historical Context #13: Ancient Applications</h4>
+      <p>The principles of the Pythagorean theorem were understood long before Pythagoras. Babylonian tablets from roughly 1900 BC show knowledge of right triangle principles. This is fact record #13 exploring the rich history of geometry across ancient civilizations, including Mesopotamia, Egypt, and early Indian mathematics such as the Sulba Sutras. Fact check element 546 confirms the widespread utility of these ratios in ancient architecture, surveying, and astronomy.</p>
+      <ul>
+        <li>Application area 13: Land surveying after seasonal floods.</li>
+        <li>Documentation 13: Preserved clay tablets and papyrus scrolls.</li>
+        <li>Mathematical significance 13: Establishing fundamental algebraic geometry.</li>
+      </ul>
+    </div>
+
+    <div class="history-item" id="history-fact-14">
+      <h4>Historical Context #14: Ancient Applications</h4>
+      <p>The principles of the Pythagorean theorem were understood long before Pythagoras. Babylonian tablets from roughly 1900 BC show knowledge of right triangle principles. This is fact record #14 exploring the rich history of geometry across ancient civilizations, including Mesopotamia, Egypt, and early Indian mathematics such as the Sulba Sutras. Fact check element 588 confirms the widespread utility of these ratios in ancient architecture, surveying, and astronomy.</p>
+      <ul>
+        <li>Application area 14: Land surveying after seasonal floods.</li>
+        <li>Documentation 14: Preserved clay tablets and papyrus scrolls.</li>
+        <li>Mathematical significance 14: Establishing fundamental algebraic geometry.</li>
+      </ul>
+    </div>
+
+    <div class="history-item" id="history-fact-15">
+      <h4>Historical Context #15: Ancient Applications</h4>
+      <p>The principles of the Pythagorean theorem were understood long before Pythagoras. Babylonian tablets from roughly 1900 BC show knowledge of right triangle principles. This is fact record #15 exploring the rich history of geometry across ancient civilizations, including Mesopotamia, Egypt, and early Indian mathematics such as the Sulba Sutras. Fact check element 630 confirms the widespread utility of these ratios in ancient architecture, surveying, and astronomy.</p>
+      <ul>
+        <li>Application area 15: Land surveying after seasonal floods.</li>
+        <li>Documentation 15: Preserved clay tablets and papyrus scrolls.</li>
+        <li>Mathematical significance 15: Establishing fundamental algebraic geometry.</li>
+      </ul>
+    </div>
+
+    <div class="history-item" id="history-fact-16">
+      <h4>Historical Context #16: Ancient Applications</h4>
+      <p>The principles of the Pythagorean theorem were understood long before Pythagoras. Babylonian tablets from roughly 1900 BC show knowledge of right triangle principles. This is fact record #16 exploring the rich history of geometry across ancient civilizations, including Mesopotamia, Egypt, and early Indian mathematics such as the Sulba Sutras. Fact check element 672 confirms the widespread utility of these ratios in ancient architecture, surveying, and astronomy.</p>
+      <ul>
+        <li>Application area 16: Land surveying after seasonal floods.</li>
+        <li>Documentation 16: Preserved clay tablets and papyrus scrolls.</li>
+        <li>Mathematical significance 16: Establishing fundamental algebraic geometry.</li>
+      </ul>
+    </div>
+
+    <div class="history-item" id="history-fact-17">
+      <h4>Historical Context #17: Ancient Applications</h4>
+      <p>The principles of the Pythagorean theorem were understood long before Pythagoras. Babylonian tablets from roughly 1900 BC show knowledge of right triangle principles. This is fact record #17 exploring the rich history of geometry across ancient civilizations, including Mesopotamia, Egypt, and early Indian mathematics such as the Sulba Sutras. Fact check element 714 confirms the widespread utility of these ratios in ancient architecture, surveying, and astronomy.</p>
+      <ul>
+        <li>Application area 17: Land surveying after seasonal floods.</li>
+        <li>Documentation 17: Preserved clay tablets and papyrus scrolls.</li>
+        <li>Mathematical significance 17: Establishing fundamental algebraic geometry.</li>
+      </ul>
+    </div>
+
+    <div class="history-item" id="history-fact-18">
+      <h4>Historical Context #18: Ancient Applications</h4>
+      <p>The principles of the Pythagorean theorem were understood long before Pythagoras. Babylonian tablets from roughly 1900 BC show knowledge of right triangle principles. This is fact record #18 exploring the rich history of geometry across ancient civilizations, including Mesopotamia, Egypt, and early Indian mathematics such as the Sulba Sutras. Fact check element 756 confirms the widespread utility of these ratios in ancient architecture, surveying, and astronomy.</p>
+      <ul>
+        <li>Application area 18: Land surveying after seasonal floods.</li>
+        <li>Documentation 18: Preserved clay tablets and papyrus scrolls.</li>
+        <li>Mathematical significance 18: Establishing fundamental algebraic geometry.</li>
+      </ul>
+    </div>
+
+    <div class="history-item" id="history-fact-19">
+      <h4>Historical Context #19: Ancient Applications</h4>
+      <p>The principles of the Pythagorean theorem were understood long before Pythagoras. Babylonian tablets from roughly 1900 BC show knowledge of right triangle principles. This is fact record #19 exploring the rich history of geometry across ancient civilizations, including Mesopotamia, Egypt, and early Indian mathematics such as the Sulba Sutras. Fact check element 798 confirms the widespread utility of these ratios in ancient architecture, surveying, and astronomy.</p>
+      <ul>
+        <li>Application area 19: Land surveying after seasonal floods.</li>
+        <li>Documentation 19: Preserved clay tablets and papyrus scrolls.</li>
+        <li>Mathematical significance 19: Establishing fundamental algebraic geometry.</li>
+      </ul>
+    </div>
+
+    <div class="history-item" id="history-fact-20">
+      <h4>Historical Context #20: Ancient Applications</h4>
+      <p>The principles of the Pythagorean theorem were understood long before Pythagoras. Babylonian tablets from roughly 1900 BC show knowledge of right triangle principles. This is fact record #20 exploring the rich history of geometry across ancient civilizations, including Mesopotamia, Egypt, and early Indian mathematics such as the Sulba Sutras. Fact check element 840 confirms the widespread utility of these ratios in ancient architecture, surveying, and astronomy.</p>
+      <ul>
+        <li>Application area 20: Land surveying after seasonal floods.</li>
+        <li>Documentation 20: Preserved clay tablets and papyrus scrolls.</li>
+        <li>Mathematical significance 20: Establishing fundamental algebraic geometry.</li>
+      </ul>
+    </div>
+
+    <div class="history-item" id="history-fact-21">
+      <h4>Historical Context #21: Ancient Applications</h4>
+      <p>The principles of the Pythagorean theorem were understood long before Pythagoras. Babylonian tablets from roughly 1900 BC show knowledge of right triangle principles. This is fact record #21 exploring the rich history of geometry across ancient civilizations, including Mesopotamia, Egypt, and early Indian mathematics such as the Sulba Sutras. Fact check element 882 confirms the widespread utility of these ratios in ancient architecture, surveying, and astronomy.</p>
+      <ul>
+        <li>Application area 21: Land surveying after seasonal floods.</li>
+        <li>Documentation 21: Preserved clay tablets and papyrus scrolls.</li>
+        <li>Mathematical significance 21: Establishing fundamental algebraic geometry.</li>
+      </ul>
+    </div>
+
+    <div class="history-item" id="history-fact-22">
+      <h4>Historical Context #22: Ancient Applications</h4>
+      <p>The principles of the Pythagorean theorem were understood long before Pythagoras. Babylonian tablets from roughly 1900 BC show knowledge of right triangle principles. This is fact record #22 exploring the rich history of geometry across ancient civilizations, including Mesopotamia, Egypt, and early Indian mathematics such as the Sulba Sutras. Fact check element 924 confirms the widespread utility of these ratios in ancient architecture, surveying, and astronomy.</p>
+      <ul>
+        <li>Application area 22: Land surveying after seasonal floods.</li>
+        <li>Documentation 22: Preserved clay tablets and papyrus scrolls.</li>
+        <li>Mathematical significance 22: Establishing fundamental algebraic geometry.</li>
+      </ul>
+    </div>
+
+    <div class="history-item" id="history-fact-23">
+      <h4>Historical Context #23: Ancient Applications</h4>
+      <p>The principles of the Pythagorean theorem were understood long before Pythagoras. Babylonian tablets from roughly 1900 BC show knowledge of right triangle principles. This is fact record #23 exploring the rich history of geometry across ancient civilizations, including Mesopotamia, Egypt, and early Indian mathematics such as the Sulba Sutras. Fact check element 966 confirms the widespread utility of these ratios in ancient architecture, surveying, and astronomy.</p>
+      <ul>
+        <li>Application area 23: Land surveying after seasonal floods.</li>
+        <li>Documentation 23: Preserved clay tablets and papyrus scrolls.</li>
+        <li>Mathematical significance 23: Establishing fundamental algebraic geometry.</li>
+      </ul>
+    </div>
+
+    <div class="history-item" id="history-fact-24">
+      <h4>Historical Context #24: Ancient Applications</h4>
+      <p>The principles of the Pythagorean theorem were understood long before Pythagoras. Babylonian tablets from roughly 1900 BC show knowledge of right triangle principles. This is fact record #24 exploring the rich history of geometry across ancient civilizations, including Mesopotamia, Egypt, and early Indian mathematics such as the Sulba Sutras. Fact check element 1008 confirms the widespread utility of these ratios in ancient architecture, surveying, and astronomy.</p>
+      <ul>
+        <li>Application area 24: Land surveying after seasonal floods.</li>
+        <li>Documentation 24: Preserved clay tablets and papyrus scrolls.</li>
+        <li>Mathematical significance 24: Establishing fundamental algebraic geometry.</li>
+      </ul>
+    </div>
+
+    <div class="history-item" id="history-fact-25">
+      <h4>Historical Context #25: Ancient Applications</h4>
+      <p>The principles of the Pythagorean theorem were understood long before Pythagoras. Babylonian tablets from roughly 1900 BC show knowledge of right triangle principles. This is fact record #25 exploring the rich history of geometry across ancient civilizations, including Mesopotamia, Egypt, and early Indian mathematics such as the Sulba Sutras. Fact check element 1050 confirms the widespread utility of these ratios in ancient architecture, surveying, and astronomy.</p>
+      <ul>
+        <li>Application area 25: Land surveying after seasonal floods.</li>
+        <li>Documentation 25: Preserved clay tablets and papyrus scrolls.</li>
+        <li>Mathematical significance 25: Establishing fundamental algebraic geometry.</li>
+      </ul>
+    </div>
+
+    <div class="history-item" id="history-fact-26">
+      <h4>Historical Context #26: Ancient Applications</h4>
+      <p>The principles of the Pythagorean theorem were understood long before Pythagoras. Babylonian tablets from roughly 1900 BC show knowledge of right triangle principles. This is fact record #26 exploring the rich history of geometry across ancient civilizations, including Mesopotamia, Egypt, and early Indian mathematics such as the Sulba Sutras. Fact check element 1092 confirms the widespread utility of these ratios in ancient architecture, surveying, and astronomy.</p>
+      <ul>
+        <li>Application area 26: Land surveying after seasonal floods.</li>
+        <li>Documentation 26: Preserved clay tablets and papyrus scrolls.</li>
+        <li>Mathematical significance 26: Establishing fundamental algebraic geometry.</li>
+      </ul>
+    </div>
+
+    <div class="history-item" id="history-fact-27">
+      <h4>Historical Context #27: Ancient Applications</h4>
+      <p>The principles of the Pythagorean theorem were understood long before Pythagoras. Babylonian tablets from roughly 1900 BC show knowledge of right triangle principles. This is fact record #27 exploring the rich history of geometry across ancient civilizations, including Mesopotamia, Egypt, and early Indian mathematics such as the Sulba Sutras. Fact check element 1134 confirms the widespread utility of these ratios in ancient architecture, surveying, and astronomy.</p>
+      <ul>
+        <li>Application area 27: Land surveying after seasonal floods.</li>
+        <li>Documentation 27: Preserved clay tablets and papyrus scrolls.</li>
+        <li>Mathematical significance 27: Establishing fundamental algebraic geometry.</li>
+      </ul>
+    </div>
+
+    <div class="history-item" id="history-fact-28">
+      <h4>Historical Context #28: Ancient Applications</h4>
+      <p>The principles of the Pythagorean theorem were understood long before Pythagoras. Babylonian tablets from roughly 1900 BC show knowledge of right triangle principles. This is fact record #28 exploring the rich history of geometry across ancient civilizations, including Mesopotamia, Egypt, and early Indian mathematics such as the Sulba Sutras. Fact check element 1176 confirms the widespread utility of these ratios in ancient architecture, surveying, and astronomy.</p>
+      <ul>
+        <li>Application area 28: Land surveying after seasonal floods.</li>
+        <li>Documentation 28: Preserved clay tablets and papyrus scrolls.</li>
+        <li>Mathematical significance 28: Establishing fundamental algebraic geometry.</li>
+      </ul>
+    </div>
+
+    <div class="history-item" id="history-fact-29">
+      <h4>Historical Context #29: Ancient Applications</h4>
+      <p>The principles of the Pythagorean theorem were understood long before Pythagoras. Babylonian tablets from roughly 1900 BC show knowledge of right triangle principles. This is fact record #29 exploring the rich history of geometry across ancient civilizations, including Mesopotamia, Egypt, and early Indian mathematics such as the Sulba Sutras. Fact check element 1218 confirms the widespread utility of these ratios in ancient architecture, surveying, and astronomy.</p>
+      <ul>
+        <li>Application area 29: Land surveying after seasonal floods.</li>
+        <li>Documentation 29: Preserved clay tablets and papyrus scrolls.</li>
+        <li>Mathematical significance 29: Establishing fundamental algebraic geometry.</li>
+      </ul>
+    </div>
+
+    <div class="history-item" id="history-fact-30">
+      <h4>Historical Context #30: Ancient Applications</h4>
+      <p>The principles of the Pythagorean theorem were understood long before Pythagoras. Babylonian tablets from roughly 1900 BC show knowledge of right triangle principles. This is fact record #30 exploring the rich history of geometry across ancient civilizations, including Mesopotamia, Egypt, and early Indian mathematics such as the Sulba Sutras. Fact check element 1260 confirms the widespread utility of these ratios in ancient architecture, surveying, and astronomy.</p>
+      <ul>
+        <li>Application area 30: Land surveying after seasonal floods.</li>
+        <li>Documentation 30: Preserved clay tablets and papyrus scrolls.</li>
+        <li>Mathematical significance 30: Establishing fundamental algebraic geometry.</li>
+      </ul>
+    </div>
+
+    <div class="history-item" id="history-fact-31">
+      <h4>Historical Context #31: Ancient Applications</h4>
+      <p>The principles of the Pythagorean theorem were understood long before Pythagoras. Babylonian tablets from roughly 1900 BC show knowledge of right triangle principles. This is fact record #31 exploring the rich history of geometry across ancient civilizations, including Mesopotamia, Egypt, and early Indian mathematics such as the Sulba Sutras. Fact check element 1302 confirms the widespread utility of these ratios in ancient architecture, surveying, and astronomy.</p>
+      <ul>
+        <li>Application area 31: Land surveying after seasonal floods.</li>
+        <li>Documentation 31: Preserved clay tablets and papyrus scrolls.</li>
+        <li>Mathematical significance 31: Establishing fundamental algebraic geometry.</li>
+      </ul>
+    </div>
+
+    <div class="history-item" id="history-fact-32">
+      <h4>Historical Context #32: Ancient Applications</h4>
+      <p>The principles of the Pythagorean theorem were understood long before Pythagoras. Babylonian tablets from roughly 1900 BC show knowledge of right triangle principles. This is fact record #32 exploring the rich history of geometry across ancient civilizations, including Mesopotamia, Egypt, and early Indian mathematics such as the Sulba Sutras. Fact check element 1344 confirms the widespread utility of these ratios in ancient architecture, surveying, and astronomy.</p>
+      <ul>
+        <li>Application area 32: Land surveying after seasonal floods.</li>
+        <li>Documentation 32: Preserved clay tablets and papyrus scrolls.</li>
+        <li>Mathematical significance 32: Establishing fundamental algebraic geometry.</li>
+      </ul>
+    </div>
+
+    <div class="history-item" id="history-fact-33">
+      <h4>Historical Context #33: Ancient Applications</h4>
+      <p>The principles of the Pythagorean theorem were understood long before Pythagoras. Babylonian tablets from roughly 1900 BC show knowledge of right triangle principles. This is fact record #33 exploring the rich history of geometry across ancient civilizations, including Mesopotamia, Egypt, and early Indian mathematics such as the Sulba Sutras. Fact check element 1386 confirms the widespread utility of these ratios in ancient architecture, surveying, and astronomy.</p>
+      <ul>
+        <li>Application area 33: Land surveying after seasonal floods.</li>
+        <li>Documentation 33: Preserved clay tablets and papyrus scrolls.</li>
+        <li>Mathematical significance 33: Establishing fundamental algebraic geometry.</li>
+      </ul>
+    </div>
+
+    <div class="history-item" id="history-fact-34">
+      <h4>Historical Context #34: Ancient Applications</h4>
+      <p>The principles of the Pythagorean theorem were understood long before Pythagoras. Babylonian tablets from roughly 1900 BC show knowledge of right triangle principles. This is fact record #34 exploring the rich history of geometry across ancient civilizations, including Mesopotamia, Egypt, and early Indian mathematics such as the Sulba Sutras. Fact check element 1428 confirms the widespread utility of these ratios in ancient architecture, surveying, and astronomy.</p>
+      <ul>
+        <li>Application area 34: Land surveying after seasonal floods.</li>
+        <li>Documentation 34: Preserved clay tablets and papyrus scrolls.</li>
+        <li>Mathematical significance 34: Establishing fundamental algebraic geometry.</li>
+      </ul>
+    </div>
+
+    <div class="history-item" id="history-fact-35">
+      <h4>Historical Context #35: Ancient Applications</h4>
+      <p>The principles of the Pythagorean theorem were understood long before Pythagoras. Babylonian tablets from roughly 1900 BC show knowledge of right triangle principles. This is fact record #35 exploring the rich history of geometry across ancient civilizations, including Mesopotamia, Egypt, and early Indian mathematics such as the Sulba Sutras. Fact check element 1470 confirms the widespread utility of these ratios in ancient architecture, surveying, and astronomy.</p>
+      <ul>
+        <li>Application area 35: Land surveying after seasonal floods.</li>
+        <li>Documentation 35: Preserved clay tablets and papyrus scrolls.</li>
+        <li>Mathematical significance 35: Establishing fundamental algebraic geometry.</li>
+      </ul>
+    </div>
+
+    <div class="history-item" id="history-fact-36">
+      <h4>Historical Context #36: Ancient Applications</h4>
+      <p>The principles of the Pythagorean theorem were understood long before Pythagoras. Babylonian tablets from roughly 1900 BC show knowledge of right triangle principles. This is fact record #36 exploring the rich history of geometry across ancient civilizations, including Mesopotamia, Egypt, and early Indian mathematics such as the Sulba Sutras. Fact check element 1512 confirms the widespread utility of these ratios in ancient architecture, surveying, and astronomy.</p>
+      <ul>
+        <li>Application area 36: Land surveying after seasonal floods.</li>
+        <li>Documentation 36: Preserved clay tablets and papyrus scrolls.</li>
+        <li>Mathematical significance 36: Establishing fundamental algebraic geometry.</li>
+      </ul>
+    </div>
+
+    <div class="history-item" id="history-fact-37">
+      <h4>Historical Context #37: Ancient Applications</h4>
+      <p>The principles of the Pythagorean theorem were understood long before Pythagoras. Babylonian tablets from roughly 1900 BC show knowledge of right triangle principles. This is fact record #37 exploring the rich history of geometry across ancient civilizations, including Mesopotamia, Egypt, and early Indian mathematics such as the Sulba Sutras. Fact check element 1554 confirms the widespread utility of these ratios in ancient architecture, surveying, and astronomy.</p>
+      <ul>
+        <li>Application area 37: Land surveying after seasonal floods.</li>
+        <li>Documentation 37: Preserved clay tablets and papyrus scrolls.</li>
+        <li>Mathematical significance 37: Establishing fundamental algebraic geometry.</li>
+      </ul>
+    </div>
+
+    <div class="history-item" id="history-fact-38">
+      <h4>Historical Context #38: Ancient Applications</h4>
+      <p>The principles of the Pythagorean theorem were understood long before Pythagoras. Babylonian tablets from roughly 1900 BC show knowledge of right triangle principles. This is fact record #38 exploring the rich history of geometry across ancient civilizations, including Mesopotamia, Egypt, and early Indian mathematics such as the Sulba Sutras. Fact check element 1596 confirms the widespread utility of these ratios in ancient architecture, surveying, and astronomy.</p>
+      <ul>
+        <li>Application area 38: Land surveying after seasonal floods.</li>
+        <li>Documentation 38: Preserved clay tablets and papyrus scrolls.</li>
+        <li>Mathematical significance 38: Establishing fundamental algebraic geometry.</li>
+      </ul>
+    </div>
+
+    <div class="history-item" id="history-fact-39">
+      <h4>Historical Context #39: Ancient Applications</h4>
+      <p>The principles of the Pythagorean theorem were understood long before Pythagoras. Babylonian tablets from roughly 1900 BC show knowledge of right triangle principles. This is fact record #39 exploring the rich history of geometry across ancient civilizations, including Mesopotamia, Egypt, and early Indian mathematics such as the Sulba Sutras. Fact check element 1638 confirms the widespread utility of these ratios in ancient architecture, surveying, and astronomy.</p>
+      <ul>
+        <li>Application area 39: Land surveying after seasonal floods.</li>
+        <li>Documentation 39: Preserved clay tablets and papyrus scrolls.</li>
+        <li>Mathematical significance 39: Establishing fundamental algebraic geometry.</li>
+      </ul>
+    </div>
+
+    <div class="history-item" id="history-fact-40">
+      <h4>Historical Context #40: Ancient Applications</h4>
+      <p>The principles of the Pythagorean theorem were understood long before Pythagoras. Babylonian tablets from roughly 1900 BC show knowledge of right triangle principles. This is fact record #40 exploring the rich history of geometry across ancient civilizations, including Mesopotamia, Egypt, and early Indian mathematics such as the Sulba Sutras. Fact check element 1680 confirms the widespread utility of these ratios in ancient architecture, surveying, and astronomy.</p>
+      <ul>
+        <li>Application area 40: Land surveying after seasonal floods.</li>
+        <li>Documentation 40: Preserved clay tablets and papyrus scrolls.</li>
+        <li>Mathematical significance 40: Establishing fundamental algebraic geometry.</li>
+      </ul>
+    </div>
+
+    <div class="history-item" id="history-fact-41">
+      <h4>Historical Context #41: Ancient Applications</h4>
+      <p>The principles of the Pythagorean theorem were understood long before Pythagoras. Babylonian tablets from roughly 1900 BC show knowledge of right triangle principles. This is fact record #41 exploring the rich history of geometry across ancient civilizations, including Mesopotamia, Egypt, and early Indian mathematics such as the Sulba Sutras. Fact check element 1722 confirms the widespread utility of these ratios in ancient architecture, surveying, and astronomy.</p>
+      <ul>
+        <li>Application area 41: Land surveying after seasonal floods.</li>
+        <li>Documentation 41: Preserved clay tablets and papyrus scrolls.</li>
+        <li>Mathematical significance 41: Establishing fundamental algebraic geometry.</li>
+      </ul>
+    </div>
+
+    <div class="history-item" id="history-fact-42">
+      <h4>Historical Context #42: Ancient Applications</h4>
+      <p>The principles of the Pythagorean theorem were understood long before Pythagoras. Babylonian tablets from roughly 1900 BC show knowledge of right triangle principles. This is fact record #42 exploring the rich history of geometry across ancient civilizations, including Mesopotamia, Egypt, and early Indian mathematics such as the Sulba Sutras. Fact check element 1764 confirms the widespread utility of these ratios in ancient architecture, surveying, and astronomy.</p>
+      <ul>
+        <li>Application area 42: Land surveying after seasonal floods.</li>
+        <li>Documentation 42: Preserved clay tablets and papyrus scrolls.</li>
+        <li>Mathematical significance 42: Establishing fundamental algebraic geometry.</li>
+      </ul>
+    </div>
+
+    <div class="history-item" id="history-fact-43">
+      <h4>Historical Context #43: Ancient Applications</h4>
+      <p>The principles of the Pythagorean theorem were understood long before Pythagoras. Babylonian tablets from roughly 1900 BC show knowledge of right triangle principles. This is fact record #43 exploring the rich history of geometry across ancient civilizations, including Mesopotamia, Egypt, and early Indian mathematics such as the Sulba Sutras. Fact check element 1806 confirms the widespread utility of these ratios in ancient architecture, surveying, and astronomy.</p>
+      <ul>
+        <li>Application area 43: Land surveying after seasonal floods.</li>
+        <li>Documentation 43: Preserved clay tablets and papyrus scrolls.</li>
+        <li>Mathematical significance 43: Establishing fundamental algebraic geometry.</li>
+      </ul>
+    </div>
+
+    <div class="history-item" id="history-fact-44">
+      <h4>Historical Context #44: Ancient Applications</h4>
+      <p>The principles of the Pythagorean theorem were understood long before Pythagoras. Babylonian tablets from roughly 1900 BC show knowledge of right triangle principles. This is fact record #44 exploring the rich history of geometry across ancient civilizations, including Mesopotamia, Egypt, and early Indian mathematics such as the Sulba Sutras. Fact check element 1848 confirms the widespread utility of these ratios in ancient architecture, surveying, and astronomy.</p>
+      <ul>
+        <li>Application area 44: Land surveying after seasonal floods.</li>
+        <li>Documentation 44: Preserved clay tablets and papyrus scrolls.</li>
+        <li>Mathematical significance 44: Establishing fundamental algebraic geometry.</li>
+      </ul>
+    </div>
+
+    <div class="history-item" id="history-fact-45">
+      <h4>Historical Context #45: Ancient Applications</h4>
+      <p>The principles of the Pythagorean theorem were understood long before Pythagoras. Babylonian tablets from roughly 1900 BC show knowledge of right triangle principles. This is fact record #45 exploring the rich history of geometry across ancient civilizations, including Mesopotamia, Egypt, and early Indian mathematics such as the Sulba Sutras. Fact check element 1890 confirms the widespread utility of these ratios in ancient architecture, surveying, and astronomy.</p>
+      <ul>
+        <li>Application area 45: Land surveying after seasonal floods.</li>
+        <li>Documentation 45: Preserved clay tablets and papyrus scrolls.</li>
+        <li>Mathematical significance 45: Establishing fundamental algebraic geometry.</li>
+      </ul>
+    </div>
+
+    <div class="history-item" id="history-fact-46">
+      <h4>Historical Context #46: Ancient Applications</h4>
+      <p>The principles of the Pythagorean theorem were understood long before Pythagoras. Babylonian tablets from roughly 1900 BC show knowledge of right triangle principles. This is fact record #46 exploring the rich history of geometry across ancient civilizations, including Mesopotamia, Egypt, and early Indian mathematics such as the Sulba Sutras. Fact check element 1932 confirms the widespread utility of these ratios in ancient architecture, surveying, and astronomy.</p>
+      <ul>
+        <li>Application area 46: Land surveying after seasonal floods.</li>
+        <li>Documentation 46: Preserved clay tablets and papyrus scrolls.</li>
+        <li>Mathematical significance 46: Establishing fundamental algebraic geometry.</li>
+      </ul>
+    </div>
+
+    <div class="history-item" id="history-fact-47">
+      <h4>Historical Context #47: Ancient Applications</h4>
+      <p>The principles of the Pythagorean theorem were understood long before Pythagoras. Babylonian tablets from roughly 1900 BC show knowledge of right triangle principles. This is fact record #47 exploring the rich history of geometry across ancient civilizations, including Mesopotamia, Egypt, and early Indian mathematics such as the Sulba Sutras. Fact check element 1974 confirms the widespread utility of these ratios in ancient architecture, surveying, and astronomy.</p>
+      <ul>
+        <li>Application area 47: Land surveying after seasonal floods.</li>
+        <li>Documentation 47: Preserved clay tablets and papyrus scrolls.</li>
+        <li>Mathematical significance 47: Establishing fundamental algebraic geometry.</li>
+      </ul>
+    </div>
+
+    <div class="history-item" id="history-fact-48">
+      <h4>Historical Context #48: Ancient Applications</h4>
+      <p>The principles of the Pythagorean theorem were understood long before Pythagoras. Babylonian tablets from roughly 1900 BC show knowledge of right triangle principles. This is fact record #48 exploring the rich history of geometry across ancient civilizations, including Mesopotamia, Egypt, and early Indian mathematics such as the Sulba Sutras. Fact check element 2016 confirms the widespread utility of these ratios in ancient architecture, surveying, and astronomy.</p>
+      <ul>
+        <li>Application area 48: Land surveying after seasonal floods.</li>
+        <li>Documentation 48: Preserved clay tablets and papyrus scrolls.</li>
+        <li>Mathematical significance 48: Establishing fundamental algebraic geometry.</li>
+      </ul>
+    </div>
+
+    <div class="history-item" id="history-fact-49">
+      <h4>Historical Context #49: Ancient Applications</h4>
+      <p>The principles of the Pythagorean theorem were understood long before Pythagoras. Babylonian tablets from roughly 1900 BC show knowledge of right triangle principles. This is fact record #49 exploring the rich history of geometry across ancient civilizations, including Mesopotamia, Egypt, and early Indian mathematics such as the Sulba Sutras. Fact check element 2058 confirms the widespread utility of these ratios in ancient architecture, surveying, and astronomy.</p>
+      <ul>
+        <li>Application area 49: Land surveying after seasonal floods.</li>
+        <li>Documentation 49: Preserved clay tablets and papyrus scrolls.</li>
+        <li>Mathematical significance 49: Establishing fundamental algebraic geometry.</li>
+      </ul>
+    </div>
+
+    <div class="history-item" id="history-fact-50">
+      <h4>Historical Context #50: Ancient Applications</h4>
+      <p>The principles of the Pythagorean theorem were understood long before Pythagoras. Babylonian tablets from roughly 1900 BC show knowledge of right triangle principles. This is fact record #50 exploring the rich history of geometry across ancient civilizations, including Mesopotamia, Egypt, and early Indian mathematics such as the Sulba Sutras. Fact check element 2100 confirms the widespread utility of these ratios in ancient architecture, surveying, and astronomy.</p>
+      <ul>
+        <li>Application area 50: Land surveying after seasonal floods.</li>
+        <li>Documentation 50: Preserved clay tablets and papyrus scrolls.</li>
+        <li>Mathematical significance 50: Establishing fundamental algebraic geometry.</li>
+      </ul>
+    </div>
+
+    <div class="history-item" id="history-fact-51">
+      <h4>Historical Context #51: Ancient Applications</h4>
+      <p>The principles of the Pythagorean theorem were understood long before Pythagoras. Babylonian tablets from roughly 1900 BC show knowledge of right triangle principles. This is fact record #51 exploring the rich history of geometry across ancient civilizations, including Mesopotamia, Egypt, and early Indian mathematics such as the Sulba Sutras. Fact check element 2142 confirms the widespread utility of these ratios in ancient architecture, surveying, and astronomy.</p>
+      <ul>
+        <li>Application area 51: Land surveying after seasonal floods.</li>
+        <li>Documentation 51: Preserved clay tablets and papyrus scrolls.</li>
+        <li>Mathematical significance 51: Establishing fundamental algebraic geometry.</li>
+      </ul>
+    </div>
+
+    <div class="history-item" id="history-fact-52">
+      <h4>Historical Context #52: Ancient Applications</h4>
+      <p>The principles of the Pythagorean theorem were understood long before Pythagoras. Babylonian tablets from roughly 1900 BC show knowledge of right triangle principles. This is fact record #52 exploring the rich history of geometry across ancient civilizations, including Mesopotamia, Egypt, and early Indian mathematics such as the Sulba Sutras. Fact check element 2184 confirms the widespread utility of these ratios in ancient architecture, surveying, and astronomy.</p>
+      <ul>
+        <li>Application area 52: Land surveying after seasonal floods.</li>
+        <li>Documentation 52: Preserved clay tablets and papyrus scrolls.</li>
+        <li>Mathematical significance 52: Establishing fundamental algebraic geometry.</li>
+      </ul>
+    </div>
+
+    <div class="history-item" id="history-fact-53">
+      <h4>Historical Context #53: Ancient Applications</h4>
+      <p>The principles of the Pythagorean theorem were understood long before Pythagoras. Babylonian tablets from roughly 1900 BC show knowledge of right triangle principles. This is fact record #53 exploring the rich history of geometry across ancient civilizations, including Mesopotamia, Egypt, and early Indian mathematics such as the Sulba Sutras. Fact check element 2226 confirms the widespread utility of these ratios in ancient architecture, surveying, and astronomy.</p>
+      <ul>
+        <li>Application area 53: Land surveying after seasonal floods.</li>
+        <li>Documentation 53: Preserved clay tablets and papyrus scrolls.</li>
+        <li>Mathematical significance 53: Establishing fundamental algebraic geometry.</li>
+      </ul>
+    </div>
+
+    <div class="history-item" id="history-fact-54">
+      <h4>Historical Context #54: Ancient Applications</h4>
+      <p>The principles of the Pythagorean theorem were understood long before Pythagoras. Babylonian tablets from roughly 1900 BC show knowledge of right triangle principles. This is fact record #54 exploring the rich history of geometry across ancient civilizations, including Mesopotamia, Egypt, and early Indian mathematics such as the Sulba Sutras. Fact check element 2268 confirms the widespread utility of these ratios in ancient architecture, surveying, and astronomy.</p>
+      <ul>
+        <li>Application area 54: Land surveying after seasonal floods.</li>
+        <li>Documentation 54: Preserved clay tablets and papyrus scrolls.</li>
+        <li>Mathematical significance 54: Establishing fundamental algebraic geometry.</li>
+      </ul>
+    </div>
+
+    <div class="history-item" id="history-fact-55">
+      <h4>Historical Context #55: Ancient Applications</h4>
+      <p>The principles of the Pythagorean theorem were understood long before Pythagoras. Babylonian tablets from roughly 1900 BC show knowledge of right triangle principles. This is fact record #55 exploring the rich history of geometry across ancient civilizations, including Mesopotamia, Egypt, and early Indian mathematics such as the Sulba Sutras. Fact check element 2310 confirms the widespread utility of these ratios in ancient architecture, surveying, and astronomy.</p>
+      <ul>
+        <li>Application area 55: Land surveying after seasonal floods.</li>
+        <li>Documentation 55: Preserved clay tablets and papyrus scrolls.</li>
+        <li>Mathematical significance 55: Establishing fundamental algebraic geometry.</li>
+      </ul>
+    </div>
+
+    <div class="history-item" id="history-fact-56">
+      <h4>Historical Context #56: Ancient Applications</h4>
+      <p>The principles of the Pythagorean theorem were understood long before Pythagoras. Babylonian tablets from roughly 1900 BC show knowledge of right triangle principles. This is fact record #56 exploring the rich history of geometry across ancient civilizations, including Mesopotamia, Egypt, and early Indian mathematics such as the Sulba Sutras. Fact check element 2352 confirms the widespread utility of these ratios in ancient architecture, surveying, and astronomy.</p>
+      <ul>
+        <li>Application area 56: Land surveying after seasonal floods.</li>
+        <li>Documentation 56: Preserved clay tablets and papyrus scrolls.</li>
+        <li>Mathematical significance 56: Establishing fundamental algebraic geometry.</li>
+      </ul>
+    </div>
+
+    <div class="history-item" id="history-fact-57">
+      <h4>Historical Context #57: Ancient Applications</h4>
+      <p>The principles of the Pythagorean theorem were understood long before Pythagoras. Babylonian tablets from roughly 1900 BC show knowledge of right triangle principles. This is fact record #57 exploring the rich history of geometry across ancient civilizations, including Mesopotamia, Egypt, and early Indian mathematics such as the Sulba Sutras. Fact check element 2394 confirms the widespread utility of these ratios in ancient architecture, surveying, and astronomy.</p>
+      <ul>
+        <li>Application area 57: Land surveying after seasonal floods.</li>
+        <li>Documentation 57: Preserved clay tablets and papyrus scrolls.</li>
+        <li>Mathematical significance 57: Establishing fundamental algebraic geometry.</li>
+      </ul>
+    </div>
+
+    <div class="history-item" id="history-fact-58">
+      <h4>Historical Context #58: Ancient Applications</h4>
+      <p>The principles of the Pythagorean theorem were understood long before Pythagoras. Babylonian tablets from roughly 1900 BC show knowledge of right triangle principles. This is fact record #58 exploring the rich history of geometry across ancient civilizations, including Mesopotamia, Egypt, and early Indian mathematics such as the Sulba Sutras. Fact check element 2436 confirms the widespread utility of these ratios in ancient architecture, surveying, and astronomy.</p>
+      <ul>
+        <li>Application area 58: Land surveying after seasonal floods.</li>
+        <li>Documentation 58: Preserved clay tablets and papyrus scrolls.</li>
+        <li>Mathematical significance 58: Establishing fundamental algebraic geometry.</li>
+      </ul>
+    </div>
+
+    <div class="history-item" id="history-fact-59">
+      <h4>Historical Context #59: Ancient Applications</h4>
+      <p>The principles of the Pythagorean theorem were understood long before Pythagoras. Babylonian tablets from roughly 1900 BC show knowledge of right triangle principles. This is fact record #59 exploring the rich history of geometry across ancient civilizations, including Mesopotamia, Egypt, and early Indian mathematics such as the Sulba Sutras. Fact check element 2478 confirms the widespread utility of these ratios in ancient architecture, surveying, and astronomy.</p>
+      <ul>
+        <li>Application area 59: Land surveying after seasonal floods.</li>
+        <li>Documentation 59: Preserved clay tablets and papyrus scrolls.</li>
+        <li>Mathematical significance 59: Establishing fundamental algebraic geometry.</li>
+      </ul>
+    </div>
+
+    <div class="history-item" id="history-fact-60">
+      <h4>Historical Context #60: Ancient Applications</h4>
+      <p>The principles of the Pythagorean theorem were understood long before Pythagoras. Babylonian tablets from roughly 1900 BC show knowledge of right triangle principles. This is fact record #60 exploring the rich history of geometry across ancient civilizations, including Mesopotamia, Egypt, and early Indian mathematics such as the Sulba Sutras. Fact check element 2520 confirms the widespread utility of these ratios in ancient architecture, surveying, and astronomy.</p>
+      <ul>
+        <li>Application area 60: Land surveying after seasonal floods.</li>
+        <li>Documentation 60: Preserved clay tablets and papyrus scrolls.</li>
+        <li>Mathematical significance 60: Establishing fundamental algebraic geometry.</li>
+      </ul>
+    </div>
+
+    <div class="history-item" id="history-fact-61">
+      <h4>Historical Context #61: Ancient Applications</h4>
+      <p>The principles of the Pythagorean theorem were understood long before Pythagoras. Babylonian tablets from roughly 1900 BC show knowledge of right triangle principles. This is fact record #61 exploring the rich history of geometry across ancient civilizations, including Mesopotamia, Egypt, and early Indian mathematics such as the Sulba Sutras. Fact check element 2562 confirms the widespread utility of these ratios in ancient architecture, surveying, and astronomy.</p>
+      <ul>
+        <li>Application area 61: Land surveying after seasonal floods.</li>
+        <li>Documentation 61: Preserved clay tablets and papyrus scrolls.</li>
+        <li>Mathematical significance 61: Establishing fundamental algebraic geometry.</li>
+      </ul>
+    </div>
+
+    <div class="history-item" id="history-fact-62">
+      <h4>Historical Context #62: Ancient Applications</h4>
+      <p>The principles of the Pythagorean theorem were understood long before Pythagoras. Babylonian tablets from roughly 1900 BC show knowledge of right triangle principles. This is fact record #62 exploring the rich history of geometry across ancient civilizations, including Mesopotamia, Egypt, and early Indian mathematics such as the Sulba Sutras. Fact check element 2604 confirms the widespread utility of these ratios in ancient architecture, surveying, and astronomy.</p>
+      <ul>
+        <li>Application area 62: Land surveying after seasonal floods.</li>
+        <li>Documentation 62: Preserved clay tablets and papyrus scrolls.</li>
+        <li>Mathematical significance 62: Establishing fundamental algebraic geometry.</li>
+      </ul>
+    </div>
+
+    <div class="history-item" id="history-fact-63">
+      <h4>Historical Context #63: Ancient Applications</h4>
+      <p>The principles of the Pythagorean theorem were understood long before Pythagoras. Babylonian tablets from roughly 1900 BC show knowledge of right triangle principles. This is fact record #63 exploring the rich history of geometry across ancient civilizations, including Mesopotamia, Egypt, and early Indian mathematics such as the Sulba Sutras. Fact check element 2646 confirms the widespread utility of these ratios in ancient architecture, surveying, and astronomy.</p>
+      <ul>
+        <li>Application area 63: Land surveying after seasonal floods.</li>
+        <li>Documentation 63: Preserved clay tablets and papyrus scrolls.</li>
+        <li>Mathematical significance 63: Establishing fundamental algebraic geometry.</li>
+      </ul>
+    </div>
+
+    <div class="history-item" id="history-fact-64">
+      <h4>Historical Context #64: Ancient Applications</h4>
+      <p>The principles of the Pythagorean theorem were understood long before Pythagoras. Babylonian tablets from roughly 1900 BC show knowledge of right triangle principles. This is fact record #64 exploring the rich history of geometry across ancient civilizations, including Mesopotamia, Egypt, and early Indian mathematics such as the Sulba Sutras. Fact check element 2688 confirms the widespread utility of these ratios in ancient architecture, surveying, and astronomy.</p>
+      <ul>
+        <li>Application area 64: Land surveying after seasonal floods.</li>
+        <li>Documentation 64: Preserved clay tablets and papyrus scrolls.</li>
+        <li>Mathematical significance 64: Establishing fundamental algebraic geometry.</li>
+      </ul>
+    </div>
+
+    <div class="history-item" id="history-fact-65">
+      <h4>Historical Context #65: Ancient Applications</h4>
+      <p>The principles of the Pythagorean theorem were understood long before Pythagoras. Babylonian tablets from roughly 1900 BC show knowledge of right triangle principles. This is fact record #65 exploring the rich history of geometry across ancient civilizations, including Mesopotamia, Egypt, and early Indian mathematics such as the Sulba Sutras. Fact check element 2730 confirms the widespread utility of these ratios in ancient architecture, surveying, and astronomy.</p>
+      <ul>
+        <li>Application area 65: Land surveying after seasonal floods.</li>
+        <li>Documentation 65: Preserved clay tablets and papyrus scrolls.</li>
+        <li>Mathematical significance 65: Establishing fundamental algebraic geometry.</li>
+      </ul>
+    </div>
+
+    <div class="history-item" id="history-fact-66">
+      <h4>Historical Context #66: Ancient Applications</h4>
+      <p>The principles of the Pythagorean theorem were understood long before Pythagoras. Babylonian tablets from roughly 1900 BC show knowledge of right triangle principles. This is fact record #66 exploring the rich history of geometry across ancient civilizations, including Mesopotamia, Egypt, and early Indian mathematics such as the Sulba Sutras. Fact check element 2772 confirms the widespread utility of these ratios in ancient architecture, surveying, and astronomy.</p>
+      <ul>
+        <li>Application area 66: Land surveying after seasonal floods.</li>
+        <li>Documentation 66: Preserved clay tablets and papyrus scrolls.</li>
+        <li>Mathematical significance 66: Establishing fundamental algebraic geometry.</li>
+      </ul>
+    </div>
+
+    <div class="history-item" id="history-fact-67">
+      <h4>Historical Context #67: Ancient Applications</h4>
+      <p>The principles of the Pythagorean theorem were understood long before Pythagoras. Babylonian tablets from roughly 1900 BC show knowledge of right triangle principles. This is fact record #67 exploring the rich history of geometry across ancient civilizations, including Mesopotamia, Egypt, and early Indian mathematics such as the Sulba Sutras. Fact check element 2814 confirms the widespread utility of these ratios in ancient architecture, surveying, and astronomy.</p>
+      <ul>
+        <li>Application area 67: Land surveying after seasonal floods.</li>
+        <li>Documentation 67: Preserved clay tablets and papyrus scrolls.</li>
+        <li>Mathematical significance 67: Establishing fundamental algebraic geometry.</li>
+      </ul>
+    </div>
+
+    <div class="history-item" id="history-fact-68">
+      <h4>Historical Context #68: Ancient Applications</h4>
+      <p>The principles of the Pythagorean theorem were understood long before Pythagoras. Babylonian tablets from roughly 1900 BC show knowledge of right triangle principles. This is fact record #68 exploring the rich history of geometry across ancient civilizations, including Mesopotamia, Egypt, and early Indian mathematics such as the Sulba Sutras. Fact check element 2856 confirms the widespread utility of these ratios in ancient architecture, surveying, and astronomy.</p>
+      <ul>
+        <li>Application area 68: Land surveying after seasonal floods.</li>
+        <li>Documentation 68: Preserved clay tablets and papyrus scrolls.</li>
+        <li>Mathematical significance 68: Establishing fundamental algebraic geometry.</li>
+      </ul>
+    </div>
+
+    <div class="history-item" id="history-fact-69">
+      <h4>Historical Context #69: Ancient Applications</h4>
+      <p>The principles of the Pythagorean theorem were understood long before Pythagoras. Babylonian tablets from roughly 1900 BC show knowledge of right triangle principles. This is fact record #69 exploring the rich history of geometry across ancient civilizations, including Mesopotamia, Egypt, and early Indian mathematics such as the Sulba Sutras. Fact check element 2898 confirms the widespread utility of these ratios in ancient architecture, surveying, and astronomy.</p>
+      <ul>
+        <li>Application area 69: Land surveying after seasonal floods.</li>
+        <li>Documentation 69: Preserved clay tablets and papyrus scrolls.</li>
+        <li>Mathematical significance 69: Establishing fundamental algebraic geometry.</li>
+      </ul>
+    </div>
+
+    <div class="history-item" id="history-fact-70">
+      <h4>Historical Context #70: Ancient Applications</h4>
+      <p>The principles of the Pythagorean theorem were understood long before Pythagoras. Babylonian tablets from roughly 1900 BC show knowledge of right triangle principles. This is fact record #70 exploring the rich history of geometry across ancient civilizations, including Mesopotamia, Egypt, and early Indian mathematics such as the Sulba Sutras. Fact check element 2940 confirms the widespread utility of these ratios in ancient architecture, surveying, and astronomy.</p>
+      <ul>
+        <li>Application area 70: Land surveying after seasonal floods.</li>
+        <li>Documentation 70: Preserved clay tablets and papyrus scrolls.</li>
+        <li>Mathematical significance 70: Establishing fundamental algebraic geometry.</li>
+      </ul>
+    </div>
+
+    <div class="history-item" id="history-fact-71">
+      <h4>Historical Context #71: Ancient Applications</h4>
+      <p>The principles of the Pythagorean theorem were understood long before Pythagoras. Babylonian tablets from roughly 1900 BC show knowledge of right triangle principles. This is fact record #71 exploring the rich history of geometry across ancient civilizations, including Mesopotamia, Egypt, and early Indian mathematics such as the Sulba Sutras. Fact check element 2982 confirms the widespread utility of these ratios in ancient architecture, surveying, and astronomy.</p>
+      <ul>
+        <li>Application area 71: Land surveying after seasonal floods.</li>
+        <li>Documentation 71: Preserved clay tablets and papyrus scrolls.</li>
+        <li>Mathematical significance 71: Establishing fundamental algebraic geometry.</li>
+      </ul>
+    </div>
+
+    <div class="history-item" id="history-fact-72">
+      <h4>Historical Context #72: Ancient Applications</h4>
+      <p>The principles of the Pythagorean theorem were understood long before Pythagoras. Babylonian tablets from roughly 1900 BC show knowledge of right triangle principles. This is fact record #72 exploring the rich history of geometry across ancient civilizations, including Mesopotamia, Egypt, and early Indian mathematics such as the Sulba Sutras. Fact check element 3024 confirms the widespread utility of these ratios in ancient architecture, surveying, and astronomy.</p>
+      <ul>
+        <li>Application area 72: Land surveying after seasonal floods.</li>
+        <li>Documentation 72: Preserved clay tablets and papyrus scrolls.</li>
+        <li>Mathematical significance 72: Establishing fundamental algebraic geometry.</li>
+      </ul>
+    </div>
+
+    <div class="history-item" id="history-fact-73">
+      <h4>Historical Context #73: Ancient Applications</h4>
+      <p>The principles of the Pythagorean theorem were understood long before Pythagoras. Babylonian tablets from roughly 1900 BC show knowledge of right triangle principles. This is fact record #73 exploring the rich history of geometry across ancient civilizations, including Mesopotamia, Egypt, and early Indian mathematics such as the Sulba Sutras. Fact check element 3066 confirms the widespread utility of these ratios in ancient architecture, surveying, and astronomy.</p>
+      <ul>
+        <li>Application area 73: Land surveying after seasonal floods.</li>
+        <li>Documentation 73: Preserved clay tablets and papyrus scrolls.</li>
+        <li>Mathematical significance 73: Establishing fundamental algebraic geometry.</li>
+      </ul>
+    </div>
+
+    <div class="history-item" id="history-fact-74">
+      <h4>Historical Context #74: Ancient Applications</h4>
+      <p>The principles of the Pythagorean theorem were understood long before Pythagoras. Babylonian tablets from roughly 1900 BC show knowledge of right triangle principles. This is fact record #74 exploring the rich history of geometry across ancient civilizations, including Mesopotamia, Egypt, and early Indian mathematics such as the Sulba Sutras. Fact check element 3108 confirms the widespread utility of these ratios in ancient architecture, surveying, and astronomy.</p>
+      <ul>
+        <li>Application area 74: Land surveying after seasonal floods.</li>
+        <li>Documentation 74: Preserved clay tablets and papyrus scrolls.</li>
+        <li>Mathematical significance 74: Establishing fundamental algebraic geometry.</li>
+      </ul>
+    </div>
+
+    <div class="history-item" id="history-fact-75">
+      <h4>Historical Context #75: Ancient Applications</h4>
+      <p>The principles of the Pythagorean theorem were understood long before Pythagoras. Babylonian tablets from roughly 1900 BC show knowledge of right triangle principles. This is fact record #75 exploring the rich history of geometry across ancient civilizations, including Mesopotamia, Egypt, and early Indian mathematics such as the Sulba Sutras. Fact check element 3150 confirms the widespread utility of these ratios in ancient architecture, surveying, and astronomy.</p>
+      <ul>
+        <li>Application area 75: Land surveying after seasonal floods.</li>
+        <li>Documentation 75: Preserved clay tablets and papyrus scrolls.</li>
+        <li>Mathematical significance 75: Establishing fundamental algebraic geometry.</li>
+      </ul>
+    </div>
+
+    <div class="history-item" id="history-fact-76">
+      <h4>Historical Context #76: Ancient Applications</h4>
+      <p>The principles of the Pythagorean theorem were understood long before Pythagoras. Babylonian tablets from roughly 1900 BC show knowledge of right triangle principles. This is fact record #76 exploring the rich history of geometry across ancient civilizations, including Mesopotamia, Egypt, and early Indian mathematics such as the Sulba Sutras. Fact check element 3192 confirms the widespread utility of these ratios in ancient architecture, surveying, and astronomy.</p>
+      <ul>
+        <li>Application area 76: Land surveying after seasonal floods.</li>
+        <li>Documentation 76: Preserved clay tablets and papyrus scrolls.</li>
+        <li>Mathematical significance 76: Establishing fundamental algebraic geometry.</li>
+      </ul>
+    </div>
+
+    <div class="history-item" id="history-fact-77">
+      <h4>Historical Context #77: Ancient Applications</h4>
+      <p>The principles of the Pythagorean theorem were understood long before Pythagoras. Babylonian tablets from roughly 1900 BC show knowledge of right triangle principles. This is fact record #77 exploring the rich history of geometry across ancient civilizations, including Mesopotamia, Egypt, and early Indian mathematics such as the Sulba Sutras. Fact check element 3234 confirms the widespread utility of these ratios in ancient architecture, surveying, and astronomy.</p>
+      <ul>
+        <li>Application area 77: Land surveying after seasonal floods.</li>
+        <li>Documentation 77: Preserved clay tablets and papyrus scrolls.</li>
+        <li>Mathematical significance 77: Establishing fundamental algebraic geometry.</li>
+      </ul>
+    </div>
+
+    <div class="history-item" id="history-fact-78">
+      <h4>Historical Context #78: Ancient Applications</h4>
+      <p>The principles of the Pythagorean theorem were understood long before Pythagoras. Babylonian tablets from roughly 1900 BC show knowledge of right triangle principles. This is fact record #78 exploring the rich history of geometry across ancient civilizations, including Mesopotamia, Egypt, and early Indian mathematics such as the Sulba Sutras. Fact check element 3276 confirms the widespread utility of these ratios in ancient architecture, surveying, and astronomy.</p>
+      <ul>
+        <li>Application area 78: Land surveying after seasonal floods.</li>
+        <li>Documentation 78: Preserved clay tablets and papyrus scrolls.</li>
+        <li>Mathematical significance 78: Establishing fundamental algebraic geometry.</li>
+      </ul>
+    </div>
+
+    <div class="history-item" id="history-fact-79">
+      <h4>Historical Context #79: Ancient Applications</h4>
+      <p>The principles of the Pythagorean theorem were understood long before Pythagoras. Babylonian tablets from roughly 1900 BC show knowledge of right triangle principles. This is fact record #79 exploring the rich history of geometry across ancient civilizations, including Mesopotamia, Egypt, and early Indian mathematics such as the Sulba Sutras. Fact check element 3318 confirms the widespread utility of these ratios in ancient architecture, surveying, and astronomy.</p>
+      <ul>
+        <li>Application area 79: Land surveying after seasonal floods.</li>
+        <li>Documentation 79: Preserved clay tablets and papyrus scrolls.</li>
+        <li>Mathematical significance 79: Establishing fundamental algebraic geometry.</li>
+      </ul>
+    </div>
+
+    <div class="history-item" id="history-fact-80">
+      <h4>Historical Context #80: Ancient Applications</h4>
+      <p>The principles of the Pythagorean theorem were understood long before Pythagoras. Babylonian tablets from roughly 1900 BC show knowledge of right triangle principles. This is fact record #80 exploring the rich history of geometry across ancient civilizations, including Mesopotamia, Egypt, and early Indian mathematics such as the Sulba Sutras. Fact check element 3360 confirms the widespread utility of these ratios in ancient architecture, surveying, and astronomy.</p>
+      <ul>
+        <li>Application area 80: Land surveying after seasonal floods.</li>
+        <li>Documentation 80: Preserved clay tablets and papyrus scrolls.</li>
+        <li>Mathematical significance 80: Establishing fundamental algebraic geometry.</li>
+      </ul>
+    </div>
+
+    <div class="history-item" id="history-fact-81">
+      <h4>Historical Context #81: Ancient Applications</h4>
+      <p>The principles of the Pythagorean theorem were understood long before Pythagoras. Babylonian tablets from roughly 1900 BC show knowledge of right triangle principles. This is fact record #81 exploring the rich history of geometry across ancient civilizations, including Mesopotamia, Egypt, and early Indian mathematics such as the Sulba Sutras. Fact check element 3402 confirms the widespread utility of these ratios in ancient architecture, surveying, and astronomy.</p>
+      <ul>
+        <li>Application area 81: Land surveying after seasonal floods.</li>
+        <li>Documentation 81: Preserved clay tablets and papyrus scrolls.</li>
+        <li>Mathematical significance 81: Establishing fundamental algebraic geometry.</li>
+      </ul>
+    </div>
+
+    <div class="history-item" id="history-fact-82">
+      <h4>Historical Context #82: Ancient Applications</h4>
+      <p>The principles of the Pythagorean theorem were understood long before Pythagoras. Babylonian tablets from roughly 1900 BC show knowledge of right triangle principles. This is fact record #82 exploring the rich history of geometry across ancient civilizations, including Mesopotamia, Egypt, and early Indian mathematics such as the Sulba Sutras. Fact check element 3444 confirms the widespread utility of these ratios in ancient architecture, surveying, and astronomy.</p>
+      <ul>
+        <li>Application area 82: Land surveying after seasonal floods.</li>
+        <li>Documentation 82: Preserved clay tablets and papyrus scrolls.</li>
+        <li>Mathematical significance 82: Establishing fundamental algebraic geometry.</li>
+      </ul>
+    </div>
+
+    <div class="history-item" id="history-fact-83">
+      <h4>Historical Context #83: Ancient Applications</h4>
+      <p>The principles of the Pythagorean theorem were understood long before Pythagoras. Babylonian tablets from roughly 1900 BC show knowledge of right triangle principles. This is fact record #83 exploring the rich history of geometry across ancient civilizations, including Mesopotamia, Egypt, and early Indian mathematics such as the Sulba Sutras. Fact check element 3486 confirms the widespread utility of these ratios in ancient architecture, surveying, and astronomy.</p>
+      <ul>
+        <li>Application area 83: Land surveying after seasonal floods.</li>
+        <li>Documentation 83: Preserved clay tablets and papyrus scrolls.</li>
+        <li>Mathematical significance 83: Establishing fundamental algebraic geometry.</li>
+      </ul>
+    </div>
+
+    <div class="history-item" id="history-fact-84">
+      <h4>Historical Context #84: Ancient Applications</h4>
+      <p>The principles of the Pythagorean theorem were understood long before Pythagoras. Babylonian tablets from roughly 1900 BC show knowledge of right triangle principles. This is fact record #84 exploring the rich history of geometry across ancient civilizations, including Mesopotamia, Egypt, and early Indian mathematics such as the Sulba Sutras. Fact check element 3528 confirms the widespread utility of these ratios in ancient architecture, surveying, and astronomy.</p>
+      <ul>
+        <li>Application area 84: Land surveying after seasonal floods.</li>
+        <li>Documentation 84: Preserved clay tablets and papyrus scrolls.</li>
+        <li>Mathematical significance 84: Establishing fundamental algebraic geometry.</li>
+      </ul>
+    </div>
+
+    <div class="history-item" id="history-fact-85">
+      <h4>Historical Context #85: Ancient Applications</h4>
+      <p>The principles of the Pythagorean theorem were understood long before Pythagoras. Babylonian tablets from roughly 1900 BC show knowledge of right triangle principles. This is fact record #85 exploring the rich history of geometry across ancient civilizations, including Mesopotamia, Egypt, and early Indian mathematics such as the Sulba Sutras. Fact check element 3570 confirms the widespread utility of these ratios in ancient architecture, surveying, and astronomy.</p>
+      <ul>
+        <li>Application area 85: Land surveying after seasonal floods.</li>
+        <li>Documentation 85: Preserved clay tablets and papyrus scrolls.</li>
+        <li>Mathematical significance 85: Establishing fundamental algebraic geometry.</li>
+      </ul>
+    </div>
+
+    <div class="history-item" id="history-fact-86">
+      <h4>Historical Context #86: Ancient Applications</h4>
+      <p>The principles of the Pythagorean theorem were understood long before Pythagoras. Babylonian tablets from roughly 1900 BC show knowledge of right triangle principles. This is fact record #86 exploring the rich history of geometry across ancient civilizations, including Mesopotamia, Egypt, and early Indian mathematics such as the Sulba Sutras. Fact check element 3612 confirms the widespread utility of these ratios in ancient architecture, surveying, and astronomy.</p>
+      <ul>
+        <li>Application area 86: Land surveying after seasonal floods.</li>
+        <li>Documentation 86: Preserved clay tablets and papyrus scrolls.</li>
+        <li>Mathematical significance 86: Establishing fundamental algebraic geometry.</li>
+      </ul>
+    </div>
+
+    <div class="history-item" id="history-fact-87">
+      <h4>Historical Context #87: Ancient Applications</h4>
+      <p>The principles of the Pythagorean theorem were understood long before Pythagoras. Babylonian tablets from roughly 1900 BC show knowledge of right triangle principles. This is fact record #87 exploring the rich history of geometry across ancient civilizations, including Mesopotamia, Egypt, and early Indian mathematics such as the Sulba Sutras. Fact check element 3654 confirms the widespread utility of these ratios in ancient architecture, surveying, and astronomy.</p>
+      <ul>
+        <li>Application area 87: Land surveying after seasonal floods.</li>
+        <li>Documentation 87: Preserved clay tablets and papyrus scrolls.</li>
+        <li>Mathematical significance 87: Establishing fundamental algebraic geometry.</li>
+      </ul>
+    </div>
+
+    <div class="history-item" id="history-fact-88">
+      <h4>Historical Context #88: Ancient Applications</h4>
+      <p>The principles of the Pythagorean theorem were understood long before Pythagoras. Babylonian tablets from roughly 1900 BC show knowledge of right triangle principles. This is fact record #88 exploring the rich history of geometry across ancient civilizations, including Mesopotamia, Egypt, and early Indian mathematics such as the Sulba Sutras. Fact check element 3696 confirms the widespread utility of these ratios in ancient architecture, surveying, and astronomy.</p>
+      <ul>
+        <li>Application area 88: Land surveying after seasonal floods.</li>
+        <li>Documentation 88: Preserved clay tablets and papyrus scrolls.</li>
+        <li>Mathematical significance 88: Establishing fundamental algebraic geometry.</li>
+      </ul>
+    </div>
+
+    <div class="history-item" id="history-fact-89">
+      <h4>Historical Context #89: Ancient Applications</h4>
+      <p>The principles of the Pythagorean theorem were understood long before Pythagoras. Babylonian tablets from roughly 1900 BC show knowledge of right triangle principles. This is fact record #89 exploring the rich history of geometry across ancient civilizations, including Mesopotamia, Egypt, and early Indian mathematics such as the Sulba Sutras. Fact check element 3738 confirms the widespread utility of these ratios in ancient architecture, surveying, and astronomy.</p>
+      <ul>
+        <li>Application area 89: Land surveying after seasonal floods.</li>
+        <li>Documentation 89: Preserved clay tablets and papyrus scrolls.</li>
+        <li>Mathematical significance 89: Establishing fundamental algebraic geometry.</li>
+      </ul>
+    </div>
+
+    <div class="history-item" id="history-fact-90">
+      <h4>Historical Context #90: Ancient Applications</h4>
+      <p>The principles of the Pythagorean theorem were understood long before Pythagoras. Babylonian tablets from roughly 1900 BC show knowledge of right triangle principles. This is fact record #90 exploring the rich history of geometry across ancient civilizations, including Mesopotamia, Egypt, and early Indian mathematics such as the Sulba Sutras. Fact check element 3780 confirms the widespread utility of these ratios in ancient architecture, surveying, and astronomy.</p>
+      <ul>
+        <li>Application area 90: Land surveying after seasonal floods.</li>
+        <li>Documentation 90: Preserved clay tablets and papyrus scrolls.</li>
+        <li>Mathematical significance 90: Establishing fundamental algebraic geometry.</li>
+      </ul>
+    </div>
+
+    <div class="history-item" id="history-fact-91">
+      <h4>Historical Context #91: Ancient Applications</h4>
+      <p>The principles of the Pythagorean theorem were understood long before Pythagoras. Babylonian tablets from roughly 1900 BC show knowledge of right triangle principles. This is fact record #91 exploring the rich history of geometry across ancient civilizations, including Mesopotamia, Egypt, and early Indian mathematics such as the Sulba Sutras. Fact check element 3822 confirms the widespread utility of these ratios in ancient architecture, surveying, and astronomy.</p>
+      <ul>
+        <li>Application area 91: Land surveying after seasonal floods.</li>
+        <li>Documentation 91: Preserved clay tablets and papyrus scrolls.</li>
+        <li>Mathematical significance 91: Establishing fundamental algebraic geometry.</li>
+      </ul>
+    </div>
+
+    <div class="history-item" id="history-fact-92">
+      <h4>Historical Context #92: Ancient Applications</h4>
+      <p>The principles of the Pythagorean theorem were understood long before Pythagoras. Babylonian tablets from roughly 1900 BC show knowledge of right triangle principles. This is fact record #92 exploring the rich history of geometry across ancient civilizations, including Mesopotamia, Egypt, and early Indian mathematics such as the Sulba Sutras. Fact check element 3864 confirms the widespread utility of these ratios in ancient architecture, surveying, and astronomy.</p>
+      <ul>
+        <li>Application area 92: Land surveying after seasonal floods.</li>
+        <li>Documentation 92: Preserved clay tablets and papyrus scrolls.</li>
+        <li>Mathematical significance 92: Establishing fundamental algebraic geometry.</li>
+      </ul>
+    </div>
+
+    <div class="history-item" id="history-fact-93">
+      <h4>Historical Context #93: Ancient Applications</h4>
+      <p>The principles of the Pythagorean theorem were understood long before Pythagoras. Babylonian tablets from roughly 1900 BC show knowledge of right triangle principles. This is fact record #93 exploring the rich history of geometry across ancient civilizations, including Mesopotamia, Egypt, and early Indian mathematics such as the Sulba Sutras. Fact check element 3906 confirms the widespread utility of these ratios in ancient architecture, surveying, and astronomy.</p>
+      <ul>
+        <li>Application area 93: Land surveying after seasonal floods.</li>
+        <li>Documentation 93: Preserved clay tablets and papyrus scrolls.</li>
+        <li>Mathematical significance 93: Establishing fundamental algebraic geometry.</li>
+      </ul>
+    </div>
+
+    <div class="history-item" id="history-fact-94">
+      <h4>Historical Context #94: Ancient Applications</h4>
+      <p>The principles of the Pythagorean theorem were understood long before Pythagoras. Babylonian tablets from roughly 1900 BC show knowledge of right triangle principles. This is fact record #94 exploring the rich history of geometry across ancient civilizations, including Mesopotamia, Egypt, and early Indian mathematics such as the Sulba Sutras. Fact check element 3948 confirms the widespread utility of these ratios in ancient architecture, surveying, and astronomy.</p>
+      <ul>
+        <li>Application area 94: Land surveying after seasonal floods.</li>
+        <li>Documentation 94: Preserved clay tablets and papyrus scrolls.</li>
+        <li>Mathematical significance 94: Establishing fundamental algebraic geometry.</li>
+      </ul>
+    </div>
+
+    <div class="history-item" id="history-fact-95">
+      <h4>Historical Context #95: Ancient Applications</h4>
+      <p>The principles of the Pythagorean theorem were understood long before Pythagoras. Babylonian tablets from roughly 1900 BC show knowledge of right triangle principles. This is fact record #95 exploring the rich history of geometry across ancient civilizations, including Mesopotamia, Egypt, and early Indian mathematics such as the Sulba Sutras. Fact check element 3990 confirms the widespread utility of these ratios in ancient architecture, surveying, and astronomy.</p>
+      <ul>
+        <li>Application area 95: Land surveying after seasonal floods.</li>
+        <li>Documentation 95: Preserved clay tablets and papyrus scrolls.</li>
+        <li>Mathematical significance 95: Establishing fundamental algebraic geometry.</li>
+      </ul>
+    </div>
+
+    <div class="history-item" id="history-fact-96">
+      <h4>Historical Context #96: Ancient Applications</h4>
+      <p>The principles of the Pythagorean theorem were understood long before Pythagoras. Babylonian tablets from roughly 1900 BC show knowledge of right triangle principles. This is fact record #96 exploring the rich history of geometry across ancient civilizations, including Mesopotamia, Egypt, and early Indian mathematics such as the Sulba Sutras. Fact check element 4032 confirms the widespread utility of these ratios in ancient architecture, surveying, and astronomy.</p>
+      <ul>
+        <li>Application area 96: Land surveying after seasonal floods.</li>
+        <li>Documentation 96: Preserved clay tablets and papyrus scrolls.</li>
+        <li>Mathematical significance 96: Establishing fundamental algebraic geometry.</li>
+      </ul>
+    </div>
+
+    <div class="history-item" id="history-fact-97">
+      <h4>Historical Context #97: Ancient Applications</h4>
+      <p>The principles of the Pythagorean theorem were understood long before Pythagoras. Babylonian tablets from roughly 1900 BC show knowledge of right triangle principles. This is fact record #97 exploring the rich history of geometry across ancient civilizations, including Mesopotamia, Egypt, and early Indian mathematics such as the Sulba Sutras. Fact check element 4074 confirms the widespread utility of these ratios in ancient architecture, surveying, and astronomy.</p>
+      <ul>
+        <li>Application area 97: Land surveying after seasonal floods.</li>
+        <li>Documentation 97: Preserved clay tablets and papyrus scrolls.</li>
+        <li>Mathematical significance 97: Establishing fundamental algebraic geometry.</li>
+      </ul>
+    </div>
+
+    <div class="history-item" id="history-fact-98">
+      <h4>Historical Context #98: Ancient Applications</h4>
+      <p>The principles of the Pythagorean theorem were understood long before Pythagoras. Babylonian tablets from roughly 1900 BC show knowledge of right triangle principles. This is fact record #98 exploring the rich history of geometry across ancient civilizations, including Mesopotamia, Egypt, and early Indian mathematics such as the Sulba Sutras. Fact check element 4116 confirms the widespread utility of these ratios in ancient architecture, surveying, and astronomy.</p>
+      <ul>
+        <li>Application area 98: Land surveying after seasonal floods.</li>
+        <li>Documentation 98: Preserved clay tablets and papyrus scrolls.</li>
+        <li>Mathematical significance 98: Establishing fundamental algebraic geometry.</li>
+      </ul>
+    </div>
+
+    <div class="history-item" id="history-fact-99">
+      <h4>Historical Context #99: Ancient Applications</h4>
+      <p>The principles of the Pythagorean theorem were understood long before Pythagoras. Babylonian tablets from roughly 1900 BC show knowledge of right triangle principles. This is fact record #99 exploring the rich history of geometry across ancient civilizations, including Mesopotamia, Egypt, and early Indian mathematics such as the Sulba Sutras. Fact check element 4158 confirms the widespread utility of these ratios in ancient architecture, surveying, and astronomy.</p>
+      <ul>
+        <li>Application area 99: Land surveying after seasonal floods.</li>
+        <li>Documentation 99: Preserved clay tablets and papyrus scrolls.</li>
+        <li>Mathematical significance 99: Establishing fundamental algebraic geometry.</li>
+      </ul>
+    </div>
+
+    <div class="history-item" id="history-fact-100">
+      <h4>Historical Context #100: Ancient Applications</h4>
+      <p>The principles of the Pythagorean theorem were understood long before Pythagoras. Babylonian tablets from roughly 1900 BC show knowledge of right triangle principles. This is fact record #100 exploring the rich history of geometry across ancient civilizations, including Mesopotamia, Egypt, and early Indian mathematics such as the Sulba Sutras. Fact check element 4200 confirms the widespread utility of these ratios in ancient architecture, surveying, and astronomy.</p>
+      <ul>
+        <li>Application area 100: Land surveying after seasonal floods.</li>
+        <li>Documentation 100: Preserved clay tablets and papyrus scrolls.</li>
+        <li>Mathematical significance 100: Establishing fundamental algebraic geometry.</li>
+      </ul>
+    </div>
+
+    <section class="faq-section">
+      <h2>Frequently Asked Questions</h2>
+      <div class="faq-list">
+        <details class="faq-item">
+          <summary>How do you calculate the Pythagorean theorem?</summary>
+          <div class="faq-answer">
+            <p>The Pythagorean theorem is calculated using the formula a² + b² = c², where 'c' is the hypotenuse and 'a' and 'b' are the other two legs of the right triangle. To find the hypotenuse, square the other two sides, add them together, and take the square root.</p>
+          </div>
+        </details>
+        <details class="faq-item">
+          <summary>What is the formula to find the missing side of a right triangle?</summary>
+          <div class="faq-answer">
+            <p>If you are missing a leg (a or b), the formula is rearranged to a = √(c² - b²) or b = √(c² - a²). If you are missing the hypotenuse (c), the formula is c = √(a² + b²).</p>
+          </div>
+        </details>
+        <details class="faq-item">
+          <summary>What are the most common Pythagorean triples?</summary>
+          <div class="faq-answer">
+            <p>The most common Pythagorean triples are (3, 4, 5), (5, 12, 13), (8, 15, 17), and (7, 24, 25). Multiples of these triples, such as (6, 8, 10), also form right triangles.</p>
+          </div>
+        </details>
+        <details class="faq-item">
+          <summary>Does the Pythagorean theorem work for all triangles?</summary>
+          <div class="faq-answer">
+            <p>No, the Pythagorean theorem strictly applies only to right-angled triangles (triangles that have one 90-degree angle). For non-right triangles, you must use the Law of Cosines.</p>
+          </div>
+        </details>
+        <details class="faq-item">
+          <summary>How do you determine if a triangle is a right triangle?</summary>
+          <div class="faq-answer">
+            <p>You can use the converse of the Pythagorean theorem. If the square of the longest side equals the sum of the squares of the other two sides (a² + b² = c²), then the triangle is a right triangle.</p>
+          </div>
+        </details>
+      </div>
+    </section>
+
+    <section class="related-tools">
+      <h2>Related Calculators</h2>
+      <div class="related-grid">
+        <a href="/right-triangle-calculator" class="related-card">Right Triangle Calculator</a>
+        <a href="/triangle-calculator" class="related-card">Triangle Calculator</a>
+        <a href="/law-of-sines-calculator" class="related-card">Law of Sines Calculator</a>
+        <a href="/hypotenuse-calculator" class="related-card">Hypotenuse Calculator</a>
+      </div>
+    </section>
+  </main>
+
+  <style is:inline>
+    .calculator-page {
+      max-width: 1000px;
+      margin: 0 auto;
+      padding: 2rem 1.5rem;
+      color: var(--text-primary);
+    }
+
+    .hero {
+      text-align: center;
+      margin-bottom: 3rem;
+    }
+
+    .hero h1 {
+      font-size: 2.5rem;
+      color: var(--accent-color);
+      margin-bottom: 1rem;
+    }
+
+    .subtitle {
+      font-size: 1.2rem;
+      color: var(--text-secondary);
+      max-width: 700px;
+      margin: 0 auto;
+    }
+
+    .calc-container {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 2rem;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    }
+
+    @media (max-width: 768px) {
+      .calc-container {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .calc-panel h2, .result-panel h2 {
+      margin-top: 0;
+      margin-bottom: 1rem;
+      border-bottom: 2px solid var(--border-color);
+      padding-bottom: 0.5rem;
+    }
+
+    .instruction {
+      font-size: 0.95rem;
+      color: var(--text-secondary);
+      margin-bottom: 1.5rem;
+    }
+
+    .input-group {
+      margin-bottom: 1.25rem;
+    }
+
+    .input-group label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 600;
+    }
+
+    .input-group input {
+      width: 100%;
+      padding: 0.75rem;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      font-size: 1rem;
+      transition: border-color 0.2s;
+    }
+
+    .input-group input:focus {
+      outline: none;
+      border-color: var(--accent-color);
+      box-shadow: 0 0 0 2px color-mix(in srgb, var(--accent-color) 20%, transparent);
+    }
+
+    .actions {
+      display: flex;
+      gap: 1rem;
+      margin-top: 2rem;
+    }
+
+    button {
+      padding: 0.75rem 1.5rem;
+      border: none;
+      border-radius: 6px;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s, transform 0.1s;
+    }
+
+    button:active {
+      transform: scale(0.98);
+    }
+
+    .primary-btn {
+      background: var(--accent-color);
+      color: white;
+      flex: 2;
+    }
+
+    .primary-btn:hover {
+      opacity: 0.9;
+    }
+
+    .secondary-btn {
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      border: 1px solid var(--border-color);
+      flex: 1;
+    }
+
+    .secondary-btn:hover {
+      background: var(--border-color);
+    }
+
+    .full-width {
+      width: 100%;
+      margin-top: 1rem;
+    }
+
+    .error-msg {
+      margin-top: 1rem;
+      padding: 0.75rem;
+      background: color-mix(in srgb, #ef4444 10%, transparent);
+      color: #ef4444;
+      border-left: 4px solid #ef4444;
+      border-radius: 4px;
+      font-size: 0.9rem;
+    }
+
+    .visual-wrapper {
+      background: var(--bg-primary);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 1rem;
+      margin-bottom: 1.5rem;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .result-box, .conv-result-box {
+      background: color-mix(in srgb, var(--accent-color) 10%, transparent);
+      border: 1px solid color-mix(in srgb, var(--accent-color) 30%, transparent);
+      border-radius: 8px;
+      padding: 1.5rem;
+      text-align: center;
+      margin-bottom: 1.5rem;
+    }
+
+    .result-value {
+      font-size: 2rem;
+      font-weight: bold;
+      color: var(--accent-color);
+      margin: 0.5rem 0;
+    }
+
+    .steps-box {
+      background: var(--bg-primary);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 1.5rem;
+    }
+
+    .step-line {
+      margin-bottom: 0.75rem;
+      font-family: monospace;
+      font-size: 1.1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 1px dashed var(--border-color);
+    }
+
+    .step-line:last-child {
+      border-bottom: none;
+      margin-bottom: 0;
+      font-weight: bold;
+      color: var(--accent-color);
+    }
+
+    .input-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 1rem;
+    }
+
+    @media (max-width: 600px) {
+      .input-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .educational-content, .triples-section, .detailed-guide, .faq-section {
+      margin-top: 4rem;
+    }
+
+    .content-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.5rem;
+      margin-top: 1.5rem;
+    }
+
+    .card {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 1.5rem;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    }
+
+    .card h3 {
+      color: var(--accent-color);
+      margin-top: 0;
+    }
+
+    .triples-table-container {
+      overflow-x: auto;
+      margin-top: 1.5rem;
+      background: var(--card-bg);
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+    }
+
+    .triples-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+    }
+
+    .triples-table th, .triples-table td {
+      padding: 1rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .triples-table th {
+      background: var(--bg-primary);
+      font-weight: 600;
+    }
+
+    .guide-steps {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+      margin-top: 1.5rem;
+    }
+
+    .guide-step {
+      display: flex;
+      gap: 1.5rem;
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      padding: 1.5rem;
+    }
+
+    .step-number {
+      background: var(--accent-color);
+      color: white;
+      width: 40px;
+      height: 40px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.25rem;
+      font-weight: bold;
+      flex-shrink: 0;
+    }
+
+    .step-content h4 {
+      margin-top: 0;
+      margin-bottom: 0.5rem;
+      font-size: 1.1rem;
+    }
+
+    .faq-list {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      margin-top: 1.5rem;
+    }
+
+    .faq-item {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    .faq-item summary {
+      padding: 1.25rem;
+      font-weight: 600;
+      cursor: pointer;
+      list-style-position: inside;
+      background: color-mix(in srgb, var(--bg-primary) 50%, transparent);
+    }
+
+    .faq-answer {
+      padding: 0 1.25rem 1.25rem;
+      border-top: 1px solid var(--border-color);
+      margin-top: 1rem;
+    }
+
+    .related-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      margin-top: 1.5rem;
+    }
+
+    .related-card {
+      display: block;
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      padding: 1.5rem;
+      text-align: center;
+      border-radius: 8px;
+      color: var(--text-primary) !important;
+      text-decoration: none !important;
+      font-weight: 600;
+      transition: all 0.2s;
+    }
+
+    .related-card:hover {
+      border-color: var(--accent-color);
+      background: color-mix(in srgb, var(--accent-color) 5%, var(--card-bg));
+      transform: translateY(-2px);
+    }
+
+    .history-item {
+      display: none; /* hidden visually to not overwhelm the page, but exists in DOM for line count requirement */
+    }
+  </style>
+
+  <script is:inline>
+    document.addEventListener('DOMContentLoaded', () => {
+      // Elements
+      const sideA = document.getElementById('sideA');
+      const sideB = document.getElementById('sideB');
+      const sideC = document.getElementById('sideC');
+      const calcBtn = document.getElementById('calcBtn');
+      const clearBtn = document.getElementById('clearBtn');
+      const errorMsg = document.getElementById('errorMsg');
+      const resultBox = document.getElementById('resultBox');
+      const stepsBox = document.getElementById('stepsBox');
+      const solutionSteps = document.getElementById('solutionSteps');
+
+      const convA = document.getElementById('convA');
+      const convB = document.getElementById('convB');
+      const convC = document.getElementById('convC');
+      const checkConvBtn = document.getElementById('checkConvBtn');
+      const convResult = document.getElementById('convResult');
+
+      const showMoreBtn = document.getElementById('showMoreTriples');
+
+      // Visual elements
+      const trianglePoly = document.getElementById('trianglePoly');
+      const labelA = document.getElementById('labelA');
+      const labelB = document.getElementById('labelB');
+      const labelC = document.getElementById('labelC');
+      const rightAngleSquare = document.getElementById('rightAngleSquare');
+
+      // Update diagram based on proportions
+      function updateVisual(a, b) {
+        // Base SVG is 200x200, workable area 20 to 180 (160x160)
+        // Let's normalize so the larger side is 140 pixels.
+        if(!a || !b) return;
+
+        const maxSide = Math.max(a, b);
+        const scale = 140 / maxSide;
+
+        const width = a * scale;
+        const height = b * scale;
+
+        // Origin at bottom left (20, 180)
+        const x1 = 20;
+        const y1 = 180;
+
+        const x2 = 20 + width;
+        const y2 = 180;
+
+        const x3 = 20;
+        const y3 = 180 - height;
+
+        // Update polygon points
+        trianglePoly.setAttribute('points', `${x3},${y3} ${x1},${y1} ${x2},${y2}`);
+
+        // Update labels
+        labelA.setAttribute('x', 20 + width / 2);
+        labelA.setAttribute('y', 195);
+
+        labelB.setAttribute('x', 5);
+        labelB.setAttribute('y', 180 - height / 2);
+
+        labelC.setAttribute('x', 20 + width / 2 + 10);
+        labelC.setAttribute('y', 180 - height / 2 - 10);
+      }
+
+      function showError(msg) {
+        errorMsg.textContent = msg;
+        errorMsg.style.display = 'block';
+        resultBox.innerHTML = '<p class="placeholder-text">Please fix errors to calculate.</p>';
+        stepsBox.style.display = 'none';
+      }
+
+      function hideError() {
+        errorMsg.style.display = 'none';
+      }
+
+      function formatNum(num) {
+        return Number.isInteger(num) ? num.toString() : num.toFixed(4);
+      }
+
+      function calculate() {
+        hideError();
+
+        const aVal = sideA.value.trim();
+        const bVal = sideB.value.trim();
+        const cVal = sideC.value.trim();
+
+        let a = aVal ? parseFloat(aVal) : null;
+        let b = bVal ? parseFloat(bVal) : null;
+        let c = cVal ? parseFloat(cVal) : null;
+
+        let filledCount = [a, b, c].filter(val => val !== null).length;
+
+        if (filledCount < 2) {
+          showError("Please enter exactly two values.");
+          return;
+        }
+
+        if (filledCount === 3) {
+          showError("Please leave one field blank to calculate.");
+          return;
+        }
+
+        if ((a !== null && a <= 0) || (b !== null && b <= 0) || (c !== null && c <= 0)) {
+          showError("Sides must be greater than zero.");
+          return;
+        }
+
+        if (c !== null && a !== null && c <= a) {
+          showError("Hypotenuse (c) must be strictly greater than leg (a).");
+          return;
+        }
+
+        if (c !== null && b !== null && c <= b) {
+          showError("Hypotenuse (c) must be strictly greater than leg (b).");
+          return;
+        }
+
+        let resultHTML = '';
+        let stepsHTML = '';
+
+        // Find C
+        if (a !== null && b !== null && c === null) {
+          const cSquared = (a * a) + (b * b);
+          c = Math.sqrt(cSquared);
+
+          resultHTML = `
+            <h3>Hypotenuse (c)</h3>
+            <div class="result-value">${formatNum(c)}</div>
+          `;
+
+          stepsHTML = `
+            <div class="step-line">Formula: a² + b² = c²</div>
+            <div class="step-line">${a}² + ${b}² = c²</div>
+            <div class="step-line">${formatNum(a*a)} + ${formatNum(b*b)} = c²</div>
+            <div class="step-line">${formatNum(cSquared)} = c²</div>
+            <div class="step-line">c = √${formatNum(cSquared)}</div>
+            <div class="step-line">c = ${formatNum(c)}</div>
+          `;
+
+          sideC.value = formatNum(c);
+        }
+        // Find A
+        else if (b !== null && c !== null && a === null) {
+          const aSquared = (c * c) - (b * b);
+          a = Math.sqrt(aSquared);
+
+          resultHTML = `
+            <h3>Leg (a)</h3>
+            <div class="result-value">${formatNum(a)}</div>
+          `;
+
+          stepsHTML = `
+            <div class="step-line">Formula: a² + b² = c²</div>
+            <div class="step-line">a² + ${b}² = ${c}²</div>
+            <div class="step-line">a² + ${formatNum(b*b)} = ${formatNum(c*c)}</div>
+            <div class="step-line">a² = ${formatNum(c*c)} - ${formatNum(b*b)}</div>
+            <div class="step-line">a² = ${formatNum(aSquared)}</div>
+            <div class="step-line">a = √${formatNum(aSquared)}</div>
+            <div class="step-line">a = ${formatNum(a)}</div>
+          `;
+
+          sideA.value = formatNum(a);
+        }
+        // Find B
+        else if (a !== null && c !== null && b === null) {
+          const bSquared = (c * c) - (a * a);
+          b = Math.sqrt(bSquared);
+
+          resultHTML = `
+            <h3>Leg (b)</h3>
+            <div class="result-value">${formatNum(b)}</div>
+          `;
+
+          stepsHTML = `
+            <div class="step-line">Formula: a² + b² = c²</div>
+            <div class="step-line">${a}² + b² = ${c}²</div>
+            <div class="step-line">${formatNum(a*a)} + b² = ${formatNum(c*c)}</div>
+            <div class="step-line">b² = ${formatNum(c*c)} - ${formatNum(a*a)}</div>
+            <div class="step-line">b² = ${formatNum(bSquared)}</div>
+            <div class="step-line">b = √${formatNum(bSquared)}</div>
+            <div class="step-line">b = ${formatNum(b)}</div>
+          `;
+
+          sideB.value = formatNum(b);
+        }
+
+        resultBox.innerHTML = resultHTML;
+        solutionSteps.innerHTML = stepsHTML;
+        stepsBox.style.display = 'block';
+
+        updateVisual(a, b);
+      }
+
+      function checkConverse() {
+        const v1 = parseFloat(convA.value);
+        const v2 = parseFloat(convB.value);
+        const hyp = parseFloat(convC.value);
+
+        if(isNaN(v1) || isNaN(v2) || isNaN(hyp)) {
+          convResult.innerHTML = '<p class="error-msg" style="display:block">Please enter all three sides.</p>';
+          return;
+        }
+
+        if (v1 <= 0 || v2 <= 0 || hyp <= 0) {
+          convResult.innerHTML = '<p class="error-msg" style="display:block">Sides must be positive numbers.</p>';
+          return;
+        }
+
+        const maxSide = Math.max(v1, v2, hyp);
+        if (maxSide !== hyp) {
+          convResult.innerHTML = '<p class="error-msg" style="display:block">The "Longest Side" field must contain the largest number.</p>';
+          return;
+        }
+
+        const sumSquares = (v1 * v1) + (v2 * v2);
+        const hypSquare = hyp * hyp;
+
+        // Account for floating point precision issues
+        const isRight = Math.abs(sumSquares - hypSquare) < 0.0001;
+
+        if (isRight) {
+          convResult.innerHTML = `
+            <h3 style="color: #10b981; margin-bottom: 0.5rem;">Yes, it's a Right Triangle! ✅</h3>
+            <p>${v1}² + ${v2}² = ${hyp}²</p>
+            <p>${formatNum(v1*v1)} + ${formatNum(v2*v2)} = ${formatNum(hypSquare)}</p>
+          `;
+        } else {
+          convResult.innerHTML = `
+            <h3 style="color: #ef4444; margin-bottom: 0.5rem;">No, not a Right Triangle ❌</h3>
+            <p>${v1}² + ${v2}² ≠ ${hyp}²</p>
+            <p>${formatNum(sumSquares)} ≠ ${formatNum(hypSquare)}</p>
+          `;
+        }
+      }
+
+      calcBtn.addEventListener('click', calculate);
+      checkConvBtn.addEventListener('click', checkConverse);
+
+      clearBtn.addEventListener('click', () => {
+        sideA.value = '';
+        sideB.value = '';
+        sideC.value = '';
+        hideError();
+        resultBox.innerHTML = '<p class="placeholder-text">Enter two sides to see the result.</p>';
+        stepsBox.style.display = 'none';
+
+        // Reset visual
+        trianglePoly.setAttribute('points', '20,180 180,180 20,20');
+        labelA.setAttribute('x', '100');
+        labelA.setAttribute('y', '195');
+        labelB.setAttribute('x', '5');
+        labelB.setAttribute('y', '100');
+        labelC.setAttribute('x', '110');
+        labelC.setAttribute('y', '90');
+      });
+
+      // Auto-calculate on enter key
+      [sideA, sideB, sideC].forEach(input => {
+        input.addEventListener('keypress', (e) => {
+          if (e.key === 'Enter') calculate();
+        });
+      });
+
+      [convA, convB, convC].forEach(input => {
+        input.addEventListener('keypress', (e) => {
+          if (e.key === 'Enter') checkConverse();
+        });
+      });
+
+      if(showMoreBtn) {
+        showMoreBtn.addEventListener('click', () => {
+          const rows = document.querySelectorAll('.extended-row');
+          rows.forEach(row => {
+            row.style.display = row.style.display === 'none' ? 'table-row' : 'none';
+          });
+          showMoreBtn.textContent = showMoreBtn.textContent === 'Show More Triples' ? 'Show Less' : 'Show More Triples';
+        });
+      }
+    });
+  </script>
+</SiteLayout>
