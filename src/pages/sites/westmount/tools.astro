@@ -1,0 +1,68 @@
+---
+import SiteLayout from "../../../layouts/SiteLayout.astro";
+
+export const meta = {
+  title: "Free Financial Tools & Calculators | Westmount Fundamentals",
+  description: "Browse our complete collection of free financial tools. Calculators, trackers, comparisons, and interactive analysis tools for investors. No signup required.",
+  category: "guide",
+  published: "2026-03-23"
+};
+
+const allPages = import.meta.glob('./*.astro', { eager: true });
+
+interface PageEntry { slug: string; meta: any; }
+
+const tools: PageEntry[] = Object.entries(allPages)
+  .filter(([path, mod]: [string, any]) => {
+    if (path.includes('index') || path.includes('[')) return false;
+    const m = (mod as any).meta;
+    return m?.category === 'tool';
+  })
+  .map(([path, mod]: [string, any]) => ({
+    slug: path.replace('./', '').replace('.astro', ''),
+    meta: (mod as any).meta,
+  }))
+  .sort((a, b) => a.meta.title.localeCompare(b.meta.title));
+
+const schema = {
+  "@context": "https://schema.org",
+  "@type": "CollectionPage",
+  "name": meta.title,
+  "description": meta.description,
+  "numberOfItems": tools.length
+};
+---
+
+<SiteLayout site="westmount" title={meta.title} description={meta.description} canonical="https://westmountfundamentals.com/tools/" schema={JSON.stringify(schema)}>
+
+<style is:inline>
+  .hub-hero { text-align:center; padding:3rem 1rem 2rem; background:linear-gradient(135deg,rgba(74,143,231,0.1),rgba(74,143,231,0.02)); border-bottom:1px solid rgba(74,143,231,0.15); }
+  .hub-hero h1 { font-size:2.2rem; margin-bottom:0.5rem; color:#e8eaed; }
+  .hub-hero p { color:#94a3b8; font-size:1.05rem; max-width:600px; margin:0.5rem auto 0; }
+  .hub-hero .badge { display:inline-block; background:rgba(74,143,231,0.15); color:#4a8fe7; padding:6px 16px; border-radius:20px; font-weight:700; font-size:1.2rem; margin-bottom:1rem; }
+  .hub-container { max-width:1100px; margin:0 auto; padding:2rem 24px 3rem; }
+  .tool-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(300px, 1fr)); gap:16px; }
+  .tool-card { display:block; padding:20px; background:#0d1117; border:1px solid #30363d; border-radius:10px; text-decoration:none; transition:all 0.2s; }
+  .tool-card:hover { border-color:#4a8fe7; transform:translateY(-2px); }
+  .tool-card h3 { color:#e8eaed; font-size:1rem; margin:0 0 6px; }
+  .tool-card p { color:#94a3b8; font-size:0.85rem; margin:0; line-height:1.5; display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical; overflow:hidden; }
+</style>
+
+<div class="hub-hero">
+  <div class="badge">{tools.length} Tools</div>
+  <h1>Free Financial Tools</h1>
+  <p>Calculators, trackers, and interactive tools for smarter investing</p>
+</div>
+
+<div class="hub-container">
+  <div class="tool-grid">
+    {tools.map(t => (
+      <a class="tool-card" href={`/${t.slug}/`}>
+        <h3>{t.meta.title.split('|')[0].split('—')[0].trim()}</h3>
+        <p>{t.meta.description}</p>
+      </a>
+    ))}
+  </div>
+</div>
+
+</SiteLayout>
