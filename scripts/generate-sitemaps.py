@@ -94,16 +94,10 @@ def generate_sitemap(site_id):
             # index.astro → directory URL with trailing slash
             parts.pop()
             url_path = "/".join(parts)
-            if site_id in SUB_SITES:
-                page_data.append((f"https://{domain}/{site_id}/{url_path}{'/' if url_path else ''}", mtime))
-            else:
-                page_data.append((f"https://{domain}/{url_path}{'/' if url_path else ''}", mtime))
+            page_data.append((f"https://{domain}/{url_path}{'/' if url_path else ''}", mtime))
         else:
             url_path = "/".join(parts)
-            if site_id in SUB_SITES:
-                page_data.append((f"https://{domain}/{site_id}/{url_path}", mtime))
-            else:
-                page_data.append((f"https://{domain}/{url_path}", mtime))
+            page_data.append((f"https://{domain}/{url_path}", mtime))
 
     # Add dynamic pages from JSON data (IV & prospect for westmount)
     if site_id == "westmount":
@@ -155,7 +149,7 @@ def generate_robots_txt(site_id):
         f"User-agent: *\n"
         f"Allow: /\n"
         f"\n"
-        f"Sitemap: https://{domain}/{site_id}/sitemap.xml\n" if site_id in SUB_SITES else f"Sitemap: https://{domain}/sitemap.xml\n"
+        f"Sitemap: https://{domain}/sitemap.xml\n"
     )
 
 
