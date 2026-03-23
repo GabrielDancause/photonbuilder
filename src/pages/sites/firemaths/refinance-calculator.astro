@@ -1,0 +1,769 @@
+---
+import SiteLayout from '../../../layouts/SiteLayout.astro';
+
+export const meta = {
+  title: 'Refinance Calculator | Firemaths',
+  description: 'Compare your current mortgage to new refinance rates. See exactly when you break even and how much you can save over the life of your loan.',
+  category: 'tool',
+  keywords: ['refinance calculator', 'mortgage refinance', 'break even calculator', 'refinance savings', 'closing costs refinance', 'lower mortgage rate']
+};
+
+const schema = JSON.stringify([
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": "Refinance Calculator | Firemaths",
+    "description": "Compare your current mortgage to new refinance rates. See exactly when you break even and how much you can save over the life of your loan.",
+    "author": {
+      "@type": "Organization",
+      "name": "firemaths.info"
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "firemaths.info"
+    },
+    "datePublished": "2026-03-23",
+    "dateModified": "2026-03-23"
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "When does it make sense to refinance my mortgage?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "It generally makes sense to refinance if you can lower your interest rate by at least 0.5% to 1%, and you plan to stay in the home long enough to pass the break-even point where your monthly savings cover the closing costs."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "What is the break-even point in refinancing?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "The break-even point is the number of months it takes for your monthly interest savings to equal the upfront closing costs paid to refinance the loan."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Should I roll closing costs into my new loan?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Rolling closing costs into the loan prevents you from paying out of pocket, but it increases your loan balance and means you will pay interest on those costs for the life of the loan."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Can I refinance from a 30-year to a 15-year mortgage?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes. Refinancing to a shorter term usually gives you a lower interest rate and reduces your total interest paid, though your monthly payment may increase because you are paying off the principal faster."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Are there tax benefits to refinancing?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "You can typically still deduct the mortgage interest on your refinanced loan, but points paid to refinance must usually be deducted over the life of the loan rather than in the year they are paid."
+        }
+      }
+    ]
+  }
+]);
+---
+
+<SiteLayout site="firemaths" title={meta.title} description={meta.description}>
+  <Fragment slot="head">
+    <script type="application/ld+json" set:html={schema} />
+  </Fragment>
+
+  <!-- HERO -->
+  <section class="mill-hero">
+    <div class="mill-hero-badge">INTERACTIVE CALCULATOR</div>
+    <h1>Should You Refinance Your Mortgage?</h1>
+    <p class="mill-hero-hook">See if lowering your interest rate is worth the closing costs. <br/>Find your true break-even point.</p>
+    <div class="mill-hero-stats">
+      <div class="mill-stat">
+        <span class="mill-stat-num" id="hero-monthly-savings">$0</span>
+        <span class="mill-stat-label">Monthly Savings</span>
+      </div>
+      <div class="mill-stat">
+        <span class="mill-stat-num" id="hero-total-savings">$0</span>
+        <span class="mill-stat-label">Lifetime Interest Saved</span>
+      </div>
+      <div class="mill-stat">
+        <span class="mill-stat-num" id="hero-breakeven">0 mo</span>
+        <span class="mill-stat-label">Break-Even Point</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- CALCULATOR -->
+  <section class="mill-section">
+    <h2 class="mill-section-title">Refinance Calculator</h2>
+    <p class="mill-section-sub">Compare your current loan against a new refinance offer.</p>
+
+    <div class="mill-calc-container">
+      <div class="mill-calc-inputs">
+        <h3 style="margin-top: 0; color: var(--text-primary); border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; margin-bottom: 1rem;">Current Loan</h3>
+
+        <div class="mill-input-row">
+          <div class="mill-input-group">
+            <label for="current-balance">Current Balance</label>
+            <div class="mill-input-wrap"><span class="mill-input-prefix">$</span><input type="number" id="current-balance" min="10000" max="10000000" step="1000" value="300000" /></div>
+          </div>
+          <div class="mill-input-group">
+            <label for="current-rate">Current Rate (%)</label>
+            <div class="mill-input-wrap"><input type="number" id="current-rate" min="0.1" max="20" step="0.1" value="7.5" /></div>
+          </div>
+          <div class="mill-input-group">
+            <label for="current-term">Remaining Term (Years)</label>
+            <div class="mill-input-wrap"><input type="number" id="current-term" min="1" max="40" step="1" value="25" /></div>
+          </div>
+        </div>
+
+        <h3 style="margin-top: 2rem; color: var(--text-primary); border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; margin-bottom: 1rem;">New Loan</h3>
+
+        <div class="mill-input-row">
+          <div class="mill-input-group">
+            <label for="new-rate">New Rate (%)</label>
+            <div class="mill-input-wrap"><input type="number" id="new-rate" min="0.1" max="20" step="0.1" value="5.5" /></div>
+          </div>
+          <div class="mill-input-group">
+            <label for="new-term">New Term (Years)</label>
+            <select id="new-term">
+              <option value="30">30 Years</option>
+              <option value="20">20 Years</option>
+              <option value="15" selected>15 Years</option>
+              <option value="10">10 Years</option>
+            </select>
+          </div>
+          <div class="mill-input-group">
+            <label for="closing-costs">Closing Costs</label>
+            <div class="mill-input-wrap"><span class="mill-input-prefix">$</span><input type="number" id="closing-costs" min="0" max="50000" step="100" value="6000" /></div>
+          </div>
+        </div>
+
+        <div class="mill-input-group" style="margin-top: 1rem;">
+          <label class="mill-checkbox-label">
+            <input type="checkbox" id="roll-costs" checked />
+            Roll closing costs into new loan balance
+          </label>
+        </div>
+
+        <p id="calc-error" style="color: #ef4444; display: none; font-size: 0.9rem; margin-top: 1rem;"></p>
+      </div>
+
+      <div class="mill-calc-output">
+        <h3 style="margin-top: 0; color: var(--text-primary);">Refinance Analysis</h3>
+
+        <div class="mill-output-row">
+          <div class="mill-output-col">
+            <span class="mill-output-label">Old Monthly P&I</span>
+            <span class="mill-output-val" id="out-old-payment">$0</span>
+          </div>
+          <div class="mill-output-col">
+            <span class="mill-output-label">New Monthly P&I</span>
+            <span class="mill-output-val" id="out-new-payment">$0</span>
+          </div>
+        </div>
+
+        <div class="mill-chart-container">
+          <div class="mill-chart" id="interest-chart">
+             <!-- Chart generated by JS -->
+          </div>
+          <div class="mill-chart-legend">
+            <span><i class="mill-legend-dot" style="background: var(--text-secondary);"></i> Current Interest</span>
+            <span><i class="mill-legend-dot" style="background: var(--accent-color);"></i> New Interest</span>
+          </div>
+        </div>
+
+        <div class="mill-insight" id="result-insight"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- SIDE BY SIDE COMPARISON -->
+  <section class="mill-section">
+    <h2 class="mill-section-title">Cost Breakdown Over Time</h2>
+    <p class="mill-section-sub">See how your balance and total interest paid changes under both scenarios.</p>
+
+    <div class="mill-compare-results" id="compare-results">
+      <div class="mill-compare-cards" style="display: flex; gap: 1rem; flex-wrap: wrap;">
+        <div class="mill-compare-card" id="compare-card-old" style="flex: 1; background: var(--card-bg); padding: 1.5rem; border: 1px solid var(--border-color); border-radius: 8px;"></div>
+        <div class="mill-compare-card" id="compare-card-new" style="flex: 1; background: var(--card-bg); padding: 1.5rem; border: 1px solid var(--border-color); border-radius: 8px;"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- EDUCATIONAL CONTENT -->
+  <section class="mill-section">
+    <h2 class="mill-section-title">Understanding Refinancing</h2>
+    <div class="mill-cards">
+      <div class="mill-card">
+        <h3>The Break-Even Point</h3>
+        <p>Refinancing usually involves closing costs (appraisal fees, origination fees, etc.). The break-even point is how long it takes for your monthly savings to cover these upfront costs. If you plan to sell the house before this point, refinancing will actually cost you money.</p>
+      </div>
+      <div class="mill-card">
+        <h3>Rolling Costs Into the Loan</h3>
+        <p>You can often finance your closing costs by rolling them into the new loan balance. This saves you from paying cash out of pocket, but it means you'll pay interest on those fees over the life of the new loan, which reduces your overall savings.</p>
+      </div>
+      <div class="mill-card">
+        <h3>Term Adjustments</h3>
+        <p>Many homeowners refinance to shorten their loan term (e.g., going from 30 years to 15 years). While this often increases the monthly payment, it drastically reduces the total interest paid and helps build equity much faster.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section class="mill-section">
+    <h2 class="mill-section-title">Frequently Asked Questions</h2>
+    <div class="mill-faq-list" id="faq-container">
+      <!-- Generated by JS -->
+    </div>
+  </section>
+
+  <!-- RELATED LINKS -->
+  <section class="mill-section">
+    <h2 class="mill-section-title">More Calculators</h2>
+    <div class="mill-cards">
+      <a href="/mortgage-calculator" class="mill-card" style="text-decoration: none; color: inherit;">
+        <h3>Mortgage Calculator</h3>
+        <p>Calculate P&I and view amortization schedules.</p>
+      </a>
+      <a href="/home-affordability-calculator" class="mill-card" style="text-decoration: none; color: inherit;">
+        <h3>Home Affordability</h3>
+        <p>See how much house you can afford.</p>
+      </a>
+      <a href="/rent-vs-buy-calculator" class="mill-card" style="text-decoration: none; color: inherit;">
+        <h3>Rent vs Buy</h3>
+        <p>Compare the financial impacts of renting vs buying.</p>
+      </a>
+    </div>
+  </section>
+
+  <style is:inline>
+    .mill-hero {
+      text-align: center;
+      padding: 4rem 1rem;
+      background: linear-gradient(180deg, var(--card-bg, #0B1120) 0%, var(--bg-primary, #060913) 100%);
+      border-bottom: 1px solid var(--border-color, #152040);
+      margin-bottom: 3rem;
+    }
+    .mill-hero-badge {
+      display: inline-block;
+      font-size: 0.75rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      color: var(--accent-color, #10b981);
+      background: rgba(16, 185, 129, 0.1);
+      padding: 0.4rem 0.8rem;
+      border-radius: 100px;
+      margin-bottom: 1.5rem;
+    }
+    .mill-hero h1 {
+      font-size: clamp(2rem, 5vw, 3.5rem);
+      margin: 0 0 1rem 0;
+      color: #fff;
+      line-height: 1.1;
+      font-weight: 700;
+    }
+    .mill-hero-hook {
+      font-size: 1.25rem;
+      color: var(--text-secondary, #8b9bb4);
+      max-width: 600px;
+      margin: 0 auto 3rem auto;
+      line-height: 1.6;
+    }
+    .mill-hero-hook strong {
+      color: var(--accent-color, #10b981);
+    }
+    .mill-hero-stats {
+      display: flex;
+      justify-content: center;
+      gap: 2rem;
+      flex-wrap: wrap;
+    }
+    .mill-stat {
+      background: var(--card-bg, #0B1120);
+      border: 1px solid var(--border-color, #152040);
+      padding: 1.5rem;
+      border-radius: 12px;
+      min-width: 200px;
+    }
+    .mill-stat-num {
+      display: block;
+      font-size: 2rem;
+      font-weight: 700;
+      color: #fff;
+      margin-bottom: 0.25rem;
+    }
+    .mill-stat-num.positive { color: var(--accent-color, #10b981); }
+    .mill-stat-num.negative { color: #ef4444; }
+
+    .mill-stat-label {
+      font-size: 0.875rem;
+      color: var(--text-secondary, #8b9bb4);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .mill-section {
+      max-width: 1000px;
+      margin: 0 auto 4rem auto;
+      padding: 0 1rem;
+    }
+    .mill-section-title {
+      font-size: 2rem;
+      color: #fff;
+      margin: 0 0 0.5rem 0;
+    }
+    .mill-section-sub {
+      color: var(--text-secondary, #8b9bb4);
+      font-size: 1.1rem;
+      margin: 0 0 2rem 0;
+    }
+
+    .mill-calc-container {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+      background: var(--card-bg, #0B1120);
+      border: 1px solid var(--border-color, #152040);
+      border-radius: 16px;
+      padding: 2rem;
+    }
+    @media(max-width: 768px) {
+      .mill-calc-container { grid-template-columns: 1fr; padding: 1.5rem; }
+    }
+
+    .mill-input-row {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+      flex-wrap: wrap;
+    }
+    .mill-input-group {
+      flex: 1;
+      min-width: 120px;
+      margin-bottom: 1rem;
+    }
+    .mill-input-group label {
+      display: block;
+      font-size: 0.875rem;
+      color: var(--text-secondary, #8b9bb4);
+      margin-bottom: 0.5rem;
+    }
+    .mill-input-wrap {
+      position: relative;
+      display: flex;
+      align-items: center;
+    }
+    .mill-input-prefix {
+      position: absolute;
+      left: 1rem;
+      color: var(--text-secondary, #8b9bb4);
+    }
+    .mill-input-wrap input {
+      width: 100%;
+      background: var(--bg-primary, #060913);
+      border: 1px solid var(--border-color, #152040);
+      color: #fff;
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 1rem;
+    }
+    .mill-input-wrap input[id^="current-balance"], .mill-input-wrap input[id^="closing-costs"] {
+      padding-left: 2rem;
+    }
+    .mill-input-group select {
+      width: 100%;
+      background: var(--bg-primary, #060913);
+      border: 1px solid var(--border-color, #152040);
+      color: #fff;
+      padding: 0.75rem 1rem;
+      border-radius: 8px;
+      font-family: inherit;
+      font-size: 1rem;
+      appearance: none;
+    }
+    .mill-input-wrap input:focus, .mill-input-group select:focus {
+      outline: none;
+      border-color: var(--accent-color, #10b981);
+    }
+    .mill-checkbox-label {
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        color: var(--text-primary);
+        cursor: pointer;
+        font-size: 0.9rem;
+    }
+    .mill-checkbox-label input {
+        cursor: pointer;
+    }
+
+    .mill-output-row {
+      display: flex;
+      gap: 1rem;
+      background: var(--bg-primary, #060913);
+      padding: 1.5rem;
+      border-radius: 12px;
+      margin-bottom: 2rem;
+    }
+    .mill-output-col {
+      flex: 1;
+    }
+    .mill-output-label {
+      display: block;
+      font-size: 0.875rem;
+      color: var(--text-secondary, #8b9bb4);
+      margin-bottom: 0.25rem;
+    }
+    .mill-output-val {
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .mill-chart-container {
+      margin-top: 2rem;
+    }
+    .mill-chart {
+      height: 40px;
+      display: flex;
+      border-radius: 6px;
+      overflow: hidden;
+      margin-bottom: 1rem;
+      background: var(--bg-primary, #060913);
+    }
+    .mill-chart-bar {
+      height: 100%;
+      transition: width 0.3s ease;
+    }
+    .mill-chart-legend {
+      display: flex;
+      gap: 1.5rem;
+      font-size: 0.875rem;
+      color: var(--text-secondary, #8b9bb4);
+      justify-content: center;
+    }
+    .mill-legend-dot {
+      display: inline-block;
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      margin-right: 0.4rem;
+    }
+
+    .mill-insight {
+      margin-top: 2rem;
+      padding: 1.5rem;
+      background: rgba(16, 185, 129, 0.1);
+      border-left: 4px solid var(--accent-color, #10b981);
+      border-radius: 0 8px 8px 0;
+      color: #fff;
+      line-height: 1.5;
+    }
+    .mill-insight.negative {
+      background: rgba(239, 68, 68, 0.1);
+      border-left-color: #ef4444;
+    }
+
+    .mill-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 1.5rem;
+    }
+    .mill-card {
+      background: var(--card-bg, #0B1120);
+      border: 1px solid var(--border-color, #152040);
+      padding: 2rem;
+      border-radius: 12px;
+    }
+    .mill-card h3 {
+      color: #fff;
+      margin: 0 0 1rem 0;
+      font-size: 1.25rem;
+    }
+    .mill-card p {
+      color: var(--text-secondary, #8b9bb4);
+      margin: 0;
+      line-height: 1.6;
+    }
+
+    .mill-faq-list {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    .mill-faq-item {
+      background: var(--card-bg, #0B1120);
+      border: 1px solid var(--border-color, #152040);
+      border-radius: 8px;
+    }
+    .mill-faq-q {
+      padding: 1.5rem;
+      color: #fff;
+      font-weight: 600;
+      cursor: pointer;
+      list-style: none;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .mill-faq-q::-webkit-details-marker { display: none; }
+    .mill-faq-q::after {
+      content: '+';
+      color: var(--accent-color, #10b981);
+      font-size: 1.5rem;
+      line-height: 1;
+    }
+    .mill-faq-item[open] .mill-faq-q::after { content: '-'; }
+    .mill-faq-a {
+      padding: 0 1.5rem 1.5rem 1.5rem;
+      color: var(--text-secondary, #8b9bb4);
+      line-height: 1.6;
+    }
+  </style>
+
+  <script is:inline>
+    const schemaData = [
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": "Refinance Calculator | Firemaths",
+    "description": "Compare your current mortgage to new refinance rates. See exactly when you break even and how much you can save over the life of your loan.",
+    "author": {
+      "@type": "Organization",
+      "name": "firemaths.info"
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "firemaths.info"
+    },
+    "datePublished": "2026-03-23",
+    "dateModified": "2026-03-23"
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "When does it make sense to refinance my mortgage?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "It generally makes sense to refinance if you can lower your interest rate by at least 0.5% to 1%, and you plan to stay in the home long enough to pass the break-even point where your monthly savings cover the closing costs."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "What is the break-even point in refinancing?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "The break-even point is the number of months it takes for your monthly interest savings to equal the upfront closing costs paid to refinance the loan."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Should I roll closing costs into my new loan?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Rolling closing costs into the loan prevents you from paying out of pocket, but it increases your loan balance and means you will pay interest on those costs for the life of the loan."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Can I refinance from a 30-year to a 15-year mortgage?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes. Refinancing to a shorter term usually gives you a lower interest rate and reduces your total interest paid, though your monthly payment may increase because you are paying off the principal faster."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Are there tax benefits to refinancing?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "You can typically still deduct the mortgage interest on your refinanced loan, but points paid to refinance must usually be deducted over the life of the loan rather than in the year they are paid."
+        }
+      }
+    ]
+  }
+];
+
+    // Generate FAQ
+    const faqContainer = document.getElementById('faq-container');
+    const faqData = schemaData[1].mainEntity;
+
+    faqData.forEach(faq => {
+        const details = document.createElement('details');
+        details.className = 'mill-faq-item';
+
+        const summary = document.createElement('summary');
+        summary.className = 'mill-faq-q';
+        summary.textContent = faq.name;
+
+        const div = document.createElement('div');
+        div.className = 'mill-faq-a';
+        div.textContent = faq.acceptedAnswer.text;
+
+        details.appendChild(summary);
+        details.appendChild(div);
+        faqContainer.appendChild(details);
+    });
+
+    const elCurrentBalance = document.getElementById('current-balance');
+    const elCurrentRate = document.getElementById('current-rate');
+    const elCurrentTerm = document.getElementById('current-term');
+
+    const elNewRate = document.getElementById('new-rate');
+    const elNewTerm = document.getElementById('new-term');
+    const elClosingCosts = document.getElementById('closing-costs');
+    const elRollCosts = document.getElementById('roll-costs');
+    const elError = document.getElementById('calc-error');
+
+    // Outputs
+    const outOldPayment = document.getElementById('out-old-payment');
+    const outNewPayment = document.getElementById('out-new-payment');
+
+    const heroSavings = document.getElementById('hero-monthly-savings');
+    const heroTotalSavings = document.getElementById('hero-total-savings');
+    const heroBreakeven = document.getElementById('hero-breakeven');
+
+    const chart = document.getElementById('interest-chart');
+    const insight = document.getElementById('result-insight');
+
+    const compareCardOld = document.getElementById('compare-card-old');
+    const compareCardNew = document.getElementById('compare-card-new');
+
+    const fmtCurrency = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 });
+
+    function calculateMortgage(principal, annualRate, years) {
+      if (annualRate === 0) return { payment: principal / (years * 12), totalInterest: 0 };
+      const monthlyRate = annualRate / 100 / 12;
+      const payments = years * 12;
+      const x = Math.pow(1 + monthlyRate, payments);
+      const monthlyPayment = (principal * x * monthlyRate) / (x - 1);
+      const totalPaid = monthlyPayment * payments;
+      const totalInterest = totalPaid - principal;
+      return { payment: monthlyPayment, totalInterest: totalInterest, totalPaid: totalPaid };
+    }
+
+    function update() {
+      const currentBalance = parseFloat(elCurrentBalance.value);
+      const currentRate = parseFloat(elCurrentRate.value);
+      const currentTerm = parseFloat(elCurrentTerm.value);
+
+      const newRate = parseFloat(elNewRate.value);
+      const newTerm = parseFloat(elNewTerm.value);
+      const closingCosts = parseFloat(elClosingCosts.value);
+      const rollCosts = elRollCosts.checked;
+
+      elError.style.display = 'none';
+
+      if (isNaN(currentBalance) || currentBalance <= 0 ||
+          isNaN(currentRate) || currentRate < 0 ||
+          isNaN(currentTerm) || currentTerm <= 0 ||
+          isNaN(newRate) || newRate < 0 ||
+          isNaN(newTerm) || newTerm <= 0 ||
+          isNaN(closingCosts) || closingCosts < 0) {
+        elError.textContent = "Please enter valid positive numbers.";
+        elError.style.display = 'block';
+        return;
+      }
+
+      // Calculate Old Loan
+      const oldLoan = calculateMortgage(currentBalance, currentRate, currentTerm);
+
+      // Calculate New Loan
+      const newPrincipal = rollCosts ? currentBalance + closingCosts : currentBalance;
+      const newLoan = calculateMortgage(newPrincipal, newRate, newTerm);
+
+      // Comparisons
+      const monthlySavings = oldLoan.payment - newLoan.payment;
+
+      // True cost includes out of pocket closing costs if not rolled in
+      const oldTotalCost = oldLoan.totalInterest + currentBalance;
+      const newTotalCost = newLoan.totalInterest + newPrincipal + (rollCosts ? 0 : closingCosts);
+
+      const lifetimeSavings = oldTotalCost - newTotalCost;
+
+      // Break Even calculation (months)
+      // Closing costs / Monthly interest savings
+      // More accurately, time to recover closing costs via monthly cash flow savings
+      let breakevenMonths = 0;
+      if (monthlySavings > 0) {
+          breakevenMonths = closingCosts / monthlySavings;
+      }
+
+      // UI Updates
+      outOldPayment.textContent = fmtCurrency.format(oldLoan.payment);
+      outNewPayment.textContent = fmtCurrency.format(newLoan.payment);
+
+      heroSavings.textContent = fmtCurrency.format(monthlySavings);
+      heroSavings.className = 'mill-stat-num ' + (monthlySavings > 0 ? 'positive' : 'negative');
+
+      heroTotalSavings.textContent = fmtCurrency.format(lifetimeSavings);
+      heroTotalSavings.className = 'mill-stat-num ' + (lifetimeSavings > 0 ? 'positive' : 'negative');
+
+      if (monthlySavings <= 0) {
+          heroBreakeven.textContent = "Never";
+      } else {
+          const yrs = Math.floor(breakevenMonths / 12);
+          const mos = Math.ceil(breakevenMonths % 12);
+          heroBreakeven.textContent = yrs > 0 ? `${yrs}y ${mos}m` : `${mos} mo`;
+      }
+
+      // Chart Update
+      const maxInterest = Math.max(oldLoan.totalInterest, newLoan.totalInterest);
+      const oldPct = Math.min(100, (oldLoan.totalInterest / maxInterest) * 100) || 0;
+      const newPct = Math.min(100, (newLoan.totalInterest / maxInterest) * 100) || 0;
+
+      chart.innerHTML = `
+        <div class="mill-chart-bar" style="width: ${oldPct / 2}%; background: var(--text-secondary); margin-right: 2px;"></div>
+        <div class="mill-chart-bar" style="width: ${newPct / 2}%; background: var(--accent-color);"></div>
+      `;
+
+      // Insight
+      insight.className = 'mill-insight ' + (lifetimeSavings > 0 ? '' : 'negative');
+      if (lifetimeSavings > 0 && monthlySavings > 0) {
+          insight.innerHTML = `<strong>Good Idea!</strong> Refinancing saves you <strong>${fmtCurrency.format(monthlySavings)}</strong> per month and <strong>${fmtCurrency.format(lifetimeSavings)}</strong> in total interest. You will break even in about <strong>${Math.ceil(breakevenMonths)} months</strong>.`;
+      } else if (lifetimeSavings > 0 && monthlySavings <= 0) {
+          insight.innerHTML = `<strong>Faster Payoff.</strong> Your monthly payment goes up by <strong>${fmtCurrency.format(Math.abs(monthlySavings))}</strong>, but you pay off the loan <strong>${currentTerm - newTerm} years faster</strong>, saving <strong>${fmtCurrency.format(lifetimeSavings)}</strong> in total interest.`;
+      } else if (lifetimeSavings <= 0 && monthlySavings > 0) {
+          insight.innerHTML = `<strong>Cash Flow Focus.</strong> Your monthly payment drops by <strong>${fmtCurrency.format(monthlySavings)}</strong>, but you will pay <strong>${fmtCurrency.format(Math.abs(lifetimeSavings))} MORE</strong> in total interest over the life of the longer loan.`;
+      } else {
+          insight.innerHTML = `<strong>Not Recommended.</strong> This refinance increases your monthly payment AND costs you <strong>${fmtCurrency.format(Math.abs(lifetimeSavings))} MORE</strong> in total interest.`;
+      }
+
+      // Compare Cards
+      compareCardOld.innerHTML = `
+        <h3 style="color: #fff; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; margin-top:0;">Current Loan</h3>
+        <p style="color: var(--text-secondary); display:flex; justify-content:space-between; margin: 0.5rem 0;"><span>Principal:</span> <strong style="color: #fff;">${fmtCurrency.format(currentBalance)}</strong></p>
+        <p style="color: var(--text-secondary); display:flex; justify-content:space-between; margin: 0.5rem 0;"><span>Total Interest:</span> <strong style="color: #fff;">${fmtCurrency.format(oldLoan.totalInterest)}</strong></p>
+        <p style="color: var(--text-secondary); display:flex; justify-content:space-between; margin: 0.5rem 0;"><span>Total Cost:</span> <strong style="color: #fff;">${fmtCurrency.format(oldTotalCost)}</strong></p>
+      `;
+
+      compareCardNew.innerHTML = `
+        <h3 style="color: #fff; border-bottom: 1px solid var(--border-color); padding-bottom: 0.5rem; margin-top:0;">New Loan</h3>
+        <p style="color: var(--text-secondary); display:flex; justify-content:space-between; margin: 0.5rem 0;"><span>Principal (+Costs):</span> <strong style="color: #fff;">${fmtCurrency.format(newPrincipal)}</strong></p>
+        <p style="color: var(--text-secondary); display:flex; justify-content:space-between; margin: 0.5rem 0;"><span>Total Interest:</span> <strong style="color: var(--accent-color);">${fmtCurrency.format(newLoan.totalInterest)}</strong></p>
+        <p style="color: var(--text-secondary); display:flex; justify-content:space-between; margin: 0.5rem 0;"><span>Total Cost:</span> <strong style="color: #fff;">${fmtCurrency.format(newTotalCost)}</strong></p>
+      `;
+    }
+
+    // Listeners
+    [elCurrentBalance, elCurrentRate, elCurrentTerm, elNewRate, elNewTerm, elClosingCosts].forEach(el => {
+        el.addEventListener('input', update);
+    });
+    elRollCosts.addEventListener('change', update);
+
+    // Initial render
+    update();
+  </script>
+</SiteLayout>
