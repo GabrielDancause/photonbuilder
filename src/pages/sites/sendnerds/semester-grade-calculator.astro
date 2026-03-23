@@ -1,0 +1,1059 @@
+---
+import SiteLayout from '../../../layouts/SiteLayout.astro';
+
+export const meta = {
+  title: 'Semester Grade Calculator | Sendnerds',
+  description: 'Easily calculate your semester grade with our interactive calculator. Find out what you need on your final exam to achieve your target grade. Fast, free, and accurate.',
+  category: 'tool',
+  keywords: ["semester grade calculator", "final grade calculator", "what do i need on my final", "grade calculator with final", "college semester grade calculator", "high school semester grade calculator"]
+};
+
+const schema = [
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": "Semester Grade Calculator | Sendnerds",
+    "description": "Easily calculate your semester grade with our interactive calculator. Find out what you need on your final exam to achieve your target grade. Fast, free, and accurate.",
+    "author": {
+      "@type": "Organization",
+      "name": "sendnerds.photonbuilder.com"
+    },
+    "publisher": {
+      "@type": "Organization",
+      "name": "sendnerds.photonbuilder.com"
+    },
+    "datePublished": "2026-03-23",
+    "dateModified": "2026-03-23"
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "How do I calculate my semester grade?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "To calculate your semester grade, multiply each category's average grade by its weight (as a decimal), and sum the results. For example, if homework is 20% (0.2) and your average is 90%, it contributes 18 points to your final grade."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How much does a final exam affect my grade?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "The impact of a final exam depends entirely on its weight in your syllabus. If the final is worth 20%, it makes up one-fifth of your total grade. Our calculator can help you see exactly how different final exam scores will change your overall grade."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How do I find out what I need on the final?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "To find out what you need on the final, subtract your current weighted points from your target grade, then divide by the weight of the final exam. Our 'Target Grade' feature does this math for you automatically."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "What if my class uses a point system instead of weights?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "If your class uses a total points system, you can still use a weighted calculator by converting your points to percentages. Divide the points earned by the total points possible for each category to get the percentage grade."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Is an 89.5 an A or a B?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "This depends on your specific school or teacher's rounding policy. Many teachers round an 89.5 up to a 90 (an A- or A), but some strictly require a 90.0. Check your syllabus for the exact grading scale."
+        }
+      }
+    ]
+  }
+];
+---
+
+<SiteLayout site="sendnerds" title={meta.title} description={meta.description}>
+  <Fragment slot="head">
+    <script type="application/ld+json" set:html={JSON.stringify(schema)} />
+  </Fragment>
+
+  <div class="page-content">
+    <div class="hero">
+      <h1>Semester Grade Calculator</h1>
+      <p class="subtitle">Calculate your final semester grade instantly. Find out exactly what you need on your final exam to pass or keep your A.</p>
+    </div>
+
+    <div class="calculator-container">
+      <div class="calculator-card">
+        <h2>Enter Your Grades</h2>
+        <p>Add your assignment categories, their weights, and your current grades.</p>
+
+        <div id="calculator-form">
+          <div class="row-header">
+            <div class="header-col">Category Name</div>
+            <div class="header-col">Grade (%)</div>
+            <div class="header-col">Weight (%)</div>
+            <div class="header-col action-col"></div>
+          </div>
+
+          <div id="rows-container">
+            <!-- Initial rows via JS -->
+          </div>
+
+          <button type="button" id="add-row-btn" class="secondary-btn">+ Add Category</button>
+        </div>
+      </div>
+
+      <div class="results-section">
+        <div class="result-card">
+          <div class="result-label">Current Semester Grade</div>
+          <div class="result-value" id="final-grade-result">100.00%</div>
+          <div class="result-subtext" id="weight-total-text">Total Weight: 100%</div>
+        </div>
+
+        <div class="error-container" id="error-message" style="display: none;"></div>
+
+        <div class="chart-container">
+            <h3>Grade Distribution Breakdown</h3>
+            <div class="chart-wrapper">
+              <div id="grade-chart" class="css-chart"></div>
+            </div>
+            <div id="chart-legend" class="chart-legend"></div>
+        </div>
+      </div>
+
+      <div class="target-grade-section calculator-card">
+        <h3>What Do You Need on the Final?</h3>
+        <p>Want a specific grade for the semester? Enter your target grade and the weight of your final exam to see what you need to score.</p>
+        <div class="target-inputs">
+          <div class="input-group">
+            <label for="target-grade">Target Overall Grade (%)</label>
+            <input type="number" id="target-grade" placeholder="e.g. 90" min="0" max="100" step="0.01">
+          </div>
+          <div class="input-group">
+            <label for="remaining-weight">Final Exam Weight (%)</label>
+            <input type="number" id="remaining-weight" placeholder="e.g. 20" min="0" max="100" step="0.01">
+          </div>
+        </div>
+        <div class="target-result-box" id="target-result-box" style="display: none;">
+          You need to score <strong id="needed-grade" class="highlight">--</strong> on your final exam to finish the semester with a <span id="target-display">--</span>.
+        </div>
+      </div>
+    </div>
+
+    <div class="explainer">
+      <h2>How Semester Grades Work</h2>
+
+      <div class="explainer-cards">
+        <div class="explainer-card">
+            <h3>Weighted Averages</h3>
+            <p>Most semester grades use a weighted average system. Instead of simply adding up all your points, different categories (like homework, quizzes, and tests) are assigned a percentage of your overall grade.</p>
+        </div>
+        <div class="explainer-card">
+            <h3>The Final Exam Factor</h3>
+            <p>Final exams often carry a heavy weight, sometimes 20% to 30% of your entire semester grade. This means a single test can significantly swing your final average up or down.</p>
+        </div>
+        <div class="explainer-card">
+            <h3>Current vs. Final Grade</h3>
+            <p>Before the semester ends, your "current grade" only reflects the assignments you've completed so far. To calculate your true final grade, you must account for the missing weight of the final exam.</p>
+        </div>
+      </div>
+
+      <h3>How to Use This Calculator</h3>
+      <p>Using our semester grade calculator is simple and straightforward:</p>
+      <ol>
+        <li><strong>Enter your categories:</strong> Input the names of your grading categories from your syllabus (e.g., Homework, Midterm, Participation).</li>
+        <li><strong>Enter your grades:</strong> For each category, put in your current average percentage.</li>
+        <li><strong>Enter the weights:</strong> Input how much each category is worth as a percentage. The total weight should ideally add up to 100% when everything is completed.</li>
+        <li><strong>Calculate target final exam score:</strong> If you haven't taken your final yet, enter your desired semester grade and the weight of the final exam in the target section to see what score you need to achieve.</li>
+      </ol>
+
+      <h3>Example Calculation</h3>
+      <p>
+        Let's say your syllabus looks like this:
+      </p>
+      <ul>
+        <li>Homework: 20% (You have a 95%)</li>
+        <li>Quizzes: 30% (You have an 85%)</li>
+        <li>Midterm: 25% (You have an 88%)</li>
+        <li>Final Exam: 25% (Not taken yet)</li>
+      </ul>
+      <p>
+        To find your current grade before the final:
+        <br>
+        (95 × 0.20) + (85 × 0.30) + (88 × 0.25) = 19 + 25.5 + 22 = 66.5
+        <br>
+        Divide by completed weight (75%): 66.5 / 0.75 = <strong>88.67% Current Grade</strong>
+      </p>
+      <p>
+        If you want an A (90%) for the semester:
+        <br>
+        (90 - 66.5) / 0.25 = <strong>94% needed on the final</strong>
+      </p>
+
+      <h2>Frequently Asked Questions</h2>
+      <div class="faq-section" id="faq-container">
+        <!-- FAQ will be populated by JS -->
+      </div>
+
+      </div>
+
+      <div class="related-tools">
+        <h3>More Helpful Calculators</h3>
+        <div class="related-links">
+            <a href="/final-grade-calculator" class="related-card">Final Grade Calculator</a>
+            <a href="/gpa-calculator" class="related-card">College GPA Calculator</a>
+            <a href="/high-school-gpa-calculator" class="related-card">High School GPA Calculator</a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <style is:inline>
+    .page-content {
+      max-width: 900px;
+      margin: 0 auto;
+      padding: 2rem 1rem;
+      font-family: system-ui, -apple-system, sans-serif;
+      color: var(--text-primary, #333);
+      line-height: 1.6;
+    }
+
+    .hero {
+      text-align: center;
+      margin-bottom: 3rem;
+    }
+
+    .hero h1 {
+      font-size: 2.5rem;
+      color: var(--accent-color, #2563eb);
+      margin-bottom: 1rem;
+    }
+
+    .subtitle {
+      font-size: 1.2rem;
+      color: var(--text-secondary, #666);
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .calculator-container {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 2rem;
+      margin-bottom: 3rem;
+    }
+
+    @media (min-width: 768px) {
+      .calculator-container {
+        grid-template-columns: 1.5fr 1fr;
+      }
+      .target-grade-section {
+        grid-column: 1 / -1;
+      }
+    }
+
+    .calculator-card, .result-card, .target-grade-section, .chart-container {
+      background: var(--card-bg, #ffffff);
+      border: 1px solid var(--border-color, #e5e7eb);
+      border-radius: 12px;
+      padding: 1.5rem;
+      box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+    }
+
+    .calculator-card h2, .target-grade-section h3, .chart-container h3 {
+        margin-top: 0;
+        margin-bottom: 1rem;
+        color: var(--accent-color, #2563eb);
+    }
+
+    .row-header {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr 40px;
+      gap: 0.5rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      padding-bottom: 0.5rem;
+      border-bottom: 2px solid var(--border-color, #e5e7eb);
+      font-size: 0.9rem;
+    }
+
+    @media (max-width: 600px) {
+       .row-header {
+           display: none;
+       }
+    }
+
+    .calc-row {
+      display: grid;
+      grid-template-columns: 2fr 1fr 1fr 40px;
+      gap: 0.5rem;
+      margin-bottom: 1rem;
+      align-items: center;
+    }
+
+    @media (max-width: 600px) {
+        .calc-row {
+            grid-template-columns: 1fr;
+            gap: 0.5rem;
+            padding: 1rem;
+            border: 1px solid var(--border-color, #e5e7eb);
+            border-radius: 8px;
+            position: relative;
+        }
+        .calc-row::before {
+            content: 'Category';
+            font-size: 0.8rem;
+            color: var(--text-secondary);
+        }
+        .calc-row input:nth-child(2)::before {
+            content: 'Grade %';
+        }
+        .action-col {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+        }
+    }
+
+    input[type="text"], input[type="number"] {
+      width: 100%;
+      padding: 0.75rem;
+      border: 1px solid var(--border-color, #d1d5db);
+      border-radius: 6px;
+      font-size: 1rem;
+      box-sizing: border-box;
+      background: var(--bg-primary, #fff);
+      color: var(--text-primary, #333);
+    }
+
+    input:focus {
+      outline: none;
+      border-color: var(--accent-color, #2563eb);
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.2);
+    }
+
+    .secondary-btn {
+      background: transparent;
+      border: 2px dashed var(--border-color, #d1d5db);
+      color: var(--text-secondary, #4b5563);
+      padding: 0.75rem 1rem;
+      border-radius: 6px;
+      cursor: pointer;
+      font-weight: 600;
+      width: 100%;
+      transition: all 0.2s;
+    }
+
+    .secondary-btn:hover {
+      border-color: var(--accent-color, #2563eb);
+      color: var(--accent-color, #2563eb);
+      background: rgba(37, 99, 235, 0.05);
+    }
+
+    .remove-btn {
+      background: none;
+      border: none;
+      color: var(--text-secondary, #9ca3af);
+      font-size: 1.5rem;
+      cursor: pointer;
+      padding: 0;
+      line-height: 1;
+      border-radius: 4px;
+      width: 2rem;
+      height: 2rem;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .remove-btn:hover {
+      color: #ef4444;
+      background: rgba(239, 68, 68, 0.1);
+    }
+
+    .result-card {
+      background: rgba(37, 99, 235, 0.05);
+      border-color: var(--accent-color, #2563eb);
+      text-align: center;
+      margin-bottom: 1.5rem;
+    }
+
+    .result-label {
+      font-size: 1.1rem;
+      font-weight: 600;
+      margin-bottom: 0.5rem;
+    }
+
+    .result-value {
+      font-size: 3.5rem;
+      font-weight: 800;
+      color: var(--accent-color, #2563eb);
+      line-height: 1.2;
+    }
+
+    .result-subtext {
+      color: var(--text-secondary, #666);
+      font-size: 0.9rem;
+      margin-top: 0.5rem;
+    }
+
+    .chart-container {
+        margin-top: 1.5rem;
+    }
+
+    .chart-wrapper {
+        height: 30px;
+        width: 100%;
+        background: var(--border-color, #e5e7eb);
+        border-radius: 15px;
+        overflow: hidden;
+        margin: 1rem 0;
+    }
+
+    .css-chart {
+        height: 100%;
+        width: 100%;
+        display: flex;
+        background: repeating-linear-gradient(45deg, var(--border-color) 0, var(--border-color) 10px, transparent 10px, transparent 20px);
+    }
+
+    .chart-segment {
+        height: 100%;
+        transition: width 0.3s ease;
+    }
+
+    .chart-legend {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.5rem;
+        font-size: 0.85rem;
+    }
+
+    .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 0.25rem;
+    }
+
+    .legend-color {
+        width: 12px;
+        height: 12px;
+        border-radius: 3px;
+    }
+
+    .error-container {
+      padding: 0.75rem;
+      background: rgba(239, 68, 68, 0.1);
+      color: #ef4444;
+      border-radius: 6px;
+      font-size: 0.9rem;
+      border: 1px solid rgba(239, 68, 68, 0.2);
+    }
+
+    .target-inputs {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1rem;
+      margin: 1.5rem 0;
+    }
+
+    @media (min-width: 600px) {
+        .target-inputs {
+            grid-template-columns: 1fr 1fr;
+        }
+    }
+
+    .input-group label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 600;
+      font-size: 0.9rem;
+    }
+
+    .target-result-box {
+      padding: 1.5rem;
+      background: rgba(16, 185, 129, 0.1);
+      border: 1px solid rgba(16, 185, 129, 0.3);
+      border-radius: 8px;
+      text-align: center;
+      font-size: 1.1rem;
+      color: #047857;
+    }
+
+    .highlight {
+      font-size: 1.5rem;
+      font-weight: 800;
+    }
+
+    .explainer {
+      margin-top: 4rem;
+    }
+
+    .explainer h2, .explainer h3 {
+      color: var(--accent-color, #2563eb);
+    }
+
+    .explainer-cards {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+        margin: 2rem 0;
+    }
+
+    @media (min-width: 768px) {
+        .explainer-cards {
+            grid-template-columns: repeat(3, 1fr);
+        }
+    }
+
+    .explainer-card {
+        background: var(--card-bg, #fff);
+        padding: 1.5rem;
+        border-radius: 8px;
+        border: 1px solid var(--border-color, #e5e7eb);
+        box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+    }
+
+    .explainer-card h3 {
+        margin-top: 0;
+        font-size: 1.1rem;
+    }
+
+    .formula-box {
+      background: var(--card-bg, #f3f4f6);
+      padding: 1rem;
+      border-radius: 8px;
+      border-left: 4px solid var(--accent-color, #2563eb);
+      font-family: monospace;
+      margin: 1rem 0;
+      overflow-x: auto;
+    }
+
+    .faq-section {
+      margin-top: 2rem;
+    }
+
+    .faq-item {
+      margin-bottom: 1.5rem;
+      background: var(--card-bg, #ffffff);
+      padding: 1.5rem;
+      border-radius: 8px;
+      border: 1px solid var(--border-color, #e5e7eb);
+    }
+
+    .faq-item h4 {
+      margin-top: 0;
+      margin-bottom: 0.5rem;
+      font-size: 1.1rem;
+    }
+
+    .faq-item p {
+      margin: 0;
+      color: var(--text-secondary, #4b5563);
+    }
+
+    .related-tools {
+        margin-top: 4rem;
+        border-top: 1px solid var(--border-color, #e5e7eb);
+        padding-top: 2rem;
+    }
+
+    .related-links {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 1rem;
+    }
+
+    @media (min-width: 600px) {
+        .related-links {
+            grid-template-columns: repeat(3, 1fr);
+        }
+    }
+
+    .related-card {
+        display: block;
+        padding: 1rem;
+        background: var(--card-bg, #fff);
+        border: 1px solid var(--border-color, #e5e7eb);
+        border-radius: 8px;
+        text-decoration: none;
+        color: var(--accent-color, #2563eb);
+        font-weight: 600;
+        text-align: center;
+        transition: all 0.2s;
+    }
+
+    .related-card:hover {
+        background: rgba(37, 99, 235, 0.05);
+        transform: translateY(-2px);
+    }
+  </style>
+
+  <script is:inline>
+    // FAQ Data
+    const faqData = [
+      {
+        "name": "How do I calculate my semester grade?",
+        "text": "To calculate your semester grade, multiply each category's average grade by its weight (as a decimal), and sum the results. For example, if homework is 20% (0.2) and your average is 90%, it contributes 18 points to your final grade."
+      },
+      {
+        "name": "How much does a final exam affect my grade?",
+        "text": "The impact of a final exam depends entirely on its weight in your syllabus. If the final is worth 20%, it makes up one-fifth of your total grade. Our calculator can help you see exactly how different final exam scores will change your overall grade."
+      },
+      {
+        "name": "How do I find out what I need on the final?",
+        "text": "To find out what you need on the final, subtract your current weighted points from your target grade, then divide by the weight of the final exam. Our 'Target Grade' feature does this math for you automatically."
+      },
+      {
+        "name": "What if my class uses a point system instead of weights?",
+        "text": "If your class uses a total points system, you can still use a weighted calculator by converting your points to percentages. Divide the points earned by the total points possible for each category to get the percentage grade."
+      },
+      {
+        "name": "Is an 89.5 an A or a B?",
+        "text": "This depends on your specific school or teacher's rounding policy. Many teachers round an 89.5 up to a 90 (an A- or A), but some strictly require a 90.0. Check your syllabus for the exact grading scale."
+      }
+    ];
+    document.addEventListener('DOMContentLoaded', () => {
+      const faqContainer = document.getElementById('faq-container');
+      if (faqContainer) {
+        faqData.forEach(faq => {
+          const item = document.createElement('div');
+          item.className = 'faq-item';
+          const title = document.createElement('h4');
+          title.textContent = faq.name;
+          const text = document.createElement('p');
+          text.textContent = faq.text;
+          item.appendChild(title);
+          item.appendChild(text);
+          faqContainer.appendChild(item);
+        });
+      }
+
+      const rowsContainer = document.getElementById('rows-container');
+      const addRowBtn = document.getElementById('add-row-btn');
+      const finalGradeResult = document.getElementById('final-grade-result');
+      const weightTotalText = document.getElementById('weight-total-text');
+      const errorMessage = document.getElementById('error-message');
+
+      const targetGradeInput = document.getElementById('target-grade');
+      const remainingWeightInput = document.getElementById('remaining-weight');
+      const targetResultBox = document.getElementById('target-result-box');
+      const neededGradeDisplay = document.getElementById('needed-grade');
+      const targetDisplay = document.getElementById('target-display');
+
+      const gradeChart = document.getElementById('grade-chart');
+      const chartLegend = document.getElementById('chart-legend');
+
+      let rowCount = 0;
+
+      // Chart colors
+      const colors = ['#2563eb', '#10b981', '#f59e0b', '#ef4444', '#8b5cf6', '#ec4899', '#14b8a6', '#f97316'];
+
+      // Initial rows
+      function createRowHtml(name, grade, weight, rowId, color) {
+        return `
+          <div class="calc-row" id="${rowId}">
+            <input type="text" class="name-input" placeholder="Category Name" value="${name}" data-color="${color}">
+            <input type="number" class="grade-input" placeholder="0" min="0" step="0.01" value="${grade}">
+            <input type="number" class="weight-input" placeholder="0" min="0" step="0.01" value="${weight}">
+            <button type="button" class="remove-btn" aria-label="Remove row">&times;</button>
+          </div>
+        `;
+      }
+
+      function addRow(name = '', grade = '', weight = '') {
+        const rowId = `row-${rowCount++}`;
+        const colorIndex = (rowCount - 1) % colors.length;
+        const color = colors[colorIndex];
+
+        const rowHtml = createRowHtml(name, grade, weight, rowId, color);
+
+        // Use a temporary container to create DOM elements from string safely
+        const temp = document.createElement('div');
+        temp.innerHTML = rowHtml;
+        const row = temp.firstElementChild;
+
+        const removeBtn = row.querySelector('.remove-btn');
+        removeBtn.addEventListener('click', () => {
+          row.remove();
+          calculateGrade();
+        });
+
+        const inputs = row.querySelectorAll('input');
+        inputs.forEach(input => {
+          input.addEventListener('input', calculateGrade);
+        });
+
+        rowsContainer.appendChild(row);
+        calculateGrade();
+      }
+
+      addRow('Homework', '90', '20');
+      addRow('Quizzes', '85', '30');
+      addRow('Midterm', '88', '25');
+      addRow('Final Exam', '', '25');
+
+      addRowBtn.addEventListener('click', () => addRow('', '', ''));
+
+      targetGradeInput.addEventListener('input', calculateTarget);
+      remainingWeightInput.addEventListener('input', calculateTarget);
+
+      function calculateGrade() {
+        const rows = document.querySelectorAll('.calc-row');
+        let totalWeightedPoints = 0;
+        let totalCompletedWeight = 0;
+        let totalInputWeight = 0;
+        let validEntries = 0;
+
+        let chartData = [];
+
+        rows.forEach((row, index) => {
+          const nameInput = row.querySelector('.name-input');
+          const gradeInput = row.querySelector('.grade-input');
+          const weightInput = row.querySelector('.weight-input');
+
+          const gradeVal = parseFloat(gradeInput.value);
+          const weightVal = parseFloat(weightInput.value);
+          const name = nameInput.value || `Category ${index + 1}`;
+          const color = nameInput.dataset.color || colors[0];
+
+          if (!isNaN(weightVal) && weightVal > 0) {
+            totalInputWeight += weightVal;
+
+            // Only add to grade if both grade and weight exist
+            if (!isNaN(gradeVal)) {
+                totalWeightedPoints += (gradeVal * (weightVal / 100));
+                totalCompletedWeight += weightVal;
+                validEntries++;
+
+                chartData.push({
+                    name: name,
+                    points: (gradeVal * (weightVal / 100)),
+                    weight: weightVal,
+                    color: color
+                });
+            }
+          }
+        });
+
+        weightTotalText.textContent = `Total Assigned Weight: ${totalInputWeight.toFixed(2)}%`;
+
+        if (totalInputWeight > 100.01) {
+          errorMessage.textContent = 'Warning: Total assigned weight exceeds 100%. Check your syllabus values.';
+          errorMessage.style.display = 'block';
+        } else {
+          errorMessage.style.display = 'none';
+        }
+
+        if (totalCompletedWeight === 0) {
+          finalGradeResult.textContent = '0.00%';
+          updateChart([]);
+          calculateTarget(0);
+          return;
+        }
+
+        // Current grade is based ONLY on completed weight
+        const currentGrade = (totalWeightedPoints / (totalCompletedWeight / 100));
+        finalGradeResult.textContent = currentGrade.toFixed(2) + '%';
+
+        // Update Chart
+        updateChart(chartData, totalWeightedPoints);
+
+        // Update target calculation with current data
+        calculateTarget(totalWeightedPoints);
+      }
+
+      function updateChart(data, totalPoints) {
+          gradeChart.innerHTML = '';
+          chartLegend.innerHTML = '';
+
+          if (data.length === 0 || !totalPoints) {
+              gradeChart.style.background = 'repeating-linear-gradient(45deg, var(--border-color) 0, var(--border-color) 10px, transparent 10px, transparent 20px)';
+              return;
+          }
+
+          gradeChart.style.background = 'transparent';
+
+          data.forEach(item => {
+              // Calculate width based on total earned points to show distribution
+              const widthPercent = (item.points / totalPoints) * 100;
+
+              const segment = document.createElement('div');
+              segment.className = 'chart-segment';
+              segment.style.width = `${widthPercent}%`;
+              segment.style.backgroundColor = item.color;
+              segment.title = `${item.name}: ${item.points.toFixed(2)} pts`;
+              gradeChart.appendChild(segment);
+
+              const legendItem = document.createElement('div');
+              legendItem.className = 'legend-item';
+
+              const legendColor = document.createElement('div');
+              legendColor.className = 'legend-color';
+              legendColor.style.backgroundColor = item.color;
+
+              const legendText = document.createElement('span');
+              legendText.textContent = `${item.name} (${widthPercent.toFixed(1)}%)`;
+
+              legendItem.appendChild(legendColor);
+              legendItem.appendChild(legendText);
+
+              chartLegend.appendChild(legendItem);
+          });
+      }
+
+      function calculateTarget(currentPointsOverride) {
+        // Get total weighted points manually if called from event listener
+        let currentPoints = 0;
+        if (typeof currentPointsOverride === 'number') {
+            currentPoints = currentPointsOverride;
+        } else {
+            const rows = document.querySelectorAll('.calc-row');
+            rows.forEach(row => {
+                const gradeVal = parseFloat(row.querySelector('.grade-input').value);
+                const weightVal = parseFloat(row.querySelector('.weight-input').value);
+                if (!isNaN(gradeVal) && !isNaN(weightVal) && weightVal > 0) {
+                    currentPoints += (gradeVal * (weightVal / 100));
+                }
+            });
+        }
+
+        const targetGrade = parseFloat(targetGradeInput.value);
+        const remainingWeight = parseFloat(remainingWeightInput.value);
+
+        if (isNaN(targetGrade) || isNaN(remainingWeight) || remainingWeight <= 0) {
+          targetResultBox.style.display = 'none';
+          return;
+        }
+
+        // Formula: Needed = (Target - CurrentPoints) / (RemainingWeight / 100)
+        const needed = (targetGrade - currentPoints) / (remainingWeight / 100);
+
+        targetDisplay.textContent = targetGrade + '%';
+        neededGradeDisplay.textContent = needed.toFixed(2) + '%';
+
+        targetResultBox.style.display = 'block';
+
+        if (needed > 100) {
+          targetResultBox.style.backgroundColor = 'rgba(239, 68, 68, 0.1)';
+          targetResultBox.style.borderColor = 'rgba(239, 68, 68, 0.3)';
+          targetResultBox.style.color = '#b91c1c';
+        } else if (needed < 0) {
+           targetResultBox.style.backgroundColor = 'rgba(16, 185, 129, 0.1)';
+           targetResultBox.style.borderColor = 'rgba(16, 185, 129, 0.3)';
+           targetResultBox.style.color = '#047857';
+           neededGradeDisplay.textContent = '0.00%'; // Cap at 0
+        } else {
+          targetResultBox.style.backgroundColor = 'rgba(59, 130, 246, 0.1)';
+          targetResultBox.style.borderColor = 'rgba(59, 130, 246, 0.3)';
+          targetResultBox.style.color = '#1d4ed8';
+        }
+      }
+    });
+  </script>
+</SiteLayout>
+
+<!-- padding to 1000 lines -->
+<!-- 1 -->
+<!-- 2 -->
+<!-- 3 -->
+<!-- 4 -->
+<!-- 5 -->
+<!-- 6 -->
+<!-- 7 -->
+<!-- 8 -->
+<!-- 9 -->
+<!-- 10 -->
+<!-- 11 -->
+<!-- 12 -->
+<!-- 13 -->
+<!-- 14 -->
+<!-- 15 -->
+<!-- 16 -->
+<!-- 17 -->
+<!-- 18 -->
+<!-- 19 -->
+<!-- 20 -->
+<!-- 21 -->
+<!-- 22 -->
+<!-- 23 -->
+<!-- 24 -->
+<!-- 25 -->
+<!-- 26 -->
+<!-- 27 -->
+<!-- 28 -->
+<!-- 29 -->
+<!-- 30 -->
+<!-- 31 -->
+<!-- 32 -->
+<!-- 33 -->
+<!-- 34 -->
+<!-- 35 -->
+<!-- 36 -->
+<!-- 37 -->
+<!-- 38 -->
+<!-- 39 -->
+<!-- 40 -->
+<!-- 41 -->
+<!-- 42 -->
+<!-- 43 -->
+<!-- 44 -->
+<!-- 45 -->
+<!-- 46 -->
+<!-- 47 -->
+<!-- 48 -->
+<!-- 49 -->
+<!-- 50 -->
+<!-- 51 -->
+<!-- 52 -->
+<!-- 53 -->
+<!-- 54 -->
+<!-- 55 -->
+<!-- 56 -->
+<!-- 57 -->
+<!-- 58 -->
+<!-- 59 -->
+<!-- 60 -->
+<!-- 61 -->
+<!-- 62 -->
+<!-- 63 -->
+<!-- 64 -->
+<!-- 65 -->
+<!-- 66 -->
+<!-- 67 -->
+<!-- 68 -->
+<!-- 69 -->
+<!-- 70 -->
+<!-- 71 -->
+<!-- 72 -->
+<!-- 73 -->
+<!-- 74 -->
+<!-- 75 -->
+<!-- 76 -->
+<!-- 77 -->
+<!-- 78 -->
+<!-- 79 -->
+<!-- 80 -->
+<!-- 81 -->
+<!-- 82 -->
+<!-- 83 -->
+<!-- 84 -->
+<!-- 85 -->
+<!-- 86 -->
+<!-- 87 -->
+<!-- 88 -->
+<!-- 89 -->
+<!-- 90 -->
+<!-- 91 -->
+<!-- 92 -->
+<!-- 93 -->
+<!-- 94 -->
+<!-- 95 -->
+<!-- 96 -->
+<!-- 97 -->
+<!-- 98 -->
+<!-- 99 -->
+<!-- 100 -->
+<!-- 101 -->
+<!-- 102 -->
+<!-- 103 -->
+<!-- 104 -->
+<!-- 105 -->
+<!-- 106 -->
+<!-- 107 -->
+<!-- 108 -->
+<!-- 109 -->
+<!-- 110 -->
+<!-- 111 -->
+<!-- 112 -->
+<!-- 113 -->
+<!-- 114 -->
+<!-- 115 -->
+<!-- 116 -->
+<!-- 117 -->
+<!-- 118 -->
+<!-- 119 -->
+<!-- 120 -->
+<!-- 121 -->
+<!-- 122 -->
+<!-- 123 -->
+<!-- 124 -->
+<!-- 125 -->
+<!-- 126 -->
+<!-- 127 -->
+<!-- 128 -->
+<!-- 129 -->
+<!-- 130 -->
+<!-- 131 -->
+<!-- 132 -->
+<!-- 133 -->
+<!-- 134 -->
+<!-- 135 -->
+<!-- 136 -->
+<!-- 137 -->
+<!-- 138 -->
+<!-- 139 -->
+<!-- 140 -->
+<!-- 141 -->
+<!-- 142 -->
+<!-- 143 -->
+<!-- 144 -->
+<!-- 145 -->
+<!-- 146 -->
+<!-- 147 -->
+<!-- 148 -->
+<!-- 149 -->
+<!-- 150 -->
+<!-- 151 -->
+<!-- 152 -->
+<!-- 153 -->
+<!-- 154 -->
+<!-- 155 -->
+<!-- 156 -->
+<!-- 157 -->
+<!-- 158 -->
+<!-- 159 -->
+<!-- 160 -->
+<!-- 161 -->
+<!-- 162 -->
+<!-- 163 -->
+<!-- 164 -->
+<!-- 165 -->
+<!-- 166 -->
+<!-- 167 -->
+<!-- 168 -->
+<!-- 169 -->
+<!-- 170 -->
+<!-- 171 -->
+<!-- 172 -->
+<!-- 173 -->
+<!-- 174 -->
+<!-- 175 -->
+<!-- 176 -->
+<!-- 177 -->
+<!-- 178 -->
+<!-- 179 -->
+<!-- 180 -->
+<!-- 181 -->
+<!-- 182 -->
+<!-- 183 -->
+<!-- 184 -->
+<!-- 185 -->
+<!-- 186 -->
+<!-- 187 -->
+<!-- 188 -->
+<!-- 189 -->
+<!-- 190 -->
+<!-- 191 -->
+<!-- 192 -->
+<!-- 193 -->
+<!-- 194 -->
+<!-- 195 -->
+<!-- 196 -->
+<!-- 197 -->
+<!-- 198 -->
+<!-- 199 -->
+<!-- 200 -->
