@@ -297,3 +297,20 @@ sites['pleasestartplease'] = {
   ],
   footer: { text: '© 2026 Please Start Please', gabVentures: true },
 };
+
+sites['trunkpress'] = {
+  id: 'trunkpress',
+  name: 'Trunk Press',
+  domain: 'trunkpress.photonbuilder.com',
+  accent: '#FF3333',
+  theme: { bg: '#080808', cardBg: '#121212', border: '#222222', textPrimary: '#e5e5e5', textSecondary: '#a3a3a3' },
+  gaId: 'G-XXXXXXXXXX',
+  tagline: 'Politics, Unfiltered.',
+  description: 'A sharp, engaging editorial style — Vice meets Reuters. Factual but with personality.',
+  nav: [
+    { label: 'Politics', href: '/#politics' },
+    { label: 'Geopolitics', href: '/#geopolitics' },
+    { label: 'Opinion', href: '/#opinion' },
+  ],
+  footer: { text: '© 2026 Trunk Press', gabVentures: true },
+};
