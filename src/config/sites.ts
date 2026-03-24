@@ -27,6 +27,37 @@ export interface SiteConfig {
 }
 
 export const sites: Record<string, SiteConfig> = {
+  trunkpress: {
+    id: 'trunkpress',
+    name: 'Trunkpress',
+    domain: 'trunkpress.photonbuilder.com',
+    accent: '#FF3333',
+    theme: {
+      bg: '#ffffff',
+      cardBg: '#f8f9fa',
+      border: '#e9ecef',
+      textPrimary: '#1a1a1a',
+      textSecondary: '#4a4a4a'
+    },
+    newsletter: {
+      emoji: '🗞️',
+      title: 'Get the latest news',
+      subtitle: 'Subscribe for updates and sharp editorial analysis.'
+    },
+    nav: [
+      { label: 'Politics', href: '/' },
+      { label: 'World', href: '/' },
+      { label: 'Culture', href: '/' }
+    ],
+    footer: {
+      text: '© 2026 Trunkpress. All rights reserved.',
+      links: [
+        { label: 'About', href: '/' },
+        { label: 'Privacy', href: '/' },
+        { label: 'Terms', href: '/' }
+      ]
+    }
+  },
   firemaths: {
     id: 'firemaths',
     name: 'Fire Maths',

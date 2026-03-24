@@ -31,6 +31,7 @@ const SITE_MAP = {
   'leeroyjenkins.quest': 'leeroyjenkins',
   'www.leeroyjenkins.quest': 'leeroyjenkins',
   'ijustwantto.live': 'ijustwantto',
+  'trunkpress.photonbuilder.com': 'trunkpress',
   'www.ijustwantto.live': 'ijustwantto',
   'thenookienook.com': 'nookienook',
   'www.thenookienook.com': 'nookienook',
