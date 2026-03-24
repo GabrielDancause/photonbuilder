@@ -335,7 +335,6 @@ sites['trunkpress'] = {
   nav: [
     { label: 'Politics', href: '/#politics' },
     { label: 'Geopolitics', href: '/#geopolitics' },
-    { label: 'Opinion', href: '/#opinion' },
   ],
   footer: { text: '© 2026 Trunk Press', gabVentures: true },
 };
