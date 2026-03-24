@@ -99,8 +99,8 @@ def generate_sitemap(site_id):
             page_data.append((f"https://{domain}/{url_path}{'/' if url_path else ''}", mtime))
         else:
             url_path = "/".join(parts)
-            # Always add trailing slash to match canonical URLs
-            page_data.append((f"https://{domain}/{url_path}/", mtime))
+            # No trailing slash — matches Astro canonical URLs
+            page_data.append((f"https://{domain}/{url_path}", mtime))
 
     # Add dynamic pages from JSON data (IV & prospect for westmount)
     if site_id == "westmount":
