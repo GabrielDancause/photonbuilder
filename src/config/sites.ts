@@ -297,3 +297,18 @@ sites['pleasestartplease'] = {
   ],
   footer: { text: '© 2026 Please Start Please', gabVentures: true },
 };
+
+sites['trunkpress'] = {
+  id: 'trunkpress',
+  name: 'Trunkpress',
+  domain: 'trunkpress.photonbuilder.com',
+  accent: '#FF3333',
+  theme: { bg: '#060a12', cardBg: '#0a1020', border: '#152040', textPrimary: '#e2e8f0', textSecondary: '#94a3b8' },
+  gaId: 'G-XXXXXXXXXX',
+  tagline: 'World News & Editorial',
+  description: 'Sharp, engaging editorial news covering world events.',
+  nav: [
+    { label: 'News', href: '/#news' },
+  ],
+  footer: { text: '© 2026 Trunkpress', gabVentures: true },
+};
