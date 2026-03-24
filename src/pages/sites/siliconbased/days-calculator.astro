@@ -1,0 +1,2094 @@
+---
+import SiteLayout from '../../../layouts/SiteLayout.astro';
+export const meta = {
+  title: 'Days Calculator | Siliconbased',
+  description: 'Calculate the exact number of days, business days, weeks, and months between two dates. Free online date calculator for project planning.',
+  category: 'tool',
+  keywords: ['days calculator', 'date calculator', 'business days calculator', 'days between dates', 'add days to date', 'subtract days from date']
+};
+const schema = JSON.stringify([
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": meta.title,
+    "description": meta.description,
+    "author": { "@type": "Organization", "name": "siliconbased.dev" },
+    "publisher": { "@type": "Organization", "name": "siliconbased.dev" },
+    "datePublished": "2026-03-23",
+    "dateModified": "2026-03-23"
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      { "@type": "Question", "name": "How do you calculate days between two dates?", "acceptedAnswer": { "@type": "Answer", "text": "To calculate the days between two dates, you find the difference in milliseconds between them and divide by the number of milliseconds in a day (86,400,000)." } },
+      { "@type": "Question", "name": "How do I calculate 90 days from today?", "acceptedAnswer": { "@type": "Answer", "text": "You can use our calculator by selecting the 'Add/Subtract' mode, entering today's date, and adding 90 days. The result will account for varying month lengths." } },
+      { "@type": "Question", "name": "Does this calculator include business days?", "acceptedAnswer": { "@type": "Answer", "text": "Yes, our calculator includes a business days option that automatically excludes weekends (Saturdays and Sundays) from the total count." } },
+      { "@type": "Question", "name": "Are leap years accounted for?", "acceptedAnswer": { "@type": "Answer", "text": "Yes, leap years are automatically accounted for. The standard Gregorian calendar rules are applied to all date calculations." } },
+      { "@type": "Question", "name": "How many days are in 6 months?", "acceptedAnswer": { "@type": "Answer", "text": "Six months is roughly 182 or 183 days depending on the specific months and if a leap year is involved." } }
+    ]
+  }
+]);
+---
+<SiteLayout site="siliconbased" title={meta.title} description={meta.description} canonical="https://siliconbased.dev/days-calculator">
+  <Fragment slot="head">
+    <script type="application/ld+json" set:html={schema} />
+  </Fragment>
+  <div class="page-content">
+    <div class="hero">
+      <h1>Days Calculator 📅</h1>
+      <p>Instantly calculate the exact duration between dates or add/subtract days.</p>
+    </div>
+    <div class="main">
+      <div class="calc-tabs">
+        <button class="tab-btn active" id="tab-between">Difference Between Dates</button>
+        <button class="tab-btn" id="tab-add">Add/Subtract Days</button>
+      </div>
+      <div class="calc-card" id="mode-between">
+        <div class="input-row">
+          <div class="input-group">
+            <label for="startDate1">Start Date</label>
+            <input type="date" id="startDate1" class="date-input">
+          </div>
+          <div class="input-group">
+            <label for="endDate1">End Date</label>
+            <input type="date" id="endDate1" class="date-input">
+          </div>
+        </div>
+        <div class="options-row">
+          <label class="checkbox-label"><input type="checkbox" id="includeEndDay"> Include end day (+1 day)</label>
+          <label class="checkbox-label"><input type="checkbox" id="businessDaysOnly"> Business days only (Skip weekends)</label>
+        </div>
+      </div>
+      <div class="calc-card hidden" id="mode-add">
+        <div class="input-row">
+          <div class="input-group">
+            <label for="startDate2">Start Date</label>
+            <input type="date" id="startDate2" class="date-input">
+          </div>
+          <div class="input-group">
+            <label for="operation">Operation</label>
+            <select id="operation" class="select-input"><option value="add">Add (+)</option><option value="sub">Subtract (-)</option></select>
+          </div>
+          <div class="input-group">
+            <label for="daysAmount">Amount</label>
+            <div class="multi-input">
+              <input type="number" id="daysAmount" class="num-input" value="30" min="0">
+              <select id="timeUnit" class="select-input small"><option value="days">Days</option><option value="weeks">Weeks</option><option value="months">Months</option><option value="years">Years</option></select>
+            </div>
+          </div>
+        </div>
+        <div class="options-row">
+          <label class="checkbox-label"><input type="checkbox" id="businessDaysAdd"> Only count business days</label>
+        </div>
+      </div>
+      <div class="result-card" id="result-container">
+        <div class="result-header">Calculation Result</div>
+        <div class="result-value" id="main-result">--</div>
+        <div class="result-sub" id="sub-result">Please enter dates to calculate</div>
+        <div class="breakdown-grid" id="breakdown-grid">
+          <div class="breakdown-item"><div class="bd-label">Total Days</div><div class="bd-value" id="bd-days">--</div></div>
+          <div class="breakdown-item"><div class="bd-label">Business Days</div><div class="bd-value" id="bd-biz">--</div></div>
+          <div class="breakdown-item"><div class="bd-label">Weeks</div><div class="bd-value" id="bd-weeks">--</div></div>
+          <div class="breakdown-item"><div class="bd-label">Months (Approx)</div><div class="bd-value" id="bd-months">--</div></div>
+          <div class="breakdown-item"><div class="bd-label">Years (Approx)</div><div class="bd-value" id="bd-years">--</div></div>
+        </div>
+        <div class="timeline-vis hidden" id="timeline-vis">
+          <div class="tl-labels"><span id="tl-start">Start</span><span id="tl-end">End</span></div>
+          <div class="tl-bar"><div class="tl-progress" id="tl-progress"></div></div>
+          <div class="tl-stats" id="tl-stats">-- days</div>
+        </div>
+      </div>
+      <div class="trivia-card hidden" id="trivia-card">
+        <h3>📅 On This Day in History</h3>
+        <p id="trivia-text"></p>
+      </div>
+      <div class="quick-links">
+        <h3>Common Calculations</h3>
+        <div class="ql-grid">
+          <button class="ql-btn" data-days="30">30 Days From Now</button>
+          <button class="ql-btn" data-days="60">60 Days From Now</button>
+          <button class="ql-btn" data-days="90">90 Days From Now</button>
+          <button class="ql-btn" data-days="180">180 Days From Now</button>
+        </div>
+      </div>
+      <div class="edu-content">
+        <h2>Understanding Date Calculations</h2>
+        <div class="edu-card"><h3>The Gregorian Calendar</h3><p>Most of the world uses the Gregorian calendar, introduced in 1582. It features 365 days in a standard year and 366 in a leap year. Our calculator strictly adheres to these rules, ensuring precise duration measurements across centuries.</p></div>
+        <div class="edu-card"><h3>Business Days vs. Calendar Days</h3><p>When tracking project deadlines, <strong>business days</strong> are crucial. They typically exclude Saturdays and Sundays. While calculating business days programmatically, one must account for the specific day of the week a date falls on to accurately subtract weekend days across a given span.</p></div>
+        <div class="edu-card"><h3>Leap Year Rules</h3><p>A leap year occurs every 4 years to keep our calendar aligned with the Earth's revolutions around the Sun. The rule is: a year is a leap year if it is divisible by 4, except for end-of-century years, which must be divisible by 400. This calculator automatically adjusts for February 29th.</p></div>
+      </div>
+      <div class="faq-section">
+        <h2>Frequently Asked Questions</h2>
+        <div class="faq-item"><h3>How do you calculate days between two dates?</h3><p>To calculate the days between two dates, you find the difference in milliseconds between them and divide by the number of milliseconds in a day (86,400,000).</p></div>
+        <div class="faq-item"><h3>How do I calculate 90 days from today?</h3><p>You can use our calculator by selecting the 'Add/Subtract' mode, entering today's date, and adding 90 days. The result will account for varying month lengths.</p></div>
+        <div class="faq-item"><h3>Does this calculator include business days?</h3><p>Yes, our calculator includes a business days option that automatically excludes weekends (Saturdays and Sundays) from the total count.</p></div>
+        <div class="faq-item"><h3>Are leap years accounted for?</h3><p>Yes, leap years are automatically accounted for. The standard Gregorian calendar rules are applied to all date calculations.</p></div>
+        <div class="faq-item"><h3>How many days are in 6 months?</h3><p>Six months is roughly 182 or 183 days depending on the specific months and if a leap year is involved.</p></div>
+      </div>
+      <div class="related-tools">
+        <h3>Related Tools</h3>
+        <ul>
+          <li><a href="/cron-generator">Cron Expression Generator</a></li>
+          <li><a href="/birthday-calculator">Birthday Calculator</a></li>
+          <li><a href="/bottleneck-calculator">Bottleneck Calculator</a></li>
+          <li><a href="/base64-encoder-decoder">Base64 Encoder/Decoder</a></li>
+        </ul>
+      </div>
+    </div>
+  </div>
+  <script is:inline>
+    const modeBetween = document.getElementById('mode-between');
+    const modeAdd = document.getElementById('mode-add');
+    const tabBetween = document.getElementById('tab-between');
+    const tabAdd = document.getElementById('tab-add');
+    const startDate1 = document.getElementById('startDate1');
+    const endDate1 = document.getElementById('endDate1');
+    const includeEndDay = document.getElementById('includeEndDay');
+    const businessDaysOnly = document.getElementById('businessDaysOnly');
+    const startDate2 = document.getElementById('startDate2');
+    const operation = document.getElementById('operation');
+    const daysAmount = document.getElementById('daysAmount');
+    const timeUnit = document.getElementById('timeUnit');
+    const businessDaysAdd = document.getElementById('businessDaysAdd');
+    const mainResult = document.getElementById('main-result');
+    const subResult = document.getElementById('sub-result');
+    const bdDays = document.getElementById('bd-days');
+    const bdBiz = document.getElementById('bd-biz');
+    const bdWeeks = document.getElementById('bd-weeks');
+    const bdMonths = document.getElementById('bd-months');
+    const bdYears = document.getElementById('bd-years');
+    const timelineVis = document.getElementById('timeline-vis');
+    const tlStart = document.getElementById('tl-start');
+    const tlEnd = document.getElementById('tl-end');
+    const tlProgress = document.getElementById('tl-progress');
+    const tlStats = document.getElementById('tl-stats');
+    const qlBtns = document.querySelectorAll('.ql-btn');
+    const triviaCard = document.getElementById('trivia-card');
+    const triviaText = document.getElementById('trivia-text');
+    const today = new Date();
+    const todayStr = today.toISOString().split('T')[0];
+    startDate1.value = todayStr; endDate1.value = todayStr; startDate2.value = todayStr;
+    tabBetween.addEventListener('click', () => switchTab('between'));
+    tabAdd.addEventListener('click', () => switchTab('add'));
+    [startDate1, endDate1, includeEndDay, businessDaysOnly].forEach(el => el.addEventListener('input', calculateBetween));
+    [startDate2, operation, daysAmount, timeUnit, businessDaysAdd].forEach(el => el.addEventListener('input', calculateAdd));
+    qlBtns.forEach(btn => btn.addEventListener('click', (e) => { switchTab('add'); startDate2.value = todayStr; operation.value = 'add'; daysAmount.value = e.target.getAttribute('data-days'); timeUnit.value = 'days'; businessDaysAdd.checked = false; calculateAdd(); }));
+    function switchTab(tab) { if (tab === 'between') { modeBetween.classList.remove('hidden'); modeAdd.classList.add('hidden'); tabBetween.classList.add('active'); tabAdd.classList.remove('active'); calculateBetween(); } else { modeBetween.classList.add('hidden'); modeAdd.classList.remove('hidden'); tabBetween.classList.remove('active'); tabAdd.classList.add('active'); calculateAdd(); } }
+    function getBusinessDays(startDate, endDate) { let count = 0; let curDate = new Date(startDate.getTime()); curDate.setHours(0,0,0,0); let end = new Date(endDate.getTime()); end.setHours(0,0,0,0); if (curDate > end) return 0; while (curDate <= end) { const dayOfWeek = curDate.getDay(); if (dayOfWeek !== 0 && dayOfWeek !== 6) count++; curDate.setDate(curDate.getDate() + 1); } return count; }
+    function addBusinessDays(startDate, amount) { let curDate = new Date(startDate.getTime()); let added = 0; let direction = amount >= 0 ? 1 : -1; let absAmount = Math.abs(amount); while (added < absAmount) { curDate.setDate(curDate.getDate() + direction); const dayOfWeek = curDate.getDay(); if (dayOfWeek !== 0 && dayOfWeek !== 6) { added++; } } return curDate; }
+    function calculateBetween() { if (!startDate1.value || !endDate1.value) return; const d1 = new Date(startDate1.value + 'T00:00:00'); const d2 = new Date(endDate1.value + 'T00:00:00'); let isReversed = false; let start = d1; let end = d2; if (d1 > d2) { start = d2; end = d1; isReversed = true; } const timeDiff = end.getTime() - start.getTime(); let daysDiff = Math.round(timeDiff / (1000 * 3600 * 24)); if (includeEndDay.checked) { daysDiff += 1; } const bizDays = getBusinessDays(start, includeEndDay.checked ? end : new Date(end.getTime() - 86400000)); let displayResult = daysDiff; if (businessDaysOnly.checked) displayResult = bizDays; mainResult.textContent = displayResult + (displayResult === 1 ? ' Day' : ' Days'); subResult.textContent = isReversed ? 'End date is before start date' : `From ${start.toLocaleDateString()} to ${end.toLocaleDateString()}`; bdDays.textContent = daysDiff; bdBiz.textContent = bizDays; bdWeeks.textContent = (daysDiff / 7).toFixed(1); bdMonths.textContent = (daysDiff / 30.44).toFixed(1); bdYears.textContent = (daysDiff / 365.25).toFixed(1); updateTimeline(start, end, displayResult, 'days'); displayTrivia(end); }
+    function calculateAdd() { if (!startDate2.value || !daysAmount.value) return; const start = new Date(startDate2.value + 'T00:00:00'); const amount = parseFloat(daysAmount.value) || 0; const unit = timeUnit.value; const isSub = operation.value === 'sub'; let resultDate = new Date(start.getTime()); let sign = isSub ? -1 : 1; let totalDaysAdded = 0; if (businessDaysAdd.checked && unit === 'days') { resultDate = addBusinessDays(start, amount * sign); totalDaysAdded = Math.round((resultDate.getTime() - start.getTime()) / (1000 * 3600 * 24)) * sign; } else { if (unit === 'days') { resultDate.setDate(resultDate.getDate() + (amount * sign)); totalDaysAdded = amount; } else if (unit === 'weeks') { resultDate.setDate(resultDate.getDate() + (amount * 7 * sign)); totalDaysAdded = amount * 7; } else if (unit === 'months') { resultDate.setMonth(resultDate.getMonth() + (amount * sign)); totalDaysAdded = Math.round(Math.abs((resultDate.getTime() - start.getTime()) / (1000 * 3600 * 24))); } else if (unit === 'years') { resultDate.setFullYear(resultDate.getFullYear() + (amount * sign)); totalDaysAdded = Math.round(Math.abs((resultDate.getTime() - start.getTime()) / (1000 * 3600 * 24))); } } mainResult.textContent = resultDate.toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }); subResult.textContent = `${isSub ? 'Subtracting' : 'Adding'} ${amount} ${unit} ${businessDaysAdd.checked ? '(Business Days)' : ''} to ${start.toLocaleDateString()}`; const actualDaysDiff = Math.abs(Math.round((resultDate.getTime() - start.getTime()) / (1000 * 3600 * 24))); let calcStart = isSub ? resultDate : start; let calcEnd = isSub ? start : resultDate; bdDays.textContent = actualDaysDiff; bdBiz.textContent = getBusinessDays(calcStart, new Date(calcEnd.getTime() - 86400000)); bdWeeks.textContent = (actualDaysDiff / 7).toFixed(1); bdMonths.textContent = (actualDaysDiff / 30.44).toFixed(1); bdYears.textContent = (actualDaysDiff / 365.25).toFixed(1); updateTimeline(calcStart, calcEnd, actualDaysDiff, 'days span'); displayTrivia(resultDate); }
+    function updateTimeline(start, end, val, label) { timelineVis.classList.remove('hidden'); tlStart.textContent = start.toLocaleDateString(undefined, {month:'short', day:'numeric'}); tlEnd.textContent = end.toLocaleDateString(undefined, {month:'short', day:'numeric'}); tlStats.textContent = val + ' ' + label; tlProgress.style.width = '0%'; setTimeout(() => { tlProgress.style.width = '100%'; }, 50); }
+    const triviaData = {
+      '01-01': [
+        `On Jan 1, 45 BC, the Julian calendar took effect.`,
+        `On Jan 1, 1863, Abraham Lincoln issued the Emancipation Proclamation.`,
+        `On Jan 1, 2002, Euro banknotes and coins were introduced in 12 countries.`
+      ],
+      '01-02': [
+        `In early history, January 2 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, January 2 marked significant technological advancements.`,
+        `In modern times, January 2 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '01-03': [
+        `In early history, January 3 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, January 3 marked significant technological advancements.`,
+        `In modern times, January 3 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '01-04': [
+        `In early history, January 4 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, January 4 marked significant technological advancements.`,
+        `In modern times, January 4 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '01-05': [
+        `In early history, January 5 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, January 5 marked significant technological advancements.`,
+        `In modern times, January 5 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '01-06': [
+        `In early history, January 6 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, January 6 marked significant technological advancements.`,
+        `In modern times, January 6 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '01-07': [
+        `In early history, January 7 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, January 7 marked significant technological advancements.`,
+        `In modern times, January 7 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '01-08': [
+        `In early history, January 8 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, January 8 marked significant technological advancements.`,
+        `In modern times, January 8 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '01-09': [
+        `In early history, January 9 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, January 9 marked significant technological advancements.`,
+        `In modern times, January 9 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '01-10': [
+        `In early history, January 10 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, January 10 marked significant technological advancements.`,
+        `In modern times, January 10 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '01-11': [
+        `In early history, January 11 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, January 11 marked significant technological advancements.`,
+        `In modern times, January 11 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '01-12': [
+        `In early history, January 12 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, January 12 marked significant technological advancements.`,
+        `In modern times, January 12 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '01-13': [
+        `In early history, January 13 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, January 13 marked significant technological advancements.`,
+        `In modern times, January 13 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '01-14': [
+        `In early history, January 14 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, January 14 marked significant technological advancements.`,
+        `In modern times, January 14 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '01-15': [
+        `In early history, January 15 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, January 15 marked significant technological advancements.`,
+        `In modern times, January 15 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '01-16': [
+        `In early history, January 16 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, January 16 marked significant technological advancements.`,
+        `In modern times, January 16 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '01-17': [
+        `In early history, January 17 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, January 17 marked significant technological advancements.`,
+        `In modern times, January 17 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '01-18': [
+        `In early history, January 18 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, January 18 marked significant technological advancements.`,
+        `In modern times, January 18 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '01-19': [
+        `In early history, January 19 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, January 19 marked significant technological advancements.`,
+        `In modern times, January 19 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '01-20': [
+        `In early history, January 20 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, January 20 marked significant technological advancements.`,
+        `In modern times, January 20 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '01-21': [
+        `In early history, January 21 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, January 21 marked significant technological advancements.`,
+        `In modern times, January 21 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '01-22': [
+        `In early history, January 22 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, January 22 marked significant technological advancements.`,
+        `In modern times, January 22 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '01-23': [
+        `In early history, January 23 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, January 23 marked significant technological advancements.`,
+        `In modern times, January 23 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '01-24': [
+        `In early history, January 24 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, January 24 marked significant technological advancements.`,
+        `In modern times, January 24 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '01-25': [
+        `In early history, January 25 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, January 25 marked significant technological advancements.`,
+        `In modern times, January 25 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '01-26': [
+        `In early history, January 26 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, January 26 marked significant technological advancements.`,
+        `In modern times, January 26 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '01-27': [
+        `In early history, January 27 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, January 27 marked significant technological advancements.`,
+        `In modern times, January 27 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '01-28': [
+        `In early history, January 28 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, January 28 marked significant technological advancements.`,
+        `In modern times, January 28 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '01-29': [
+        `In early history, January 29 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, January 29 marked significant technological advancements.`,
+        `In modern times, January 29 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '01-30': [
+        `In early history, January 30 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, January 30 marked significant technological advancements.`,
+        `In modern times, January 30 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '01-31': [
+        `In early history, January 31 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, January 31 marked significant technological advancements.`,
+        `In modern times, January 31 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '02-01': [
+        `In early history, February 1 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, February 1 marked significant technological advancements.`,
+        `In modern times, February 1 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '02-02': [
+        `In early history, February 2 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, February 2 marked significant technological advancements.`,
+        `In modern times, February 2 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '02-03': [
+        `In early history, February 3 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, February 3 marked significant technological advancements.`,
+        `In modern times, February 3 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '02-04': [
+        `In early history, February 4 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, February 4 marked significant technological advancements.`,
+        `In modern times, February 4 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '02-05': [
+        `In early history, February 5 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, February 5 marked significant technological advancements.`,
+        `In modern times, February 5 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '02-06': [
+        `In early history, February 6 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, February 6 marked significant technological advancements.`,
+        `In modern times, February 6 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '02-07': [
+        `In early history, February 7 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, February 7 marked significant technological advancements.`,
+        `In modern times, February 7 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '02-08': [
+        `In early history, February 8 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, February 8 marked significant technological advancements.`,
+        `In modern times, February 8 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '02-09': [
+        `In early history, February 9 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, February 9 marked significant technological advancements.`,
+        `In modern times, February 9 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '02-10': [
+        `In early history, February 10 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, February 10 marked significant technological advancements.`,
+        `In modern times, February 10 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '02-11': [
+        `In early history, February 11 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, February 11 marked significant technological advancements.`,
+        `In modern times, February 11 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '02-12': [
+        `In early history, February 12 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, February 12 marked significant technological advancements.`,
+        `In modern times, February 12 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '02-13': [
+        `In early history, February 13 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, February 13 marked significant technological advancements.`,
+        `In modern times, February 13 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '02-14': [
+        `In early history, February 14 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, February 14 marked significant technological advancements.`,
+        `In modern times, February 14 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '02-15': [
+        `In early history, February 15 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, February 15 marked significant technological advancements.`,
+        `In modern times, February 15 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '02-16': [
+        `In early history, February 16 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, February 16 marked significant technological advancements.`,
+        `In modern times, February 16 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '02-17': [
+        `In early history, February 17 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, February 17 marked significant technological advancements.`,
+        `In modern times, February 17 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '02-18': [
+        `In early history, February 18 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, February 18 marked significant technological advancements.`,
+        `In modern times, February 18 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '02-19': [
+        `In early history, February 19 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, February 19 marked significant technological advancements.`,
+        `In modern times, February 19 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '02-20': [
+        `In early history, February 20 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, February 20 marked significant technological advancements.`,
+        `In modern times, February 20 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '02-21': [
+        `In early history, February 21 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, February 21 marked significant technological advancements.`,
+        `In modern times, February 21 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '02-22': [
+        `In early history, February 22 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, February 22 marked significant technological advancements.`,
+        `In modern times, February 22 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '02-23': [
+        `In early history, February 23 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, February 23 marked significant technological advancements.`,
+        `In modern times, February 23 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '02-24': [
+        `In early history, February 24 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, February 24 marked significant technological advancements.`,
+        `In modern times, February 24 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '02-25': [
+        `In early history, February 25 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, February 25 marked significant technological advancements.`,
+        `In modern times, February 25 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '02-26': [
+        `In early history, February 26 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, February 26 marked significant technological advancements.`,
+        `In modern times, February 26 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '02-27': [
+        `In early history, February 27 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, February 27 marked significant technological advancements.`,
+        `In modern times, February 27 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '02-28': [
+        `In early history, February 28 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, February 28 marked significant technological advancements.`,
+        `In modern times, February 28 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '02-29': [
+        `February 29th is a leap day, added to keep our calendar in alignment with Earth's orbit.`,
+        `In 1692, Sarah Good and Tituba were accused of witchcraft, starting the Salem witch trials.`,
+        `In 1940, Hattie McDaniel became the first African American to win an Academy Award.`
+      ],
+      '03-01': [
+        `In early history, March 1 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, March 1 marked significant technological advancements.`,
+        `In modern times, March 1 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '03-02': [
+        `In early history, March 2 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, March 2 marked significant technological advancements.`,
+        `In modern times, March 2 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '03-03': [
+        `In early history, March 3 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, March 3 marked significant technological advancements.`,
+        `In modern times, March 3 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '03-04': [
+        `In early history, March 4 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, March 4 marked significant technological advancements.`,
+        `In modern times, March 4 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '03-05': [
+        `In early history, March 5 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, March 5 marked significant technological advancements.`,
+        `In modern times, March 5 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '03-06': [
+        `In early history, March 6 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, March 6 marked significant technological advancements.`,
+        `In modern times, March 6 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '03-07': [
+        `In early history, March 7 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, March 7 marked significant technological advancements.`,
+        `In modern times, March 7 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '03-08': [
+        `In early history, March 8 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, March 8 marked significant technological advancements.`,
+        `In modern times, March 8 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '03-09': [
+        `In early history, March 9 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, March 9 marked significant technological advancements.`,
+        `In modern times, March 9 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '03-10': [
+        `In early history, March 10 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, March 10 marked significant technological advancements.`,
+        `In modern times, March 10 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '03-11': [
+        `In early history, March 11 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, March 11 marked significant technological advancements.`,
+        `In modern times, March 11 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '03-12': [
+        `In early history, March 12 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, March 12 marked significant technological advancements.`,
+        `In modern times, March 12 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '03-13': [
+        `In early history, March 13 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, March 13 marked significant technological advancements.`,
+        `In modern times, March 13 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '03-14': [
+        `In early history, March 14 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, March 14 marked significant technological advancements.`,
+        `In modern times, March 14 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '03-15': [
+        `In early history, March 15 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, March 15 marked significant technological advancements.`,
+        `In modern times, March 15 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '03-16': [
+        `In early history, March 16 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, March 16 marked significant technological advancements.`,
+        `In modern times, March 16 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '03-17': [
+        `In early history, March 17 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, March 17 marked significant technological advancements.`,
+        `In modern times, March 17 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '03-18': [
+        `In early history, March 18 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, March 18 marked significant technological advancements.`,
+        `In modern times, March 18 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '03-19': [
+        `In early history, March 19 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, March 19 marked significant technological advancements.`,
+        `In modern times, March 19 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '03-20': [
+        `In early history, March 20 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, March 20 marked significant technological advancements.`,
+        `In modern times, March 20 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '03-21': [
+        `In early history, March 21 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, March 21 marked significant technological advancements.`,
+        `In modern times, March 21 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '03-22': [
+        `In early history, March 22 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, March 22 marked significant technological advancements.`,
+        `In modern times, March 22 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '03-23': [
+        `In early history, March 23 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, March 23 marked significant technological advancements.`,
+        `In modern times, March 23 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '03-24': [
+        `In early history, March 24 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, March 24 marked significant technological advancements.`,
+        `In modern times, March 24 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '03-25': [
+        `In early history, March 25 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, March 25 marked significant technological advancements.`,
+        `In modern times, March 25 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '03-26': [
+        `In early history, March 26 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, March 26 marked significant technological advancements.`,
+        `In modern times, March 26 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '03-27': [
+        `In early history, March 27 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, March 27 marked significant technological advancements.`,
+        `In modern times, March 27 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '03-28': [
+        `In early history, March 28 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, March 28 marked significant technological advancements.`,
+        `In modern times, March 28 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '03-29': [
+        `In early history, March 29 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, March 29 marked significant technological advancements.`,
+        `In modern times, March 29 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '03-30': [
+        `In early history, March 30 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, March 30 marked significant technological advancements.`,
+        `In modern times, March 30 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '03-31': [
+        `In early history, March 31 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, March 31 marked significant technological advancements.`,
+        `In modern times, March 31 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '04-01': [
+        `In early history, April 1 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, April 1 marked significant technological advancements.`,
+        `In modern times, April 1 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '04-02': [
+        `In early history, April 2 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, April 2 marked significant technological advancements.`,
+        `In modern times, April 2 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '04-03': [
+        `In early history, April 3 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, April 3 marked significant technological advancements.`,
+        `In modern times, April 3 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '04-04': [
+        `In early history, April 4 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, April 4 marked significant technological advancements.`,
+        `In modern times, April 4 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '04-05': [
+        `In early history, April 5 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, April 5 marked significant technological advancements.`,
+        `In modern times, April 5 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '04-06': [
+        `In early history, April 6 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, April 6 marked significant technological advancements.`,
+        `In modern times, April 6 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '04-07': [
+        `In early history, April 7 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, April 7 marked significant technological advancements.`,
+        `In modern times, April 7 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '04-08': [
+        `In early history, April 8 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, April 8 marked significant technological advancements.`,
+        `In modern times, April 8 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '04-09': [
+        `In early history, April 9 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, April 9 marked significant technological advancements.`,
+        `In modern times, April 9 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '04-10': [
+        `In early history, April 10 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, April 10 marked significant technological advancements.`,
+        `In modern times, April 10 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '04-11': [
+        `In early history, April 11 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, April 11 marked significant technological advancements.`,
+        `In modern times, April 11 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '04-12': [
+        `In early history, April 12 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, April 12 marked significant technological advancements.`,
+        `In modern times, April 12 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '04-13': [
+        `In early history, April 13 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, April 13 marked significant technological advancements.`,
+        `In modern times, April 13 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '04-14': [
+        `In early history, April 14 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, April 14 marked significant technological advancements.`,
+        `In modern times, April 14 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '04-15': [
+        `In early history, April 15 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, April 15 marked significant technological advancements.`,
+        `In modern times, April 15 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '04-16': [
+        `In early history, April 16 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, April 16 marked significant technological advancements.`,
+        `In modern times, April 16 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '04-17': [
+        `In early history, April 17 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, April 17 marked significant technological advancements.`,
+        `In modern times, April 17 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '04-18': [
+        `In early history, April 18 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, April 18 marked significant technological advancements.`,
+        `In modern times, April 18 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '04-19': [
+        `In early history, April 19 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, April 19 marked significant technological advancements.`,
+        `In modern times, April 19 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '04-20': [
+        `In early history, April 20 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, April 20 marked significant technological advancements.`,
+        `In modern times, April 20 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '04-21': [
+        `In early history, April 21 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, April 21 marked significant technological advancements.`,
+        `In modern times, April 21 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '04-22': [
+        `In early history, April 22 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, April 22 marked significant technological advancements.`,
+        `In modern times, April 22 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '04-23': [
+        `In early history, April 23 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, April 23 marked significant technological advancements.`,
+        `In modern times, April 23 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '04-24': [
+        `In early history, April 24 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, April 24 marked significant technological advancements.`,
+        `In modern times, April 24 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '04-25': [
+        `In early history, April 25 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, April 25 marked significant technological advancements.`,
+        `In modern times, April 25 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '04-26': [
+        `In early history, April 26 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, April 26 marked significant technological advancements.`,
+        `In modern times, April 26 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '04-27': [
+        `In early history, April 27 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, April 27 marked significant technological advancements.`,
+        `In modern times, April 27 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '04-28': [
+        `In early history, April 28 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, April 28 marked significant technological advancements.`,
+        `In modern times, April 28 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '04-29': [
+        `In early history, April 29 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, April 29 marked significant technological advancements.`,
+        `In modern times, April 29 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '04-30': [
+        `In early history, April 30 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, April 30 marked significant technological advancements.`,
+        `In modern times, April 30 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '05-01': [
+        `In early history, May 1 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, May 1 marked significant technological advancements.`,
+        `In modern times, May 1 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '05-02': [
+        `In early history, May 2 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, May 2 marked significant technological advancements.`,
+        `In modern times, May 2 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '05-03': [
+        `In early history, May 3 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, May 3 marked significant technological advancements.`,
+        `In modern times, May 3 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '05-04': [
+        `In early history, May 4 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, May 4 marked significant technological advancements.`,
+        `In modern times, May 4 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '05-05': [
+        `In early history, May 5 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, May 5 marked significant technological advancements.`,
+        `In modern times, May 5 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '05-06': [
+        `In early history, May 6 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, May 6 marked significant technological advancements.`,
+        `In modern times, May 6 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '05-07': [
+        `In early history, May 7 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, May 7 marked significant technological advancements.`,
+        `In modern times, May 7 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '05-08': [
+        `In early history, May 8 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, May 8 marked significant technological advancements.`,
+        `In modern times, May 8 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '05-09': [
+        `In early history, May 9 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, May 9 marked significant technological advancements.`,
+        `In modern times, May 9 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '05-10': [
+        `In early history, May 10 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, May 10 marked significant technological advancements.`,
+        `In modern times, May 10 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '05-11': [
+        `In early history, May 11 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, May 11 marked significant technological advancements.`,
+        `In modern times, May 11 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '05-12': [
+        `In early history, May 12 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, May 12 marked significant technological advancements.`,
+        `In modern times, May 12 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '05-13': [
+        `In early history, May 13 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, May 13 marked significant technological advancements.`,
+        `In modern times, May 13 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '05-14': [
+        `In early history, May 14 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, May 14 marked significant technological advancements.`,
+        `In modern times, May 14 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '05-15': [
+        `In early history, May 15 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, May 15 marked significant technological advancements.`,
+        `In modern times, May 15 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '05-16': [
+        `In early history, May 16 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, May 16 marked significant technological advancements.`,
+        `In modern times, May 16 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '05-17': [
+        `In early history, May 17 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, May 17 marked significant technological advancements.`,
+        `In modern times, May 17 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '05-18': [
+        `In early history, May 18 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, May 18 marked significant technological advancements.`,
+        `In modern times, May 18 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '05-19': [
+        `In early history, May 19 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, May 19 marked significant technological advancements.`,
+        `In modern times, May 19 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '05-20': [
+        `In early history, May 20 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, May 20 marked significant technological advancements.`,
+        `In modern times, May 20 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '05-21': [
+        `In early history, May 21 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, May 21 marked significant technological advancements.`,
+        `In modern times, May 21 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '05-22': [
+        `In early history, May 22 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, May 22 marked significant technological advancements.`,
+        `In modern times, May 22 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '05-23': [
+        `In early history, May 23 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, May 23 marked significant technological advancements.`,
+        `In modern times, May 23 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '05-24': [
+        `In early history, May 24 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, May 24 marked significant technological advancements.`,
+        `In modern times, May 24 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '05-25': [
+        `In early history, May 25 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, May 25 marked significant technological advancements.`,
+        `In modern times, May 25 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '05-26': [
+        `In early history, May 26 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, May 26 marked significant technological advancements.`,
+        `In modern times, May 26 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '05-27': [
+        `In early history, May 27 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, May 27 marked significant technological advancements.`,
+        `In modern times, May 27 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '05-28': [
+        `In early history, May 28 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, May 28 marked significant technological advancements.`,
+        `In modern times, May 28 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '05-29': [
+        `In early history, May 29 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, May 29 marked significant technological advancements.`,
+        `In modern times, May 29 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '05-30': [
+        `In early history, May 30 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, May 30 marked significant technological advancements.`,
+        `In modern times, May 30 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '05-31': [
+        `In early history, May 31 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, May 31 marked significant technological advancements.`,
+        `In modern times, May 31 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '06-01': [
+        `In early history, June 1 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, June 1 marked significant technological advancements.`,
+        `In modern times, June 1 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '06-02': [
+        `In early history, June 2 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, June 2 marked significant technological advancements.`,
+        `In modern times, June 2 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '06-03': [
+        `In early history, June 3 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, June 3 marked significant technological advancements.`,
+        `In modern times, June 3 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '06-04': [
+        `In early history, June 4 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, June 4 marked significant technological advancements.`,
+        `In modern times, June 4 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '06-05': [
+        `In early history, June 5 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, June 5 marked significant technological advancements.`,
+        `In modern times, June 5 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '06-06': [
+        `In early history, June 6 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, June 6 marked significant technological advancements.`,
+        `In modern times, June 6 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '06-07': [
+        `In early history, June 7 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, June 7 marked significant technological advancements.`,
+        `In modern times, June 7 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '06-08': [
+        `In early history, June 8 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, June 8 marked significant technological advancements.`,
+        `In modern times, June 8 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '06-09': [
+        `In early history, June 9 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, June 9 marked significant technological advancements.`,
+        `In modern times, June 9 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '06-10': [
+        `In early history, June 10 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, June 10 marked significant technological advancements.`,
+        `In modern times, June 10 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '06-11': [
+        `In early history, June 11 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, June 11 marked significant technological advancements.`,
+        `In modern times, June 11 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '06-12': [
+        `In early history, June 12 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, June 12 marked significant technological advancements.`,
+        `In modern times, June 12 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '06-13': [
+        `In early history, June 13 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, June 13 marked significant technological advancements.`,
+        `In modern times, June 13 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '06-14': [
+        `In early history, June 14 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, June 14 marked significant technological advancements.`,
+        `In modern times, June 14 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '06-15': [
+        `In early history, June 15 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, June 15 marked significant technological advancements.`,
+        `In modern times, June 15 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '06-16': [
+        `In early history, June 16 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, June 16 marked significant technological advancements.`,
+        `In modern times, June 16 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '06-17': [
+        `In early history, June 17 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, June 17 marked significant technological advancements.`,
+        `In modern times, June 17 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '06-18': [
+        `In early history, June 18 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, June 18 marked significant technological advancements.`,
+        `In modern times, June 18 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '06-19': [
+        `In early history, June 19 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, June 19 marked significant technological advancements.`,
+        `In modern times, June 19 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '06-20': [
+        `In early history, June 20 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, June 20 marked significant technological advancements.`,
+        `In modern times, June 20 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '06-21': [
+        `In early history, June 21 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, June 21 marked significant technological advancements.`,
+        `In modern times, June 21 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '06-22': [
+        `In early history, June 22 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, June 22 marked significant technological advancements.`,
+        `In modern times, June 22 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '06-23': [
+        `In early history, June 23 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, June 23 marked significant technological advancements.`,
+        `In modern times, June 23 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '06-24': [
+        `In early history, June 24 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, June 24 marked significant technological advancements.`,
+        `In modern times, June 24 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '06-25': [
+        `In early history, June 25 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, June 25 marked significant technological advancements.`,
+        `In modern times, June 25 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '06-26': [
+        `In early history, June 26 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, June 26 marked significant technological advancements.`,
+        `In modern times, June 26 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '06-27': [
+        `In early history, June 27 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, June 27 marked significant technological advancements.`,
+        `In modern times, June 27 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '06-28': [
+        `In early history, June 28 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, June 28 marked significant technological advancements.`,
+        `In modern times, June 28 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '06-29': [
+        `In early history, June 29 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, June 29 marked significant technological advancements.`,
+        `In modern times, June 29 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '06-30': [
+        `In early history, June 30 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, June 30 marked significant technological advancements.`,
+        `In modern times, June 30 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '07-01': [
+        `In early history, July 1 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, July 1 marked significant technological advancements.`,
+        `In modern times, July 1 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '07-02': [
+        `In early history, July 2 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, July 2 marked significant technological advancements.`,
+        `In modern times, July 2 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '07-03': [
+        `In early history, July 3 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, July 3 marked significant technological advancements.`,
+        `In modern times, July 3 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '07-04': [
+        `In early history, July 4 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, July 4 marked significant technological advancements.`,
+        `In modern times, July 4 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '07-05': [
+        `In early history, July 5 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, July 5 marked significant technological advancements.`,
+        `In modern times, July 5 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '07-06': [
+        `In early history, July 6 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, July 6 marked significant technological advancements.`,
+        `In modern times, July 6 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '07-07': [
+        `In early history, July 7 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, July 7 marked significant technological advancements.`,
+        `In modern times, July 7 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '07-08': [
+        `In early history, July 8 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, July 8 marked significant technological advancements.`,
+        `In modern times, July 8 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '07-09': [
+        `In early history, July 9 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, July 9 marked significant technological advancements.`,
+        `In modern times, July 9 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '07-10': [
+        `In early history, July 10 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, July 10 marked significant technological advancements.`,
+        `In modern times, July 10 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '07-11': [
+        `In early history, July 11 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, July 11 marked significant technological advancements.`,
+        `In modern times, July 11 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '07-12': [
+        `In early history, July 12 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, July 12 marked significant technological advancements.`,
+        `In modern times, July 12 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '07-13': [
+        `In early history, July 13 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, July 13 marked significant technological advancements.`,
+        `In modern times, July 13 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '07-14': [
+        `In early history, July 14 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, July 14 marked significant technological advancements.`,
+        `In modern times, July 14 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '07-15': [
+        `In early history, July 15 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, July 15 marked significant technological advancements.`,
+        `In modern times, July 15 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '07-16': [
+        `In early history, July 16 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, July 16 marked significant technological advancements.`,
+        `In modern times, July 16 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '07-17': [
+        `In early history, July 17 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, July 17 marked significant technological advancements.`,
+        `In modern times, July 17 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '07-18': [
+        `In early history, July 18 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, July 18 marked significant technological advancements.`,
+        `In modern times, July 18 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '07-19': [
+        `In early history, July 19 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, July 19 marked significant technological advancements.`,
+        `In modern times, July 19 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '07-20': [
+        `In early history, July 20 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, July 20 marked significant technological advancements.`,
+        `In modern times, July 20 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '07-21': [
+        `In early history, July 21 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, July 21 marked significant technological advancements.`,
+        `In modern times, July 21 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '07-22': [
+        `In early history, July 22 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, July 22 marked significant technological advancements.`,
+        `In modern times, July 22 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '07-23': [
+        `In early history, July 23 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, July 23 marked significant technological advancements.`,
+        `In modern times, July 23 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '07-24': [
+        `In early history, July 24 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, July 24 marked significant technological advancements.`,
+        `In modern times, July 24 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '07-25': [
+        `In early history, July 25 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, July 25 marked significant technological advancements.`,
+        `In modern times, July 25 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '07-26': [
+        `In early history, July 26 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, July 26 marked significant technological advancements.`,
+        `In modern times, July 26 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '07-27': [
+        `In early history, July 27 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, July 27 marked significant technological advancements.`,
+        `In modern times, July 27 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '07-28': [
+        `In early history, July 28 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, July 28 marked significant technological advancements.`,
+        `In modern times, July 28 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '07-29': [
+        `In early history, July 29 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, July 29 marked significant technological advancements.`,
+        `In modern times, July 29 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '07-30': [
+        `In early history, July 30 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, July 30 marked significant technological advancements.`,
+        `In modern times, July 30 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '07-31': [
+        `In early history, July 31 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, July 31 marked significant technological advancements.`,
+        `In modern times, July 31 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '08-01': [
+        `In early history, August 1 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, August 1 marked significant technological advancements.`,
+        `In modern times, August 1 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '08-02': [
+        `In early history, August 2 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, August 2 marked significant technological advancements.`,
+        `In modern times, August 2 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '08-03': [
+        `In early history, August 3 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, August 3 marked significant technological advancements.`,
+        `In modern times, August 3 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '08-04': [
+        `In early history, August 4 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, August 4 marked significant technological advancements.`,
+        `In modern times, August 4 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '08-05': [
+        `In early history, August 5 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, August 5 marked significant technological advancements.`,
+        `In modern times, August 5 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '08-06': [
+        `In early history, August 6 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, August 6 marked significant technological advancements.`,
+        `In modern times, August 6 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '08-07': [
+        `In early history, August 7 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, August 7 marked significant technological advancements.`,
+        `In modern times, August 7 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '08-08': [
+        `In early history, August 8 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, August 8 marked significant technological advancements.`,
+        `In modern times, August 8 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '08-09': [
+        `In early history, August 9 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, August 9 marked significant technological advancements.`,
+        `In modern times, August 9 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '08-10': [
+        `In early history, August 10 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, August 10 marked significant technological advancements.`,
+        `In modern times, August 10 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '08-11': [
+        `In early history, August 11 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, August 11 marked significant technological advancements.`,
+        `In modern times, August 11 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '08-12': [
+        `In early history, August 12 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, August 12 marked significant technological advancements.`,
+        `In modern times, August 12 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '08-13': [
+        `In early history, August 13 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, August 13 marked significant technological advancements.`,
+        `In modern times, August 13 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '08-14': [
+        `In early history, August 14 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, August 14 marked significant technological advancements.`,
+        `In modern times, August 14 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '08-15': [
+        `In early history, August 15 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, August 15 marked significant technological advancements.`,
+        `In modern times, August 15 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '08-16': [
+        `In early history, August 16 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, August 16 marked significant technological advancements.`,
+        `In modern times, August 16 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '08-17': [
+        `In early history, August 17 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, August 17 marked significant technological advancements.`,
+        `In modern times, August 17 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '08-18': [
+        `In early history, August 18 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, August 18 marked significant technological advancements.`,
+        `In modern times, August 18 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '08-19': [
+        `In early history, August 19 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, August 19 marked significant technological advancements.`,
+        `In modern times, August 19 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '08-20': [
+        `In early history, August 20 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, August 20 marked significant technological advancements.`,
+        `In modern times, August 20 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '08-21': [
+        `In early history, August 21 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, August 21 marked significant technological advancements.`,
+        `In modern times, August 21 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '08-22': [
+        `In early history, August 22 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, August 22 marked significant technological advancements.`,
+        `In modern times, August 22 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '08-23': [
+        `In early history, August 23 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, August 23 marked significant technological advancements.`,
+        `In modern times, August 23 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '08-24': [
+        `In early history, August 24 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, August 24 marked significant technological advancements.`,
+        `In modern times, August 24 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '08-25': [
+        `In early history, August 25 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, August 25 marked significant technological advancements.`,
+        `In modern times, August 25 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '08-26': [
+        `In early history, August 26 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, August 26 marked significant technological advancements.`,
+        `In modern times, August 26 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '08-27': [
+        `In early history, August 27 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, August 27 marked significant technological advancements.`,
+        `In modern times, August 27 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '08-28': [
+        `In early history, August 28 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, August 28 marked significant technological advancements.`,
+        `In modern times, August 28 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '08-29': [
+        `In early history, August 29 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, August 29 marked significant technological advancements.`,
+        `In modern times, August 29 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '08-30': [
+        `In early history, August 30 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, August 30 marked significant technological advancements.`,
+        `In modern times, August 30 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '08-31': [
+        `In early history, August 31 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, August 31 marked significant technological advancements.`,
+        `In modern times, August 31 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '09-01': [
+        `In early history, September 1 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, September 1 marked significant technological advancements.`,
+        `In modern times, September 1 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '09-02': [
+        `In early history, September 2 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, September 2 marked significant technological advancements.`,
+        `In modern times, September 2 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '09-03': [
+        `In early history, September 3 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, September 3 marked significant technological advancements.`,
+        `In modern times, September 3 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '09-04': [
+        `In early history, September 4 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, September 4 marked significant technological advancements.`,
+        `In modern times, September 4 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '09-05': [
+        `In early history, September 5 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, September 5 marked significant technological advancements.`,
+        `In modern times, September 5 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '09-06': [
+        `In early history, September 6 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, September 6 marked significant technological advancements.`,
+        `In modern times, September 6 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '09-07': [
+        `In early history, September 7 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, September 7 marked significant technological advancements.`,
+        `In modern times, September 7 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '09-08': [
+        `In early history, September 8 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, September 8 marked significant technological advancements.`,
+        `In modern times, September 8 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '09-09': [
+        `In early history, September 9 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, September 9 marked significant technological advancements.`,
+        `In modern times, September 9 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '09-10': [
+        `In early history, September 10 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, September 10 marked significant technological advancements.`,
+        `In modern times, September 10 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '09-11': [
+        `In early history, September 11 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, September 11 marked significant technological advancements.`,
+        `In modern times, September 11 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '09-12': [
+        `In early history, September 12 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, September 12 marked significant technological advancements.`,
+        `In modern times, September 12 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '09-13': [
+        `In early history, September 13 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, September 13 marked significant technological advancements.`,
+        `In modern times, September 13 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '09-14': [
+        `In early history, September 14 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, September 14 marked significant technological advancements.`,
+        `In modern times, September 14 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '09-15': [
+        `In early history, September 15 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, September 15 marked significant technological advancements.`,
+        `In modern times, September 15 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '09-16': [
+        `In early history, September 16 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, September 16 marked significant technological advancements.`,
+        `In modern times, September 16 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '09-17': [
+        `In early history, September 17 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, September 17 marked significant technological advancements.`,
+        `In modern times, September 17 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '09-18': [
+        `In early history, September 18 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, September 18 marked significant technological advancements.`,
+        `In modern times, September 18 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '09-19': [
+        `In early history, September 19 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, September 19 marked significant technological advancements.`,
+        `In modern times, September 19 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '09-20': [
+        `In early history, September 20 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, September 20 marked significant technological advancements.`,
+        `In modern times, September 20 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '09-21': [
+        `In early history, September 21 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, September 21 marked significant technological advancements.`,
+        `In modern times, September 21 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '09-22': [
+        `In early history, September 22 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, September 22 marked significant technological advancements.`,
+        `In modern times, September 22 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '09-23': [
+        `In early history, September 23 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, September 23 marked significant technological advancements.`,
+        `In modern times, September 23 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '09-24': [
+        `In early history, September 24 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, September 24 marked significant technological advancements.`,
+        `In modern times, September 24 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '09-25': [
+        `In early history, September 25 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, September 25 marked significant technological advancements.`,
+        `In modern times, September 25 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '09-26': [
+        `In early history, September 26 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, September 26 marked significant technological advancements.`,
+        `In modern times, September 26 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '09-27': [
+        `In early history, September 27 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, September 27 marked significant technological advancements.`,
+        `In modern times, September 27 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '09-28': [
+        `In early history, September 28 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, September 28 marked significant technological advancements.`,
+        `In modern times, September 28 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '09-29': [
+        `In early history, September 29 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, September 29 marked significant technological advancements.`,
+        `In modern times, September 29 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '09-30': [
+        `In early history, September 30 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, September 30 marked significant technological advancements.`,
+        `In modern times, September 30 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '10-01': [
+        `In early history, October 1 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, October 1 marked significant technological advancements.`,
+        `In modern times, October 1 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '10-02': [
+        `In early history, October 2 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, October 2 marked significant technological advancements.`,
+        `In modern times, October 2 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '10-03': [
+        `In early history, October 3 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, October 3 marked significant technological advancements.`,
+        `In modern times, October 3 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '10-04': [
+        `In early history, October 4 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, October 4 marked significant technological advancements.`,
+        `In modern times, October 4 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '10-05': [
+        `In early history, October 5 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, October 5 marked significant technological advancements.`,
+        `In modern times, October 5 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '10-06': [
+        `In early history, October 6 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, October 6 marked significant technological advancements.`,
+        `In modern times, October 6 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '10-07': [
+        `In early history, October 7 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, October 7 marked significant technological advancements.`,
+        `In modern times, October 7 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '10-08': [
+        `In early history, October 8 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, October 8 marked significant technological advancements.`,
+        `In modern times, October 8 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '10-09': [
+        `In early history, October 9 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, October 9 marked significant technological advancements.`,
+        `In modern times, October 9 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '10-10': [
+        `In early history, October 10 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, October 10 marked significant technological advancements.`,
+        `In modern times, October 10 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '10-11': [
+        `In early history, October 11 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, October 11 marked significant technological advancements.`,
+        `In modern times, October 11 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '10-12': [
+        `In early history, October 12 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, October 12 marked significant technological advancements.`,
+        `In modern times, October 12 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '10-13': [
+        `In early history, October 13 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, October 13 marked significant technological advancements.`,
+        `In modern times, October 13 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '10-14': [
+        `In early history, October 14 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, October 14 marked significant technological advancements.`,
+        `In modern times, October 14 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '10-15': [
+        `In early history, October 15 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, October 15 marked significant technological advancements.`,
+        `In modern times, October 15 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '10-16': [
+        `In early history, October 16 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, October 16 marked significant technological advancements.`,
+        `In modern times, October 16 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '10-17': [
+        `In early history, October 17 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, October 17 marked significant technological advancements.`,
+        `In modern times, October 17 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '10-18': [
+        `In early history, October 18 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, October 18 marked significant technological advancements.`,
+        `In modern times, October 18 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '10-19': [
+        `In early history, October 19 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, October 19 marked significant technological advancements.`,
+        `In modern times, October 19 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '10-20': [
+        `In early history, October 20 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, October 20 marked significant technological advancements.`,
+        `In modern times, October 20 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '10-21': [
+        `In early history, October 21 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, October 21 marked significant technological advancements.`,
+        `In modern times, October 21 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '10-22': [
+        `In early history, October 22 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, October 22 marked significant technological advancements.`,
+        `In modern times, October 22 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '10-23': [
+        `In early history, October 23 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, October 23 marked significant technological advancements.`,
+        `In modern times, October 23 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '10-24': [
+        `In early history, October 24 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, October 24 marked significant technological advancements.`,
+        `In modern times, October 24 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '10-25': [
+        `In early history, October 25 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, October 25 marked significant technological advancements.`,
+        `In modern times, October 25 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '10-26': [
+        `In early history, October 26 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, October 26 marked significant technological advancements.`,
+        `In modern times, October 26 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '10-27': [
+        `In early history, October 27 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, October 27 marked significant technological advancements.`,
+        `In modern times, October 27 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '10-28': [
+        `In early history, October 28 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, October 28 marked significant technological advancements.`,
+        `In modern times, October 28 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '10-29': [
+        `In early history, October 29 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, October 29 marked significant technological advancements.`,
+        `In modern times, October 29 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '10-30': [
+        `In early history, October 30 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, October 30 marked significant technological advancements.`,
+        `In modern times, October 30 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '10-31': [
+        `In early history, October 31 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, October 31 marked significant technological advancements.`,
+        `In modern times, October 31 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '11-01': [
+        `In early history, November 1 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, November 1 marked significant technological advancements.`,
+        `In modern times, November 1 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '11-02': [
+        `In early history, November 2 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, November 2 marked significant technological advancements.`,
+        `In modern times, November 2 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '11-03': [
+        `In early history, November 3 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, November 3 marked significant technological advancements.`,
+        `In modern times, November 3 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '11-04': [
+        `In early history, November 4 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, November 4 marked significant technological advancements.`,
+        `In modern times, November 4 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '11-05': [
+        `In early history, November 5 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, November 5 marked significant technological advancements.`,
+        `In modern times, November 5 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '11-06': [
+        `In early history, November 6 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, November 6 marked significant technological advancements.`,
+        `In modern times, November 6 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '11-07': [
+        `In early history, November 7 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, November 7 marked significant technological advancements.`,
+        `In modern times, November 7 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '11-08': [
+        `In early history, November 8 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, November 8 marked significant technological advancements.`,
+        `In modern times, November 8 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '11-09': [
+        `In early history, November 9 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, November 9 marked significant technological advancements.`,
+        `In modern times, November 9 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '11-10': [
+        `In early history, November 10 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, November 10 marked significant technological advancements.`,
+        `In modern times, November 10 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '11-11': [
+        `In early history, November 11 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, November 11 marked significant technological advancements.`,
+        `In modern times, November 11 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '11-12': [
+        `In early history, November 12 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, November 12 marked significant technological advancements.`,
+        `In modern times, November 12 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '11-13': [
+        `In early history, November 13 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, November 13 marked significant technological advancements.`,
+        `In modern times, November 13 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '11-14': [
+        `In early history, November 14 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, November 14 marked significant technological advancements.`,
+        `In modern times, November 14 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '11-15': [
+        `In early history, November 15 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, November 15 marked significant technological advancements.`,
+        `In modern times, November 15 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '11-16': [
+        `In early history, November 16 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, November 16 marked significant technological advancements.`,
+        `In modern times, November 16 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '11-17': [
+        `In early history, November 17 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, November 17 marked significant technological advancements.`,
+        `In modern times, November 17 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '11-18': [
+        `In early history, November 18 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, November 18 marked significant technological advancements.`,
+        `In modern times, November 18 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '11-19': [
+        `In early history, November 19 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, November 19 marked significant technological advancements.`,
+        `In modern times, November 19 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '11-20': [
+        `In early history, November 20 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, November 20 marked significant technological advancements.`,
+        `In modern times, November 20 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '11-21': [
+        `In early history, November 21 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, November 21 marked significant technological advancements.`,
+        `In modern times, November 21 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '11-22': [
+        `In early history, November 22 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, November 22 marked significant technological advancements.`,
+        `In modern times, November 22 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '11-23': [
+        `In early history, November 23 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, November 23 marked significant technological advancements.`,
+        `In modern times, November 23 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '11-24': [
+        `In early history, November 24 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, November 24 marked significant technological advancements.`,
+        `In modern times, November 24 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '11-25': [
+        `In early history, November 25 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, November 25 marked significant technological advancements.`,
+        `In modern times, November 25 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '11-26': [
+        `In early history, November 26 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, November 26 marked significant technological advancements.`,
+        `In modern times, November 26 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '11-27': [
+        `In early history, November 27 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, November 27 marked significant technological advancements.`,
+        `In modern times, November 27 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '11-28': [
+        `In early history, November 28 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, November 28 marked significant technological advancements.`,
+        `In modern times, November 28 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '11-29': [
+        `In early history, November 29 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, November 29 marked significant technological advancements.`,
+        `In modern times, November 29 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '11-30': [
+        `In early history, November 30 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, November 30 marked significant technological advancements.`,
+        `In modern times, November 30 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '12-01': [
+        `In early history, December 1 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, December 1 marked significant technological advancements.`,
+        `In modern times, December 1 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '12-02': [
+        `In early history, December 2 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, December 2 marked significant technological advancements.`,
+        `In modern times, December 2 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '12-03': [
+        `In early history, December 3 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, December 3 marked significant technological advancements.`,
+        `In modern times, December 3 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '12-04': [
+        `In early history, December 4 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, December 4 marked significant technological advancements.`,
+        `In modern times, December 4 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '12-05': [
+        `In early history, December 5 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, December 5 marked significant technological advancements.`,
+        `In modern times, December 5 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '12-06': [
+        `In early history, December 6 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, December 6 marked significant technological advancements.`,
+        `In modern times, December 6 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '12-07': [
+        `In early history, December 7 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, December 7 marked significant technological advancements.`,
+        `In modern times, December 7 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '12-08': [
+        `In early history, December 8 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, December 8 marked significant technological advancements.`,
+        `In modern times, December 8 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '12-09': [
+        `In early history, December 9 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, December 9 marked significant technological advancements.`,
+        `In modern times, December 9 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '12-10': [
+        `In early history, December 10 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, December 10 marked significant technological advancements.`,
+        `In modern times, December 10 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '12-11': [
+        `In early history, December 11 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, December 11 marked significant technological advancements.`,
+        `In modern times, December 11 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '12-12': [
+        `In early history, December 12 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, December 12 marked significant technological advancements.`,
+        `In modern times, December 12 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '12-13': [
+        `In early history, December 13 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, December 13 marked significant technological advancements.`,
+        `In modern times, December 13 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '12-14': [
+        `In early history, December 14 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, December 14 marked significant technological advancements.`,
+        `In modern times, December 14 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '12-15': [
+        `In early history, December 15 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, December 15 marked significant technological advancements.`,
+        `In modern times, December 15 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '12-16': [
+        `In early history, December 16 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, December 16 marked significant technological advancements.`,
+        `In modern times, December 16 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '12-17': [
+        `In early history, December 17 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, December 17 marked significant technological advancements.`,
+        `In modern times, December 17 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '12-18': [
+        `In early history, December 18 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, December 18 marked significant technological advancements.`,
+        `In modern times, December 18 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '12-19': [
+        `In early history, December 19 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, December 19 marked significant technological advancements.`,
+        `In modern times, December 19 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '12-20': [
+        `In early history, December 20 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, December 20 marked significant technological advancements.`,
+        `In modern times, December 20 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '12-21': [
+        `In early history, December 21 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, December 21 marked significant technological advancements.`,
+        `In modern times, December 21 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '12-22': [
+        `In early history, December 22 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, December 22 marked significant technological advancements.`,
+        `In modern times, December 22 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '12-23': [
+        `In early history, December 23 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, December 23 marked significant technological advancements.`,
+        `In modern times, December 23 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '12-24': [
+        `In early history, December 24 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, December 24 marked significant technological advancements.`,
+        `In modern times, December 24 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '12-25': [
+        `In early history, December 25 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, December 25 marked significant technological advancements.`,
+        `In modern times, December 25 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '12-26': [
+        `In early history, December 26 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, December 26 marked significant technological advancements.`,
+        `In modern times, December 26 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '12-27': [
+        `In early history, December 27 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, December 27 marked significant technological advancements.`,
+        `In modern times, December 27 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '12-28': [
+        `In early history, December 28 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, December 28 marked significant technological advancements.`,
+        `In modern times, December 28 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '12-29': [
+        `In early history, December 29 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, December 29 marked significant technological advancements.`,
+        `In modern times, December 29 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '12-30': [
+        `In early history, December 30 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, December 30 marked significant technological advancements.`,
+        `In modern times, December 30 is celebrated for numerous scientific and artistic achievements.`
+      ],
+      '12-31': [
+        `In early history, December 31 was often a time of seasonal transition and cultural significance.`,
+        `During the industrial revolution, December 31 marked significant technological advancements.`,
+        `In modern times, December 31 is celebrated for numerous scientific and artistic achievements.`
+      ],
+    };
+    function displayTrivia(dateObj) { const month = String(dateObj.getMonth() + 1).padStart(2, '0'); const day = String(dateObj.getDate()).padStart(2, '0'); const key = `${month}-${day}`; if (triviaData[key]) { const facts = triviaData[key]; const randomFact = facts[Math.floor(Math.random() * facts.length)]; triviaText.textContent = randomFact; triviaCard.classList.remove('hidden'); } else { triviaCard.classList.add('hidden'); } }
+    calculateBetween();
+  </script>
+  <style is:inline>
+    .page-content { background: var(--bg-primary); min-height: 100vh; padding-bottom: 60px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+    .hero { text-align: center; padding: 40px 20px; background: var(--bg-primary); border-bottom: 1px solid var(--border-color); }
+    .hero h1 { color: var(--accent-color); font-size: 2.5rem; margin-bottom: 10px; font-weight: 800; letter-spacing: -0.02em; }
+    .hero p { color: var(--text-secondary); font-size: 1.15rem; max-width: 600px; margin: 0 auto; line-height: 1.6; }
+    .main { max-width: 800px; margin: 0 auto; padding: 30px 20px; }
+    .calc-tabs { display: flex; gap: 10px; margin-bottom: 25px; background: var(--card-bg); padding: 8px; border-radius: 12px; border: 1px solid var(--border-color); }
+    .tab-btn { flex: 1; padding: 14px; background: transparent; border: none; color: var(--text-secondary); border-radius: 8px; cursor: pointer; font-size: 1rem; font-weight: 600; transition: all 0.2s ease; text-align: center; }
+    .tab-btn:hover { color: var(--text-primary); }
+    .tab-btn.active { background: var(--text-primary); color: var(--bg-primary); box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1); border: 1px solid var(--text-primary); }
+    .calc-card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 16px; padding: 32px; margin-bottom: 30px; box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.05); }
+    .calc-card.hidden { display: none; }
+    .input-row { display: flex; gap: 24px; flex-wrap: wrap; margin-bottom: 24px; }
+    .input-group { flex: 1; min-width: 200px; display: flex; flex-direction: column; gap: 8px; }
+    .input-group label { color: var(--text-primary); font-size: 0.95rem; font-weight: 600; letter-spacing: 0.02em; }
+    .date-input, .select-input, .num-input { padding: 14px 16px; border-radius: 10px; border: 1px solid var(--border-color); background: var(--bg-primary); color: var(--text-primary); font-size: 1.05rem; outline: none; transition: all 0.2s; font-family: inherit; }
+    .date-input:focus, .select-input:focus, .num-input:focus { border-color: var(--accent-color); }
+    /* For dark themes with native dark inputs, we invert the calendar icon if text is light. Otherwise we leave it alone. */
+    @media (prefers-color-scheme: dark) { .date-input::-webkit-calendar-picker-indicator { filter: invert(1); opacity: 0.6; cursor: pointer; } .date-input::-webkit-calendar-picker-indicator:hover { opacity: 1; } }
+    .multi-input { display: flex; gap: 12px; }
+    .num-input { flex: 1; text-align: right; font-variant-numeric: tabular-nums; }
+    .select-input.small { width: 130px; }
+    .options-row { display: flex; gap: 24px; flex-wrap: wrap; padding-top: 20px; border-top: 1px solid var(--border-color); }
+    .checkbox-label { color: var(--text-secondary); display: flex; align-items: center; gap: 10px; cursor: pointer; font-size: 0.95rem; user-select: none; transition: color 0.2s; }
+    .checkbox-label:hover { color: var(--text-primary); }
+    .checkbox-label input[type='checkbox'] { width: 18px; height: 18px; accent-color: var(--accent-color); cursor: pointer; border-radius: 4px; }
+    .result-card { background: var(--card-bg); border-radius: 16px; padding: 40px 30px; text-align: center; margin-bottom: 40px; border: 1px solid var(--border-color); position: relative; overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
+    .result-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 4px; background: var(--accent-color); }
+    .result-header { color: var(--text-secondary); text-transform: uppercase; font-size: 0.85rem; letter-spacing: 1.5px; margin-bottom: 15px; font-weight: 700; }
+    .result-value { color: var(--text-primary); font-size: 3.5rem; font-weight: 800; line-height: 1.1; margin-bottom: 10px; font-variant-numeric: tabular-nums; }
+    .result-sub { color: var(--accent-color); font-size: 1.1rem; margin-bottom: 40px; font-weight: 500; }
+    .breakdown-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 16px; }
+    .breakdown-item { background: var(--bg-primary); padding: 20px; border-radius: 12px; border: 1px solid var(--border-color); transition: transform 0.2s; }
+    .breakdown-item:hover { transform: translateY(-3px); }
+    .bd-label { color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 8px; text-transform: uppercase; letter-spacing: 1px; font-weight: 600; }
+    .bd-value { color: var(--text-primary); font-size: 1.75rem; font-weight: 700; font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace; letter-spacing: -0.05em; }
+    .timeline-vis { margin-top: 40px; padding-top: 30px; border-top: 1px solid var(--border-color); }
+    .timeline-vis.hidden { display: none; }
+    .tl-labels { display: flex; justify-content: space-between; color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 12px; font-weight: 600; }
+    .tl-bar { height: 16px; background: var(--bg-primary); border-radius: 8px; overflow: hidden; position: relative; border: 1px solid var(--border-color); }
+    .tl-progress { height: 100%; background: var(--accent-color); width: 0%; transition: width 1s cubic-bezier(0.34, 1.56, 0.64, 1); border-radius: 8px; opacity: 0.8; }
+    .tl-stats { text-align: center; color: var(--accent-color); font-size: 0.95rem; margin-top: 12px; font-weight: 700; letter-spacing: 0.5px; }
+    .trivia-card { background: var(--card-bg); border-left: 4px solid var(--accent-color); padding: 24px; border-radius: 0 12px 12px 0; margin-bottom: 40px; border-top: 1px solid var(--border-color); border-bottom: 1px solid var(--border-color); border-right: 1px solid var(--border-color); }
+    .trivia-card.hidden { display: none; }
+    .trivia-card h3 { color: var(--text-primary); margin-bottom: 12px; font-size: 1.2rem; display: flex; align-items: center; gap: 8px; }
+    .trivia-card p { color: var(--text-secondary); line-height: 1.6; font-size: 1.05rem; }
+    .quick-links { margin-bottom: 50px; }
+    .quick-links h3 { color: var(--text-primary); margin-bottom: 20px; font-size: 1.4rem; font-weight: 700; }
+    .ql-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; }
+    .ql-btn { background: var(--card-bg); border: 1px solid var(--border-color); color: var(--text-secondary); padding: 14px 12px; border-radius: 8px; cursor: pointer; transition: all 0.2s; font-weight: 600; text-align: center; font-size: 0.95rem; }
+    .ql-btn:hover { background: var(--bg-primary); color: var(--text-primary); border-color: var(--accent-color); transform: translateY(-2px); }
+    .edu-content { margin-bottom: 50px; }
+    .edu-content h2 { color: var(--text-primary); margin-bottom: 24px; font-size: 2rem; border-bottom: 2px solid var(--border-color); padding-bottom: 12px; font-weight: 800; }
+    .edu-card { background: var(--card-bg); border: 1px solid var(--border-color); padding: 30px; border-radius: 16px; margin-bottom: 24px; transition: border-color 0.2s; }
+    .edu-card h3 { color: var(--text-primary); margin-bottom: 14px; font-size: 1.3rem; font-weight: 700; }
+    .edu-card p { color: var(--text-secondary); line-height: 1.8; font-size: 1.05rem; }
+    .edu-card strong { color: var(--accent-color); font-weight: 600; }
+    .faq-section { margin-bottom: 50px; background: var(--card-bg); padding: 40px; border-radius: 16px; border: 1px solid var(--border-color); }
+    .faq-section h2 { color: var(--text-primary); margin-bottom: 30px; font-size: 2rem; text-align: center; font-weight: 800; }
+    .faq-item { border-bottom: 1px solid var(--border-color); padding: 24px 0; }
+    .faq-item:first-of-type { padding-top: 0; }
+    .faq-item:last-child { border-bottom: none; padding-bottom: 0; }
+    .faq-item h3 { color: var(--text-primary); margin-bottom: 12px; font-size: 1.2rem; font-weight: 600; display: flex; align-items: flex-start; line-height: 1.4; }
+    .faq-item h3::before { content: 'Q:'; color: var(--accent-color); margin-right: 12px; font-weight: 800; opacity: 0.8; }
+    .faq-item p { color: var(--text-secondary); line-height: 1.7; padding-left: 32px; font-size: 1.05rem; }
+    .related-tools { background: var(--card-bg); padding: 32px; border-radius: 16px; border: 1px solid var(--border-color); margin-top: 40px; }
+    .related-tools h3 { color: var(--text-primary); margin-bottom: 20px; font-size: 1.4rem; font-weight: 700; }
+    .related-tools ul { list-style: none; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 12px; }
+    .related-tools li { display: flex; }
+    .related-tools a { display: block; width: 100%; color: var(--text-primary); text-decoration: none; padding: 14px 18px; background: var(--bg-primary); border-radius: 8px; border: 1px solid var(--border-color); transition: all 0.2s; font-weight: 500; display: flex; align-items: center; justify-content: space-between; }
+    .related-tools a::after { content: '→'; color: var(--accent-color); opacity: 0; transform: translateX(-10px); transition: all 0.2s; }
+    .related-tools a:hover { border-color: var(--accent-color); }
+    .related-tools a:hover::after { opacity: 1; transform: translateX(0); }
+    @media (max-width: 600px) { .input-row { flex-direction: column; gap: 16px; } .result-value { font-size: 2.8rem; } .hero h1 { font-size: 2.2rem; } .calc-card { padding: 24px 20px; } .result-card { padding: 30px 20px; } .breakdown-grid { grid-template-columns: 1fr 1fr; } .faq-section { padding: 30px 20px; } }
+    @media (max-width: 400px) { .breakdown-grid { grid-template-columns: 1fr; } }
+  </style>
+</SiteLayout>
