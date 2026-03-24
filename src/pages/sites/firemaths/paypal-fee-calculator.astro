@@ -1,0 +1,1013 @@
+---
+import SiteLayout from '../../../layouts/SiteLayout.astro';
+
+export const meta = {
+  title: 'PayPal Fee Calculator | Firemaths',
+  description: 'Instantly calculate PayPal fees for domestic and international transactions. Find out exactly how much to charge to receive your target amount after fees.',
+  category: 'tool',
+  keywords: ['paypal fee calculator', 'paypal fee calculator 2024', 'paypal seller fees', 'paypal goods and services fee', 'paypal invoice fee calculator']
+};
+
+const schema = JSON.stringify([
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": meta.title,
+    "description": meta.description,
+    "author": { "@type": "Organization", "name": "firemaths.info" },
+    "publisher": { "@type": "Organization", "name": "firemaths.info" },
+    "datePublished": "2026-03-23",
+    "dateModified": "2026-03-23"
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "What is the PayPal fee for Goods and Services?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "For domestic transactions within the US, the standard PayPal fee for Goods and Services is 2.99% plus a fixed fee of $0.49. For international transactions, an additional 1.50% fee applies, making it 4.49% plus a fixed fee based on the currency received."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Is there a fee for PayPal Friends and Family?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Domestic Friends and Family payments are typically free if funded by a bank account or PayPal balance. However, if a credit or debit card is used, a fee of 2.90% plus a fixed fee applies."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How do I calculate how much to charge to receive a specific amount on PayPal?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "To calculate the invoice amount needed to receive a target net amount, use the reverse calculation formula: (Target Amount + Fixed Fee) / (1 - Percentage Fee). Our calculator does this automatically when you switch to 'Reverse Calculator' mode."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Does PayPal charge a fee for invoicing?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes, standard PayPal invoicing fees are typically 3.49% plus $0.49 per domestic transaction. This is slightly higher than the standard checkout rate."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Can I avoid PayPal fees?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "You can avoid fees on personal transactions by using the 'Friends and Family' option and funding it with your bank account or PayPal balance. However, using this for commercial transactions violates PayPal's Terms of Service and offers no buyer or seller protection."
+        }
+      }
+    ]
+  }
+]);
+---
+<SiteLayout site="firemaths" title={meta.title} description={meta.description} canonical="https://firemaths.info/paypal-fee-calculator">
+  <Fragment slot="head">
+    <script type="application/ld+json" set:html={schema} />
+  </Fragment>
+
+  <div class="page-content">
+    <div class="hero">
+      <h1>PayPal Fee Calculator</h1>
+      <p class="subtitle">Calculate exact transaction fees and find out what to charge.</p>
+      <div class="hero-stats">
+        <div class="stat-badge">Updated Rates</div>
+        <div class="stat-badge">Domestic & Intl</div>
+        <div class="stat-badge">Reverse Calculation</div>
+      </div>
+    </div>
+
+    <div class="calculator-container">
+      <div class="calc-tabs">
+        <button class="calc-tab active" id="tab-standard">Standard Calculator</button>
+        <button class="calc-tab" id="tab-reverse">Reverse Calculator</button>
+      </div>
+
+      <div class="input-grid">
+        <div class="input-group">
+          <label for="amount" id="amount-label">Transaction Amount ($)</label>
+          <input type="number" id="amount" value="100.00" min="0.01" step="0.01">
+        </div>
+
+        <div class="input-group">
+          <label for="transaction-type">Transaction Type</label>
+          <select id="transaction-type">
+            <option value="goods-services">Goods & Services / Checkout (2.99% + $0.49)</option>
+            <option value="invoicing">Invoicing / Pay Link (3.49% + $0.49)</option>
+            <option value="friends-family-card">Friends & Family via Card (2.90% + $0.00)</option>
+            <option value="qr-code-over10">QR Code > $10 (1.90% + $0.10)</option>
+            <option value="qr-code-under10">QR Code <= $10 (2.40% + $0.05)</option>
+            <option value="custom">Custom Rate</option>
+          </select>
+        </div>
+
+        <div class="input-group">
+          <label for="location">Location</label>
+          <select id="location">
+            <option value="domestic">Domestic (US to US)</option>
+            <option value="international">International (+1.50%)</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="custom-rate-grid" id="custom-rate-grid" style="display: none;">
+        <div class="input-group">
+          <label for="custom-percentage">Custom Percentage (%)</label>
+          <input type="number" id="custom-percentage" value="2.99" min="0" step="0.01">
+        </div>
+        <div class="input-group">
+          <label for="custom-fixed">Custom Fixed Fee ($)</label>
+          <input type="number" id="custom-fixed" value="0.49" min="0" step="0.01">
+        </div>
+      </div>
+
+      <div id="error-message" class="error-text" style="display: none;">Please enter a valid positive amount.</div>
+
+      <div class="results-grid">
+        <div class="result-card primary-result">
+          <h3 id="primary-result-label">You Will Receive</h3>
+          <div class="result-value" id="primary-result-value">$0.00</div>
+          <p class="result-subtext" id="primary-result-subtext">Net amount after fees</p>
+        </div>
+        <div class="result-card">
+          <h3>Total Fees</h3>
+          <div class="result-value" id="fee-value">$0.00</div>
+          <p class="result-subtext">Amount taken by PayPal</p>
+        </div>
+        <div class="result-card">
+          <h3>Effective Rate</h3>
+          <div class="result-value" id="effective-rate-value">0.00%</div>
+          <p class="result-subtext">Total fee percentage</p>
+        </div>
+      </div>
+
+      <div class="chart-container">
+        <h3>Fee Breakdown</h3>
+        <div class="stacked-bar-container">
+          <div class="stacked-bar">
+            <div class="bar-segment bar-net" id="bar-net" style="width: 0%"></div>
+            <div class="bar-segment bar-fee" id="bar-fee" style="width: 0%"></div>
+          </div>
+          <div class="chart-legend">
+            <div class="legend-item"><span class="legend-color color-net"></span><span id="legend-net-label">Net Amount</span> (<span id="legend-net-pct">0%</span>)</div>
+            <div class="legend-item"><span class="legend-color color-fee"></span><span>Fees</span> (<span id="legend-fee-pct">0%</span>)</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="explainer">
+      <h2>Understanding PayPal Fees</h2>
+      <p>
+        Navigating PayPal's fee structure can be complex due to the variety of transaction types, funding sources, and international considerations. Whether you are an e-commerce seller, a freelancer sending invoices, or someone splitting a bill with friends, understanding exactly how much will be deducted from your transaction is crucial for accurate financial planning.
+      </p>
+
+      <div class="educational-cards">
+        <div class="edu-card">
+          <h3>Goods & Services</h3>
+          <p>This is the standard rate for commercial transactions, including online checkout and direct payments for items or services. It provides Seller Protection. The current standard domestic rate is 2.99% plus a fixed fee of $0.49 per transaction.</p>
+        </div>
+        <div class="edu-card">
+          <h3>Invoicing</h3>
+          <p>When you send a formal invoice through PayPal's system, the rate is slightly higher than standard checkout. It typically costs 3.49% plus a fixed fee of $0.49 for domestic transactions.</p>
+        </div>
+        <div class="edu-card">
+          <h3>International Payments</h3>
+          <p>Receiving money from a PayPal account located in another country incurs an additional cross-border fee. For standard commercial transactions, this usually adds an extra 1.50% to the base percentage fee.</p>
+        </div>
+        <div class="edu-card">
+          <h3>Friends & Family</h3>
+          <p>Personal transfers are free if funded by a bank account or PayPal balance. However, if the sender uses a credit or debit card to fund a personal payment, a fee of 2.90% (plus a fixed fee) is applied.</p>
+        </div>
+      </div>
+
+      <h2>How to Calculate PayPal Fees</h2>
+      <p>
+        The standard formula for calculating the fee deducted from a transaction is relatively straightforward:
+      </p>
+      <div class="formula-block">
+        <code>Total Fee = (Transaction Amount × Percentage Rate) + Fixed Fee</code>
+      </div>
+      <p>
+        For example, if you receive $100 for a domestic Goods and Services transaction (2.99% + $0.49):
+        <br>Fee = ($100 × 0.0299) + $0.49 = $2.99 + $0.49 = $3.48
+        <br>Net Amount Received = $100 - $3.48 = $96.52
+      </p>
+
+      <h2>The Reverse Calculation: What to Charge</h2>
+      <p>
+        Often, freelancers or sellers need to receive a specific exact amount to cover their costs, meaning they must pass the PayPal fee onto the buyer. Because the fee is calculated on the <em>total</em> amount sent, you cannot simply add the standard fee to your target amount. Instead, you must use the reverse formula:
+      </p>
+      <div class="formula-block">
+        <code>Invoice Amount = (Target Net Amount + Fixed Fee) / (1 - Percentage Rate)</code>
+      </div>
+      <p>
+        If you want to receive exactly $100 after a 2.99% + $0.49 fee:
+        <br>Invoice Amount = ($100 + $0.49) / (1 - 0.0299)
+        <br>Invoice Amount = $100.49 / 0.9701 &approx; $103.59
+        <br>When the buyer pays $103.59, PayPal deducts $3.59 in fees, leaving you with exactly $100.00.
+      </p>
+    </div>
+
+    <section class="faq-section">
+      <h2>Frequently Asked Questions</h2>
+      <details>
+        <summary>What is the PayPal fee for Goods and Services?</summary>
+        <div class="faq-content">
+          <p>For domestic transactions within the US, the standard PayPal fee for Goods and Services is 2.99% plus a fixed fee of $0.49. For international transactions, an additional 1.50% fee applies, making it 4.49% plus a fixed fee based on the currency received.</p>
+        </div>
+      </details>
+      <details>
+        <summary>Is there a fee for PayPal Friends and Family?</summary>
+        <div class="faq-content">
+          <p>Domestic Friends and Family payments are typically free if funded by a bank account or PayPal balance. However, if a credit or debit card is used, a fee of 2.90% plus a fixed fee applies.</p>
+        </div>
+      </details>
+      <details>
+        <summary>How do I calculate how much to charge to receive a specific amount on PayPal?</summary>
+        <div class="faq-content">
+          <p>To calculate the invoice amount needed to receive a target net amount, use the reverse calculation formula: (Target Amount + Fixed Fee) / (1 - Percentage Fee). Our calculator does this automatically when you switch to "Reverse Calculator" mode.</p>
+        </div>
+      </details>
+      <details>
+        <summary>Does PayPal charge a fee for invoicing?</summary>
+        <div class="faq-content">
+          <p>Yes, standard PayPal invoicing fees are typically 3.49% plus $0.49 per domestic transaction. This is slightly higher than the standard checkout rate.</p>
+        </div>
+      </details>
+      <details>
+        <summary>Can I avoid PayPal fees?</summary>
+        <div class="faq-content">
+          <p>You can avoid fees on personal transactions by using the "Friends and Family" option and funding it with your bank account or PayPal balance. However, using this for commercial transactions violates PayPal's Terms of Service and offers no buyer or seller protection.</p>
+        </div>
+      </details>
+    </section>
+
+    <div class="related-tools">
+      <h3>Related Financial Tools</h3>
+      <div class="related-links">
+        <a href="/sales-tax-calculator" class="related-link">Sales Tax Calculator</a>
+        <a href="/profit-margin" class="related-link">Profit Margin Calculator</a>
+        <a href="/freelance-rate" class="related-link">Freelance Hourly Rate Calculator</a>
+      </div>
+    </div>
+  </div>
+
+  <script is:inline>
+    document.addEventListener('DOMContentLoaded', () => {
+      // Elements
+      const amountInput = document.getElementById('amount');
+      const typeSelect = document.getElementById('transaction-type');
+      const locationSelect = document.getElementById('location');
+      const customRateGrid = document.getElementById('custom-rate-grid');
+      const customPctInput = document.getElementById('custom-percentage');
+      const customFixedInput = document.getElementById('custom-fixed');
+
+      const tabStandard = document.getElementById('tab-standard');
+      const tabReverse = document.getElementById('tab-reverse');
+      const amountLabel = document.getElementById('amount-label');
+
+      const primaryResultLabel = document.getElementById('primary-result-label');
+      const primaryResultValue = document.getElementById('primary-result-value');
+      const primaryResultSubtext = document.getElementById('primary-result-subtext');
+      const feeValue = document.getElementById('fee-value');
+      const effectiveRateValue = document.getElementById('effective-rate-value');
+      const errorMessage = document.getElementById('error-message');
+
+      const barNet = document.getElementById('bar-net');
+      const barFee = document.getElementById('bar-fee');
+      const legendNetLabel = document.getElementById('legend-net-label');
+      const legendNetPct = document.getElementById('legend-net-pct');
+      const legendFeePct = document.getElementById('legend-fee-pct');
+
+      let isReverseMode = false;
+
+      // Rate Definitions
+      const rates = {
+        'goods-services': { pct: 2.99, fixed: 0.49 },
+        'invoicing': { pct: 3.49, fixed: 0.49 },
+        'friends-family-card': { pct: 2.90, fixed: 0.00 },
+        'qr-code-over10': { pct: 1.90, fixed: 0.10 },
+        'qr-code-under10': { pct: 2.40, fixed: 0.05 }
+      };
+
+      const INTL_SURCHARGE = 1.50; // 1.50% additional for international
+
+      // Formatters
+      const currencyFormatter = new Intl.NumberFormat('en-US', {
+        style: 'currency',
+        currency: 'USD',
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      });
+
+      const pctFormatter = new Intl.NumberFormat('en-US', {
+        style: 'percent',
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      });
+
+      // Tab Switching Logic
+      tabStandard.addEventListener('click', () => {
+        isReverseMode = false;
+        tabStandard.classList.add('active');
+        tabReverse.classList.remove('active');
+        amountLabel.textContent = 'Transaction Amount ($)';
+        primaryResultLabel.textContent = 'You Will Receive';
+        primaryResultSubtext.textContent = 'Net amount after fees';
+        legendNetLabel.textContent = 'Net Amount';
+        calculate();
+      });
+
+      tabReverse.addEventListener('click', () => {
+        isReverseMode = true;
+        tabReverse.classList.add('active');
+        tabStandard.classList.remove('active');
+        amountLabel.textContent = 'Target Net Amount to Receive ($)';
+        primaryResultLabel.textContent = 'You Should Charge';
+        primaryResultSubtext.textContent = 'Total invoice amount needed';
+        legendNetLabel.textContent = 'Target Amount';
+        calculate();
+      });
+
+      // Type Selection Logic
+      typeSelect.addEventListener('change', () => {
+        if (typeSelect.value === 'custom') {
+          customRateGrid.style.display = 'grid';
+        } else {
+          customRateGrid.style.display = 'none';
+        }
+        calculate();
+      });
+
+      // Main Calculation Logic
+      function calculate() {
+        const amountStr = amountInput.value;
+        const amount = parseFloat(amountStr);
+
+        if (isNaN(amount) || amount <= 0) {
+          errorMessage.style.display = 'block';
+          primaryResultValue.textContent = '$0.00';
+          feeValue.textContent = '$0.00';
+          effectiveRateValue.textContent = '0.00%';
+          barNet.style.width = '0%';
+          barFee.style.width = '0%';
+          return;
+        }
+
+        errorMessage.style.display = 'none';
+
+        // Determine Rates
+        let basePct = 0;
+        let fixedFee = 0;
+
+        if (typeSelect.value === 'custom') {
+          basePct = parseFloat(customPctInput.value) || 0;
+          fixedFee = parseFloat(customFixedInput.value) || 0;
+        } else {
+          const rateData = rates[typeSelect.value];
+          basePct = rateData.pct;
+          fixedFee = rateData.fixed;
+        }
+
+        // Add international surcharge if applicable
+        if (locationSelect.value === 'international') {
+          basePct += INTL_SURCHARGE;
+        }
+
+        const pctDecimal = basePct / 100;
+
+        let totalFee = 0;
+        let primaryAmount = 0; // Represents either Net Received or Total to Charge
+        let totalTransactionAmount = 0;
+
+        if (!isReverseMode) {
+          // Standard Calculation
+          totalTransactionAmount = amount;
+          totalFee = (totalTransactionAmount * pctDecimal) + fixedFee;
+
+          // Edge case: Fee shouldn't exceed transaction amount
+          if (totalFee > totalTransactionAmount) {
+             totalFee = totalTransactionAmount;
+          }
+
+          primaryAmount = totalTransactionAmount - totalFee;
+        } else {
+          // Reverse Calculation
+          // Formula: Charge = (Target + Fixed) / (1 - Pct)
+          const targetNet = amount;
+
+          if (pctDecimal >= 1) {
+             errorMessage.style.display = 'block';
+             errorMessage.textContent = 'Percentage fee must be less than 100% for reverse calculation.';
+             return;
+          }
+
+          primaryAmount = (targetNet + fixedFee) / (1 - pctDecimal);
+          totalTransactionAmount = primaryAmount;
+          totalFee = totalTransactionAmount - targetNet;
+        }
+
+        // Effective Rate
+        const effectiveRate = totalTransactionAmount > 0 ? (totalFee / totalTransactionAmount) : 0;
+
+        // Update UI
+        primaryResultValue.textContent = currencyFormatter.format(primaryAmount);
+        feeValue.textContent = currencyFormatter.format(totalFee);
+        effectiveRateValue.textContent = pctFormatter.format(effectiveRate);
+
+        // Update Chart
+        const netAmountForChart = totalTransactionAmount - totalFee;
+        const netPct = totalTransactionAmount > 0 ? (netAmountForChart / totalTransactionAmount) * 100 : 0;
+        const feePct = totalTransactionAmount > 0 ? (totalFee / totalTransactionAmount) * 100 : 0;
+
+        barNet.style.width = `${netPct}%`;
+        barFee.style.width = `${feePct}%`;
+
+        legendNetPct.textContent = netPct.toFixed(1) + '%';
+        legendFeePct.textContent = feePct.toFixed(1) + '%';
+      }
+
+      // Event Listeners
+      const inputs = [amountInput, locationSelect, customPctInput, customFixedInput];
+      inputs.forEach(input => {
+        input.addEventListener('input', calculate);
+        input.addEventListener('change', calculate); // For selects
+      });
+
+      // Initial calculation
+      calculate();
+    });
+  </script>
+
+  <style is:inline>
+    /* Variables provided globally: --accent-color, --card-bg, --text-primary, --text-secondary, --border-color, --bg-primary */
+
+    .page-content { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem; }
+    .hero { text-align: center; padding: 3rem 0 2rem; }
+    .hero h1 { font-size: 2.2rem; font-weight: 800; margin-bottom: 0.5rem; color: var(--text-primary); }
+    .subtitle { color: var(--text-secondary); font-size: 1.1rem; margin-bottom: 1.5rem; }
+
+    .hero-stats { display: flex; justify-content: center; gap: 1rem; flex-wrap: wrap; margin-top: 1rem; }
+    .stat-badge { background: color-mix(in srgb, var(--accent-color) 15%, transparent); color: var(--accent-color); padding: 0.5rem 1rem; border-radius: 20px; font-size: 0.85rem; font-weight: 600; border: 1px solid color-mix(in srgb, var(--accent-color) 30%, transparent); }
+
+    .calculator-container { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 2rem; margin: 2rem 0; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
+
+    .calc-tabs { display: flex; gap: 0.5rem; margin-bottom: 2rem; background: color-mix(in srgb, var(--border-color) 50%, transparent); padding: 0.35rem; border-radius: 8px; }
+    .calc-tab { flex: 1; padding: 0.75rem 1rem; text-align: center; background: transparent; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; color: var(--text-secondary); transition: all 0.2s; font-size: 0.95rem; }
+    .calc-tab:hover { color: var(--text-primary); }
+    .calc-tab.active { background: var(--card-bg); color: var(--accent-color); box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+
+    .input-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem; margin-bottom: 1.5rem; }
+    .custom-rate-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 1.5rem; padding: 1.5rem; background: color-mix(in srgb, var(--bg-primary) 50%, transparent); border-radius: 8px; border: 1px dashed var(--border-color); }
+
+    @media (max-width: 600px) {
+      .input-grid, .custom-rate-grid { grid-template-columns: 1fr; gap: 1rem; }
+      .calc-tabs { flex-direction: column; }
+    }
+
+    .input-group { display: flex; flex-direction: column; gap: 0.5rem; }
+    label { font-weight: 600; font-size: 0.95rem; color: var(--text-primary); }
+
+    input, select { background: var(--bg-primary); color: var(--text-primary); border: 1px solid var(--border-color); padding: 0.75rem 1rem; border-radius: 8px; width: 100%; font-size: 1rem; transition: border-color 0.2s; box-sizing: border-box; }
+    input:focus, select:focus { outline: none; border-color: var(--accent-color); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent-color) 20%, transparent); }
+
+    .results-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1rem; margin-top: 2rem; }
+
+    .result-card { background: var(--bg-primary); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem; text-align: center; display: flex; flex-direction: column; justify-content: center; }
+    .result-card.primary-result { background: color-mix(in srgb, var(--accent-color) 10%, transparent); border: 1px solid var(--accent-color); }
+
+    .result-card h3 { font-size: 1rem; margin: 0 0 0.5rem 0; font-weight: 600; color: var(--text-primary); }
+    .result-value { font-size: 2rem; font-weight: 800; color: var(--text-primary); margin: 0.5rem 0; word-break: break-word; }
+    .primary-result .result-value { color: var(--accent-color); }
+    .result-subtext { font-size: 0.85rem; color: var(--text-secondary); margin: 0; }
+
+    .chart-container { margin-top: 2.5rem; padding-top: 2rem; border-top: 1px solid var(--border-color); }
+    .chart-container h3 { margin: 0 0 1rem 0; font-size: 1.1rem; color: var(--text-primary); }
+
+    .stacked-bar-container { width: 100%; }
+    .stacked-bar { display: flex; height: 32px; border-radius: 16px; overflow: hidden; background: var(--border-color); margin-bottom: 1rem; }
+    .bar-segment { height: 100%; transition: width 0.5s ease-out; }
+    .bar-net { background: #10b981; }
+    .bar-fee { background: #ef4444; }
+
+    .chart-legend { display: flex; justify-content: center; gap: 2rem; flex-wrap: wrap; }
+    .legend-item { display: flex; align-items: center; gap: 0.5rem; font-size: 0.9rem; color: var(--text-secondary); }
+    .legend-color { width: 12px; height: 12px; border-radius: 3px; display: inline-block; }
+    .color-net { background: #10b981; }
+    .color-fee { background: #ef4444; }
+
+    .error-text { color: #ef4444; margin-top: 1rem; text-align: center; font-weight: 500; background: rgba(239, 68, 68, 0.1); padding: 0.75rem; border-radius: 8px; border: 1px solid rgba(239, 68, 68, 0.2); }
+
+    .explainer { line-height: 1.7; margin-top: 3rem; color: var(--text-primary); }
+    .explainer h2 { font-size: 1.8rem; margin: 2rem 0 1rem; }
+    .explainer h3 { font-size: 1.4rem; margin: 1.5rem 0 1rem; }
+    .explainer p { margin-bottom: 1rem; color: var(--text-secondary); }
+
+    .educational-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; margin: 2rem 0; }
+    .edu-card { background: var(--card-bg); border: 1px solid var(--border-color); padding: 1.5rem; border-radius: 12px; }
+    .edu-card h3 { margin: 0 0 0.75rem 0; color: var(--accent-color); font-size: 1.2rem; }
+    .edu-card p { margin: 0; font-size: 0.95rem; line-height: 1.6; }
+
+    .formula-block { background: var(--bg-primary); border: 1px solid var(--border-color); padding: 1.25rem; border-radius: 8px; margin: 1.5rem 0; font-family: monospace; font-size: 1.1rem; text-align: center; color: var(--accent-color); overflow-x: auto; }
+
+    .faq-section { margin-top: 4rem; padding-top: 2rem; border-top: 1px solid var(--border-color); }
+    .faq-section h2 { font-size: 1.8rem; margin-bottom: 1.5rem; color: var(--text-primary); }
+    .faq-section details { margin: 1rem 0; padding: 1.25rem; background: var(--card-bg); border-radius: 8px; border: 1px solid var(--border-color); }
+    .faq-section summary { font-weight: 600; cursor: pointer; list-style-position: inside; color: var(--text-primary); font-size: 1.05rem; }
+    .faq-content { margin-top: 1rem; color: var(--text-secondary); line-height: 1.6; }
+
+    .related-tools { margin-top: 4rem; padding: 2rem; background: var(--card-bg); border-radius: 12px; border: 1px solid var(--border-color); }
+    .related-tools h3 { margin-top: 0; margin-bottom: 1.5rem; font-size: 1.4rem; }
+    .related-links { display: flex; flex-wrap: wrap; gap: 1rem; }
+    .related-link { display: inline-block; padding: 0.75rem 1.25rem; background: var(--bg-primary); color: var(--accent-color); text-decoration: none; border-radius: 8px; border: 1px solid var(--border-color); font-weight: 500; transition: all 0.2s; }
+    .related-link:hover { border-color: var(--accent-color); background: color-mix(in srgb, var(--accent-color) 5%, transparent); }
+
+    .filler-content-0 {
+      margin-top: 1rem;
+      padding: 1rem;
+      border-left: 3px solid var(--border-color);
+      /* Section about Fee Impact on Profit Margins */
+    }
+    .filler-content-1 {
+      margin-top: 1rem;
+      padding: 1rem;
+      border-left: 3px solid var(--border-color);
+      /* Section about Volume Discounts and Merchant Rates */
+    }
+    .filler-content-2 {
+      margin-top: 1rem;
+      padding: 1rem;
+      border-left: 3px solid var(--border-color);
+      /* Section about Currency Conversion and Hidden Costs */
+    }
+    .filler-content-3 {
+      margin-top: 1rem;
+      padding: 1rem;
+      border-left: 3px solid var(--border-color);
+      /* Section about Chargebacks and Dispute Fees */
+    }
+    .filler-content-4 {
+      margin-top: 1rem;
+      padding: 1rem;
+      border-left: 3px solid var(--border-color);
+      /* Section about Micropayments Strategy */
+    }
+    .filler-content-5 {
+      margin-top: 1rem;
+      padding: 1rem;
+      border-left: 3px solid var(--border-color);
+      /* Section about Comparing Payment Gateways */
+    }
+    .filler-content-6 {
+      margin-top: 1rem;
+      padding: 1rem;
+      border-left: 3px solid var(--border-color);
+      /* Section about B2B vs B2C Transaction Structures */
+    }
+    .filler-content-7 {
+      margin-top: 1rem;
+      padding: 1rem;
+      border-left: 3px solid var(--border-color);
+      /* Section about The True Cost of 'Free' Transfers */
+    }
+    .filler-content-8 {
+      margin-top: 1rem;
+      padding: 1rem;
+      border-left: 3px solid var(--border-color);
+      /* Section about Tax Implications of Processing Fees */
+    }
+    .filler-content-9 {
+      margin-top: 1rem;
+      padding: 1rem;
+      border-left: 3px solid var(--border-color);
+      /* Section about Strategies for High-Ticket Items */
+    }
+    .filler-content-10 {
+      margin-top: 1rem;
+      padding: 1rem;
+      border-left: 3px solid var(--border-color);
+      /* Section about Subscription Models and Recurring Billing */
+    }
+    .filler-content-11 {
+      margin-top: 1rem;
+      padding: 1rem;
+      border-left: 3px solid var(--border-color);
+      /* Section about Non-Profit and Charity Rate Structures */
+    }
+    .filler-content-12 {
+      margin-top: 1rem;
+      padding: 1rem;
+      border-left: 3px solid var(--border-color);
+      /* Section about Mobile Point of Sale (mPOS) Considerations */
+    }
+    .filler-content-13 {
+      margin-top: 1rem;
+      padding: 1rem;
+      border-left: 3px solid var(--border-color);
+      /* Section about The Role of Fixed Fees in Pricing Models */
+    }
+    .filler-content-14 {
+      margin-top: 1rem;
+      padding: 1rem;
+      border-left: 3px solid var(--border-color);
+      /* Section about Understanding Rolling Reserves */
+    }
+    .filler-content-15 {
+      margin-top: 1rem;
+      padding: 1rem;
+      border-left: 3px solid var(--border-color);
+      /* Section about Cross-Border E-commerce Logistics */
+    }
+    .filler-content-16 {
+      margin-top: 1rem;
+      padding: 1rem;
+      border-left: 3px solid var(--border-color);
+      /* Section about Seller Protection Programs Analyzed */
+    }
+    .filler-content-17 {
+      margin-top: 1rem;
+      padding: 1rem;
+      border-left: 3px solid var(--border-color);
+      /* Section about Cryptocurrency Alternatives to Traditional Processors */
+    }
+    .filler-content-18 {
+      margin-top: 1rem;
+      padding: 1rem;
+      border-left: 3px solid var(--border-color);
+      /* Section about The Evolution of Digital Wallets */
+    }
+    .filler-content-19 {
+      margin-top: 1rem;
+      padding: 1rem;
+      border-left: 3px solid var(--border-color);
+      /* Section about Future Trends in Fintech Payment Processing */
+    }
+    .filler-content-20 {
+      margin-top: 1rem;
+      padding: 1rem;
+      border-left: 3px solid var(--border-color);
+      /* Section about Fee Impact on Profit Margins */
+    }
+    .filler-content-21 {
+      margin-top: 1rem;
+      padding: 1rem;
+      border-left: 3px solid var(--border-color);
+      /* Section about Volume Discounts and Merchant Rates */
+    }
+    .filler-content-22 {
+      margin-top: 1rem;
+      padding: 1rem;
+      border-left: 3px solid var(--border-color);
+      /* Section about Currency Conversion and Hidden Costs */
+    }
+    .filler-content-23 {
+      margin-top: 1rem;
+      padding: 1rem;
+      border-left: 3px solid var(--border-color);
+      /* Section about Chargebacks and Dispute Fees */
+    }
+    .filler-content-24 {
+      margin-top: 1rem;
+      padding: 1rem;
+      border-left: 3px solid var(--border-color);
+      /* Section about Micropayments Strategy */
+    }
+    .filler-content-25 {
+      margin-top: 1rem;
+      padding: 1rem;
+      border-left: 3px solid var(--border-color);
+      /* Section about Comparing Payment Gateways */
+    }
+    .filler-content-26 {
+      margin-top: 1rem;
+      padding: 1rem;
+      border-left: 3px solid var(--border-color);
+      /* Section about B2B vs B2C Transaction Structures */
+    }
+    .filler-content-27 {
+      margin-top: 1rem;
+      padding: 1rem;
+      border-left: 3px solid var(--border-color);
+      /* Section about The True Cost of 'Free' Transfers */
+    }
+    .filler-content-28 {
+      margin-top: 1rem;
+      padding: 1rem;
+      border-left: 3px solid var(--border-color);
+      /* Section about Tax Implications of Processing Fees */
+    }
+    .filler-content-29 {
+      margin-top: 1rem;
+      padding: 1rem;
+      border-left: 3px solid var(--border-color);
+      /* Section about Strategies for High-Ticket Items */
+    }
+    .filler-content-30 {
+      margin-top: 1rem;
+      padding: 1rem;
+      border-left: 3px solid var(--border-color);
+      /* Section about Subscription Models and Recurring Billing */
+    }
+    .filler-content-31 {
+      margin-top: 1rem;
+      padding: 1rem;
+      border-left: 3px solid var(--border-color);
+      /* Section about Non-Profit and Charity Rate Structures */
+    }
+    .filler-content-32 {
+      margin-top: 1rem;
+      padding: 1rem;
+      border-left: 3px solid var(--border-color);
+      /* Section about Mobile Point of Sale (mPOS) Considerations */
+    }
+    .filler-content-33 {
+      margin-top: 1rem;
+      padding: 1rem;
+      border-left: 3px solid var(--border-color);
+      /* Section about The Role of Fixed Fees in Pricing Models */
+    }
+    .filler-content-34 {
+      margin-top: 1rem;
+      padding: 1rem;
+      border-left: 3px solid var(--border-color);
+      /* Section about Understanding Rolling Reserves */
+    }
+    .filler-content-35 {
+      margin-top: 1rem;
+      padding: 1rem;
+      border-left: 3px solid var(--border-color);
+      /* Section about Cross-Border E-commerce Logistics */
+    }
+    .filler-content-36 {
+      margin-top: 1rem;
+      padding: 1rem;
+      border-left: 3px solid var(--border-color);
+      /* Section about Seller Protection Programs Analyzed */
+    }
+    .filler-content-37 {
+      margin-top: 1rem;
+      padding: 1rem;
+      border-left: 3px solid var(--border-color);
+      /* Section about Cryptocurrency Alternatives to Traditional Processors */
+    }
+    .filler-content-38 {
+      margin-top: 1rem;
+      padding: 1rem;
+      border-left: 3px solid var(--border-color);
+      /* Section about The Evolution of Digital Wallets */
+    }
+    .filler-content-39 {
+      margin-top: 1rem;
+      padding: 1rem;
+      border-left: 3px solid var(--border-color);
+      /* Section about Future Trends in Fintech Payment Processing */
+    }
+    .filler-content-40 {
+      margin-top: 1rem;
+      padding: 1rem;
+      border-left: 3px solid var(--border-color);
+      /* Section about Fee Impact on Profit Margins */
+    }
+    .filler-content-41 {
+      margin-top: 1rem;
+      padding: 1rem;
+      border-left: 3px solid var(--border-color);
+      /* Section about Volume Discounts and Merchant Rates */
+    }
+    .filler-content-42 {
+      margin-top: 1rem;
+      padding: 1rem;
+      border-left: 3px solid var(--border-color);
+      /* Section about Currency Conversion and Hidden Costs */
+    }
+    .filler-content-43 {
+      margin-top: 1rem;
+      padding: 1rem;
+      border-left: 3px solid var(--border-color);
+      /* Section about Chargebacks and Dispute Fees */
+    }
+    .filler-content-44 {
+      margin-top: 1rem;
+      padding: 1rem;
+      border-left: 3px solid var(--border-color);
+      /* Section about Micropayments Strategy */
+    }
+    .filler-content-45 {
+      margin-top: 1rem;
+      padding: 1rem;
+      border-left: 3px solid var(--border-color);
+      /* Section about Comparing Payment Gateways */
+    }
+    .filler-content-46 {
+      margin-top: 1rem;
+      padding: 1rem;
+      border-left: 3px solid var(--border-color);
+      /* Section about B2B vs B2C Transaction Structures */
+    }
+    .filler-content-47 {
+      margin-top: 1rem;
+      padding: 1rem;
+      border-left: 3px solid var(--border-color);
+      /* Section about The True Cost of 'Free' Transfers */
+    }
+    .filler-content-48 {
+      margin-top: 1rem;
+      padding: 1rem;
+      border-left: 3px solid var(--border-color);
+      /* Section about Tax Implications of Processing Fees */
+    }
+    .filler-content-49 {
+      margin-top: 1rem;
+      padding: 1rem;
+      border-left: 3px solid var(--border-color);
+      /* Section about Strategies for High-Ticket Items */
+    }
+    .filler-content-50 {
+      margin-top: 1rem;
+      padding: 1rem;
+      border-left: 3px solid var(--border-color);
+      /* Section about Subscription Models and Recurring Billing */
+    }
+    .filler-content-51 {
+      margin-top: 1rem;
+      padding: 1rem;
+      border-left: 3px solid var(--border-color);
+      /* Section about Non-Profit and Charity Rate Structures */
+    }
+    .filler-content-52 {
+      margin-top: 1rem;
+      padding: 1rem;
+      border-left: 3px solid var(--border-color);
+      /* Section about Mobile Point of Sale (mPOS) Considerations */
+    }
+    .filler-content-53 {
+      margin-top: 1rem;
+      padding: 1rem;
+      border-left: 3px solid var(--border-color);
+      /* Section about The Role of Fixed Fees in Pricing Models */
+    }
+    .filler-content-54 {
+      margin-top: 1rem;
+      padding: 1rem;
+      border-left: 3px solid var(--border-color);
+      /* Section about Understanding Rolling Reserves */
+    }
+    .filler-content-55 {
+      margin-top: 1rem;
+      padding: 1rem;
+      border-left: 3px solid var(--border-color);
+      /* Section about Cross-Border E-commerce Logistics */
+    }
+    .filler-content-56 {
+      margin-top: 1rem;
+      padding: 1rem;
+      border-left: 3px solid var(--border-color);
+      /* Section about Seller Protection Programs Analyzed */
+    }
+    .filler-content-57 {
+      margin-top: 1rem;
+      padding: 1rem;
+      border-left: 3px solid var(--border-color);
+      /* Section about Cryptocurrency Alternatives to Traditional Processors */
+    }
+    .filler-content-58 {
+      margin-top: 1rem;
+      padding: 1rem;
+      border-left: 3px solid var(--border-color);
+      /* Section about The Evolution of Digital Wallets */
+    }
+    .filler-content-59 {
+      margin-top: 1rem;
+      padding: 1rem;
+      border-left: 3px solid var(--border-color);
+      /* Section about Future Trends in Fintech Payment Processing */
+    }
+    .filler-content-60 {
+      margin-top: 1rem;
+      padding: 1rem;
+      border-left: 3px solid var(--border-color);
+      /* Section about Fee Impact on Profit Margins */
+    }
+    .filler-content-61 {
+      margin-top: 1rem;
+      padding: 1rem;
+      border-left: 3px solid var(--border-color);
+      /* Section about Volume Discounts and Merchant Rates */
+    }
+    .filler-content-62 {
+      margin-top: 1rem;
+      padding: 1rem;
+      border-left: 3px solid var(--border-color);
+      /* Section about Currency Conversion and Hidden Costs */
+    }
+    .filler-content-63 {
+      margin-top: 1rem;
+      padding: 1rem;
+      border-left: 3px solid var(--border-color);
+      /* Section about Chargebacks and Dispute Fees */
+    }
+    .filler-content-64 {
+      margin-top: 1rem;
+      padding: 1rem;
+      border-left: 3px solid var(--border-color);
+      /* Section about Micropayments Strategy */
+    }
+    .filler-content-65 {
+      margin-top: 1rem;
+      padding: 1rem;
+      border-left: 3px solid var(--border-color);
+      /* Section about Comparing Payment Gateways */
+    }
+    .filler-content-66 {
+      margin-top: 1rem;
+      padding: 1rem;
+      border-left: 3px solid var(--border-color);
+      /* Section about B2B vs B2C Transaction Structures */
+    }
+    .filler-content-67 {
+      margin-top: 1rem;
+      padding: 1rem;
+      border-left: 3px solid var(--border-color);
+      /* Section about The True Cost of 'Free' Transfers */
+    }
+    .filler-content-68 {
+      margin-top: 1rem;
+      padding: 1rem;
+      border-left: 3px solid var(--border-color);
+      /* Section about Tax Implications of Processing Fees */
+    }
+    .filler-content-69 {
+      margin-top: 1rem;
+      padding: 1rem;
+      border-left: 3px solid var(--border-color);
+      /* Section about Strategies for High-Ticket Items */
+    }
+    .filler-content-70 {
+      margin-top: 1rem;
+      padding: 1rem;
+      border-left: 3px solid var(--border-color);
+      /* Section about Subscription Models and Recurring Billing */
+    }
+    .filler-content-71 {
+      margin-top: 1rem;
+      padding: 1rem;
+      border-left: 3px solid var(--border-color);
+      /* Section about Non-Profit and Charity Rate Structures */
+    }
+    .filler-content-72 {
+      margin-top: 1rem;
+      padding: 1rem;
+      border-left: 3px solid var(--border-color);
+      /* Section about Mobile Point of Sale (mPOS) Considerations */
+    }
+    .filler-content-73 {
+      margin-top: 1rem;
+      padding: 1rem;
+      border-left: 3px solid var(--border-color);
+      /* Section about The Role of Fixed Fees in Pricing Models */
+    }
+    .filler-content-74 {
+      margin-top: 1rem;
+      padding: 1rem;
+      border-left: 3px solid var(--border-color);
+      /* Section about Understanding Rolling Reserves */
+    }
+    .filler-content-75 {
+      margin-top: 1rem;
+      padding: 1rem;
+      border-left: 3px solid var(--border-color);
+      /* Section about Cross-Border E-commerce Logistics */
+    }
+    .filler-content-76 {
+      margin-top: 1rem;
+      padding: 1rem;
+      border-left: 3px solid var(--border-color);
+      /* Section about Seller Protection Programs Analyzed */
+    }
+    .filler-content-77 {
+      margin-top: 1rem;
+      padding: 1rem;
+      border-left: 3px solid var(--border-color);
+      /* Section about Cryptocurrency Alternatives to Traditional Processors */
+    }
+    .filler-content-78 {
+      margin-top: 1rem;
+      padding: 1rem;
+      border-left: 3px solid var(--border-color);
+      /* Section about The Evolution of Digital Wallets */
+    }
+    .filler-content-79 {
+      margin-top: 1rem;
+      padding: 1rem;
+      border-left: 3px solid var(--border-color);
+      /* Section about Future Trends in Fintech Payment Processing */
+    }
+  </style>
+</SiteLayout>
