@@ -1,0 +1,189 @@
+---
+import SiteLayout from '../../../layouts/SiteLayout.astro';
+import { sites } from '../../../config/sites';
+
+const SITE_ID = 'trunkpress';
+const siteConfig = sites[SITE_ID];
+
+const schema = {
+  "@context": "https://schema.org",
+  "@type": "NewsMediaOrganization",
+  "name": siteConfig.name,
+  "url": `https://${siteConfig.domain}/`,
+  "description": siteConfig.description
+};
+
+const allPages = import.meta.glob('./*.astro', { eager: true });
+
+interface PageMeta {
+  title: string;
+  description: string;
+  category: string;
+  published?: string;
+  stat?: string;
+  statLabel?: string;
+  priority?: number;
+  emoji?: string;
+}
+
+interface PageEntry {
+  slug: string;
+  meta: PageMeta;
+}
+
+const pages: PageEntry[] = Object.entries(allPages)
+  .filter(([path]) => !path.includes('index'))
+  .map(([path, mod]: [string, any]) => ({
+    slug: path.replace('./', '').replace('.astro', ''),
+    meta: mod.meta || {
+      title: path.replace('./', '').replace('.astro', '').replace(/-/g, ' '),
+      description: '',
+      category: 'world',
+    },
+  }))
+  .sort((a, b) => {
+    const dateA = a.meta.published || '2026-01-01';
+    const dateB = b.meta.published || '2026-01-01';
+    return dateB.localeCompare(dateA);
+  });
+
+// CNN-style categories
+const categories = [
+  { id: 'world', label: '🌍 WORLD', title: 'World News', sub: 'What\'s happening everywhere that matters.' },
+  { id: 'politics', label: '🏛️ POLITICS', title: 'Politics', sub: 'Power moves, policy shifts, and political theater.' },
+  { id: 'business', label: '💰 BUSINESS', title: 'Business & Economy', sub: 'Markets, money, and the forces behind them.' },
+  { id: 'tech', label: '⚡ TECH', title: 'Technology', sub: 'The tech shaping tomorrow — and breaking today.' },
+  { id: 'science', label: '🔬 SCIENCE', title: 'Science', sub: 'Discoveries, breakthroughs, and the unknown.' },
+  { id: 'health', label: '🏥 HEALTH', title: 'Health', sub: 'Bodies, minds, and the systems that fail them.' },
+  { id: 'climate', label: '🌡️ CLIMATE', title: 'Climate & Environment', sub: 'The planet\'s report card. It\'s not great.' },
+  { id: 'culture', label: '🎭 CULTURE', title: 'Culture & Entertainment', sub: 'The stories, sounds, and screens we can\'t quit.' },
+  { id: 'sports', label: '🏆 SPORTS', title: 'Sports', sub: 'Scores, drama, and the athletes making noise.' },
+  { id: 'opinion', label: '💬 OPINION', title: 'Opinion & Analysis', sub: 'Hot takes backed by cold facts.' },
+];
+
+function getCategoryEmoji(cat: string): string {
+  const map: Record<string, string> = {
+    world: '🌍', politics: '🏛️', business: '💰', tech: '⚡',
+    science: '🔬', health: '🏥', climate: '🌡️', culture: '🎭',
+    sports: '🏆', opinion: '💬'
+  };
+  return map[cat] || '📰';
+}
+
+function truncate(text: string, max: number): string {
+  if (!text || text.length <= max) return text || '';
+  return text.slice(0, max).replace(/\s+\S*$/, '') + '…';
+}
+---
+
+<SiteLayout
+  site={SITE_ID}
+  title="Trunk Press — News That Hits Different"
+  description={siteConfig.description}
+  canonical={`https://${siteConfig.domain}/`}
+  schema={schema}
+>
+  <!-- Hero — Vice-inspired bold layout -->
+  <div class="tp-hero">
+    <div class="tp-hero-inner">
+      <div class="tp-brand">TRUNK<span class="tp-brand-accent">PRESS</span></div>
+      <p class="tp-tagline">{siteConfig.tagline}</p>
+      <div class="tp-stat">{pages.length} stories</div>
+    </div>
+  </div>
+
+  <!-- Latest stories banner -->
+  {pages.length > 0 && (
+    <div class="tp-latest">
+      <div class="tp-latest-inner">
+        <span class="tp-breaking">LATEST</span>
+        <div class="tp-ticker">
+          {pages.slice(0, 5).map(p => (
+            <a href={`/${p.slug}`} class="tp-ticker-item">
+              <span class="tp-ticker-cat">{getCategoryEmoji(p.meta.category)}</span>
+              {truncate(p.meta.title, 60)}
+            </a>
+          ))}
+        </div>
+      </div>
+    </div>
+  )}
+
+  <!-- Category sections -->
+  {categories.map(cat => {
+    const catPages = pages.filter(p => p.meta.category === cat.id);
+    return catPages.length > 0 ? (
+      <div class="tp-section" id={cat.id}>
+        <div class="tp-section-header">
+          <span class="tp-section-tag">{cat.label}</span>
+          <h2 class="tp-section-title">{cat.title}</h2>
+          <p class="tp-section-sub">{cat.sub}</p>
+        </div>
+        <div class="tp-grid">
+          {catPages.slice(0, 6).map((page, i) => (
+            <a class={`tp-card ${i === 0 ? 'tp-card-featured' : ''}`} href={`/${page.slug}`}>
+              <div class="tp-card-cat">{cat.label}</div>
+              <h3 class="tp-card-title">{page.meta.title}</h3>
+              <p class="tp-card-desc">{truncate(page.meta.description, 140)}</p>
+              {page.meta.published && <span class="tp-card-date">{page.meta.published}</span>}
+            </a>
+          ))}
+        </div>
+      </div>
+    ) : null;
+  })}
+
+  <!-- Empty state -->
+  {pages.length === 0 && (
+    <div class="tp-empty">
+      <h2>Loading the presses…</h2>
+      <p>Stories incoming. Check back soon.</p>
+    </div>
+  )}
+
+  <style is:inline>
+    /* Vice-inspired dark editorial theme */
+    .tp-hero { text-align: center; padding: 5rem 1.5rem 3rem; border-bottom: 3px solid #FF3333; }
+    .tp-hero-inner { max-width: 700px; margin: 0 auto; }
+    .tp-brand { font-size: 4rem; font-weight: 900; letter-spacing: -2px; line-height: 1; }
+    .tp-brand-accent { color: #FF3333; }
+    .tp-tagline { color: #999; font-size: 1.2rem; margin-top: 0.75rem; font-style: italic; }
+    .tp-stat { color: #666; font-size: 0.85rem; margin-top: 0.5rem; text-transform: uppercase; letter-spacing: 2px; }
+
+    .tp-latest { background: #111; border-bottom: 1px solid #252525; padding: 1rem 1.5rem; overflow: hidden; }
+    .tp-latest-inner { max-width: 1100px; margin: 0 auto; display: flex; align-items: center; gap: 1.5rem; }
+    .tp-breaking { background: #FF3333; color: #000; font-weight: 900; font-size: 0.7rem; padding: 4px 12px; letter-spacing: 1px; white-space: nowrap; }
+    .tp-ticker { display: flex; gap: 2rem; overflow-x: auto; scrollbar-width: none; }
+    .tp-ticker::-webkit-scrollbar { display: none; }
+    .tp-ticker-item { white-space: nowrap; color: #ccc; text-decoration: none; font-size: 0.9rem; transition: color 0.2s; }
+    .tp-ticker-item:hover { color: #FF3333; }
+    .tp-ticker-cat { margin-right: 0.3rem; }
+
+    .tp-section { max-width: 1100px; margin: 0 auto; padding: 3rem 1.5rem 1rem; }
+    .tp-section-header { margin-bottom: 2rem; border-left: 4px solid #FF3333; padding-left: 1rem; }
+    .tp-section-tag { font-size: 0.7rem; font-weight: 900; letter-spacing: 2px; color: #FF3333; }
+    .tp-section-title { font-size: 1.8rem; font-weight: 900; margin: 0.25rem 0; }
+    .tp-section-sub { color: #888; font-size: 0.9rem; font-style: italic; }
+
+    .tp-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 1.25rem; }
+    .tp-card { display: block; background: #141414; border: 1px solid #252525; border-radius: 4px; padding: 1.5rem; text-decoration: none; color: inherit; transition: border-color 0.2s, transform 0.15s; }
+    .tp-card:hover { border-color: #FF3333; transform: translateY(-2px); }
+    .tp-card-featured { grid-column: 1 / -1; border-left: 4px solid #FF3333; }
+    .tp-card-cat { font-size: 0.65rem; font-weight: 800; letter-spacing: 1.5px; color: #FF3333; margin-bottom: 0.5rem; text-transform: uppercase; }
+    .tp-card-title { font-size: 1.15rem; font-weight: 800; line-height: 1.3; margin-bottom: 0.5rem; }
+    .tp-card-featured .tp-card-title { font-size: 1.5rem; }
+    .tp-card-desc { font-size: 0.88rem; color: #999; line-height: 1.5; margin: 0; }
+    .tp-card-date { display: block; font-size: 0.75rem; color: #666; margin-top: 0.75rem; text-transform: uppercase; letter-spacing: 0.5px; }
+
+    .tp-empty { text-align: center; padding: 6rem 1.5rem; }
+    .tp-empty h2 { font-size: 1.5rem; font-weight: 800; }
+    .tp-empty p { color: #666; }
+
+    @media (max-width: 640px) {
+      .tp-brand { font-size: 2.5rem; }
+      .tp-grid { grid-template-columns: 1fr; }
+      .tp-card-featured { grid-column: 1; }
+      .tp-latest-inner { flex-direction: column; align-items: flex-start; gap: 0.75rem; }
+    }
+  </style>
+</SiteLayout>

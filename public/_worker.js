@@ -49,6 +49,8 @@ const SITE_MAP = {
   'www.papyruspeople.photonbuilder.com': 'papyruspeople',
   'eeniemeenie.photonbuilder.com': 'eeniemeenie',
   'www.eeniemeenie.photonbuilder.com': 'eeniemeenie',
+  'trunkpress.photonbuilder.com': 'trunkpress',
+  'www.trunkpress.photonbuilder.com': 'trunkpress',
   'pleasestartplease.photonbuilder.com': 'pleasestartplease',
   'www.pleasestartplease.photonbuilder.com': 'pleasestartplease',
 };

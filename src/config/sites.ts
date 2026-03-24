@@ -282,6 +282,26 @@ sites['eeniemeenie'] = {
   footer: { text: '© 2026 Eenie Meenie', gabVentures: true },
 };
 
+sites['trunkpress'] = {
+  id: 'trunkpress',
+  name: 'Trunk Press',
+  domain: 'trunkpress.photonbuilder.com',
+  accent: '#FF3333',
+  theme: { bg: '#0a0a0a', cardBg: '#141414', border: '#252525', textPrimary: '#f0f0f0', textSecondary: '#999999' },
+  gaId: 'G-G86C7NJG3F',
+  tagline: 'News That Hits Different',
+  description: 'World news, politics, business, tech, science, and culture — raw, unfiltered, and straight to the point.',
+  nav: [
+    { label: 'World', href: '/#world' },
+    { label: 'Politics', href: '/#politics' },
+    { label: 'Business', href: '/#business' },
+    { label: 'Tech', href: '/#tech' },
+    { label: 'Science', href: '/#science' },
+    { label: 'Culture', href: '/#culture' },
+  ],
+  footer: { text: '© 2026 Trunk Press', gabVentures: true },
+};
+
 sites['pleasestartplease'] = {
   id: 'pleasestartplease',
   name: 'Please Start Please',
