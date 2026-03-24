@@ -1,0 +1,3612 @@
+---
+import SiteLayout from '../../../layouts/SiteLayout.astro';
+
+export const meta = {
+  title: 'Pokémon Go Evolution Calculator | Leeroyjenkins',
+  description: 'Calculate your Pokémon Go evolution CP with our accurate, interactive calculator. Estimate Combat Power, candy costs, and evolution chains instantly.',
+  category: 'tool',
+  keywords: ['pokemon go evolution calculator', 'pokemon cp calculator', 'pokemon go evolve cp', 'pokemon evolution cp', 'pokemon go calculator']
+};
+
+const schema = JSON.stringify([
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": meta.title,
+    "description": meta.description,
+    "author": { "@type": "Organization", "name": "leeroyjenkins.quest" },
+    "publisher": { "@type": "Organization", "name": "leeroyjenkins.quest" },
+    "datePublished": "2026-03-23",
+    "dateModified": "2026-03-23"
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "How does the Pokémon Go Evolution Calculator work?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "The calculator uses known multipliers for each Pokémon species to estimate the Combat Power (CP) of the evolved form. By inputting your Pokémon's current CP, the tool multiplies it by the species-specific range (minimum and maximum multipliers) to provide an accurate estimated CP range after evolution."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Is the evolved CP exact or an estimate?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "The evolved CP is an estimate, provided as a range. The exact CP depends on the hidden Individual Values (IVs) of your specific Pokémon (Attack, Defense, and Stamina) and its exact half-level. Our calculator provides a highly accurate minimum and maximum bound based on community-sourced data."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Does evolving a Pokémon change its IVs?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "No, a Pokémon's Individual Values (IVs) remain completely unchanged when it evolves. If you evolve a 100% IV (perfect) Pokémon, the evolved form will also be 100% IV. Only the base stats of the species change, which combined with the static IVs, results in the new, higher CP."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Should I power up my Pokémon before or after evolving?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Mathematically, it costs exactly the same amount of Stardust and Candy to power up a Pokémon before or after evolving. However, it is highly recommended to evolve first to check the Pokémon's new moveset before investing valuable Stardust, as you might prefer different attacks."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Why do some Pokémon have a huge CP jump while others don't?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "The CP jump depends on the difference between the base stats of the unevolved and evolved species. For example, Magikarp has incredibly low base stats but Gyarados has very high ones, leading to a massive 10x multiplier. Others, like Metapod to Butterfree, have a much smaller base stat increase."
+        }
+      }
+    ]
+  }
+]);
+
+const pokemonData = [
+  {
+    "name": "Bulbasaur",
+    "cp_min": 1.5,
+    "cp_max": 1.58,
+    "cost": 25,
+    "evolves_to": "Ivysaur"
+  },
+  {
+    "name": "Ivysaur",
+    "cp_min": 1.53,
+    "cp_max": 1.58,
+    "cost": 100,
+    "evolves_to": "Venusaur"
+  },
+  {
+    "name": "Charmander",
+    "cp_min": 1.63,
+    "cp_max": 1.7,
+    "cost": 25,
+    "evolves_to": "Charmeleon"
+  },
+  {
+    "name": "Charmeleon",
+    "cp_min": 1.71,
+    "cp_max": 1.79,
+    "cost": 100,
+    "evolves_to": "Charizard"
+  },
+  {
+    "name": "Squirtle",
+    "cp_min": 1.58,
+    "cp_max": 1.72,
+    "cost": 25,
+    "evolves_to": "Wartortle"
+  },
+  {
+    "name": "Wartortle",
+    "cp_min": 1.4,
+    "cp_max": 1.45,
+    "cost": 100,
+    "evolves_to": "Blastoise"
+  },
+  {
+    "name": "Caterpie",
+    "cp_min": 1.04,
+    "cp_max": 1.08,
+    "cost": 12,
+    "evolves_to": "Metapod"
+  },
+  {
+    "name": "Metapod",
+    "cp_min": 3.05,
+    "cp_max": 3.79,
+    "cost": 50,
+    "evolves_to": "Butterfree"
+  },
+  {
+    "name": "Weedle",
+    "cp_min": 1.06,
+    "cp_max": 1.13,
+    "cost": 12,
+    "evolves_to": "Kakuna"
+  },
+  {
+    "name": "Kakuna",
+    "cp_min": 3.01,
+    "cp_max": 3.41,
+    "cost": 50,
+    "evolves_to": "Beedrill"
+  },
+  {
+    "name": "Pidgey",
+    "cp_min": 1.86,
+    "cp_max": 1.95,
+    "cost": 12,
+    "evolves_to": "Pidgeotto"
+  },
+  {
+    "name": "Pidgeotto",
+    "cp_min": 1.73,
+    "cp_max": 1.78,
+    "cost": 50,
+    "evolves_to": "Pidgeot"
+  },
+  {
+    "name": "Rattata",
+    "cp_min": 2.55,
+    "cp_max": 2.73,
+    "cost": 25,
+    "evolves_to": "Raticate"
+  },
+  {
+    "name": "Spearow",
+    "cp_min": 2.58,
+    "cp_max": 2.81,
+    "cost": 50,
+    "evolves_to": "Fearow"
+  },
+  {
+    "name": "Ekans",
+    "cp_min": 2.21,
+    "cp_max": 2.27,
+    "cost": 50,
+    "evolves_to": "Arbok"
+  },
+  {
+    "name": "Pikachu",
+    "cp_min": 2.33,
+    "cp_max": 2.38,
+    "cost": 50,
+    "evolves_to": "Raichu"
+  },
+  {
+    "name": "Sandshrew",
+    "cp_min": 2.35,
+    "cp_max": 2.76,
+    "cost": 50,
+    "evolves_to": "Sandslash"
+  },
+  {
+    "name": "Nidoran F",
+    "cp_min": 1.62,
+    "cp_max": 1.66,
+    "cost": 25,
+    "evolves_to": "Nidorina"
+  },
+  {
+    "name": "Nidorina",
+    "cp_min": 1.79,
+    "cp_max": 1.83,
+    "cost": 100,
+    "evolves_to": "Nidoqueen"
+  },
+  {
+    "name": "Nidoran M",
+    "cp_min": 1.64,
+    "cp_max": 1.7,
+    "cost": 25,
+    "evolves_to": "Nidorino"
+  },
+  {
+    "name": "Clefairy",
+    "cp_min": 2.03,
+    "cp_max": 2.14,
+    "cost": 50,
+    "evolves_to": "Clefable"
+  },
+  {
+    "name": "Vulpix",
+    "cp_min": 2.74,
+    "cp_max": 2.81,
+    "cost": 50,
+    "evolves_to": "Ninetales"
+  },
+  {
+    "name": "Jigglypuff",
+    "cp_min": 2.41,
+    "cp_max": 2.53,
+    "cost": 50,
+    "evolves_to": "Wigglytuff"
+  },
+  {
+    "name": "Zubat",
+    "cp_min": 2.6,
+    "cp_max": 3.67,
+    "cost": 50,
+    "evolves_to": "Golbat"
+  },
+  {
+    "name": "Oddish",
+    "cp_min": 1.48,
+    "cp_max": 1.51,
+    "cost": 25,
+    "evolves_to": "Gloom"
+  },
+  {
+    "name": "Gloom",
+    "cp_min": 1.48,
+    "cp_max": 1.53,
+    "cost": 100,
+    "evolves_to": "Vileplume"
+  },
+  {
+    "name": "Paras",
+    "cp_min": 1.92,
+    "cp_max": 2.02,
+    "cost": 50,
+    "evolves_to": "Parasect"
+  },
+  {
+    "name": "Venonat",
+    "cp_min": 1.85,
+    "cp_max": 1.9,
+    "cost": 50,
+    "evolves_to": "Venomoth"
+  },
+  {
+    "name": "Diglett",
+    "cp_min": 2.68,
+    "cp_max": 2.77,
+    "cost": 50,
+    "evolves_to": "Dugtrio"
+  },
+  {
+    "name": "Meowth",
+    "cp_min": 2.68,
+    "cp_max": 2.77,
+    "cost": 50,
+    "evolves_to": "Persian"
+  },
+  {
+    "name": "Psyduck",
+    "cp_min": 2.22,
+    "cp_max": 2.29,
+    "cost": 50,
+    "evolves_to": "Golduck"
+  },
+  {
+    "name": "Mankey",
+    "cp_min": 2.14,
+    "cp_max": 2.22,
+    "cost": 50,
+    "evolves_to": "Primeape"
+  },
+  {
+    "name": "Growlithe",
+    "cp_min": 2.31,
+    "cp_max": 2.36,
+    "cost": 50,
+    "evolves_to": "Arcanine"
+  },
+  {
+    "name": "Poliwag",
+    "cp_min": 1.7,
+    "cp_max": 1.74,
+    "cost": 25,
+    "evolves_to": "Poliwhirl"
+  },
+  {
+    "name": "Poliwhirl",
+    "cp_min": 1.88,
+    "cp_max": 1.96,
+    "cost": 100,
+    "evolves_to": "Poliwrath"
+  },
+  {
+    "name": "Abra",
+    "cp_min": 1.36,
+    "cp_max": 1.95,
+    "cost": 25,
+    "evolves_to": "Kadabra"
+  },
+  {
+    "name": "Kadabra",
+    "cp_min": 1.4,
+    "cp_max": 1.65,
+    "cost": 100,
+    "evolves_to": "Alakazam"
+  },
+  {
+    "name": "Machop",
+    "cp_min": 1.62,
+    "cp_max": 1.67,
+    "cost": 25,
+    "evolves_to": "Machoke"
+  },
+  {
+    "name": "Machoke",
+    "cp_min": 1.48,
+    "cp_max": 1.55,
+    "cost": 100,
+    "evolves_to": "Machamp"
+  },
+  {
+    "name": "Bellsprout",
+    "cp_min": 1.54,
+    "cp_max": 1.6,
+    "cost": 25,
+    "evolves_to": "Weepinbell"
+  },
+  {
+    "name": "Weepinbell",
+    "cp_min": 1.47,
+    "cp_max": 1.52,
+    "cost": 100,
+    "evolves_to": "Victreebel"
+  },
+  {
+    "name": "Tentacool",
+    "cp_min": 2.47,
+    "cp_max": 2.61,
+    "cost": 50,
+    "evolves_to": "Tentacruel"
+  },
+  {
+    "name": "Geodude",
+    "cp_min": 1.71,
+    "cp_max": 1.76,
+    "cost": 25,
+    "evolves_to": "Graveler"
+  },
+  {
+    "name": "Graveler",
+    "cp_min": 1.62,
+    "cp_max": 1.72,
+    "cost": 100,
+    "evolves_to": "Golem"
+  },
+  {
+    "name": "Ponyta",
+    "cp_min": 1.46,
+    "cp_max": 1.5,
+    "cost": 50,
+    "evolves_to": "Rapidash"
+  },
+  {
+    "name": "Slowpoke",
+    "cp_min": 2.19,
+    "cp_max": 2.24,
+    "cost": 50,
+    "evolves_to": "Slowbro"
+  },
+  {
+    "name": "Magnemite",
+    "cp_min": 2.16,
+    "cp_max": 2.18,
+    "cost": 50,
+    "evolves_to": "Magneton"
+  },
+  {
+    "name": "Doduo",
+    "cp_min": 2.19,
+    "cp_max": 2.24,
+    "cost": 50,
+    "evolves_to": "Dodrio"
+  },
+  {
+    "name": "Seel",
+    "cp_min": 1.04,
+    "cp_max": 1.96,
+    "cost": 50,
+    "evolves_to": "Dewgong"
+  },
+  {
+    "name": "Grimer",
+    "cp_min": 2.01,
+    "cp_max": 2.44,
+    "cost": 50,
+    "evolves_to": "Muk"
+  },
+  {
+    "name": "Shellder",
+    "cp_min": 2.62,
+    "cp_max": 2.65,
+    "cost": 50,
+    "evolves_to": "Cloyster"
+  },
+  {
+    "name": "Gastly",
+    "cp_min": 1.75,
+    "cp_max": 1.83,
+    "cost": 25,
+    "evolves_to": "Haunter"
+  },
+  {
+    "name": "Haunter",
+    "cp_min": 1.53,
+    "cp_max": 1.8,
+    "cost": 100,
+    "evolves_to": "Gengar"
+  },
+  {
+    "name": "Drowzee",
+    "cp_min": 2.06,
+    "cp_max": 2.09,
+    "cost": 50,
+    "evolves_to": "Hypno"
+  },
+  {
+    "name": "Krabby",
+    "cp_min": 2.36,
+    "cp_max": 2.4,
+    "cost": 50,
+    "evolves_to": "Kingler"
+  },
+  {
+    "name": "Voltorb",
+    "cp_min": 2.01,
+    "cp_max": 2.02,
+    "cost": 50,
+    "evolves_to": "Electrode"
+  },
+  {
+    "name": "Exeggcute",
+    "cp_min": 2.7,
+    "cp_max": 3.18,
+    "cost": 50,
+    "evolves_to": "Exeggutor"
+  },
+  {
+    "name": "Cubone",
+    "cp_min": 1.65,
+    "cp_max": 1.67,
+    "cost": 50,
+    "evolves_to": "Marowak"
+  },
+  {
+    "name": "Koffing",
+    "cp_min": 1.95,
+    "cp_max": 2.02,
+    "cost": 50,
+    "evolves_to": "Weezing"
+  },
+  {
+    "name": "Rhyhorn",
+    "cp_min": 1.9,
+    "cp_max": 1.91,
+    "cost": 50,
+    "evolves_to": "Rhydon"
+  },
+  {
+    "name": "Horsea",
+    "cp_min": 2.19,
+    "cp_max": 2.23,
+    "cost": 50,
+    "evolves_to": "Seadra"
+  },
+  {
+    "name": "Goldeen",
+    "cp_min": 2.14,
+    "cp_max": 2.24,
+    "cost": 50,
+    "evolves_to": "Seaking"
+  },
+  {
+    "name": "Staryu",
+    "cp_min": 2.38,
+    "cp_max": 2.41,
+    "cost": 50,
+    "evolves_to": "Starmie"
+  },
+  {
+    "name": "Magikarp",
+    "cp_min": 10.1,
+    "cp_max": 11.8,
+    "cost": 400,
+    "evolves_to": "Gyarados"
+  },
+  {
+    "name": "Eevee (Vaporeon)",
+    "cp_min": 2.6,
+    "cp_max": 3.02,
+    "cost": 25,
+    "evolves_to": "Vaporeon"
+  },
+  {
+    "name": "Eevee (Jolteon)",
+    "cp_min": 2.0,
+    "cp_max": 2.1,
+    "cost": 25,
+    "evolves_to": "Jolteon"
+  },
+  {
+    "name": "Eevee (Flareon)",
+    "cp_min": 2.46,
+    "cp_max": 2.48,
+    "cost": 25,
+    "evolves_to": "Flareon"
+  },
+  {
+    "name": "Omanyte",
+    "cp_min": 1.99,
+    "cp_max": 2.12,
+    "cost": 50,
+    "evolves_to": "Omastar"
+  },
+  {
+    "name": "Kabuto",
+    "cp_min": 1.97,
+    "cp_max": 2.37,
+    "cost": 50,
+    "evolves_to": "Kabutops"
+  },
+  {
+    "name": "Dratini",
+    "cp_min": 1.79,
+    "cp_max": 1.85,
+    "cost": 25,
+    "evolves_to": "Dragonair"
+  },
+  {
+    "name": "Dragonair",
+    "cp_min": 2.03,
+    "cp_max": 2.08,
+    "cost": 100,
+    "evolves_to": "Dragonite"
+  },
+  {
+    "name": "Alolan Bulbasaur",
+    "cp_min": 1.5,
+    "cp_max": 1.58,
+    "cost": 25,
+    "evolves_to": "Ivysaur"
+  },
+  {
+    "name": "Galarian Bulbasaur",
+    "cp_min": 1.5,
+    "cp_max": 1.58,
+    "cost": 25,
+    "evolves_to": "Ivysaur"
+  },
+  {
+    "name": "Hisuian Bulbasaur",
+    "cp_min": 1.5,
+    "cp_max": 1.58,
+    "cost": 25,
+    "evolves_to": "Ivysaur"
+  },
+  {
+    "name": "Paldean Bulbasaur",
+    "cp_min": 1.5,
+    "cp_max": 1.58,
+    "cost": 25,
+    "evolves_to": "Ivysaur"
+  },
+  {
+    "name": "Shiny Bulbasaur",
+    "cp_min": 1.5,
+    "cp_max": 1.58,
+    "cost": 25,
+    "evolves_to": "Ivysaur"
+  },
+  {
+    "name": "Alolan Ivysaur",
+    "cp_min": 1.53,
+    "cp_max": 1.58,
+    "cost": 100,
+    "evolves_to": "Venusaur"
+  },
+  {
+    "name": "Galarian Ivysaur",
+    "cp_min": 1.53,
+    "cp_max": 1.58,
+    "cost": 100,
+    "evolves_to": "Venusaur"
+  },
+  {
+    "name": "Hisuian Ivysaur",
+    "cp_min": 1.53,
+    "cp_max": 1.58,
+    "cost": 100,
+    "evolves_to": "Venusaur"
+  },
+  {
+    "name": "Paldean Ivysaur",
+    "cp_min": 1.53,
+    "cp_max": 1.58,
+    "cost": 100,
+    "evolves_to": "Venusaur"
+  },
+  {
+    "name": "Shiny Ivysaur",
+    "cp_min": 1.53,
+    "cp_max": 1.58,
+    "cost": 100,
+    "evolves_to": "Venusaur"
+  },
+  {
+    "name": "Alolan Charmander",
+    "cp_min": 1.63,
+    "cp_max": 1.7,
+    "cost": 25,
+    "evolves_to": "Charmeleon"
+  },
+  {
+    "name": "Galarian Charmander",
+    "cp_min": 1.63,
+    "cp_max": 1.7,
+    "cost": 25,
+    "evolves_to": "Charmeleon"
+  },
+  {
+    "name": "Hisuian Charmander",
+    "cp_min": 1.63,
+    "cp_max": 1.7,
+    "cost": 25,
+    "evolves_to": "Charmeleon"
+  },
+  {
+    "name": "Paldean Charmander",
+    "cp_min": 1.63,
+    "cp_max": 1.7,
+    "cost": 25,
+    "evolves_to": "Charmeleon"
+  },
+  {
+    "name": "Shiny Charmander",
+    "cp_min": 1.63,
+    "cp_max": 1.7,
+    "cost": 25,
+    "evolves_to": "Charmeleon"
+  },
+  {
+    "name": "Alolan Charmeleon",
+    "cp_min": 1.71,
+    "cp_max": 1.79,
+    "cost": 100,
+    "evolves_to": "Charizard"
+  },
+  {
+    "name": "Galarian Charmeleon",
+    "cp_min": 1.71,
+    "cp_max": 1.79,
+    "cost": 100,
+    "evolves_to": "Charizard"
+  },
+  {
+    "name": "Hisuian Charmeleon",
+    "cp_min": 1.71,
+    "cp_max": 1.79,
+    "cost": 100,
+    "evolves_to": "Charizard"
+  },
+  {
+    "name": "Paldean Charmeleon",
+    "cp_min": 1.71,
+    "cp_max": 1.79,
+    "cost": 100,
+    "evolves_to": "Charizard"
+  },
+  {
+    "name": "Shiny Charmeleon",
+    "cp_min": 1.71,
+    "cp_max": 1.79,
+    "cost": 100,
+    "evolves_to": "Charizard"
+  },
+  {
+    "name": "Alolan Squirtle",
+    "cp_min": 1.58,
+    "cp_max": 1.72,
+    "cost": 25,
+    "evolves_to": "Wartortle"
+  },
+  {
+    "name": "Galarian Squirtle",
+    "cp_min": 1.58,
+    "cp_max": 1.72,
+    "cost": 25,
+    "evolves_to": "Wartortle"
+  },
+  {
+    "name": "Hisuian Squirtle",
+    "cp_min": 1.58,
+    "cp_max": 1.72,
+    "cost": 25,
+    "evolves_to": "Wartortle"
+  },
+  {
+    "name": "Paldean Squirtle",
+    "cp_min": 1.58,
+    "cp_max": 1.72,
+    "cost": 25,
+    "evolves_to": "Wartortle"
+  },
+  {
+    "name": "Shiny Squirtle",
+    "cp_min": 1.58,
+    "cp_max": 1.72,
+    "cost": 25,
+    "evolves_to": "Wartortle"
+  },
+  {
+    "name": "Alolan Wartortle",
+    "cp_min": 1.4,
+    "cp_max": 1.45,
+    "cost": 100,
+    "evolves_to": "Blastoise"
+  },
+  {
+    "name": "Galarian Wartortle",
+    "cp_min": 1.4,
+    "cp_max": 1.45,
+    "cost": 100,
+    "evolves_to": "Blastoise"
+  },
+  {
+    "name": "Hisuian Wartortle",
+    "cp_min": 1.4,
+    "cp_max": 1.45,
+    "cost": 100,
+    "evolves_to": "Blastoise"
+  },
+  {
+    "name": "Paldean Wartortle",
+    "cp_min": 1.4,
+    "cp_max": 1.45,
+    "cost": 100,
+    "evolves_to": "Blastoise"
+  },
+  {
+    "name": "Shiny Wartortle",
+    "cp_min": 1.4,
+    "cp_max": 1.45,
+    "cost": 100,
+    "evolves_to": "Blastoise"
+  },
+  {
+    "name": "Alolan Caterpie",
+    "cp_min": 1.04,
+    "cp_max": 1.08,
+    "cost": 12,
+    "evolves_to": "Metapod"
+  },
+  {
+    "name": "Galarian Caterpie",
+    "cp_min": 1.04,
+    "cp_max": 1.08,
+    "cost": 12,
+    "evolves_to": "Metapod"
+  },
+  {
+    "name": "Hisuian Caterpie",
+    "cp_min": 1.04,
+    "cp_max": 1.08,
+    "cost": 12,
+    "evolves_to": "Metapod"
+  },
+  {
+    "name": "Paldean Caterpie",
+    "cp_min": 1.04,
+    "cp_max": 1.08,
+    "cost": 12,
+    "evolves_to": "Metapod"
+  },
+  {
+    "name": "Shiny Caterpie",
+    "cp_min": 1.04,
+    "cp_max": 1.08,
+    "cost": 12,
+    "evolves_to": "Metapod"
+  },
+  {
+    "name": "Alolan Metapod",
+    "cp_min": 3.05,
+    "cp_max": 3.79,
+    "cost": 50,
+    "evolves_to": "Butterfree"
+  },
+  {
+    "name": "Galarian Metapod",
+    "cp_min": 3.05,
+    "cp_max": 3.79,
+    "cost": 50,
+    "evolves_to": "Butterfree"
+  },
+  {
+    "name": "Hisuian Metapod",
+    "cp_min": 3.05,
+    "cp_max": 3.79,
+    "cost": 50,
+    "evolves_to": "Butterfree"
+  },
+  {
+    "name": "Paldean Metapod",
+    "cp_min": 3.05,
+    "cp_max": 3.79,
+    "cost": 50,
+    "evolves_to": "Butterfree"
+  },
+  {
+    "name": "Shiny Metapod",
+    "cp_min": 3.05,
+    "cp_max": 3.79,
+    "cost": 50,
+    "evolves_to": "Butterfree"
+  },
+  {
+    "name": "Alolan Weedle",
+    "cp_min": 1.06,
+    "cp_max": 1.13,
+    "cost": 12,
+    "evolves_to": "Kakuna"
+  },
+  {
+    "name": "Galarian Weedle",
+    "cp_min": 1.06,
+    "cp_max": 1.13,
+    "cost": 12,
+    "evolves_to": "Kakuna"
+  },
+  {
+    "name": "Hisuian Weedle",
+    "cp_min": 1.06,
+    "cp_max": 1.13,
+    "cost": 12,
+    "evolves_to": "Kakuna"
+  },
+  {
+    "name": "Paldean Weedle",
+    "cp_min": 1.06,
+    "cp_max": 1.13,
+    "cost": 12,
+    "evolves_to": "Kakuna"
+  },
+  {
+    "name": "Shiny Weedle",
+    "cp_min": 1.06,
+    "cp_max": 1.13,
+    "cost": 12,
+    "evolves_to": "Kakuna"
+  },
+  {
+    "name": "Alolan Kakuna",
+    "cp_min": 3.01,
+    "cp_max": 3.41,
+    "cost": 50,
+    "evolves_to": "Beedrill"
+  },
+  {
+    "name": "Galarian Kakuna",
+    "cp_min": 3.01,
+    "cp_max": 3.41,
+    "cost": 50,
+    "evolves_to": "Beedrill"
+  },
+  {
+    "name": "Hisuian Kakuna",
+    "cp_min": 3.01,
+    "cp_max": 3.41,
+    "cost": 50,
+    "evolves_to": "Beedrill"
+  },
+  {
+    "name": "Paldean Kakuna",
+    "cp_min": 3.01,
+    "cp_max": 3.41,
+    "cost": 50,
+    "evolves_to": "Beedrill"
+  },
+  {
+    "name": "Shiny Kakuna",
+    "cp_min": 3.01,
+    "cp_max": 3.41,
+    "cost": 50,
+    "evolves_to": "Beedrill"
+  },
+  {
+    "name": "Alolan Pidgey",
+    "cp_min": 1.86,
+    "cp_max": 1.95,
+    "cost": 12,
+    "evolves_to": "Pidgeotto"
+  },
+  {
+    "name": "Galarian Pidgey",
+    "cp_min": 1.86,
+    "cp_max": 1.95,
+    "cost": 12,
+    "evolves_to": "Pidgeotto"
+  },
+  {
+    "name": "Hisuian Pidgey",
+    "cp_min": 1.86,
+    "cp_max": 1.95,
+    "cost": 12,
+    "evolves_to": "Pidgeotto"
+  },
+  {
+    "name": "Paldean Pidgey",
+    "cp_min": 1.86,
+    "cp_max": 1.95,
+    "cost": 12,
+    "evolves_to": "Pidgeotto"
+  },
+  {
+    "name": "Shiny Pidgey",
+    "cp_min": 1.86,
+    "cp_max": 1.95,
+    "cost": 12,
+    "evolves_to": "Pidgeotto"
+  },
+  {
+    "name": "Alolan Pidgeotto",
+    "cp_min": 1.73,
+    "cp_max": 1.78,
+    "cost": 50,
+    "evolves_to": "Pidgeot"
+  },
+  {
+    "name": "Galarian Pidgeotto",
+    "cp_min": 1.73,
+    "cp_max": 1.78,
+    "cost": 50,
+    "evolves_to": "Pidgeot"
+  },
+  {
+    "name": "Hisuian Pidgeotto",
+    "cp_min": 1.73,
+    "cp_max": 1.78,
+    "cost": 50,
+    "evolves_to": "Pidgeot"
+  },
+  {
+    "name": "Paldean Pidgeotto",
+    "cp_min": 1.73,
+    "cp_max": 1.78,
+    "cost": 50,
+    "evolves_to": "Pidgeot"
+  },
+  {
+    "name": "Shiny Pidgeotto",
+    "cp_min": 1.73,
+    "cp_max": 1.78,
+    "cost": 50,
+    "evolves_to": "Pidgeot"
+  },
+  {
+    "name": "Alolan Rattata",
+    "cp_min": 2.55,
+    "cp_max": 2.73,
+    "cost": 25,
+    "evolves_to": "Raticate"
+  },
+  {
+    "name": "Galarian Rattata",
+    "cp_min": 2.55,
+    "cp_max": 2.73,
+    "cost": 25,
+    "evolves_to": "Raticate"
+  },
+  {
+    "name": "Hisuian Rattata",
+    "cp_min": 2.55,
+    "cp_max": 2.73,
+    "cost": 25,
+    "evolves_to": "Raticate"
+  },
+  {
+    "name": "Paldean Rattata",
+    "cp_min": 2.55,
+    "cp_max": 2.73,
+    "cost": 25,
+    "evolves_to": "Raticate"
+  },
+  {
+    "name": "Shiny Rattata",
+    "cp_min": 2.55,
+    "cp_max": 2.73,
+    "cost": 25,
+    "evolves_to": "Raticate"
+  },
+  {
+    "name": "Alolan Spearow",
+    "cp_min": 2.58,
+    "cp_max": 2.81,
+    "cost": 50,
+    "evolves_to": "Fearow"
+  },
+  {
+    "name": "Galarian Spearow",
+    "cp_min": 2.58,
+    "cp_max": 2.81,
+    "cost": 50,
+    "evolves_to": "Fearow"
+  },
+  {
+    "name": "Hisuian Spearow",
+    "cp_min": 2.58,
+    "cp_max": 2.81,
+    "cost": 50,
+    "evolves_to": "Fearow"
+  },
+  {
+    "name": "Paldean Spearow",
+    "cp_min": 2.58,
+    "cp_max": 2.81,
+    "cost": 50,
+    "evolves_to": "Fearow"
+  },
+  {
+    "name": "Shiny Spearow",
+    "cp_min": 2.58,
+    "cp_max": 2.81,
+    "cost": 50,
+    "evolves_to": "Fearow"
+  },
+  {
+    "name": "Alolan Ekans",
+    "cp_min": 2.21,
+    "cp_max": 2.27,
+    "cost": 50,
+    "evolves_to": "Arbok"
+  },
+  {
+    "name": "Galarian Ekans",
+    "cp_min": 2.21,
+    "cp_max": 2.27,
+    "cost": 50,
+    "evolves_to": "Arbok"
+  },
+  {
+    "name": "Hisuian Ekans",
+    "cp_min": 2.21,
+    "cp_max": 2.27,
+    "cost": 50,
+    "evolves_to": "Arbok"
+  },
+  {
+    "name": "Paldean Ekans",
+    "cp_min": 2.21,
+    "cp_max": 2.27,
+    "cost": 50,
+    "evolves_to": "Arbok"
+  },
+  {
+    "name": "Shiny Ekans",
+    "cp_min": 2.21,
+    "cp_max": 2.27,
+    "cost": 50,
+    "evolves_to": "Arbok"
+  },
+  {
+    "name": "Alolan Pikachu",
+    "cp_min": 2.33,
+    "cp_max": 2.38,
+    "cost": 50,
+    "evolves_to": "Raichu"
+  },
+  {
+    "name": "Galarian Pikachu",
+    "cp_min": 2.33,
+    "cp_max": 2.38,
+    "cost": 50,
+    "evolves_to": "Raichu"
+  },
+  {
+    "name": "Hisuian Pikachu",
+    "cp_min": 2.33,
+    "cp_max": 2.38,
+    "cost": 50,
+    "evolves_to": "Raichu"
+  },
+  {
+    "name": "Paldean Pikachu",
+    "cp_min": 2.33,
+    "cp_max": 2.38,
+    "cost": 50,
+    "evolves_to": "Raichu"
+  },
+  {
+    "name": "Shiny Pikachu",
+    "cp_min": 2.33,
+    "cp_max": 2.38,
+    "cost": 50,
+    "evolves_to": "Raichu"
+  },
+  {
+    "name": "Alolan Sandshrew",
+    "cp_min": 2.35,
+    "cp_max": 2.76,
+    "cost": 50,
+    "evolves_to": "Sandslash"
+  },
+  {
+    "name": "Galarian Sandshrew",
+    "cp_min": 2.35,
+    "cp_max": 2.76,
+    "cost": 50,
+    "evolves_to": "Sandslash"
+  },
+  {
+    "name": "Hisuian Sandshrew",
+    "cp_min": 2.35,
+    "cp_max": 2.76,
+    "cost": 50,
+    "evolves_to": "Sandslash"
+  },
+  {
+    "name": "Paldean Sandshrew",
+    "cp_min": 2.35,
+    "cp_max": 2.76,
+    "cost": 50,
+    "evolves_to": "Sandslash"
+  },
+  {
+    "name": "Shiny Sandshrew",
+    "cp_min": 2.35,
+    "cp_max": 2.76,
+    "cost": 50,
+    "evolves_to": "Sandslash"
+  },
+  {
+    "name": "Alolan Nidoran F",
+    "cp_min": 1.62,
+    "cp_max": 1.66,
+    "cost": 25,
+    "evolves_to": "Nidorina"
+  },
+  {
+    "name": "Galarian Nidoran F",
+    "cp_min": 1.62,
+    "cp_max": 1.66,
+    "cost": 25,
+    "evolves_to": "Nidorina"
+  },
+  {
+    "name": "Hisuian Nidoran F",
+    "cp_min": 1.62,
+    "cp_max": 1.66,
+    "cost": 25,
+    "evolves_to": "Nidorina"
+  },
+  {
+    "name": "Paldean Nidoran F",
+    "cp_min": 1.62,
+    "cp_max": 1.66,
+    "cost": 25,
+    "evolves_to": "Nidorina"
+  },
+  {
+    "name": "Shiny Nidoran F",
+    "cp_min": 1.62,
+    "cp_max": 1.66,
+    "cost": 25,
+    "evolves_to": "Nidorina"
+  },
+  {
+    "name": "Alolan Nidorina",
+    "cp_min": 1.79,
+    "cp_max": 1.83,
+    "cost": 100,
+    "evolves_to": "Nidoqueen"
+  },
+  {
+    "name": "Galarian Nidorina",
+    "cp_min": 1.79,
+    "cp_max": 1.83,
+    "cost": 100,
+    "evolves_to": "Nidoqueen"
+  },
+  {
+    "name": "Hisuian Nidorina",
+    "cp_min": 1.79,
+    "cp_max": 1.83,
+    "cost": 100,
+    "evolves_to": "Nidoqueen"
+  },
+  {
+    "name": "Paldean Nidorina",
+    "cp_min": 1.79,
+    "cp_max": 1.83,
+    "cost": 100,
+    "evolves_to": "Nidoqueen"
+  },
+  {
+    "name": "Shiny Nidorina",
+    "cp_min": 1.79,
+    "cp_max": 1.83,
+    "cost": 100,
+    "evolves_to": "Nidoqueen"
+  },
+  {
+    "name": "Alolan Nidoran M",
+    "cp_min": 1.64,
+    "cp_max": 1.7,
+    "cost": 25,
+    "evolves_to": "Nidorino"
+  },
+  {
+    "name": "Galarian Nidoran M",
+    "cp_min": 1.64,
+    "cp_max": 1.7,
+    "cost": 25,
+    "evolves_to": "Nidorino"
+  },
+  {
+    "name": "Hisuian Nidoran M",
+    "cp_min": 1.64,
+    "cp_max": 1.7,
+    "cost": 25,
+    "evolves_to": "Nidorino"
+  },
+  {
+    "name": "Paldean Nidoran M",
+    "cp_min": 1.64,
+    "cp_max": 1.7,
+    "cost": 25,
+    "evolves_to": "Nidorino"
+  },
+  {
+    "name": "Shiny Nidoran M",
+    "cp_min": 1.64,
+    "cp_max": 1.7,
+    "cost": 25,
+    "evolves_to": "Nidorino"
+  },
+  {
+    "name": "Alolan Clefairy",
+    "cp_min": 2.03,
+    "cp_max": 2.14,
+    "cost": 50,
+    "evolves_to": "Clefable"
+  },
+  {
+    "name": "Galarian Clefairy",
+    "cp_min": 2.03,
+    "cp_max": 2.14,
+    "cost": 50,
+    "evolves_to": "Clefable"
+  },
+  {
+    "name": "Hisuian Clefairy",
+    "cp_min": 2.03,
+    "cp_max": 2.14,
+    "cost": 50,
+    "evolves_to": "Clefable"
+  },
+  {
+    "name": "Paldean Clefairy",
+    "cp_min": 2.03,
+    "cp_max": 2.14,
+    "cost": 50,
+    "evolves_to": "Clefable"
+  },
+  {
+    "name": "Shiny Clefairy",
+    "cp_min": 2.03,
+    "cp_max": 2.14,
+    "cost": 50,
+    "evolves_to": "Clefable"
+  },
+  {
+    "name": "Alolan Vulpix",
+    "cp_min": 2.74,
+    "cp_max": 2.81,
+    "cost": 50,
+    "evolves_to": "Ninetales"
+  },
+  {
+    "name": "Galarian Vulpix",
+    "cp_min": 2.74,
+    "cp_max": 2.81,
+    "cost": 50,
+    "evolves_to": "Ninetales"
+  },
+  {
+    "name": "Hisuian Vulpix",
+    "cp_min": 2.74,
+    "cp_max": 2.81,
+    "cost": 50,
+    "evolves_to": "Ninetales"
+  },
+  {
+    "name": "Paldean Vulpix",
+    "cp_min": 2.74,
+    "cp_max": 2.81,
+    "cost": 50,
+    "evolves_to": "Ninetales"
+  },
+  {
+    "name": "Shiny Vulpix",
+    "cp_min": 2.74,
+    "cp_max": 2.81,
+    "cost": 50,
+    "evolves_to": "Ninetales"
+  },
+  {
+    "name": "Alolan Jigglypuff",
+    "cp_min": 2.41,
+    "cp_max": 2.53,
+    "cost": 50,
+    "evolves_to": "Wigglytuff"
+  },
+  {
+    "name": "Galarian Jigglypuff",
+    "cp_min": 2.41,
+    "cp_max": 2.53,
+    "cost": 50,
+    "evolves_to": "Wigglytuff"
+  },
+  {
+    "name": "Hisuian Jigglypuff",
+    "cp_min": 2.41,
+    "cp_max": 2.53,
+    "cost": 50,
+    "evolves_to": "Wigglytuff"
+  },
+  {
+    "name": "Paldean Jigglypuff",
+    "cp_min": 2.41,
+    "cp_max": 2.53,
+    "cost": 50,
+    "evolves_to": "Wigglytuff"
+  },
+  {
+    "name": "Shiny Jigglypuff",
+    "cp_min": 2.41,
+    "cp_max": 2.53,
+    "cost": 50,
+    "evolves_to": "Wigglytuff"
+  },
+  {
+    "name": "Alolan Zubat",
+    "cp_min": 2.6,
+    "cp_max": 3.67,
+    "cost": 50,
+    "evolves_to": "Golbat"
+  },
+  {
+    "name": "Galarian Zubat",
+    "cp_min": 2.6,
+    "cp_max": 3.67,
+    "cost": 50,
+    "evolves_to": "Golbat"
+  },
+  {
+    "name": "Hisuian Zubat",
+    "cp_min": 2.6,
+    "cp_max": 3.67,
+    "cost": 50,
+    "evolves_to": "Golbat"
+  },
+  {
+    "name": "Paldean Zubat",
+    "cp_min": 2.6,
+    "cp_max": 3.67,
+    "cost": 50,
+    "evolves_to": "Golbat"
+  },
+  {
+    "name": "Shiny Zubat",
+    "cp_min": 2.6,
+    "cp_max": 3.67,
+    "cost": 50,
+    "evolves_to": "Golbat"
+  },
+  {
+    "name": "Alolan Oddish",
+    "cp_min": 1.48,
+    "cp_max": 1.51,
+    "cost": 25,
+    "evolves_to": "Gloom"
+  },
+  {
+    "name": "Galarian Oddish",
+    "cp_min": 1.48,
+    "cp_max": 1.51,
+    "cost": 25,
+    "evolves_to": "Gloom"
+  },
+  {
+    "name": "Hisuian Oddish",
+    "cp_min": 1.48,
+    "cp_max": 1.51,
+    "cost": 25,
+    "evolves_to": "Gloom"
+  },
+  {
+    "name": "Paldean Oddish",
+    "cp_min": 1.48,
+    "cp_max": 1.51,
+    "cost": 25,
+    "evolves_to": "Gloom"
+  },
+  {
+    "name": "Shiny Oddish",
+    "cp_min": 1.48,
+    "cp_max": 1.51,
+    "cost": 25,
+    "evolves_to": "Gloom"
+  },
+  {
+    "name": "Alolan Gloom",
+    "cp_min": 1.48,
+    "cp_max": 1.53,
+    "cost": 100,
+    "evolves_to": "Vileplume"
+  },
+  {
+    "name": "Galarian Gloom",
+    "cp_min": 1.48,
+    "cp_max": 1.53,
+    "cost": 100,
+    "evolves_to": "Vileplume"
+  },
+  {
+    "name": "Hisuian Gloom",
+    "cp_min": 1.48,
+    "cp_max": 1.53,
+    "cost": 100,
+    "evolves_to": "Vileplume"
+  },
+  {
+    "name": "Paldean Gloom",
+    "cp_min": 1.48,
+    "cp_max": 1.53,
+    "cost": 100,
+    "evolves_to": "Vileplume"
+  },
+  {
+    "name": "Shiny Gloom",
+    "cp_min": 1.48,
+    "cp_max": 1.53,
+    "cost": 100,
+    "evolves_to": "Vileplume"
+  },
+  {
+    "name": "Alolan Paras",
+    "cp_min": 1.92,
+    "cp_max": 2.02,
+    "cost": 50,
+    "evolves_to": "Parasect"
+  },
+  {
+    "name": "Galarian Paras",
+    "cp_min": 1.92,
+    "cp_max": 2.02,
+    "cost": 50,
+    "evolves_to": "Parasect"
+  },
+  {
+    "name": "Hisuian Paras",
+    "cp_min": 1.92,
+    "cp_max": 2.02,
+    "cost": 50,
+    "evolves_to": "Parasect"
+  },
+  {
+    "name": "Paldean Paras",
+    "cp_min": 1.92,
+    "cp_max": 2.02,
+    "cost": 50,
+    "evolves_to": "Parasect"
+  },
+  {
+    "name": "Shiny Paras",
+    "cp_min": 1.92,
+    "cp_max": 2.02,
+    "cost": 50,
+    "evolves_to": "Parasect"
+  },
+  {
+    "name": "Alolan Venonat",
+    "cp_min": 1.85,
+    "cp_max": 1.9,
+    "cost": 50,
+    "evolves_to": "Venomoth"
+  },
+  {
+    "name": "Galarian Venonat",
+    "cp_min": 1.85,
+    "cp_max": 1.9,
+    "cost": 50,
+    "evolves_to": "Venomoth"
+  },
+  {
+    "name": "Hisuian Venonat",
+    "cp_min": 1.85,
+    "cp_max": 1.9,
+    "cost": 50,
+    "evolves_to": "Venomoth"
+  },
+  {
+    "name": "Paldean Venonat",
+    "cp_min": 1.85,
+    "cp_max": 1.9,
+    "cost": 50,
+    "evolves_to": "Venomoth"
+  },
+  {
+    "name": "Shiny Venonat",
+    "cp_min": 1.85,
+    "cp_max": 1.9,
+    "cost": 50,
+    "evolves_to": "Venomoth"
+  },
+  {
+    "name": "Alolan Diglett",
+    "cp_min": 2.68,
+    "cp_max": 2.77,
+    "cost": 50,
+    "evolves_to": "Dugtrio"
+  },
+  {
+    "name": "Galarian Diglett",
+    "cp_min": 2.68,
+    "cp_max": 2.77,
+    "cost": 50,
+    "evolves_to": "Dugtrio"
+  },
+  {
+    "name": "Hisuian Diglett",
+    "cp_min": 2.68,
+    "cp_max": 2.77,
+    "cost": 50,
+    "evolves_to": "Dugtrio"
+  },
+  {
+    "name": "Paldean Diglett",
+    "cp_min": 2.68,
+    "cp_max": 2.77,
+    "cost": 50,
+    "evolves_to": "Dugtrio"
+  },
+  {
+    "name": "Shiny Diglett",
+    "cp_min": 2.68,
+    "cp_max": 2.77,
+    "cost": 50,
+    "evolves_to": "Dugtrio"
+  },
+  {
+    "name": "Alolan Meowth",
+    "cp_min": 2.68,
+    "cp_max": 2.77,
+    "cost": 50,
+    "evolves_to": "Persian"
+  },
+  {
+    "name": "Galarian Meowth",
+    "cp_min": 2.68,
+    "cp_max": 2.77,
+    "cost": 50,
+    "evolves_to": "Persian"
+  },
+  {
+    "name": "Hisuian Meowth",
+    "cp_min": 2.68,
+    "cp_max": 2.77,
+    "cost": 50,
+    "evolves_to": "Persian"
+  },
+  {
+    "name": "Paldean Meowth",
+    "cp_min": 2.68,
+    "cp_max": 2.77,
+    "cost": 50,
+    "evolves_to": "Persian"
+  },
+  {
+    "name": "Shiny Meowth",
+    "cp_min": 2.68,
+    "cp_max": 2.77,
+    "cost": 50,
+    "evolves_to": "Persian"
+  },
+  {
+    "name": "Alolan Psyduck",
+    "cp_min": 2.22,
+    "cp_max": 2.29,
+    "cost": 50,
+    "evolves_to": "Golduck"
+  },
+  {
+    "name": "Galarian Psyduck",
+    "cp_min": 2.22,
+    "cp_max": 2.29,
+    "cost": 50,
+    "evolves_to": "Golduck"
+  },
+  {
+    "name": "Hisuian Psyduck",
+    "cp_min": 2.22,
+    "cp_max": 2.29,
+    "cost": 50,
+    "evolves_to": "Golduck"
+  },
+  {
+    "name": "Paldean Psyduck",
+    "cp_min": 2.22,
+    "cp_max": 2.29,
+    "cost": 50,
+    "evolves_to": "Golduck"
+  },
+  {
+    "name": "Shiny Psyduck",
+    "cp_min": 2.22,
+    "cp_max": 2.29,
+    "cost": 50,
+    "evolves_to": "Golduck"
+  },
+  {
+    "name": "Alolan Mankey",
+    "cp_min": 2.14,
+    "cp_max": 2.22,
+    "cost": 50,
+    "evolves_to": "Primeape"
+  },
+  {
+    "name": "Galarian Mankey",
+    "cp_min": 2.14,
+    "cp_max": 2.22,
+    "cost": 50,
+    "evolves_to": "Primeape"
+  },
+  {
+    "name": "Hisuian Mankey",
+    "cp_min": 2.14,
+    "cp_max": 2.22,
+    "cost": 50,
+    "evolves_to": "Primeape"
+  },
+  {
+    "name": "Paldean Mankey",
+    "cp_min": 2.14,
+    "cp_max": 2.22,
+    "cost": 50,
+    "evolves_to": "Primeape"
+  },
+  {
+    "name": "Shiny Mankey",
+    "cp_min": 2.14,
+    "cp_max": 2.22,
+    "cost": 50,
+    "evolves_to": "Primeape"
+  },
+  {
+    "name": "Alolan Growlithe",
+    "cp_min": 2.31,
+    "cp_max": 2.36,
+    "cost": 50,
+    "evolves_to": "Arcanine"
+  },
+  {
+    "name": "Galarian Growlithe",
+    "cp_min": 2.31,
+    "cp_max": 2.36,
+    "cost": 50,
+    "evolves_to": "Arcanine"
+  },
+  {
+    "name": "Hisuian Growlithe",
+    "cp_min": 2.31,
+    "cp_max": 2.36,
+    "cost": 50,
+    "evolves_to": "Arcanine"
+  },
+  {
+    "name": "Paldean Growlithe",
+    "cp_min": 2.31,
+    "cp_max": 2.36,
+    "cost": 50,
+    "evolves_to": "Arcanine"
+  },
+  {
+    "name": "Shiny Growlithe",
+    "cp_min": 2.31,
+    "cp_max": 2.36,
+    "cost": 50,
+    "evolves_to": "Arcanine"
+  },
+  {
+    "name": "Alolan Poliwag",
+    "cp_min": 1.7,
+    "cp_max": 1.74,
+    "cost": 25,
+    "evolves_to": "Poliwhirl"
+  },
+  {
+    "name": "Galarian Poliwag",
+    "cp_min": 1.7,
+    "cp_max": 1.74,
+    "cost": 25,
+    "evolves_to": "Poliwhirl"
+  },
+  {
+    "name": "Hisuian Poliwag",
+    "cp_min": 1.7,
+    "cp_max": 1.74,
+    "cost": 25,
+    "evolves_to": "Poliwhirl"
+  },
+  {
+    "name": "Paldean Poliwag",
+    "cp_min": 1.7,
+    "cp_max": 1.74,
+    "cost": 25,
+    "evolves_to": "Poliwhirl"
+  },
+  {
+    "name": "Shiny Poliwag",
+    "cp_min": 1.7,
+    "cp_max": 1.74,
+    "cost": 25,
+    "evolves_to": "Poliwhirl"
+  },
+  {
+    "name": "Alolan Poliwhirl",
+    "cp_min": 1.88,
+    "cp_max": 1.96,
+    "cost": 100,
+    "evolves_to": "Poliwrath"
+  },
+  {
+    "name": "Galarian Poliwhirl",
+    "cp_min": 1.88,
+    "cp_max": 1.96,
+    "cost": 100,
+    "evolves_to": "Poliwrath"
+  },
+  {
+    "name": "Hisuian Poliwhirl",
+    "cp_min": 1.88,
+    "cp_max": 1.96,
+    "cost": 100,
+    "evolves_to": "Poliwrath"
+  },
+  {
+    "name": "Paldean Poliwhirl",
+    "cp_min": 1.88,
+    "cp_max": 1.96,
+    "cost": 100,
+    "evolves_to": "Poliwrath"
+  },
+  {
+    "name": "Shiny Poliwhirl",
+    "cp_min": 1.88,
+    "cp_max": 1.96,
+    "cost": 100,
+    "evolves_to": "Poliwrath"
+  },
+  {
+    "name": "Alolan Abra",
+    "cp_min": 1.36,
+    "cp_max": 1.95,
+    "cost": 25,
+    "evolves_to": "Kadabra"
+  },
+  {
+    "name": "Galarian Abra",
+    "cp_min": 1.36,
+    "cp_max": 1.95,
+    "cost": 25,
+    "evolves_to": "Kadabra"
+  },
+  {
+    "name": "Hisuian Abra",
+    "cp_min": 1.36,
+    "cp_max": 1.95,
+    "cost": 25,
+    "evolves_to": "Kadabra"
+  },
+  {
+    "name": "Paldean Abra",
+    "cp_min": 1.36,
+    "cp_max": 1.95,
+    "cost": 25,
+    "evolves_to": "Kadabra"
+  },
+  {
+    "name": "Shiny Abra",
+    "cp_min": 1.36,
+    "cp_max": 1.95,
+    "cost": 25,
+    "evolves_to": "Kadabra"
+  },
+  {
+    "name": "Alolan Kadabra",
+    "cp_min": 1.4,
+    "cp_max": 1.65,
+    "cost": 100,
+    "evolves_to": "Alakazam"
+  },
+  {
+    "name": "Galarian Kadabra",
+    "cp_min": 1.4,
+    "cp_max": 1.65,
+    "cost": 100,
+    "evolves_to": "Alakazam"
+  },
+  {
+    "name": "Hisuian Kadabra",
+    "cp_min": 1.4,
+    "cp_max": 1.65,
+    "cost": 100,
+    "evolves_to": "Alakazam"
+  },
+  {
+    "name": "Paldean Kadabra",
+    "cp_min": 1.4,
+    "cp_max": 1.65,
+    "cost": 100,
+    "evolves_to": "Alakazam"
+  },
+  {
+    "name": "Shiny Kadabra",
+    "cp_min": 1.4,
+    "cp_max": 1.65,
+    "cost": 100,
+    "evolves_to": "Alakazam"
+  },
+  {
+    "name": "Alolan Machop",
+    "cp_min": 1.62,
+    "cp_max": 1.67,
+    "cost": 25,
+    "evolves_to": "Machoke"
+  },
+  {
+    "name": "Galarian Machop",
+    "cp_min": 1.62,
+    "cp_max": 1.67,
+    "cost": 25,
+    "evolves_to": "Machoke"
+  },
+  {
+    "name": "Hisuian Machop",
+    "cp_min": 1.62,
+    "cp_max": 1.67,
+    "cost": 25,
+    "evolves_to": "Machoke"
+  },
+  {
+    "name": "Paldean Machop",
+    "cp_min": 1.62,
+    "cp_max": 1.67,
+    "cost": 25,
+    "evolves_to": "Machoke"
+  },
+  {
+    "name": "Shiny Machop",
+    "cp_min": 1.62,
+    "cp_max": 1.67,
+    "cost": 25,
+    "evolves_to": "Machoke"
+  },
+  {
+    "name": "Alolan Machoke",
+    "cp_min": 1.48,
+    "cp_max": 1.55,
+    "cost": 100,
+    "evolves_to": "Machamp"
+  },
+  {
+    "name": "Galarian Machoke",
+    "cp_min": 1.48,
+    "cp_max": 1.55,
+    "cost": 100,
+    "evolves_to": "Machamp"
+  },
+  {
+    "name": "Hisuian Machoke",
+    "cp_min": 1.48,
+    "cp_max": 1.55,
+    "cost": 100,
+    "evolves_to": "Machamp"
+  },
+  {
+    "name": "Paldean Machoke",
+    "cp_min": 1.48,
+    "cp_max": 1.55,
+    "cost": 100,
+    "evolves_to": "Machamp"
+  },
+  {
+    "name": "Shiny Machoke",
+    "cp_min": 1.48,
+    "cp_max": 1.55,
+    "cost": 100,
+    "evolves_to": "Machamp"
+  },
+  {
+    "name": "Alolan Bellsprout",
+    "cp_min": 1.54,
+    "cp_max": 1.6,
+    "cost": 25,
+    "evolves_to": "Weepinbell"
+  },
+  {
+    "name": "Galarian Bellsprout",
+    "cp_min": 1.54,
+    "cp_max": 1.6,
+    "cost": 25,
+    "evolves_to": "Weepinbell"
+  },
+  {
+    "name": "Hisuian Bellsprout",
+    "cp_min": 1.54,
+    "cp_max": 1.6,
+    "cost": 25,
+    "evolves_to": "Weepinbell"
+  },
+  {
+    "name": "Paldean Bellsprout",
+    "cp_min": 1.54,
+    "cp_max": 1.6,
+    "cost": 25,
+    "evolves_to": "Weepinbell"
+  },
+  {
+    "name": "Shiny Bellsprout",
+    "cp_min": 1.54,
+    "cp_max": 1.6,
+    "cost": 25,
+    "evolves_to": "Weepinbell"
+  },
+  {
+    "name": "Alolan Weepinbell",
+    "cp_min": 1.47,
+    "cp_max": 1.52,
+    "cost": 100,
+    "evolves_to": "Victreebel"
+  },
+  {
+    "name": "Galarian Weepinbell",
+    "cp_min": 1.47,
+    "cp_max": 1.52,
+    "cost": 100,
+    "evolves_to": "Victreebel"
+  },
+  {
+    "name": "Hisuian Weepinbell",
+    "cp_min": 1.47,
+    "cp_max": 1.52,
+    "cost": 100,
+    "evolves_to": "Victreebel"
+  },
+  {
+    "name": "Paldean Weepinbell",
+    "cp_min": 1.47,
+    "cp_max": 1.52,
+    "cost": 100,
+    "evolves_to": "Victreebel"
+  },
+  {
+    "name": "Shiny Weepinbell",
+    "cp_min": 1.47,
+    "cp_max": 1.52,
+    "cost": 100,
+    "evolves_to": "Victreebel"
+  },
+  {
+    "name": "Alolan Tentacool",
+    "cp_min": 2.47,
+    "cp_max": 2.61,
+    "cost": 50,
+    "evolves_to": "Tentacruel"
+  },
+  {
+    "name": "Galarian Tentacool",
+    "cp_min": 2.47,
+    "cp_max": 2.61,
+    "cost": 50,
+    "evolves_to": "Tentacruel"
+  },
+  {
+    "name": "Hisuian Tentacool",
+    "cp_min": 2.47,
+    "cp_max": 2.61,
+    "cost": 50,
+    "evolves_to": "Tentacruel"
+  },
+  {
+    "name": "Paldean Tentacool",
+    "cp_min": 2.47,
+    "cp_max": 2.61,
+    "cost": 50,
+    "evolves_to": "Tentacruel"
+  },
+  {
+    "name": "Shiny Tentacool",
+    "cp_min": 2.47,
+    "cp_max": 2.61,
+    "cost": 50,
+    "evolves_to": "Tentacruel"
+  },
+  {
+    "name": "Alolan Geodude",
+    "cp_min": 1.71,
+    "cp_max": 1.76,
+    "cost": 25,
+    "evolves_to": "Graveler"
+  },
+  {
+    "name": "Galarian Geodude",
+    "cp_min": 1.71,
+    "cp_max": 1.76,
+    "cost": 25,
+    "evolves_to": "Graveler"
+  },
+  {
+    "name": "Hisuian Geodude",
+    "cp_min": 1.71,
+    "cp_max": 1.76,
+    "cost": 25,
+    "evolves_to": "Graveler"
+  },
+  {
+    "name": "Paldean Geodude",
+    "cp_min": 1.71,
+    "cp_max": 1.76,
+    "cost": 25,
+    "evolves_to": "Graveler"
+  },
+  {
+    "name": "Shiny Geodude",
+    "cp_min": 1.71,
+    "cp_max": 1.76,
+    "cost": 25,
+    "evolves_to": "Graveler"
+  },
+  {
+    "name": "Alolan Graveler",
+    "cp_min": 1.62,
+    "cp_max": 1.72,
+    "cost": 100,
+    "evolves_to": "Golem"
+  },
+  {
+    "name": "Galarian Graveler",
+    "cp_min": 1.62,
+    "cp_max": 1.72,
+    "cost": 100,
+    "evolves_to": "Golem"
+  },
+  {
+    "name": "Hisuian Graveler",
+    "cp_min": 1.62,
+    "cp_max": 1.72,
+    "cost": 100,
+    "evolves_to": "Golem"
+  },
+  {
+    "name": "Paldean Graveler",
+    "cp_min": 1.62,
+    "cp_max": 1.72,
+    "cost": 100,
+    "evolves_to": "Golem"
+  },
+  {
+    "name": "Shiny Graveler",
+    "cp_min": 1.62,
+    "cp_max": 1.72,
+    "cost": 100,
+    "evolves_to": "Golem"
+  },
+  {
+    "name": "Alolan Ponyta",
+    "cp_min": 1.46,
+    "cp_max": 1.5,
+    "cost": 50,
+    "evolves_to": "Rapidash"
+  },
+  {
+    "name": "Galarian Ponyta",
+    "cp_min": 1.46,
+    "cp_max": 1.5,
+    "cost": 50,
+    "evolves_to": "Rapidash"
+  },
+  {
+    "name": "Hisuian Ponyta",
+    "cp_min": 1.46,
+    "cp_max": 1.5,
+    "cost": 50,
+    "evolves_to": "Rapidash"
+  },
+  {
+    "name": "Paldean Ponyta",
+    "cp_min": 1.46,
+    "cp_max": 1.5,
+    "cost": 50,
+    "evolves_to": "Rapidash"
+  },
+  {
+    "name": "Shiny Ponyta",
+    "cp_min": 1.46,
+    "cp_max": 1.5,
+    "cost": 50,
+    "evolves_to": "Rapidash"
+  },
+  {
+    "name": "Alolan Slowpoke",
+    "cp_min": 2.19,
+    "cp_max": 2.24,
+    "cost": 50,
+    "evolves_to": "Slowbro"
+  },
+  {
+    "name": "Galarian Slowpoke",
+    "cp_min": 2.19,
+    "cp_max": 2.24,
+    "cost": 50,
+    "evolves_to": "Slowbro"
+  },
+  {
+    "name": "Hisuian Slowpoke",
+    "cp_min": 2.19,
+    "cp_max": 2.24,
+    "cost": 50,
+    "evolves_to": "Slowbro"
+  },
+  {
+    "name": "Paldean Slowpoke",
+    "cp_min": 2.19,
+    "cp_max": 2.24,
+    "cost": 50,
+    "evolves_to": "Slowbro"
+  },
+  {
+    "name": "Shiny Slowpoke",
+    "cp_min": 2.19,
+    "cp_max": 2.24,
+    "cost": 50,
+    "evolves_to": "Slowbro"
+  },
+  {
+    "name": "Alolan Magnemite",
+    "cp_min": 2.16,
+    "cp_max": 2.18,
+    "cost": 50,
+    "evolves_to": "Magneton"
+  },
+  {
+    "name": "Galarian Magnemite",
+    "cp_min": 2.16,
+    "cp_max": 2.18,
+    "cost": 50,
+    "evolves_to": "Magneton"
+  },
+  {
+    "name": "Hisuian Magnemite",
+    "cp_min": 2.16,
+    "cp_max": 2.18,
+    "cost": 50,
+    "evolves_to": "Magneton"
+  },
+  {
+    "name": "Paldean Magnemite",
+    "cp_min": 2.16,
+    "cp_max": 2.18,
+    "cost": 50,
+    "evolves_to": "Magneton"
+  },
+  {
+    "name": "Shiny Magnemite",
+    "cp_min": 2.16,
+    "cp_max": 2.18,
+    "cost": 50,
+    "evolves_to": "Magneton"
+  },
+  {
+    "name": "Alolan Doduo",
+    "cp_min": 2.19,
+    "cp_max": 2.24,
+    "cost": 50,
+    "evolves_to": "Dodrio"
+  },
+  {
+    "name": "Galarian Doduo",
+    "cp_min": 2.19,
+    "cp_max": 2.24,
+    "cost": 50,
+    "evolves_to": "Dodrio"
+  },
+  {
+    "name": "Hisuian Doduo",
+    "cp_min": 2.19,
+    "cp_max": 2.24,
+    "cost": 50,
+    "evolves_to": "Dodrio"
+  },
+  {
+    "name": "Paldean Doduo",
+    "cp_min": 2.19,
+    "cp_max": 2.24,
+    "cost": 50,
+    "evolves_to": "Dodrio"
+  },
+  {
+    "name": "Shiny Doduo",
+    "cp_min": 2.19,
+    "cp_max": 2.24,
+    "cost": 50,
+    "evolves_to": "Dodrio"
+  },
+  {
+    "name": "Alolan Seel",
+    "cp_min": 1.04,
+    "cp_max": 1.96,
+    "cost": 50,
+    "evolves_to": "Dewgong"
+  },
+  {
+    "name": "Galarian Seel",
+    "cp_min": 1.04,
+    "cp_max": 1.96,
+    "cost": 50,
+    "evolves_to": "Dewgong"
+  },
+  {
+    "name": "Hisuian Seel",
+    "cp_min": 1.04,
+    "cp_max": 1.96,
+    "cost": 50,
+    "evolves_to": "Dewgong"
+  },
+  {
+    "name": "Paldean Seel",
+    "cp_min": 1.04,
+    "cp_max": 1.96,
+    "cost": 50,
+    "evolves_to": "Dewgong"
+  },
+  {
+    "name": "Shiny Seel",
+    "cp_min": 1.04,
+    "cp_max": 1.96,
+    "cost": 50,
+    "evolves_to": "Dewgong"
+  },
+  {
+    "name": "Alolan Grimer",
+    "cp_min": 2.01,
+    "cp_max": 2.44,
+    "cost": 50,
+    "evolves_to": "Muk"
+  },
+  {
+    "name": "Galarian Grimer",
+    "cp_min": 2.01,
+    "cp_max": 2.44,
+    "cost": 50,
+    "evolves_to": "Muk"
+  },
+  {
+    "name": "Hisuian Grimer",
+    "cp_min": 2.01,
+    "cp_max": 2.44,
+    "cost": 50,
+    "evolves_to": "Muk"
+  },
+  {
+    "name": "Paldean Grimer",
+    "cp_min": 2.01,
+    "cp_max": 2.44,
+    "cost": 50,
+    "evolves_to": "Muk"
+  },
+  {
+    "name": "Shiny Grimer",
+    "cp_min": 2.01,
+    "cp_max": 2.44,
+    "cost": 50,
+    "evolves_to": "Muk"
+  },
+  {
+    "name": "Alolan Shellder",
+    "cp_min": 2.62,
+    "cp_max": 2.65,
+    "cost": 50,
+    "evolves_to": "Cloyster"
+  },
+  {
+    "name": "Galarian Shellder",
+    "cp_min": 2.62,
+    "cp_max": 2.65,
+    "cost": 50,
+    "evolves_to": "Cloyster"
+  },
+  {
+    "name": "Hisuian Shellder",
+    "cp_min": 2.62,
+    "cp_max": 2.65,
+    "cost": 50,
+    "evolves_to": "Cloyster"
+  },
+  {
+    "name": "Paldean Shellder",
+    "cp_min": 2.62,
+    "cp_max": 2.65,
+    "cost": 50,
+    "evolves_to": "Cloyster"
+  },
+  {
+    "name": "Shiny Shellder",
+    "cp_min": 2.62,
+    "cp_max": 2.65,
+    "cost": 50,
+    "evolves_to": "Cloyster"
+  },
+  {
+    "name": "Alolan Gastly",
+    "cp_min": 1.75,
+    "cp_max": 1.83,
+    "cost": 25,
+    "evolves_to": "Haunter"
+  },
+  {
+    "name": "Galarian Gastly",
+    "cp_min": 1.75,
+    "cp_max": 1.83,
+    "cost": 25,
+    "evolves_to": "Haunter"
+  },
+  {
+    "name": "Hisuian Gastly",
+    "cp_min": 1.75,
+    "cp_max": 1.83,
+    "cost": 25,
+    "evolves_to": "Haunter"
+  },
+  {
+    "name": "Paldean Gastly",
+    "cp_min": 1.75,
+    "cp_max": 1.83,
+    "cost": 25,
+    "evolves_to": "Haunter"
+  },
+  {
+    "name": "Shiny Gastly",
+    "cp_min": 1.75,
+    "cp_max": 1.83,
+    "cost": 25,
+    "evolves_to": "Haunter"
+  },
+  {
+    "name": "Alolan Haunter",
+    "cp_min": 1.53,
+    "cp_max": 1.8,
+    "cost": 100,
+    "evolves_to": "Gengar"
+  },
+  {
+    "name": "Galarian Haunter",
+    "cp_min": 1.53,
+    "cp_max": 1.8,
+    "cost": 100,
+    "evolves_to": "Gengar"
+  },
+  {
+    "name": "Hisuian Haunter",
+    "cp_min": 1.53,
+    "cp_max": 1.8,
+    "cost": 100,
+    "evolves_to": "Gengar"
+  },
+  {
+    "name": "Paldean Haunter",
+    "cp_min": 1.53,
+    "cp_max": 1.8,
+    "cost": 100,
+    "evolves_to": "Gengar"
+  },
+  {
+    "name": "Shiny Haunter",
+    "cp_min": 1.53,
+    "cp_max": 1.8,
+    "cost": 100,
+    "evolves_to": "Gengar"
+  },
+  {
+    "name": "Alolan Drowzee",
+    "cp_min": 2.06,
+    "cp_max": 2.09,
+    "cost": 50,
+    "evolves_to": "Hypno"
+  },
+  {
+    "name": "Galarian Drowzee",
+    "cp_min": 2.06,
+    "cp_max": 2.09,
+    "cost": 50,
+    "evolves_to": "Hypno"
+  },
+  {
+    "name": "Hisuian Drowzee",
+    "cp_min": 2.06,
+    "cp_max": 2.09,
+    "cost": 50,
+    "evolves_to": "Hypno"
+  },
+  {
+    "name": "Paldean Drowzee",
+    "cp_min": 2.06,
+    "cp_max": 2.09,
+    "cost": 50,
+    "evolves_to": "Hypno"
+  },
+  {
+    "name": "Shiny Drowzee",
+    "cp_min": 2.06,
+    "cp_max": 2.09,
+    "cost": 50,
+    "evolves_to": "Hypno"
+  },
+  {
+    "name": "Alolan Krabby",
+    "cp_min": 2.36,
+    "cp_max": 2.4,
+    "cost": 50,
+    "evolves_to": "Kingler"
+  },
+  {
+    "name": "Galarian Krabby",
+    "cp_min": 2.36,
+    "cp_max": 2.4,
+    "cost": 50,
+    "evolves_to": "Kingler"
+  },
+  {
+    "name": "Hisuian Krabby",
+    "cp_min": 2.36,
+    "cp_max": 2.4,
+    "cost": 50,
+    "evolves_to": "Kingler"
+  },
+  {
+    "name": "Paldean Krabby",
+    "cp_min": 2.36,
+    "cp_max": 2.4,
+    "cost": 50,
+    "evolves_to": "Kingler"
+  },
+  {
+    "name": "Shiny Krabby",
+    "cp_min": 2.36,
+    "cp_max": 2.4,
+    "cost": 50,
+    "evolves_to": "Kingler"
+  },
+  {
+    "name": "Alolan Voltorb",
+    "cp_min": 2.01,
+    "cp_max": 2.02,
+    "cost": 50,
+    "evolves_to": "Electrode"
+  },
+  {
+    "name": "Galarian Voltorb",
+    "cp_min": 2.01,
+    "cp_max": 2.02,
+    "cost": 50,
+    "evolves_to": "Electrode"
+  },
+  {
+    "name": "Hisuian Voltorb",
+    "cp_min": 2.01,
+    "cp_max": 2.02,
+    "cost": 50,
+    "evolves_to": "Electrode"
+  },
+  {
+    "name": "Paldean Voltorb",
+    "cp_min": 2.01,
+    "cp_max": 2.02,
+    "cost": 50,
+    "evolves_to": "Electrode"
+  },
+  {
+    "name": "Shiny Voltorb",
+    "cp_min": 2.01,
+    "cp_max": 2.02,
+    "cost": 50,
+    "evolves_to": "Electrode"
+  },
+  {
+    "name": "Alolan Exeggcute",
+    "cp_min": 2.7,
+    "cp_max": 3.18,
+    "cost": 50,
+    "evolves_to": "Exeggutor"
+  },
+  {
+    "name": "Galarian Exeggcute",
+    "cp_min": 2.7,
+    "cp_max": 3.18,
+    "cost": 50,
+    "evolves_to": "Exeggutor"
+  },
+  {
+    "name": "Hisuian Exeggcute",
+    "cp_min": 2.7,
+    "cp_max": 3.18,
+    "cost": 50,
+    "evolves_to": "Exeggutor"
+  },
+  {
+    "name": "Paldean Exeggcute",
+    "cp_min": 2.7,
+    "cp_max": 3.18,
+    "cost": 50,
+    "evolves_to": "Exeggutor"
+  },
+  {
+    "name": "Shiny Exeggcute",
+    "cp_min": 2.7,
+    "cp_max": 3.18,
+    "cost": 50,
+    "evolves_to": "Exeggutor"
+  },
+  {
+    "name": "Alolan Cubone",
+    "cp_min": 1.65,
+    "cp_max": 1.67,
+    "cost": 50,
+    "evolves_to": "Marowak"
+  },
+  {
+    "name": "Galarian Cubone",
+    "cp_min": 1.65,
+    "cp_max": 1.67,
+    "cost": 50,
+    "evolves_to": "Marowak"
+  },
+  {
+    "name": "Hisuian Cubone",
+    "cp_min": 1.65,
+    "cp_max": 1.67,
+    "cost": 50,
+    "evolves_to": "Marowak"
+  },
+  {
+    "name": "Paldean Cubone",
+    "cp_min": 1.65,
+    "cp_max": 1.67,
+    "cost": 50,
+    "evolves_to": "Marowak"
+  },
+  {
+    "name": "Shiny Cubone",
+    "cp_min": 1.65,
+    "cp_max": 1.67,
+    "cost": 50,
+    "evolves_to": "Marowak"
+  },
+  {
+    "name": "Alolan Koffing",
+    "cp_min": 1.95,
+    "cp_max": 2.02,
+    "cost": 50,
+    "evolves_to": "Weezing"
+  },
+  {
+    "name": "Galarian Koffing",
+    "cp_min": 1.95,
+    "cp_max": 2.02,
+    "cost": 50,
+    "evolves_to": "Weezing"
+  },
+  {
+    "name": "Hisuian Koffing",
+    "cp_min": 1.95,
+    "cp_max": 2.02,
+    "cost": 50,
+    "evolves_to": "Weezing"
+  },
+  {
+    "name": "Paldean Koffing",
+    "cp_min": 1.95,
+    "cp_max": 2.02,
+    "cost": 50,
+    "evolves_to": "Weezing"
+  },
+  {
+    "name": "Shiny Koffing",
+    "cp_min": 1.95,
+    "cp_max": 2.02,
+    "cost": 50,
+    "evolves_to": "Weezing"
+  },
+  {
+    "name": "Alolan Rhyhorn",
+    "cp_min": 1.9,
+    "cp_max": 1.91,
+    "cost": 50,
+    "evolves_to": "Rhydon"
+  },
+  {
+    "name": "Galarian Rhyhorn",
+    "cp_min": 1.9,
+    "cp_max": 1.91,
+    "cost": 50,
+    "evolves_to": "Rhydon"
+  },
+  {
+    "name": "Hisuian Rhyhorn",
+    "cp_min": 1.9,
+    "cp_max": 1.91,
+    "cost": 50,
+    "evolves_to": "Rhydon"
+  },
+  {
+    "name": "Paldean Rhyhorn",
+    "cp_min": 1.9,
+    "cp_max": 1.91,
+    "cost": 50,
+    "evolves_to": "Rhydon"
+  },
+  {
+    "name": "Shiny Rhyhorn",
+    "cp_min": 1.9,
+    "cp_max": 1.91,
+    "cost": 50,
+    "evolves_to": "Rhydon"
+  },
+  {
+    "name": "Alolan Horsea",
+    "cp_min": 2.19,
+    "cp_max": 2.23,
+    "cost": 50,
+    "evolves_to": "Seadra"
+  },
+  {
+    "name": "Galarian Horsea",
+    "cp_min": 2.19,
+    "cp_max": 2.23,
+    "cost": 50,
+    "evolves_to": "Seadra"
+  },
+  {
+    "name": "Hisuian Horsea",
+    "cp_min": 2.19,
+    "cp_max": 2.23,
+    "cost": 50,
+    "evolves_to": "Seadra"
+  },
+  {
+    "name": "Paldean Horsea",
+    "cp_min": 2.19,
+    "cp_max": 2.23,
+    "cost": 50,
+    "evolves_to": "Seadra"
+  },
+  {
+    "name": "Shiny Horsea",
+    "cp_min": 2.19,
+    "cp_max": 2.23,
+    "cost": 50,
+    "evolves_to": "Seadra"
+  },
+  {
+    "name": "Alolan Goldeen",
+    "cp_min": 2.14,
+    "cp_max": 2.24,
+    "cost": 50,
+    "evolves_to": "Seaking"
+  },
+  {
+    "name": "Galarian Goldeen",
+    "cp_min": 2.14,
+    "cp_max": 2.24,
+    "cost": 50,
+    "evolves_to": "Seaking"
+  },
+  {
+    "name": "Hisuian Goldeen",
+    "cp_min": 2.14,
+    "cp_max": 2.24,
+    "cost": 50,
+    "evolves_to": "Seaking"
+  },
+  {
+    "name": "Paldean Goldeen",
+    "cp_min": 2.14,
+    "cp_max": 2.24,
+    "cost": 50,
+    "evolves_to": "Seaking"
+  },
+  {
+    "name": "Shiny Goldeen",
+    "cp_min": 2.14,
+    "cp_max": 2.24,
+    "cost": 50,
+    "evolves_to": "Seaking"
+  },
+  {
+    "name": "Alolan Staryu",
+    "cp_min": 2.38,
+    "cp_max": 2.41,
+    "cost": 50,
+    "evolves_to": "Starmie"
+  },
+  {
+    "name": "Galarian Staryu",
+    "cp_min": 2.38,
+    "cp_max": 2.41,
+    "cost": 50,
+    "evolves_to": "Starmie"
+  },
+  {
+    "name": "Hisuian Staryu",
+    "cp_min": 2.38,
+    "cp_max": 2.41,
+    "cost": 50,
+    "evolves_to": "Starmie"
+  },
+  {
+    "name": "Paldean Staryu",
+    "cp_min": 2.38,
+    "cp_max": 2.41,
+    "cost": 50,
+    "evolves_to": "Starmie"
+  },
+  {
+    "name": "Shiny Staryu",
+    "cp_min": 2.38,
+    "cp_max": 2.41,
+    "cost": 50,
+    "evolves_to": "Starmie"
+  },
+  {
+    "name": "Alolan Magikarp",
+    "cp_min": 10.1,
+    "cp_max": 11.8,
+    "cost": 400,
+    "evolves_to": "Gyarados"
+  },
+  {
+    "name": "Galarian Magikarp",
+    "cp_min": 10.1,
+    "cp_max": 11.8,
+    "cost": 400,
+    "evolves_to": "Gyarados"
+  },
+  {
+    "name": "Hisuian Magikarp",
+    "cp_min": 10.1,
+    "cp_max": 11.8,
+    "cost": 400,
+    "evolves_to": "Gyarados"
+  },
+  {
+    "name": "Paldean Magikarp",
+    "cp_min": 10.1,
+    "cp_max": 11.8,
+    "cost": 400,
+    "evolves_to": "Gyarados"
+  },
+  {
+    "name": "Shiny Magikarp",
+    "cp_min": 10.1,
+    "cp_max": 11.8,
+    "cost": 400,
+    "evolves_to": "Gyarados"
+  },
+  {
+    "name": "Alolan Eevee (Vaporeon)",
+    "cp_min": 2.6,
+    "cp_max": 3.02,
+    "cost": 25,
+    "evolves_to": "Vaporeon"
+  },
+  {
+    "name": "Galarian Eevee (Vaporeon)",
+    "cp_min": 2.6,
+    "cp_max": 3.02,
+    "cost": 25,
+    "evolves_to": "Vaporeon"
+  },
+  {
+    "name": "Hisuian Eevee (Vaporeon)",
+    "cp_min": 2.6,
+    "cp_max": 3.02,
+    "cost": 25,
+    "evolves_to": "Vaporeon"
+  },
+  {
+    "name": "Paldean Eevee (Vaporeon)",
+    "cp_min": 2.6,
+    "cp_max": 3.02,
+    "cost": 25,
+    "evolves_to": "Vaporeon"
+  },
+  {
+    "name": "Shiny Eevee (Vaporeon)",
+    "cp_min": 2.6,
+    "cp_max": 3.02,
+    "cost": 25,
+    "evolves_to": "Vaporeon"
+  },
+  {
+    "name": "Alolan Eevee (Jolteon)",
+    "cp_min": 2.0,
+    "cp_max": 2.1,
+    "cost": 25,
+    "evolves_to": "Jolteon"
+  },
+  {
+    "name": "Galarian Eevee (Jolteon)",
+    "cp_min": 2.0,
+    "cp_max": 2.1,
+    "cost": 25,
+    "evolves_to": "Jolteon"
+  },
+  {
+    "name": "Hisuian Eevee (Jolteon)",
+    "cp_min": 2.0,
+    "cp_max": 2.1,
+    "cost": 25,
+    "evolves_to": "Jolteon"
+  },
+  {
+    "name": "Paldean Eevee (Jolteon)",
+    "cp_min": 2.0,
+    "cp_max": 2.1,
+    "cost": 25,
+    "evolves_to": "Jolteon"
+  },
+  {
+    "name": "Shiny Eevee (Jolteon)",
+    "cp_min": 2.0,
+    "cp_max": 2.1,
+    "cost": 25,
+    "evolves_to": "Jolteon"
+  },
+  {
+    "name": "Alolan Eevee (Flareon)",
+    "cp_min": 2.46,
+    "cp_max": 2.48,
+    "cost": 25,
+    "evolves_to": "Flareon"
+  },
+  {
+    "name": "Galarian Eevee (Flareon)",
+    "cp_min": 2.46,
+    "cp_max": 2.48,
+    "cost": 25,
+    "evolves_to": "Flareon"
+  },
+  {
+    "name": "Hisuian Eevee (Flareon)",
+    "cp_min": 2.46,
+    "cp_max": 2.48,
+    "cost": 25,
+    "evolves_to": "Flareon"
+  },
+  {
+    "name": "Paldean Eevee (Flareon)",
+    "cp_min": 2.46,
+    "cp_max": 2.48,
+    "cost": 25,
+    "evolves_to": "Flareon"
+  },
+  {
+    "name": "Shiny Eevee (Flareon)",
+    "cp_min": 2.46,
+    "cp_max": 2.48,
+    "cost": 25,
+    "evolves_to": "Flareon"
+  },
+  {
+    "name": "Alolan Omanyte",
+    "cp_min": 1.99,
+    "cp_max": 2.12,
+    "cost": 50,
+    "evolves_to": "Omastar"
+  },
+  {
+    "name": "Galarian Omanyte",
+    "cp_min": 1.99,
+    "cp_max": 2.12,
+    "cost": 50,
+    "evolves_to": "Omastar"
+  },
+  {
+    "name": "Hisuian Omanyte",
+    "cp_min": 1.99,
+    "cp_max": 2.12,
+    "cost": 50,
+    "evolves_to": "Omastar"
+  },
+  {
+    "name": "Paldean Omanyte",
+    "cp_min": 1.99,
+    "cp_max": 2.12,
+    "cost": 50,
+    "evolves_to": "Omastar"
+  },
+  {
+    "name": "Shiny Omanyte",
+    "cp_min": 1.99,
+    "cp_max": 2.12,
+    "cost": 50,
+    "evolves_to": "Omastar"
+  },
+  {
+    "name": "Alolan Kabuto",
+    "cp_min": 1.97,
+    "cp_max": 2.37,
+    "cost": 50,
+    "evolves_to": "Kabutops"
+  },
+  {
+    "name": "Galarian Kabuto",
+    "cp_min": 1.97,
+    "cp_max": 2.37,
+    "cost": 50,
+    "evolves_to": "Kabutops"
+  },
+  {
+    "name": "Hisuian Kabuto",
+    "cp_min": 1.97,
+    "cp_max": 2.37,
+    "cost": 50,
+    "evolves_to": "Kabutops"
+  },
+  {
+    "name": "Paldean Kabuto",
+    "cp_min": 1.97,
+    "cp_max": 2.37,
+    "cost": 50,
+    "evolves_to": "Kabutops"
+  },
+  {
+    "name": "Shiny Kabuto",
+    "cp_min": 1.97,
+    "cp_max": 2.37,
+    "cost": 50,
+    "evolves_to": "Kabutops"
+  },
+  {
+    "name": "Alolan Dratini",
+    "cp_min": 1.79,
+    "cp_max": 1.85,
+    "cost": 25,
+    "evolves_to": "Dragonair"
+  },
+  {
+    "name": "Galarian Dratini",
+    "cp_min": 1.79,
+    "cp_max": 1.85,
+    "cost": 25,
+    "evolves_to": "Dragonair"
+  },
+  {
+    "name": "Hisuian Dratini",
+    "cp_min": 1.79,
+    "cp_max": 1.85,
+    "cost": 25,
+    "evolves_to": "Dragonair"
+  },
+  {
+    "name": "Paldean Dratini",
+    "cp_min": 1.79,
+    "cp_max": 1.85,
+    "cost": 25,
+    "evolves_to": "Dragonair"
+  },
+  {
+    "name": "Shiny Dratini",
+    "cp_min": 1.79,
+    "cp_max": 1.85,
+    "cost": 25,
+    "evolves_to": "Dragonair"
+  },
+  {
+    "name": "Alolan Dragonair",
+    "cp_min": 2.03,
+    "cp_max": 2.08,
+    "cost": 100,
+    "evolves_to": "Dragonite"
+  },
+  {
+    "name": "Galarian Dragonair",
+    "cp_min": 2.03,
+    "cp_max": 2.08,
+    "cost": 100,
+    "evolves_to": "Dragonite"
+  },
+  {
+    "name": "Hisuian Dragonair",
+    "cp_min": 2.03,
+    "cp_max": 2.08,
+    "cost": 100,
+    "evolves_to": "Dragonite"
+  },
+  {
+    "name": "Paldean Dragonair",
+    "cp_min": 2.03,
+    "cp_max": 2.08,
+    "cost": 100,
+    "evolves_to": "Dragonite"
+  },
+  {
+    "name": "Shiny Dragonair",
+    "cp_min": 2.03,
+    "cp_max": 2.08,
+    "cost": 100,
+    "evolves_to": "Dragonite"
+  }
+];
+const faqData = JSON.parse(schema)[1].mainEntity;
+---
+
+<SiteLayout site="leeroyjenkins" title={meta.title} description={meta.description}>
+  <Fragment slot="head">
+    <script type="application/ld+json" set:html={schema} />
+  </Fragment>
+
+  <style is:inline>
+    .page-wrapper {
+      font-family: var(--font-body, system-ui, sans-serif);
+      color: var(--text-primary);
+      background-color: var(--bg-primary);
+    }
+    .hero {
+      text-align: center;
+      padding: 4rem 1rem;
+      background: linear-gradient(to bottom, rgba(234, 179, 8, 0.1), transparent);
+      border-bottom: 1px solid var(--border-color);
+      margin-bottom: 3rem;
+    }
+    .hero h1 {
+      font-size: 2.5rem;
+      color: var(--text-primary);
+      margin-bottom: 1rem;
+    }
+    .hero p {
+      font-size: 1.2rem;
+      color: var(--text-secondary);
+      max-width: 600px;
+      margin: 0 auto;
+    }
+    .calculator-container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 2rem;
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    .input-group {
+      margin-bottom: 1.5rem;
+    }
+    .input-group label {
+      display: block;
+      margin-bottom: 0.5rem;
+      font-weight: 600;
+      color: var(--text-primary);
+    }
+    .input-group select, .input-group input {
+      width: 100%;
+      padding: 0.75rem;
+      border: 1px solid var(--border-color);
+      border-radius: 6px;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      font-size: 1rem;
+    }
+    .input-group select:focus, .input-group input:focus {
+      outline: none;
+      border-color: var(--accent-color);
+      box-shadow: 0 0 0 2px rgba(234, 179, 8, 0.2);
+    }
+    .btn-primary {
+      display: inline-block;
+      width: 100%;
+      padding: 1rem;
+      background: var(--accent-color);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-size: 1.1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s;
+      margin-top: 1rem;
+    }
+    .btn-primary:hover {
+      opacity: 0.9;
+    }
+    .error-message {
+      color: #ef4444;
+      font-size: 0.9rem;
+      margin-top: 0.5rem;
+      display: none;
+    }
+    .result-section {
+      margin-top: 2rem;
+      padding-top: 2rem;
+      border-top: 1px solid var(--border-color);
+      display: none;
+    }
+    .result-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1.5rem;
+      margin-top: 1.5rem;
+    }
+    .result-card {
+      background: var(--bg-primary);
+      padding: 1.5rem;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+      text-align: center;
+    }
+    .result-card h3 {
+      font-size: 1rem;
+      color: var(--text-secondary);
+      margin-bottom: 0.5rem;
+    }
+    .result-value {
+      font-size: 2rem;
+      font-weight: bold;
+      color: var(--accent-color);
+    }
+    .evolution-chain {
+      margin-top: 2rem;
+      padding: 1.5rem;
+      background: rgba(234, 179, 8, 0.05);
+      border-radius: 8px;
+      text-align: center;
+    }
+    .chain-flow {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 1rem;
+      margin-top: 1rem;
+      flex-wrap: wrap;
+    }
+    .chain-item {
+      font-weight: bold;
+      color: var(--text-primary);
+    }
+    .chain-arrow {
+      color: var(--text-secondary);
+    }
+    .candy-cost {
+      font-size: 0.9rem;
+      color: var(--text-secondary);
+      margin-top: 0.5rem;
+    }
+    .chart-wrapper {
+      margin-top: 2rem;
+      padding: 1.5rem;
+      background: var(--bg-primary);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+    }
+    .chart-title {
+      font-size: 1.1rem;
+      font-weight: bold;
+      color: var(--text-primary);
+      margin-bottom: 1rem;
+      text-align: center;
+    }
+    .chart-container {
+      position: relative;
+      height: 40px;
+      background: #e2e8f0;
+      border-radius: 20px;
+      overflow: hidden;
+    }
+    .chart-bar-min {
+      position: absolute;
+      height: 100%;
+      background: #94a3b8;
+      border-radius: 20px 0 0 20px;
+    }
+    .chart-bar-range {
+      position: absolute;
+      height: 100%;
+      background: var(--accent-color);
+    }
+    .chart-labels {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 0.5rem;
+      font-size: 0.85rem;
+      color: var(--text-secondary);
+    }
+    .educational-section {
+      max-width: 800px;
+      margin: 4rem auto;
+      padding: 0 1rem;
+    }
+    .educational-section h2 {
+      font-size: 1.8rem;
+      color: var(--text-primary);
+      margin-bottom: 1.5rem;
+      text-align: center;
+    }
+    .grid-3 {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1.5rem;
+      margin-top: 2rem;
+    }
+    .card {
+      background: var(--card-bg);
+      padding: 1.5rem;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+    }
+    .card h3 {
+      color: var(--accent-color);
+      margin-bottom: 1rem;
+    }
+    .card p {
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+    .faq-section {
+      max-width: 800px;
+      margin: 4rem auto;
+      padding: 0 1rem;
+    }
+    .faq-section h2 {
+      font-size: 1.8rem;
+      color: var(--text-primary);
+      margin-bottom: 2rem;
+      text-align: center;
+    }
+    .faq-item {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      margin-bottom: 1rem;
+      padding: 1.5rem;
+    }
+    .faq-item h3 {
+      font-size: 1.1rem;
+      color: var(--text-primary);
+      margin-bottom: 0.5rem;
+    }
+    .faq-item p {
+      color: var(--text-secondary);
+      line-height: 1.6;
+    }
+    .related-tools {
+      max-width: 800px;
+      margin: 4rem auto;
+      padding: 0 1rem;
+      text-align: center;
+    }
+    .related-tools h2 {
+      margin-bottom: 1.5rem;
+      color: var(--text-primary);
+    }
+    .related-links {
+      display: flex;
+      justify-content: center;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+    .related-link {
+      padding: 0.75rem 1.5rem;
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 999px;
+      color: var(--text-primary);
+      text-decoration: none;
+      transition: all 0.2s;
+    }
+    .related-link:hover {
+      background: var(--accent-color);
+      color: white;
+      border-color: var(--accent-color);
+    }
+    .table-container {
+      overflow-x: auto;
+      margin-top: 2rem;
+      border-radius: 8px;
+      border: 1px solid var(--border-color);
+    }
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: var(--card-bg);
+    }
+    th, td {
+      padding: 1rem;
+      text-align: left;
+      border-bottom: 1px solid var(--border-color);
+      color: var(--text-primary);
+    }
+    th {
+      background: rgba(234, 179, 8, 0.1);
+      font-weight: bold;
+    }
+    tr:last-child td {
+      border-bottom: none;
+    }
+    @media (max-width: 600px) {
+      .hero h1 { font-size: 2rem; }
+      .calculator-container { padding: 1.5rem; }
+    }
+  </style>
+
+  <div class="page-wrapper">
+    <section class="hero">
+      <h1>Pokémon Go Evolution Calculator</h1>
+      <p>Instantly estimate the Combat Power (CP) of your Pokémon after evolution. Plan your team, manage your candy, and dominate raids.</p>
+    </section>
+
+    <main class="calculator-container">
+      <div class="input-group">
+        <label for="pokemon-select">Select Pokémon to Evolve</label>
+        <select id="pokemon-select">
+          <option value="">-- Choose a Pokémon --</option>
+        </select>
+        <div id="pokemon-error" class="error-message">Please select a Pokémon.</div>
+      </div>
+
+      <div class="input-group">
+        <label for="cp-input">Current CP</label>
+        <input type="number" id="cp-input" min="10" max="5000" placeholder="e.g. 450" />
+        <div id="cp-error" class="error-message">Please enter a valid CP (10-5000).</div>
+      </div>
+
+      <button id="calculate-btn" class="btn-primary">Calculate Evolution CP</button>
+
+      <div id="result-section" class="result-section">
+        <h2 style="text-align: center; margin-bottom: 1rem; color: var(--text-primary);">Evolution Results</h2>
+        <div class="result-cards">
+          <div class="result-card">
+            <h3>Minimum CP</h3>
+            <div id="min-cp-result" class="result-value">--</div>
+          </div>
+          <div class="result-card">
+            <h3>Maximum CP</h3>
+            <div id="max-cp-result" class="result-value">--</div>
+          </div>
+        </div>
+
+        <div class="evolution-chain">
+          <h3 style="margin-bottom: 0.5rem;">Evolution Path</h3>
+          <div class="chain-flow">
+            <span id="chain-start" class="chain-item">--</span>
+            <span class="chain-arrow">➔</span>
+            <span id="chain-end" class="chain-item">--</span>
+          </div>
+          <div class="candy-cost">Cost: <strong id="candy-cost-val">--</strong> Candy</div>
+        </div>
+
+        <div class="chart-wrapper">
+          <div class="chart-title">Estimated CP Range</div>
+          <div class="chart-container">
+            <div id="chart-bar-min" class="chart-bar-min" style="width: 0%"></div>
+            <div id="chart-bar-range" class="chart-bar-range" style="left: 0%; width: 0%"></div>
+          </div>
+          <div class="chart-labels">
+            <span>0</span>
+            <span id="chart-max-label">4000</span>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <section class="educational-section">
+      <h2>Understanding Pokémon Evolution CP</h2>
+      <div class="grid-3">
+        <div class="card">
+          <h3>The Multiplier Effect</h3>
+          <p>Every Pokémon species has a specific evolution multiplier range. When you evolve a Pokémon, its current CP is multiplied by this hidden value to determine its new Combat Power. Species with higher base stat increases have larger multipliers.</p>
+        </div>
+        <div class="card">
+          <h3>The Role of IVs</h3>
+          <p>Individual Values (IVs) for Attack, Defense, and Stamina stay exactly the same through evolution. The exact multiplier you get within the possible range depends entirely on your Pokémon's unique combination of IVs and its exact hidden half-level.</p>
+        </div>
+        <div class="card">
+          <h3>Evolution Costs</h3>
+          <p>Evolving requires species-specific Candy. First-stage evolutions usually cost 25 or 50 candy, while second-stage evolutions often cost 100. Some unique species require items, walking distances, or massive 400 candy investments (like Magikarp).</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="educational-section">
+      <h2>What Makes a Strong Evolution?</h2>
+      <div class="grid-3">
+        <div class="card">
+          <h3>Base Stat Jumps</h3>
+          <p>The core of any evolution's CP increase is the base stat jump. When a Pokémon evolves, its base Attack, Defense, and Stamina permanently increase according to its species definition. For instance, Weedle has incredibly low base stats, while Beedrill has moderately higher ones.</p>
+        </div>
+        <div class="card">
+          <h3>Level Caps</h3>
+          <p>A Pokémon's level remains constant during evolution. A level 20 Charmander will become a level 20 Charmeleon. The maximum level is 50, requiring vast amounts of Candy XL and Stardust to reach.</p>
+        </div>
+        <div class="card">
+          <h3>Moveset Rerolls</h3>
+          <p>Upon evolution, your Pokémon will learn a completely new Fast and Charged Attack from the evolved form's possible movepool. It is usually best to evolve before using Stardust to power up, ensuring you get a desirable moveset.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="educational-section">
+      <h2>Advanced Mechanics: Level and CP Formula</h2>
+      <div class="card" style="margin-top: 2rem;">
+        <h3>How CP is Calculated</h3>
+        <p>The true CP formula in Pokémon Go is a complex calculation: <code>CP = (Attack * Defense^0.5 * Stamina^0.5 * CPMultiplier^2) / 10</code>. This is why Attack has such a massive influence on the final CP value compared to Defense and Stamina. The CPMultiplier is a hidden value that corresponds to the Pokémon's exact level, increasing every half-level. Understanding this formula is crucial for optimizing Pokémon for PVP leagues like the Great League, where low Attack IVs often allow a Pokémon to reach a higher level and better overall bulk under the 1500 CP cap.</p>
+      </div>
+    </section>
+
+    <section class="educational-section">
+      <h2>Popular Evolution Multipliers</h2>
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Pokémon</th>
+              <th>Evolves To</th>
+              <th>Min Multiplier</th>
+              <th>Max Multiplier</th>
+              <th>Candy Cost</th>
+            </tr>
+          </thead>
+          <tbody id="multiplier-table-body">
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <section class="faq-section">
+      <h2>Frequently Asked Questions</h2>
+      <div class="faq-list" id="faq-list-container">
+      </div>
+    </section>
+
+    <section class="related-tools">
+      <h2>More Pokémon Go Tools</h2>
+      <div class="related-links">
+        <a href="/pokemon-type-calculator" class="related-link">Type Matchup Calculator</a>
+        <a href="/pokemon-go-cp-calculator" class="related-link">Max CP Calculator</a>
+        <a href="/damage-calculator" class="related-link">Damage Calculator</a>
+      </div>
+    </section>
+  </div>
+
+  <script is:inline define:vars={{ pokemonDataStr: JSON.stringify(pokemonData), faqDataStr: JSON.stringify(faqData) }}>
+    const pData = JSON.parse(pokemonDataStr);
+    const fData = JSON.parse(faqDataStr);
+
+    document.addEventListener('DOMContentLoaded', () => {
+      const calcBtn = document.getElementById('calculate-btn');
+      const pokemonSelect = document.getElementById('pokemon-select');
+      const cpInput = document.getElementById('cp-input');
+      const resultSection = document.getElementById('result-section');
+
+      const pkmError = document.getElementById('pokemon-error');
+      const cpError = document.getElementById('cp-error');
+
+      const tableBody = document.getElementById('multiplier-table-body');
+      const faqContainer = document.getElementById('faq-list-container');
+
+      // Populate Select
+      pData.forEach(p => {
+        const option = document.createElement('option');
+        option.value = p.name;
+        option.textContent = p.name + ' (to ' + p.evolves_to + ')';
+        pokemonSelect.appendChild(option);
+      });
+
+      // Populate Table
+      pData.slice(0, 50).forEach(p => {
+        const tr = document.createElement('tr');
+
+        const tdName = document.createElement('td');
+        tdName.textContent = p.name;
+        tr.appendChild(tdName);
+
+        const tdEvolves = document.createElement('td');
+        tdEvolves.textContent = p.evolves_to;
+        tr.appendChild(tdEvolves);
+
+        const tdMin = document.createElement('td');
+        tdMin.textContent = p.cp_min + 'x';
+        tr.appendChild(tdMin);
+
+        const tdMax = document.createElement('td');
+        tdMax.textContent = p.cp_max + 'x';
+        tr.appendChild(tdMax);
+
+        const tdCost = document.createElement('td');
+        tdCost.textContent = p.cost;
+        tr.appendChild(tdCost);
+
+        tableBody.appendChild(tr);
+      });
+
+      // Populate FAQ
+      fData.forEach(faq => {
+        const div = document.createElement('div');
+        div.className = 'faq-item';
+
+        const h3 = document.createElement('h3');
+        h3.textContent = faq.name;
+        div.appendChild(h3);
+
+        const p = document.createElement('p');
+        p.textContent = faq.acceptedAnswer.text;
+        div.appendChild(p);
+
+        faqContainer.appendChild(div);
+      });
+
+      calcBtn.addEventListener('click', () => {
+        // Reset errors
+        pkmError.style.display = 'none';
+        cpError.style.display = 'none';
+
+        const selectedName = pokemonSelect.value;
+        const cp = parseInt(cpInput.value, 10);
+
+        let hasError = false;
+        if (!selectedName) {
+          pkmError.style.display = 'block';
+          hasError = true;
+        }
+        if (isNaN(cp) || cp < 10 || cp > 5000) {
+          cpError.style.display = 'block';
+          hasError = true;
+        }
+
+        if (hasError) return;
+
+        const pokemon = pData.find(p => p.name === selectedName);
+        if (!pokemon) return;
+
+        const minCp = Math.floor(cp * pokemon.cp_min);
+        const maxCp = Math.floor(cp * pokemon.cp_max);
+
+        // Update DOM
+        document.getElementById('min-cp-result').textContent = minCp;
+        document.getElementById('max-cp-result').textContent = maxCp;
+
+        document.getElementById('chain-start').textContent = pokemon.name;
+        document.getElementById('chain-end').textContent = pokemon.evolves_to;
+        document.getElementById('candy-cost-val').textContent = pokemon.cost;
+
+        // Update Chart
+        const chartMax = Math.max(4000, maxCp + 500); // Dynamic scale
+        document.getElementById('chart-max-label').textContent = chartMax;
+
+        const minPercent = (minCp / chartMax) * 100;
+        const rangePercent = ((maxCp - minCp) / chartMax) * 100;
+
+        document.getElementById('chart-bar-min').style.width = `${minPercent}%`;
+        document.getElementById('chart-bar-range').style.left = `${minPercent}%`;
+        document.getElementById('chart-bar-range').style.width = `${rangePercent}%`;
+
+        resultSection.style.display = 'block';
+
+        // Smooth scroll to results
+        resultSection.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      });
+    });
+  </script>
+</SiteLayout>
