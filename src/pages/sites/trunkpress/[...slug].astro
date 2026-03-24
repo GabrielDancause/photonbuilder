@@ -39,20 +39,40 @@ const pubDate = new Date(article.published + 'T00:00:00');
 const dateStr = pubDate.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
 
 // Schema.org
-const schema = {
-  "@context": "https://schema.org",
-  "@type": "NewsArticle",
-  "headline": article.title,
-  "description": article.description,
-  "datePublished": article.published,
-  "dateModified": article.modified || article.published,
-  "author": { "@type": "Organization", "name": "Trunk Press" },
-  "publisher": { "@type": "Organization", "name": "Trunk Press" },
-  "mainEntityOfPage": {
-    "@type": "WebPage",
-    "@id": `https://trunkpress.photonbuilder.com/${article.slug}`
+const schemas: any[] = [
+  {
+    "@context": "https://schema.org",
+    "@type": "NewsArticle",
+    "headline": article.title,
+    "description": article.description,
+    "datePublished": article.published,
+    "dateModified": article.modified || article.published,
+    "author": { "@type": "Organization", "name": "Trunk Press" },
+    "publisher": { "@type": "Organization", "name": "Trunk Press" },
+    "mainEntityOfPage": {
+      "@type": "WebPage",
+      "@id": `https://trunkpress.photonbuilder.com/${article.slug}`
+    }
   }
-};
+];
+
+// Add FAQPage schema if FAQs exist
+if (article.faqs && article.faqs.length > 0) {
+  schemas.push({
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": article.faqs.map((faq: { q: string; a: string }) => ({
+      "@type": "Question",
+      "name": faq.q,
+      "acceptedAnswer": {
+        "@type": "Answer",
+        "text": faq.a
+      }
+    }))
+  });
+}
+
+const schema = schemas.length === 1 ? schemas[0] : schemas;
 ---
 
 <SiteLayout
@@ -92,6 +112,25 @@ const schema = {
         </>
       ))}
     </div>
+
+    <!-- FAQ -->
+    {article.faqs && article.faqs.length > 0 && (
+      <div class="mt-12 pt-8 border-t border-[var(--border-color)]">
+        <h2 class="text-xl font-bold text-[var(--text-primary)] mb-6">Frequently Asked Questions</h2>
+        <div class="space-y-5">
+          {article.faqs.map((faq: { q: string; a: string }) => (
+            <details class="group">
+              <summary class="cursor-pointer text-[var(--text-primary)] font-semibold text-[0.95rem] leading-snug select-none">
+                {faq.q}
+              </summary>
+              <p class="mt-2 text-[var(--text-secondary)] text-[0.95rem] leading-relaxed pl-0">
+                {faq.a}
+              </p>
+            </details>
+          ))}
+        </div>
+      </div>
+    )}
 
     <!-- Tags -->
     {article.tags && article.tags.length > 0 && (
