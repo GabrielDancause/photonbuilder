@@ -1,0 +1,1296 @@
+---
+import SiteLayout from '../../../layouts/SiteLayout.astro';
+export const meta = {
+  title: 'High School GPA Calculator | Sendnerds',
+  description: 'Calculate your high school GPA with our free interactive tool. Easily compute weighted and unweighted GPA, semester vs. cumulative, and AP/Honors classes.',
+  category: 'tool',
+  keywords: ['gpa calculator high school', 'high school gpa', 'weighted gpa calculator', 'unweighted gpa calculator', 'semester gpa', 'cumulative gpa', 'ap honors gpa']
+};
+
+const schema = JSON.stringify([
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": meta.title,
+    "description": meta.description,
+    "author": { "@type": "Organization", "name": "sendnerds.photonbuilder.com" },
+    "publisher": { "@type": "Organization", "name": "sendnerds.photonbuilder.com" },
+    "datePublished": "2026-03-23",
+    "dateModified": "2026-03-23"
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "How do I calculate my high school GPA?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "To calculate your high school GPA, convert each letter grade to a grade point value (e.g., A=4.0, B=3.0). Multiply each grade point by the credits for that class. Sum all these values, then divide by the total number of credits."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "What is a weighted vs unweighted GPA?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "An unweighted GPA measures grades on a scale from 0 to 4.0, regardless of class difficulty. A weighted GPA takes class difficulty into account, often adding 0.5 points for Honors classes and 1.0 point for AP or IB classes, allowing GPAs to exceed 4.0."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Do colleges look at weighted or unweighted GPA?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Colleges typically look at both. They use the unweighted GPA to see your raw grades, but the weighted GPA is crucial because it shows the rigor of your coursework. Many colleges recalculate your GPA using their own scale during admissions."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "What is a good GPA for college?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "A good GPA depends on your target college. The national average high school GPA is around a 3.0. Highly selective colleges often look for a 3.8-4.0 unweighted GPA, while state universities may be looking for a 3.0-3.5."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "How much does an AP class boost my GPA?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "In a weighted GPA system, an AP (Advanced Placement) class typically boosts your grade point by 1.0. For example, an A in an AP class would count as a 5.0 instead of the standard 4.0, and a B would count as a 4.0."
+        }
+      }
+    ]
+  }
+]);
+---
+<SiteLayout site="sendnerds" title={meta.title} description={meta.description}>
+  <Fragment slot="head">
+    <script type="application/ld+json" set:html={schema} />
+  </Fragment>
+
+  <main class="calculator-page">
+    <header class="hero">
+      <div class="hero-content">
+        <h1>High School GPA Calculator</h1>
+        <p class="hero-subtitle">
+          Calculate your semester and cumulative High School GPA instantly. Supports unweighted and weighted scales including AP, IB, Dual Enrollment, and Honors classes.
+        </p>
+        <div class="hero-stats">
+          <div class="stat-card">
+            <span class="stat-value">100%</span>
+            <span class="stat-label">Free & Private</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-value">4.0 & 5.0</span>
+            <span class="stat-label">Scales Supported</span>
+          </div>
+          <div class="stat-card">
+            <span class="stat-value">Instant</span>
+            <span class="stat-label">Calculations</span>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <div class="calculator-container">
+      <div class="results-panel">
+        <div class="results-grid">
+          <div class="result-box">
+            <span class="result-label">SEMESTER UNWEIGHTED</span>
+            <span class="result-value" id="res-semester-unweighted">0.00</span>
+          </div>
+          <div class="result-box">
+            <span class="result-label">SEMESTER WEIGHTED</span>
+            <span class="result-value" id="res-semester-weighted">0.00</span>
+          </div>
+          <div class="result-box highlight">
+            <span class="result-label">CUMULATIVE UNWEIGHTED</span>
+            <span class="result-value" id="res-cumulative-unweighted">0.00</span>
+          </div>
+          <div class="result-box highlight">
+            <span class="result-label">CUMULATIVE WEIGHTED</span>
+            <span class="result-value" id="res-cumulative-weighted">0.00</span>
+          </div>
+          <div class="result-box">
+            <span class="result-label">TOTAL CREDITS (CUMULATIVE)</span>
+            <span class="result-value" id="res-total-credits">0</span>
+          </div>
+        </div>
+
+        <div class="chart-section">
+          <h3 class="chart-title">Cumulative GPA Scale Visualization (Weighted)</h3>
+          <div class="gpa-bar-container">
+            <div class="gpa-bar-fill" id="gpa-fill"></div>
+            <div class="gpa-marker" id="gpa-marker"></div>
+          </div>
+          <div class="gpa-bar-labels">
+            <span>0.0</span>
+            <span>1.0</span>
+            <span>2.0</span>
+            <span>3.0</span>
+            <span>4.0</span>
+            <span>5.0</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="input-section">
+        <div class="section-header">
+          <h2>1. Prior Cumulative GPA (Optional)</h2>
+          <p class="section-desc">Enter your current overall GPA and credits before this semester.</p>
+        </div>
+
+        <div class="prior-gpa-grid">
+          <div class="form-group">
+            <label for="prior-unweighted">Prior Unweighted GPA</label>
+            <input type="number" id="prior-unweighted" min="0" max="4.0" step="0.01" placeholder="e.g., 3.50">
+          </div>
+          <div class="form-group">
+            <label for="prior-weighted">Prior Weighted GPA</label>
+            <input type="number" id="prior-weighted" min="0" max="5.0" step="0.01" placeholder="e.g., 3.80">
+          </div>
+          <div class="form-group">
+            <label for="prior-credits">Prior Total Credits</label>
+            <input type="number" id="prior-credits" min="0" step="0.5" placeholder="e.g., 18.0">
+          </div>
+        </div>
+
+        <div class="section-header" style="margin-top: 2rem;">
+          <div class="header-flex">
+            <h2>2. Current Semester Classes</h2>
+            <button class="btn-clear" id="btn-clear">Clear All</button>
+          </div>
+          <p class="section-desc">Enter the classes you are currently taking or plan to take.</p>
+        </div>
+
+        <div class="classes-list" id="classes-list">
+          <!-- JS will populate rows here -->
+        </div>
+
+        <div class="add-row-container">
+          <button class="btn-add" id="btn-add-class">+ Add Another Class</button>
+        </div>
+
+        <div class="section-header" style="margin-top: 3rem;">
+          <h2>3. What-If Scenario</h2>
+          <p class="section-desc">See how a specific future grade might affect your semester GPA.</p>
+        </div>
+
+        <div class="what-if-box">
+          <div class="what-if-grid">
+            <div class="form-group">
+              <label>Target Class Name</label>
+              <input type="text" id="what-if-name" placeholder="e.g., AP Chemistry">
+            </div>
+            <div class="form-group">
+              <label>Expected Grade</label>
+              <select id="what-if-grade">
+                <option value="4.0">A+ / A (93-100)</option>
+                <option value="3.7">A- (90-92)</option>
+                <option value="3.3">B+ (87-89)</option>
+                <option value="3.0">B (83-86)</option>
+                <option value="2.7">B- (80-82)</option>
+                <option value="2.3">C+ (77-79)</option>
+                <option value="2.0">C (73-76)</option>
+                <option value="1.7">C- (70-72)</option>
+                <option value="1.3">D+ (67-69)</option>
+                <option value="1.0">D (65-66)</option>
+                <option value="0.0">F (Below 65)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Weight</label>
+              <select id="what-if-weight">
+                <option value="0">Regular</option>
+                <option value="0.5">Honors (+0.5)</option>
+                <option value="1.0">AP/IB/Dual (+1.0)</option>
+              </select>
+            </div>
+          </div>
+          <div class="what-if-result">
+            <p>If you take <strong id="wi-display-name">[Class]</strong> and get an <strong id="wi-display-grade">[A]</strong>, your Cumulative Weighted GPA will be: <span class="highlight-text" id="wi-display-result">0.00</span></p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Educational Content -->
+    <section class="educational-section">
+      <div class="edu-container">
+        <h2>Understanding High School GPA</h2>
+        <p>Your Grade Point Average (GPA) is one of the most critical metrics considered by college admissions officers. It provides a numerical representation of your academic performance throughout high school, summarizing years of hard work into a single number.</p>
+
+        <div class="edu-grid">
+          <div class="edu-card">
+            <h3>Unweighted GPA</h3>
+            <p>The standard GPA scale from 0.0 to 4.0. In this system, all classes are treated equally regardless of difficulty. An 'A' in standard Biology counts the same as an 'A' in AP Biology (both 4.0). This is the purest measure of your raw grades.</p>
+          </div>
+          <div class="edu-card">
+            <h3>Weighted GPA</h3>
+            <p>Takes course rigor into account. Harder classes award more points. Typically, Honors classes add 0.5 points (A = 4.5), and AP/IB/College-level classes add 1.0 point (A = 5.0). This rewards students who challenge themselves.</p>
+          </div>
+          <div class="edu-card">
+            <h3>Credits</h3>
+            <p>Credits represent the weight of the class towards graduation. Most year-long classes are 1.0 credit, while semester classes might be 0.5. Your GPA is a weighted average based on these credits, meaning a 1.0 credit class impacts your GPA twice as much as a 0.5 credit class.</p>
+          </div>
+          <div class="edu-card">
+            <h3>Semester vs. Cumulative</h3>
+            <p><strong>Semester GPA</strong> reflects your performance in a single grading period. <strong>Cumulative GPA</strong> is the rolling average of every class you've ever taken in high school. Colleges primarily look at Cumulative, but they also check Semester GPAs to ensure you maintain an upward trend.</p>
+          </div>
+        </div>
+
+        <h2 class="mt-xl">Standard Grade Scale Conversion</h2>
+        <p>While some high schools use a percentage system (e.g., 93-100 = A), the standard conversion to grade points usually follows this comprehensive pattern. Note that exact scales can vary slightly by school district.</p>
+
+        <div class="table-responsive">
+          <table class="scale-table">
+            <thead>
+              <tr>
+                <th>Letter Grade</th>
+                <th>Percent Range</th>
+                <th>Standard (Unweighted)</th>
+                <th>Honors (Weighted)</th>
+                <th>AP/IB/Dual (Weighted)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>A+ / A</td><td>93-100</td><td>4.0</td><td>4.5</td><td>5.0</td></tr>
+              <tr><td>A-</td><td>90-92</td><td>3.7</td><td>4.2</td><td>4.7</td></tr>
+              <tr><td>B+</td><td>87-89</td><td>3.3</td><td>3.8</td><td>4.3</td></tr>
+              <tr><td>B</td><td>83-86</td><td>3.0</td><td>3.5</td><td>4.0</td></tr>
+              <tr><td>B-</td><td>80-82</td><td>2.7</td><td>3.2</td><td>3.7</td></tr>
+              <tr><td>C+</td><td>77-79</td><td>2.3</td><td>2.8</td><td>3.3</td></tr>
+              <tr><td>C</td><td>73-76</td><td>2.0</td><td>2.5</td><td>3.0</td></tr>
+              <tr><td>C-</td><td>70-72</td><td>1.7</td><td>2.2</td><td>2.7</td></tr>
+              <tr><td>D+</td><td>67-69</td><td>1.3</td><td>1.8</td><td>2.3</td></tr>
+              <tr><td>D</td><td>65-66</td><td>1.0</td><td>1.5</td><td>2.0</td></tr>
+              <tr><td>F</td><td>Below 65</td><td>0.0</td><td>0.0</td><td>0.0</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h2 class="mt-xl">The Difference Between AP, IB, Honors, and Dual Enrollment</h2>
+        <p>Understanding the different types of advanced classes is crucial for maximizing your weighted GPA. Each program has unique characteristics, but they all serve the same purpose: demonstrating college readiness.</p>
+        <ul class="info-list">
+          <li><strong>Honors Classes:</strong> High school-level courses that move at a faster pace and cover material in more depth than standard classes. They typically receive a 0.5 GPA boost.</li>
+          <li><strong>AP (Advanced Placement):</strong> College-level courses created by the College Board. Students take a standardized exam at the end of the year, which can earn college credit. They almost universally receive a 1.0 GPA boost.</li>
+          <li><strong>IB (International Baccalaureate):</strong> A rigorous, internationally recognized curriculum that emphasizes critical thinking and global contexts. Like AP, IB classes typically receive a 1.0 GPA boost.</li>
+          <li><strong>Dual Enrollment:</strong> Actual college courses taken at a local community college or university while in high school. You earn both high school and college credit simultaneously. These usually receive a 1.0 GPA boost.</li>
+        </ul>
+
+        <h2 class="mt-xl">How Colleges Recalculate Your GPA</h2>
+        <p>It's a common misconception that colleges simply look at the GPA printed on your high school transcript and accept it at face value. In reality, most selective colleges and universities will completely recalculate your GPA using their own specific, institutional formula. Why do they do this? Because every high school in the country calculates GPA slightly differently. Some schools use a 4.0 scale, some use a 5.0 scale, some use a 100-point scale, and some refuse to weight classes at all. To compare applicants fairly, colleges need a standardized metric.</p>
+
+        <h3>Common Recalculation Methods</h3>
+        <ul class="info-list">
+          <li><strong>Core Classes Only:</strong> Many colleges will strip out elective classes like physical education, health, art, drama, or typing. They only calculate your GPA based on "core" academic subjects: English, Math, Science, Social Studies, and Foreign Language.</li>
+          <li><strong>Unweighting the Scale:</strong> Some highly selective colleges (including many Ivy League schools) will convert all weighted GPAs back to an unweighted 4.0 scale. They want to see your pure academic performance without the inflation of weighted grades. They then separately evaluate the rigor of your transcript (how many AP/Honors classes you took).</li>
+          <li><strong>Standardized Weighting:</strong> Some colleges will apply their own consistent weighting formula, regardless of how your high school weighted the classes (e.g., strictly +1 for AP, +0.5 for Honors).</li>
+          <li><strong>Removing Freshman Year:</strong> Certain university systems (like the University of California and California State University systems) completely ignore your freshman year grades when calculating your admissions GPA, focusing entirely on sophomore and junior years.</li>
+        </ul>
+
+        <h2 class="mt-xl">Year-by-Year Guide to Managing Your GPA</h2>
+
+        <h3>Freshman Year: The Foundation</h3>
+        <p>Freshman year sets the baseline for your cumulative GPA. While some colleges might overlook a slightly rocky start, establishing strong study habits now makes the rest of high school much easier. Focus on mastering time management, learning how to study effectively, and discovering which subjects you naturally excel in.</p>
+
+        <h3>Sophomore Year: Increasing Rigor</h3>
+        <p>This is typically when you can start taking more advanced classes. Introduce your first AP or Honors class if you feel ready. Colleges want to see that you are challenging yourself more than you did as a freshman. Maintain your grades while stepping up the difficulty.</p>
+
+        <h3>Junior Year: The Most Important Year</h3>
+        <p>Junior year is universally considered the most critical year for college admissions. This is the last full year of grades colleges will see before you apply. It should be your most rigorous year academically, packed with AP, IB, or Dual Enrollment classes, while simultaneously prepping for the SAT or ACT.</p>
+
+        <h3>Senior Year: Finishing Strong</h3>
+        <p>While your first-semester senior grades will be sent to colleges (often in a Mid-Year Report), your cumulative GPA is largely solidified by this point. However, colleges can and will rescind acceptance offers if you experience "senioritis" and your grades drop significantly in the spring. Keep up the momentum.</p>
+
+        <h2 class="mt-xl">Comprehensive AP Course Difficulty & Weighting Guide</h2>
+        <p>Advanced Placement (AP) classes are a great way to boost your weighted GPA. However, not all AP classes are created equal in terms of workload and difficulty. Below is a comprehensive overview of popular AP courses, typical credits awarded, and their standard GPA weights.</p>
+
+        <div class="table-responsive">
+          <table class="scale-table">
+            <thead>
+              <tr>
+                <th>AP Course Name</th>
+                <th>Subject Area</th>
+                <th>Standard Credit</th>
+                <th>Weighted GPA Boost</th>
+                <th>Typical Difficulty Level</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>AP Calculus BC</td><td>Mathematics</td><td>1.0</td><td>+1.0</td><td>Very High</td></tr>
+              <tr><td>AP Physics C: Mechanics</td><td>Science</td><td>1.0</td><td>+1.0</td><td>Very High</td></tr>
+              <tr><td>AP Chemistry</td><td>Science</td><td>1.0</td><td>+1.0</td><td>Very High</td></tr>
+              <tr><td>AP Biology</td><td>Science</td><td>1.0</td><td>+1.0</td><td>High</td></tr>
+              <tr><td>AP US History (APUSH)</td><td>Social Studies</td><td>1.0</td><td>+1.0</td><td>High</td></tr>
+              <tr><td>AP English Literature</td><td>English</td><td>1.0</td><td>+1.0</td><td>High</td></tr>
+              <tr><td>AP Calculus AB</td><td>Mathematics</td><td>1.0</td><td>+1.0</td><td>High</td></tr>
+              <tr><td>AP World History</td><td>Social Studies</td><td>1.0</td><td>+1.0</td><td>Medium-High</td></tr>
+              <tr><td>AP Statistics</td><td>Mathematics</td><td>1.0</td><td>+1.0</td><td>Medium</td></tr>
+              <tr><td>AP English Language</td><td>English</td><td>1.0</td><td>+1.0</td><td>Medium</td></tr>
+              <tr><td>AP Psychology</td><td>Social Studies</td><td>1.0</td><td>+1.0</td><td>Medium</td></tr>
+              <tr><td>AP Environmental Science</td><td>Science</td><td>1.0</td><td>+1.0</td><td>Medium</td></tr>
+              <tr><td>AP Human Geography</td><td>Social Studies</td><td>1.0</td><td>+1.0</td><td>Medium</td></tr>
+              <tr><td>AP Computer Science Principles</td><td>Computer Science</td><td>1.0</td><td>+1.0</td><td>Medium</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h2 class="mt-xl">How to Recover From a Low GPA</h2>
+        <p>If you have struggled academically in the past, a low GPA can feel like an insurmountable obstacle to getting into your dream college. However, college admissions officers love a good comeback story. Here are several actionable strategies to improve your academic standing.</p>
+
+        <h3>1. Show an Upward Trend</h3>
+        <p>Colleges pay close attention to the trajectory of your grades. An applicant who started with a 2.5 GPA in freshman year but earned a 3.8 GPA in junior year is often viewed more favorably than a student whose grades steadily declined over four years. An upward trend demonstrates maturity, resilience, and improved study habits.</p>
+
+        <h3>2. Retake Classes</h3>
+        <p>If you failed a class or received a D, many high schools allow you to retake the course (either during the school year, over the summer, or online). While policies vary, many schools will replace the old grade with the new one when calculating your cumulative GPA. Even if both grades remain on your transcript, performing significantly better the second time shows dedication.</p>
+
+        <h3>3. Take Summer School or Community College Classes</h3>
+        <p>Taking classes during the summer is an excellent way to recover credits, demonstrate academic commitment, or boost your GPA with additional weighted classes. Completing a rigorous community college course over the summer can prove to admissions officers that you are capable of handling college-level work, regardless of past high school grades.</p>
+
+        <h3>4. Explain Extenuating Circumstances</h3>
+        <p>If your low GPA was caused by a specific, unavoidable event—such as a prolonged illness, a family emergency, a learning disability diagnosis, or a significant disruption at home—you should explain this in your college application. The Common App provides an "Additional Information" section specifically for this purpose. Be honest, concise, and focus on how you overcame the challenge.</p>
+
+        <h3>5. Excel in Other Areas</h3>
+        <p>While GPA is crucial, it is only one component of holistic admissions. If your GPA is lower than the average for a specific college, you can offset it by achieving exceptionally high standardized test scores (SAT/ACT), writing compelling personal essays, securing glowing letters of recommendation, and demonstrating deep involvement and leadership in extracurricular activities.</p>
+      </div>
+    </section>
+
+    <!-- FAQ Section -->
+    <section class="faq-section">
+      <div class="edu-container">
+        <h2>Frequently Asked Questions</h2>
+        <div class="faq-list">
+          {JSON.parse(schema)[1].mainEntity.map((faq: any) => (
+            <div class="faq-item">
+              <h3>{faq.name}</h3>
+              <p>{faq.acceptedAnswer.text}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    <!-- Related Links -->
+    <section class="related-section">
+      <div class="edu-container">
+        <h2>More GPA & Grade Calculators</h2>
+        <div class="related-links">
+          <a href="/college-gpa-calculator" class="related-card">
+            <h4>College GPA Calculator</h4>
+            <p>Calculate your college semester and cumulative GPA.</p>
+          </a>
+          <a href="/final-grade-calculator" class="related-card">
+            <h4>Final Grade Calculator</h4>
+            <p>Find out what you need on your final exam to pass.</p>
+          </a>
+          <a href="/grade-calculator" class="related-card">
+            <h4>General Grade Calculator</h4>
+            <p>Calculate your current class grade based on assignments.</p>
+          </a>
+          <a href="/test-grade-calculator" class="related-card">
+            <h4>Test Grade Calculator</h4>
+            <p>Calculate your score for any test based on correct and incorrect answers.</p>
+          </a>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <style is:inline>
+    .calculator-page {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 2rem 1rem;
+      font-family: system-ui, -apple-system, sans-serif;
+      color: var(--text-primary);
+    }
+
+    .mt-xl {
+      margin-top: 3rem;
+    }
+
+    .hero {
+      text-align: center;
+      margin-bottom: 3rem;
+      padding: 3.5rem 1.5rem;
+      background: var(--card-bg);
+      border-radius: 16px;
+      border: 1px solid var(--border-color);
+      box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 4px;
+      background: var(--accent-color);
+    }
+
+    .hero h1 {
+      font-size: 2.75rem;
+      margin-bottom: 1.25rem;
+      color: var(--text-primary);
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+
+    .hero-subtitle {
+      font-size: 1.15rem;
+      color: var(--text-secondary);
+      max-width: 750px;
+      margin: 0 auto 2.5rem;
+      line-height: 1.6;
+    }
+
+    .hero-stats {
+      display: flex;
+      justify-content: center;
+      gap: 2rem;
+      flex-wrap: wrap;
+    }
+
+    .stat-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 1.25rem 2.5rem;
+      background: var(--bg-primary);
+      border-radius: 12px;
+      border: 1px solid var(--border-color);
+      box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+      transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .stat-card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 12px rgba(0,0,0,0.05);
+    }
+
+    .stat-value {
+      font-size: 1.75rem;
+      font-weight: 800;
+      color: var(--accent-color);
+    }
+
+    .stat-label {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      margin-top: 0.5rem;
+      font-weight: 600;
+    }
+
+    .calculator-container {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 2.5rem;
+      margin-bottom: 4rem;
+    }
+
+    @media (min-width: 992px) {
+      .calculator-container {
+        grid-template-columns: 360px 1fr;
+        align-items: start;
+      }
+    }
+
+    .results-panel {
+      background: var(--card-bg);
+      padding: 2.5rem 2rem;
+      border-radius: 16px;
+      border: 1px solid var(--border-color);
+      position: sticky;
+      top: 2rem;
+      box-shadow: 0 10px 25px -5px rgba(0,0,0,0.1), 0 8px 10px -6px rgba(0,0,0,0.1);
+    }
+
+    .results-grid {
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+      margin-bottom: 2.5rem;
+    }
+
+    .result-box {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 1.25rem;
+      background: var(--bg-primary);
+      border-radius: 10px;
+      border: 1px solid var(--border-color);
+      text-align: center;
+      transition: all 0.3s ease;
+    }
+
+    .result-box.highlight {
+      border-color: var(--accent-color);
+      background: rgba(var(--accent-color-rgb, 0,0,0), 0.03);
+      box-shadow: 0 4px 6px -1px rgba(var(--accent-color-rgb, 0,0,0), 0.1);
+      transform: scale(1.02);
+    }
+
+    .result-label {
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: var(--text-secondary);
+      margin-bottom: 0.5rem;
+      letter-spacing: 0.05em;
+    }
+
+    .result-value {
+      font-size: 2.75rem;
+      font-weight: 800;
+      color: var(--text-primary);
+      font-variant-numeric: tabular-nums;
+      line-height: 1;
+    }
+
+    .result-box.highlight .result-value {
+      color: var(--accent-color);
+    }
+
+    .chart-section {
+      margin-top: 2.5rem;
+      padding-top: 2.5rem;
+      border-top: 1px solid var(--border-color);
+    }
+
+    .chart-title {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--text-secondary);
+      text-align: center;
+      margin-bottom: 1.25rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .gpa-bar-container {
+      height: 14px;
+      background: var(--bg-primary);
+      border-radius: 7px;
+      border: 1px solid var(--border-color);
+      position: relative;
+      overflow: hidden;
+      margin-bottom: 0.75rem;
+    }
+
+    .gpa-bar-fill {
+      height: 100%;
+      background: linear-gradient(90deg, #ef4444 0%, #f59e0b 50%, #10b981 100%);
+      width: 0%;
+      transition: width 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .gpa-marker {
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      width: 3px;
+      background: #111827;
+      left: 0%;
+      transition: left 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+      box-shadow: 0 0 0 2px #fff;
+      border-radius: 2px;
+    }
+
+    .gpa-bar-labels {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+
+    .input-section {
+      background: var(--card-bg);
+      padding: 2.5rem;
+      border-radius: 16px;
+      border: 1px solid var(--border-color);
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+    }
+
+    .section-header {
+      margin-bottom: 2rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .header-flex {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+
+    .section-header h2 {
+      font-size: 1.75rem;
+      color: var(--text-primary);
+      font-weight: 700;
+    }
+
+    .section-desc {
+      font-size: 1rem;
+      color: var(--text-secondary);
+      margin-top: 0.5rem;
+      line-height: 1.5;
+    }
+
+    .prior-gpa-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+      gap: 1.5rem;
+      background: var(--bg-primary);
+      padding: 2rem;
+      border-radius: 12px;
+      border: 1px dashed var(--border-color);
+    }
+
+    .class-row {
+      display: grid;
+      grid-template-columns: 2.5fr 1.2fr 1fr 1.5fr auto;
+      gap: 1.25rem;
+      align-items: end;
+      margin-bottom: 1.5rem;
+      padding-bottom: 1.5rem;
+      border-bottom: 1px solid var(--border-color);
+      animation: fadeIn 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(15px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    @media (max-width: 768px) {
+      .class-row {
+        grid-template-columns: 1fr 1fr;
+        background: var(--bg-primary);
+        padding: 1.5rem;
+        border-radius: 12px;
+        border: 1px solid var(--border-color);
+      }
+      .class-row > div:nth-child(1) { grid-column: 1 / -1; }
+      .class-row > div:nth-child(5) {
+        grid-column: 1 / -1;
+        display: flex;
+        justify-content: flex-end;
+        padding-top: 0.5rem;
+        border-top: 1px solid var(--border-color);
+      }
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .form-group label {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text-secondary);
+    }
+
+    .form-group input,
+    .form-group select {
+      padding: 0.875rem;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      font-size: 1rem;
+      transition: all 0.2s ease;
+      width: 100%;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus {
+      outline: none;
+      border-color: var(--accent-color);
+      box-shadow: 0 0 0 3px rgba(var(--accent-color-rgb, 0,0,0), 0.15);
+    }
+
+    .btn-remove {
+      background: rgba(239, 68, 68, 0.1);
+      color: #ef4444;
+      border: 1px solid rgba(239, 68, 68, 0.2);
+      padding: 0.875rem;
+      cursor: pointer;
+      font-size: 1.25rem;
+      border-radius: 8px;
+      transition: all 0.2s ease;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      line-height: 1;
+    }
+
+    .btn-remove:hover {
+      background: #ef4444;
+      color: white;
+    }
+
+    .add-row-container {
+      display: flex;
+      justify-content: center;
+      margin-top: 2rem;
+    }
+
+    .btn-add {
+      background: var(--bg-primary);
+      color: var(--accent-color);
+      border: 2px dashed var(--accent-color);
+      padding: 1rem 2.5rem;
+      border-radius: 10px;
+      font-weight: 700;
+      font-size: 1.1rem;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      width: 100%;
+    }
+
+    .btn-add:hover {
+      background: var(--accent-color);
+      color: #fff;
+    }
+
+    .btn-clear {
+      background: var(--bg-primary);
+      color: var(--text-secondary);
+      border: 1px solid var(--border-color);
+      padding: 0.6rem 1.2rem;
+      border-radius: 8px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn-clear:hover {
+      background: #fee2e2;
+      color: #ef4444;
+      border-color: #fca5a5;
+    }
+
+    .what-if-box {
+      background: var(--bg-primary);
+      border: 1px dashed var(--border-color);
+      border-radius: 12px;
+      padding: 2rem;
+    }
+
+    .what-if-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1.5rem;
+      margin-bottom: 2rem;
+    }
+
+    .what-if-result {
+      background: var(--card-bg);
+      padding: 1.5rem;
+      border-radius: 10px;
+      border-left: 5px solid var(--accent-color);
+      font-size: 1.15rem;
+      line-height: 1.6;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    }
+
+    .highlight-text {
+      color: var(--accent-color);
+      font-weight: 800;
+      font-size: 1.5rem;
+      background: rgba(var(--accent-color-rgb, 0,0,0), 0.05);
+      padding: 0.2rem 0.6rem;
+      border-radius: 6px;
+    }
+
+    .educational-section {
+      background: var(--card-bg);
+      padding: 5rem 2rem;
+      border-radius: 16px;
+      margin-bottom: 4rem;
+      border: 1px solid var(--border-color);
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+    }
+
+    .edu-container {
+      max-width: 850px;
+      margin: 0 auto;
+    }
+
+    .educational-section h2 {
+      font-size: 2.25rem;
+      margin-bottom: 1.5rem;
+      color: var(--text-primary);
+      font-weight: 800;
+      letter-spacing: -0.02em;
+    }
+
+    .educational-section h3 {
+      font-size: 1.5rem;
+      margin: 2rem 0 1rem;
+      color: var(--text-primary);
+      font-weight: 700;
+    }
+
+    .educational-section p {
+      font-size: 1.1rem;
+      line-height: 1.8;
+      color: var(--text-secondary);
+      margin-bottom: 1.5rem;
+    }
+
+    .edu-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 2rem;
+      margin: 3rem 0;
+    }
+
+    .edu-card {
+      background: var(--bg-primary);
+      padding: 2rem;
+      border-radius: 12px;
+      border: 1px solid var(--border-color);
+      transition: transform 0.2s ease;
+    }
+
+    .edu-card:hover {
+      transform: translateY(-4px);
+      box-shadow: 0 10px 15px -3px rgba(0,0,0,0.05);
+    }
+
+    .edu-card h3 {
+      margin-top: 0;
+      color: var(--accent-color);
+    }
+
+    .edu-card p {
+      margin-bottom: 0;
+      font-size: 1.05rem;
+    }
+
+    .table-responsive {
+      overflow-x: auto;
+      margin: 2.5rem 0;
+      border-radius: 12px;
+      border: 1px solid var(--border-color);
+    }
+
+    .scale-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      background: var(--bg-primary);
+    }
+
+    .scale-table th,
+    .scale-table td {
+      padding: 1.25rem 1.5rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    .scale-table th {
+      background: var(--card-bg);
+      font-weight: 700;
+      color: var(--text-primary);
+      font-size: 0.95rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .scale-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .scale-table tbody tr:hover {
+      background: var(--card-bg);
+    }
+
+    .info-list {
+      list-style-type: none;
+      padding: 0;
+      margin: 2.5rem 0;
+    }
+
+    .info-list li {
+      margin-bottom: 1.25rem;
+      padding-left: 2rem;
+      position: relative;
+      line-height: 1.7;
+      color: var(--text-secondary);
+      font-size: 1.1rem;
+    }
+
+    .info-list li::before {
+      content: "→";
+      color: var(--accent-color);
+      font-size: 1.25rem;
+      font-weight: bold;
+      position: absolute;
+      left: 0;
+      top: -2px;
+    }
+
+    .info-list li strong {
+      color: var(--text-primary);
+    }
+
+    .faq-section {
+      background: var(--card-bg);
+      padding: 5rem 2rem;
+      border-radius: 16px;
+      margin-bottom: 4rem;
+      border: 1px solid var(--border-color);
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+    }
+
+    .faq-list {
+      display: flex;
+      flex-direction: column;
+      gap: 2.5rem;
+      margin-top: 3rem;
+    }
+
+    .faq-item {
+      background: var(--bg-primary);
+      padding: 2rem;
+      border-radius: 12px;
+      border: 1px solid var(--border-color);
+    }
+
+    .faq-item h3 {
+      font-size: 1.35rem;
+      margin-bottom: 1rem;
+      color: var(--text-primary);
+      font-weight: 700;
+    }
+
+    .faq-item p {
+      color: var(--text-secondary);
+      line-height: 1.7;
+      font-size: 1.1rem;
+      margin: 0;
+    }
+
+    .related-section {
+      background: var(--card-bg);
+      padding: 5rem 2rem;
+      border-radius: 16px;
+      border: 1px solid var(--border-color);
+      box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+    }
+
+    .related-links {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+      gap: 2rem;
+      margin-top: 3rem;
+    }
+
+    .related-card {
+      display: block;
+      padding: 2rem;
+      background: var(--bg-primary);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      text-decoration: none;
+      transition: all 0.3s ease;
+      height: 100%;
+    }
+
+    .related-card:hover {
+      border-color: var(--accent-color);
+      transform: translateY(-5px);
+      box-shadow: 0 10px 20px rgba(0,0,0,0.05);
+      background: var(--card-bg);
+    }
+
+    .related-card h4 {
+      color: var(--accent-color);
+      font-size: 1.25rem;
+      margin-bottom: 0.75rem;
+      font-weight: 700;
+    }
+
+    .related-card p {
+      color: var(--text-secondary);
+      font-size: 1rem;
+      line-height: 1.6;
+      margin: 0;
+    }
+  </style>
+
+  <script is:inline>
+    (function() {
+      // DOM Elements
+      const classesList = document.getElementById('classes-list');
+      const btnAddClass = document.getElementById('btn-add-class');
+      const btnClear = document.getElementById('btn-clear');
+
+      // Prior Inputs
+      const inputPriorUnweighted = document.getElementById('prior-unweighted');
+      const inputPriorWeighted = document.getElementById('prior-weighted');
+      const inputPriorCredits = document.getElementById('prior-credits');
+
+      // Results
+      const resSemesterUnweighted = document.getElementById('res-semester-unweighted');
+      const resSemesterWeighted = document.getElementById('res-semester-weighted');
+      const resCumUnweighted = document.getElementById('res-cumulative-unweighted');
+      const resCumWeighted = document.getElementById('res-cumulative-weighted');
+      const resTotalCredits = document.getElementById('res-total-credits');
+
+      // Chart
+      const gpaFill = document.getElementById('gpa-fill');
+      const gpaMarker = document.getElementById('gpa-marker');
+
+      // What-If
+      const wiName = document.getElementById('what-if-name');
+      const wiGrade = document.getElementById('what-if-grade');
+      const wiWeight = document.getElementById('what-if-weight');
+      const wiDispName = document.getElementById('wi-display-name');
+      const wiDispGrade = document.getElementById('wi-display-grade');
+      const wiDispRes = document.getElementById('wi-display-result');
+
+      let rowCount = 0;
+
+      // Initialize default rows
+      function init() {
+        const savedData = localStorage.getItem('hsGpaDataV2');
+        if (savedData) {
+          try {
+            const data = JSON.parse(savedData);
+            if (data.prior) {
+              inputPriorUnweighted.value = data.prior.unweighted || '';
+              inputPriorWeighted.value = data.prior.weighted || '';
+              inputPriorCredits.value = data.prior.credits || '';
+            }
+            if (data.classes && data.classes.length > 0) {
+              data.classes.forEach(c => addClassRow(c.name, c.grade, c.credits, c.weight));
+            } else {
+              addDefaultRows();
+            }
+          } catch(e) {
+            addDefaultRows();
+          }
+        } else {
+          addDefaultRows();
+        }
+
+        setupEventListeners();
+        calculateGPA();
+      }
+
+      function addDefaultRows() {
+        addClassRow('English 9', '4.0', '1', '0');
+        addClassRow('Algebra 1', '3.3', '1', '0');
+        addClassRow('Biology', '3.7', '1', '0.5');
+        addClassRow('World History', '3.0', '1', '0');
+      }
+
+      function setupEventListeners() {
+        btnAddClass.addEventListener('click', () => {
+          addClassRow();
+          calculateGPA();
+        });
+
+        btnClear.addEventListener('click', () => {
+          if(confirm('Are you sure you want to clear all classes and prior GPA data?')) {
+            classesList.innerHTML = '';
+            inputPriorUnweighted.value = '';
+            inputPriorWeighted.value = '';
+            inputPriorCredits.value = '';
+            addDefaultRows();
+            calculateGPA();
+            localStorage.removeItem('hsGpaDataV2');
+          }
+        });
+
+        classesList.addEventListener('input', calculateGPA);
+
+        inputPriorUnweighted.addEventListener('input', calculateGPA);
+        inputPriorWeighted.addEventListener('input', calculateGPA);
+        inputPriorCredits.addEventListener('input', calculateGPA);
+
+        wiName.addEventListener('input', updateWhatIf);
+        wiGrade.addEventListener('change', updateWhatIf);
+        wiWeight.addEventListener('change', updateWhatIf);
+      }
+
+      function addClassRow(name = '', grade = '4.0', credits = '1', weight = '0') {
+        rowCount++;
+
+        const row = document.createElement('div');
+        row.className = 'class-row';
+        row.innerHTML = `
+          <div class="form-group">
+            <label>Class Name</label>
+            <input type="text" class="c-name" placeholder="e.g., Biology" value="${name}">
+          </div>
+          <div class="form-group">
+            <label>Grade</label>
+            <select class="c-grade">
+              <option value="4.0" ${grade === '4.0' ? 'selected' : ''}>A+ / A (4.0)</option>
+              <option value="3.7" ${grade === '3.7' ? 'selected' : ''}>A- (3.7)</option>
+              <option value="3.3" ${grade === '3.3' ? 'selected' : ''}>B+ (3.3)</option>
+              <option value="3.0" ${grade === '3.0' ? 'selected' : ''}>B (3.0)</option>
+              <option value="2.7" ${grade === '2.7' ? 'selected' : ''}>B- (2.7)</option>
+              <option value="2.3" ${grade === '2.3' ? 'selected' : ''}>C+ (2.3)</option>
+              <option value="2.0" ${grade === '2.0' ? 'selected' : ''}>C (2.0)</option>
+              <option value="1.7" ${grade === '1.7' ? 'selected' : ''}>C- (1.7)</option>
+              <option value="1.3" ${grade === '1.3' ? 'selected' : ''}>D+ (1.3)</option>
+              <option value="1.0" ${grade === '1.0' ? 'selected' : ''}>D (1.0)</option>
+              <option value="0.0" ${grade === '0.0' ? 'selected' : ''}>F (0.0)</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label>Credits</label>
+            <input type="number" class="c-credits" min="0" step="0.5" value="${credits}">
+          </div>
+          <div class="form-group">
+            <label>Class Type</label>
+            <select class="c-weight">
+              <option value="0" ${weight === '0' ? 'selected' : ''}>Regular</option>
+              <option value="0.5" ${weight === '0.5' ? 'selected' : ''}>Honors (+0.5)</option>
+              <option value="1.0" ${weight === '1.0' ? 'selected' : ''}>AP/IB/Dual (+1.0)</option>
+            </select>
+          </div>
+          <button class="btn-remove" aria-label="Remove class" onclick="this.parentElement.remove(); document.getElementById('classes-list').dispatchEvent(new Event('input', {bubbles: true}));">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M18 6L6 18M6 6l12 12"/></svg>
+          </button>
+        `;
+        classesList.appendChild(row);
+      }
+
+      function calculateGPA() {
+        let semCredits = 0;
+        let semPtsUnweighted = 0;
+        let semPtsWeighted = 0;
+
+        const classes = [];
+
+        const rows = document.querySelectorAll('.class-row');
+        rows.forEach(row => {
+          const name = row.querySelector('.c-name').value;
+          const grade = parseFloat(row.querySelector('.c-grade').value);
+          const credits = parseFloat(row.querySelector('.c-credits').value) || 0;
+          const weight = parseFloat(row.querySelector('.c-weight').value) || 0;
+
+          classes.push({ name, grade: grade.toString(), credits: credits.toString(), weight: weight.toString() });
+
+          if (credits > 0 && !isNaN(grade)) {
+            semCredits += credits;
+            semPtsUnweighted += (grade * credits);
+            // If F, no weight boost usually applies
+            const finalWeight = grade > 0 ? weight : 0;
+            semPtsWeighted += ((grade + finalWeight) * credits);
+          }
+        });
+
+        const semesterUnweighted = semCredits > 0 ? (semPtsUnweighted / semCredits) : 0;
+        const semesterWeighted = semCredits > 0 ? (semPtsWeighted / semCredits) : 0;
+
+        const priorUnweighted = parseFloat(inputPriorUnweighted.value) || 0;
+        const priorWeighted = parseFloat(inputPriorWeighted.value) || 0;
+        const priorCredits = parseFloat(inputPriorCredits.value) || 0;
+
+        let totalCredits = priorCredits + semCredits;
+        let totalPtsUnweighted = (priorUnweighted * priorCredits) + semPtsUnweighted;
+        let totalPtsWeighted = (priorWeighted * priorCredits) + semPtsWeighted;
+
+        const cumUnweighted = totalCredits > 0 ? (totalPtsUnweighted / totalCredits) : 0;
+        const cumWeighted = totalCredits > 0 ? (totalPtsWeighted / totalCredits) : 0;
+
+        resSemesterUnweighted.textContent = semesterUnweighted.toFixed(2);
+        resSemesterWeighted.textContent = semesterWeighted.toFixed(2);
+        resCumUnweighted.textContent = cumUnweighted.toFixed(2);
+        resCumWeighted.textContent = cumWeighted.toFixed(2);
+        resTotalCredits.textContent = totalCredits.toString();
+
+        updateChart(cumWeighted);
+        updateWhatIf();
+        saveData(priorUnweighted, priorWeighted, priorCredits, classes);
+      }
+
+      function updateChart(gpa) {
+        const maxGPA = 5.0;
+        let percentage = (gpa / maxGPA) * 100;
+        if (percentage > 100) percentage = 100;
+        if (percentage < 0) percentage = 0;
+
+        gpaFill.style.width = `${percentage}%`;
+        gpaMarker.style.left = `${percentage}%`;
+      }
+
+      function updateWhatIf() {
+        const name = wiName.value || 'Class';
+        const gradeText = wiGrade.options[wiGrade.selectedIndex].text.split(' ')[0];
+        const gradeVal = parseFloat(wiGrade.value);
+        const weightVal = parseFloat(wiWeight.value);
+
+        wiDispName.textContent = name;
+        wiDispGrade.textContent = gradeText;
+
+        // Cumulative what-if logic
+        const priorUnweighted = parseFloat(inputPriorUnweighted.value) || 0;
+        const priorWeighted = parseFloat(inputPriorWeighted.value) || 0;
+        const priorCredits = parseFloat(inputPriorCredits.value) || 0;
+
+        let semCredits = 0;
+        let semPtsWeighted = 0;
+
+        const rows = document.querySelectorAll('.class-row');
+        rows.forEach(row => {
+          const g = parseFloat(row.querySelector('.c-grade').value);
+          const c = parseFloat(row.querySelector('.c-credits').value) || 0;
+          const w = parseFloat(row.querySelector('.c-weight').value) || 0;
+          if (c > 0 && !isNaN(g)) {
+            semCredits += c;
+            semPtsWeighted += ((g + (g > 0 ? w : 0)) * c);
+          }
+        });
+
+        // Add what-if class (assume 1 credit)
+        const whatIfCredit = 1;
+        const whatIfWeight = gradeVal > 0 ? weightVal : 0;
+
+        semCredits += whatIfCredit;
+        semPtsWeighted += ((gradeVal + whatIfWeight) * whatIfCredit);
+
+        let totalCredits = priorCredits + semCredits;
+        let totalPtsWeighted = (priorWeighted * priorCredits) + semPtsWeighted;
+
+        const newWeightedGPA = totalCredits > 0 ? (totalPtsWeighted / totalCredits) : 0;
+        wiDispRes.textContent = newWeightedGPA.toFixed(2);
+      }
+
+      function saveData(pu, pw, pc, classes) {
+        const data = {
+          prior: {
+            unweighted: pu,
+            weighted: pw,
+            credits: pc
+          },
+          classes: classes
+        };
+        localStorage.setItem('hsGpaDataV2', JSON.stringify(data));
+      }
+
+      document.addEventListener('DOMContentLoaded', init);
+    })();
+  </script>
+</SiteLayout>
