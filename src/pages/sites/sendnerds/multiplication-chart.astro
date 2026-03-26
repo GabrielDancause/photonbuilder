@@ -205,23 +205,22 @@ const schema = [
 
   <!-- Minimal style block for JS-driven highlights only -->
   <style>
-    .highlighted-row,
-    .highlighted-col {
-      background: rgba(59, 130, 246, 0.25) !important;
-    }
-
     .highlighted-cell {
-      background: var(--accent-color) !important;
       color: white !important;
       font-weight: bold !important;
-      transform: scale(1.1) !important;
-      z-index: 2 !important;
+      transform: scale(1.1);
+      z-index: 2;
+    }
+
+    .highlighted-row,
+    .highlighted-col {
+      z-index: 1;
     }
 
     .chart-cell:hover {
       background: rgba(59, 130, 246, 0.4) !important;
-      transform: scale(1.05) !important;
-      z-index: 1 !important;
+      transform: scale(1.05);
+      z-index: 1;
     }
 
     @media print {
@@ -307,9 +306,12 @@ const schema = [
             td.dataset.col = col;
             td.dataset.product = product;
             
-            // Apply color coding with discrete Tailwind classes
-            const colorClass = getColorClass(product, maxProduct);
-            td.className = `w-10 h-10 md:w-[40px] md:h-[40px] text-center align-middle border border-[var(--border-color)] text-xs md:text-sm text-[var(--text-primary)] cursor-pointer relative transition-all duration-200 chart-cell ${colorClass} print:w-8 print:h-8 print:text-xs print:bg-white print:text-black print:border-black`;
+            // Apply color coding via data attribute
+            const ratio = product / maxProduct;
+            const opacity = Math.min(0.24, ratio * 0.18 + 0.03);
+            td.className = 'w-10 h-10 md:w-[40px] md:h-[40px] text-center align-middle border border-[var(--border-color)] text-xs md:text-sm text-[var(--text-primary)] cursor-pointer relative transition-all duration-200 chart-cell print:w-8 print:h-8 print:text-xs print:bg-white print:text-black print:border-black';
+            td.style.setProperty('--cell-bg', `rgba(59, 130, 246, ${opacity})`);
+            td.style.backgroundColor = `var(--cell-bg)`;
             
             td.addEventListener('click', function() {
               highlightCell(row, col, size);
@@ -325,23 +327,24 @@ const schema = [
       }
 
       function highlightCell(row, col, size) {
-        // Clear previous highlights
         const allCells = chartContainer.querySelectorAll('td');
+        // Clear all highlights, restore original bg
         allCells.forEach(cell => {
           cell.classList.remove('highlighted-row', 'highlighted-col', 'highlighted-cell');
+          cell.style.backgroundColor = `var(--cell-bg)`;
         });
         
-        // Add new highlights
+        // Apply highlights — override backgroundColor directly
         allCells.forEach(cell => {
           const cellRow = parseInt(cell.dataset.row);
           const cellCol = parseInt(cell.dataset.col);
           
           if (cellRow === row && cellCol === col) {
             cell.classList.add('highlighted-cell');
-          } else if (cellRow === row) {
-            cell.classList.add('highlighted-row');
-          } else if (cellCol === col) {
-            cell.classList.add('highlighted-col');
+            cell.style.backgroundColor = 'var(--accent-color)';
+          } else if (cellRow === row || cellCol === col) {
+            cell.classList.add(cellRow === row ? 'highlighted-row' : 'highlighted-col');
+            cell.style.backgroundColor = 'rgba(59, 130, 246, 0.25)';
           }
         });
         
