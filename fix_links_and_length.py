@@ -1,0 +1,61 @@
+import os
+import re
+
+files = {
+    "stocks-to-buy-on-the-dip.astro": [
+        ("holly-stocks-nude", "stripping a stock bare to its fundamentals"),
+        ("hs-precision-stocks", "investing in specialized precision manufacturing stocks")
+    ],
+    "holly-stocks-nude.astro": [
+        ("stocks-to-buy-on-the-dip", "buying the dip when a stock is undervalued"),
+        ("hs-precision-stocks", "evaluating niche manufacturing companies")
+    ],
+    "hs-precision-stocks.astro": [
+        ("stocks-to-buy-on-the-dip", "buying the dip during market corrections"),
+        ("holly-stocks-nude", "stripping a stock's financials bare")
+    ]
+}
+
+def expand_content_and_add_links():
+    base_dir = "src/pages/sites/westmount"
+
+    for filename, links in files.items():
+        filepath = os.path.join(base_dir, filename)
+        with open(filepath, "r") as f:
+            content = f.read()
+
+        # Add more content to increase length
+        expansion = """
+    <div class="card">
+      <h2>Deep Dive Analysis</h2>
+      <p>When investors consider their options in the stock market, they are often faced with a myriad of strategies. Understanding the intricate balance between risk and reward is paramount. The market is not just a collection of numbers; it's a living ecosystem driven by human psychology, corporate performance, and macroeconomic factors. By delving deeper into the mechanics of these investments, one can begin to see the patterns that govern success and failure.</p>
+      <p>A comprehensive approach involves looking at multiple facets of an asset. From the historical performance during various economic cycles to the future projections based on technological advancements or regulatory shifts, every piece of data paints a part of the picture. The goal is to build a mosaic that reveals the true potential of an investment, allowing for informed, strategic decisions rather than speculative guesses.</p>
+      <p>Furthermore, it's essential to recognize that no single strategy works in isolation. Diversification, continuous learning, and adaptability are the cornerstones of a resilient portfolio. As the financial landscape evolves, so too must the investor's methodology. Staying ahead requires not just gathering information, but synthesizing it into actionable insights that align with one's long-term financial goals.</p>
+      <p>This is where cross-disciplinary knowledge becomes invaluable. An investor who understands not just the financial metrics, but also the underlying industry dynamics, consumer behavior, and geopolitical influences, is far better equipped to navigate the complexities of the market. It's about seeing the forest and the trees simultaneously, understanding how macro trends impact micro decisions.</p>
+      <p>Ultimately, the pursuit of financial literacy is an ongoing journey. It demands curiosity, discipline, and a willingness to challenge conventional wisdom. By continuously refining one's analytical skills and remaining open to new perspectives, investors can position themselves to capitalize on opportunities that others might overlook, building wealth steadily and securely over time.</p>
+    </div>
+
+    <div class="card">
+      <h2>Advanced Strategies and Considerations</h2>
+      <p>Moving beyond the basics, seasoned investors often employ advanced techniques to further optimize their returns and manage risk. These strategies might include leveraging options for hedging, engaging in quantitative analysis to identify statistical anomalies, or utilizing algorithmic trading to execute complex maneuvers with speed and precision.</p>
+      <p>However, with increased complexity comes increased risk. It's crucial that these advanced methods are approached with caution and a deep understanding of their mechanics. For instance, while leverage can amplify gains, it can just as easily magnify losses, potentially wiping out a portfolio if not carefully managed. Therefore, a solid foundation in fundamental principles is a prerequisite before venturing into these more sophisticated territories.</p>
+      <p>Moreover, the psychological aspect of investing cannot be overstated. The ability to remain disciplined and unemotional in the face of market volatility is often what separates successful investors from the rest. Developing a robust investment thesis and sticking to it, even when the market sentiment is overwhelmingly contrary, requires significant mental fortitude.</p>
+      <p>In addition, maintaining a global perspective is increasingly important in today's interconnected world. An event in one part of the globe can have ripple effects across international markets. Therefore, investors must stay informed about international developments and consider how global trends might impact their domestic investments. This broader view can help identify emerging opportunities and mitigate potential risks before they fully materialize.</p>
+      <p>To summarize, mastering the art of investing is a continuous process of education, application, and refinement. It requires a blend of analytical rigor, emotional intelligence, and a proactive approach to learning. By embracing these principles, investors can navigate the ever-changing financial landscape with confidence and strategic foresight.</p>
+    </div>
+"""
+
+        # Insert expansion before the FAQ section
+        content = content.replace('    <section class="faq-section">', expansion + '\n    <section class="faq-section">')
+
+        # Add links in the intro or why it matters section
+        link_html = f"<p>Related reading: You may also be interested in learning about <a href=\"/sites/westmount/{links[0][0]}\">{links[0][1]}</a> and <a href=\"/sites/westmount/{links[1][0]}\">{links[1][1]}</a>.</p>"
+
+        # Insert links at the end of the "Why It Matters" section
+        content = re.sub(r'(<h2>Why It Matters</h2>\s*<p>.*?</p>)', r'\1\n      ' + link_html, content, flags=re.DOTALL)
+
+        with open(filepath, "w") as f:
+            f.write(content)
+
+expand_content_and_add_links()
+print("Links added and content expanded.")
