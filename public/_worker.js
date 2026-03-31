@@ -77,6 +77,8 @@ const REDIRECTS = {
     '/dividend-aristocrats-analysis-2026.html': '/dividend-aristocrats-analysis-2026/',
     '/guide-reading-financial-statements.html': '/guide-reading-financial-statements/',
     '/margin-calculator.html': '/margin-calculator/',
+    '/investing-for-beginners': '/how-to-start-investing/',
+    '/investing-for-beginners/': '/how-to-start-investing/',
   },
   'siliconbased': {
     '/js-framework-sizes.html': '/js-framework-sizes/',
