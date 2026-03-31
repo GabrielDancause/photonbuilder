@@ -45,11 +45,11 @@ TODAY = datetime.now().strftime("%Y-%m-%d")
 
 
 def _collect_dynamic_pages(site_id, domain):
-    """Collect URLs from JSON-driven dynamic routes (IV & prospect pages)."""
+    """Collect URLs from JSON-driven dynamic routes (IV pages only — prospects merged into IV)."""
     data_dir = PHOTON_DIR / "src" / "data"
     page_data = []
 
-    for kind in ("iv", "prospect"):
+    for kind in ("iv",):
         json_dir = data_dir / kind
         if not json_dir.is_dir():
             continue
