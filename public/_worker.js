@@ -58,10 +58,16 @@ const SITE_MAP = {
 // SEO redirects per site (from → to)
 const REDIRECTS = {
   'westmount': {
-    '/most-shorted-stocks-march-2026/': '/most-shorted-stocks/',
-    '/most-shorted-stocks-march-2026': '/most-shorted-stocks/',
-    '/short-squeeze-candidates-march-2026/': '/short-squeeze-candidates/',
-    '/short-squeeze-candidates-march-2026': '/short-squeeze-candidates/',
+    '/most-shorted-stocks': '/short-interest/',
+    '/most-shorted-stocks/': '/short-interest/',
+    '/most-shorted-stocks-march-2026': '/short-interest/',
+    '/most-shorted-stocks-march-2026/': '/short-interest/',
+    '/short-squeeze-candidates': '/short-interest/',
+    '/short-squeeze-candidates/': '/short-interest/',
+    '/short-squeeze-candidates-march-2026': '/short-interest/',
+    '/short-squeeze-candidates-march-2026/': '/short-interest/',
+    '/short-interest-study': '/short-interest/',
+    '/short-interest-study/': '/short-interest/',
     '/ceo-compensation.html': '/ceo-compensation/',
     '/fire-retirement-calculator.html': '/fire-retirement-calculator/',
     '/dividend-aristocrats-analysis-2026.html': '/dividend-aristocrats-analysis-2026/',
