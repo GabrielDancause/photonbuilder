@@ -1,0 +1,615 @@
+---
+import SiteLayout from "../../../layouts/SiteLayout.astro";
+
+const faqSchema = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": [
+    { "@type": "Question", "name": "How do I track my dividend income?", "acceptedAnswer": { "@type": "Answer", "text": "Add your dividend stocks to our free portfolio tracker by entering the ticker symbol and number of shares. The tool automatically calculates your annual income, monthly payments, and portfolio yield." }},
+    { "@type": "Question", "name": "What stocks pay monthly dividends?", "acceptedAnswer": { "@type": "Answer", "text": "Realty Income (O), Main Street Capital (MAIN), STAG Industrial (STAG), EPR Properties (EPR), and AGNC Investment Corp (AGNC) are popular monthly dividend payers included in our tracker." }},
+    { "@type": "Question", "name": "How is portfolio dividend yield calculated?", "acceptedAnswer": { "@type": "Answer", "text": "Portfolio yield is your total annual dividend income divided by your total investment amount (shares × current stock price), expressed as a percentage." }},
+    { "@type": "Question", "name": "Can I save my dividend portfolio?", "acceptedAnswer": { "@type": "Answer", "text": "Yes, your portfolio is automatically saved to your browser's local storage and will persist when you return to the page." }}
+  ]
+};
+
+const schema = {
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": "Dividend Tracker — Calculate Your Portfolio's Annual Income",
+  "description": "Free dividend portfolio tracker. Add your stocks, see total annual income, yield on cost, monthly income breakdown, and sector diversification.",
+  "datePublished": "2026-03-28",
+  "dateModified": "2026-03-28",
+  "author": {
+    "@type": "Organization",
+    "name": "Westmount Research",
+    "url": "https://westmountfundamentals.com"
+  },
+  "publisher": {
+    "@type": "Organization",
+    "name": "Westmount Research",
+    "url": "https://westmountfundamentals.com"
+  },
+  "mainEntityOfPage": {
+    "@type": "WebPage",
+    "@id": "https://westmountfundamentals.com/dividend-tracker"
+  }
+};
+
+export const meta = {
+  title: "Dividend Tracker — Calculate Your Portfolio's Annual Income",
+  description: "Free dividend portfolio tracker. Add your stocks, see total annual income, yield on cost, monthly income breakdown, and sector diversification.",
+  category: "tool",
+  published: "2026-03-28",
+};
+---
+
+<SiteLayout
+  site="westmount"
+  title="Dividend Tracker — Calculate Your Portfolio's Annual Income"
+  description="Free dividend portfolio tracker. Add your stocks, see total annual income, yield on cost, monthly income breakdown, and sector diversification."
+  canonical="https://westmountfundamentals.com/dividend-tracker"
+  schema={[schema, faqSchema]}
+>
+  <style>
+    *, *::before, *::after { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Inter', -apple-system, sans-serif; background: #060a12; color: #c8d0de; line-height: 1.6; }
+    a { color: #4a8fe7; text-decoration: none; }
+    a:hover { text-decoration: underline; }
+
+    .container { max-width: 1200px; margin: 0 auto; padding: 0 20px; }
+
+    /* Header */
+    .header { text-align: center; padding: 60px 20px 40px; background: linear-gradient(180deg, #0a1628 0%, #060a12 100%); position: relative; }
+    .header::before { content: ''; position: absolute; inset: 0; background: radial-gradient(circle at 50% 40%, rgba(74,143,231,0.06) 0%, transparent 60%); }
+    .header-content { position: relative; z-index: 1; }
+    .back-link { display: inline-block; font-size: 0.8rem; color: #4a5568; margin-bottom: 16px; }
+    .back-link:hover { color: #4a8fe7; }
+    .tag { display: inline-block; background: rgba(74,143,231,0.12); color: #4a8fe7; font-size: 0.65rem; font-weight: 800; padding: 4px 14px; border-radius: 20px; letter-spacing: 1.5px; text-transform: uppercase; margin-bottom: 16px; }
+    h1 { font-size: 2.4rem; font-weight: 900; color: #fff; letter-spacing: -1px; margin-bottom: 8px; }
+    .subtitle { color: #5a6a80; font-size: 1rem; max-width: 600px; margin: 0 auto 8px; }
+
+    /* Tool Section */
+    .tool-section { background: #0a1020; border: 1px solid #152040; border-radius: 16px; padding: 32px; margin: 40px auto; max-width: 1000px; }
+    
+    /* Add Stock Form */
+    .add-form { display: flex; gap: 12px; margin-bottom: 32px; flex-wrap: wrap; align-items: end; }
+    .form-group { flex: 1; min-width: 140px; }
+    .form-label { display: block; font-size: 0.8rem; color: #8a9ab0; margin-bottom: 6px; font-weight: 600; }
+    .form-input { width: 100%; padding: 12px 16px; background: #060a12; border: 1px solid #152040; border-radius: 8px; color: #c8d0de; font-size: 0.9rem; }
+    .form-input:focus { outline: none; border-color: #4a8fe7; }
+    .suggestions { position: absolute; background: #060a12; border: 1px solid #152040; border-radius: 8px; max-height: 200px; overflow-y: auto; z-index: 100; width: 100%; margin-top: 2px; }
+    .suggestion { padding: 12px 16px; cursor: pointer; font-size: 0.85rem; border-bottom: 1px solid #152040; }
+    .suggestion:hover { background: #0a1020; }
+    .suggestion:last-child { border-bottom: none; }
+    .suggestion-ticker { color: #4a8fe7; font-weight: 600; }
+    .suggestion-name { color: #8a9ab0; margin-left: 8px; }
+    .btn { background: #4a8fe7; color: #fff; border: none; padding: 12px 24px; border-radius: 8px; font-size: 0.9rem; font-weight: 600; cursor: pointer; transition: all 0.2s; }
+    .btn:hover { background: #3a7fd7; transform: translateY(-1px); }
+    .btn:disabled { background: #2a3a50; cursor: not-allowed; transform: none; }
+
+    /* Stats Grid */
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 32px; }
+    .stat-card { background: linear-gradient(135deg, #0a1020 0%, #0d1428 100%); border: 1px solid #152040; border-radius: 12px; padding: 20px; text-align: center; }
+    .stat-value { font-family: 'JetBrains Mono', monospace; font-size: 1.8rem; font-weight: 700; color: #4a8fe7; line-height: 1.1; }
+    .stat-label { font-size: 0.75rem; color: #8a9ab0; margin-top: 4px; }
+    .stat-green { color: #48bb78; }
+
+    /* Portfolio Holdings */
+    .holdings-section { margin-bottom: 32px; }
+    .holdings-table { width: 100%; border-collapse: collapse; background: #060a12; border-radius: 12px; overflow: hidden; border: 1px solid #152040; }
+    .holdings-table th, .holdings-table td { padding: 12px 16px; text-align: left; border-bottom: 1px solid #152040; }
+    .holdings-table th { background: #0a1020; font-size: 0.8rem; color: #8a9ab0; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+    .holdings-table tr:last-child td { border-bottom: none; }
+    .holdings-table .ticker { color: #4a8fe7; font-weight: 600; }
+    .holdings-table .amount { font-family: 'JetBrains Mono', monospace; }
+    .remove-btn { background: #e53e3e; color: #fff; border: none; padding: 4px 8px; border-radius: 4px; font-size: 0.7rem; cursor: pointer; }
+    .remove-btn:hover { background: #c53030; }
+
+    /* Monthly Income Chart */
+    .chart-section { margin-bottom: 32px; }
+    .chart-container { background: #060a12; border: 1px solid #152040; border-radius: 12px; padding: 24px; }
+    .chart-title { font-size: 1.2rem; font-weight: 700; color: #fff; margin-bottom: 20px; }
+    .chart-grid { display: grid; grid-template-columns: repeat(12, 1fr); gap: 8px; height: 200px; align-items: end; }
+    .chart-bar { background: linear-gradient(to top, #1a3a6a, #4a8fe7); border-radius: 4px 4px 0 0; position: relative; min-height: 4px; transition: all 0.3s; }
+    .chart-bar:hover { opacity: 0.8; }
+    .chart-bar-value { position: absolute; bottom: 100%; left: 50%; transform: translateX(-50%); font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; color: #c8d0de; margin-bottom: 4px; white-space: nowrap; }
+    .chart-labels { display: grid; grid-template-columns: repeat(12, 1fr); gap: 8px; margin-top: 8px; }
+    .chart-label { text-align: center; font-size: 0.7rem; color: #8a9ab0; }
+
+    /* Sector Breakdown */
+    .sectors-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 12px; }
+    .sector-item { background: #060a12; border: 1px solid #152040; border-radius: 8px; padding: 16px; text-align: center; }
+    .sector-name { font-size: 0.8rem; color: #8a9ab0; margin-bottom: 4px; }
+    .sector-value { font-family: 'JetBrains Mono', monospace; font-size: 1.1rem; color: #4a8fe7; font-weight: 600; }
+
+    /* Empty State */
+    .empty-state { text-align: center; padding: 60px 20px; color: #5a6a80; }
+    .empty-state h3 { font-size: 1.2rem; margin-bottom: 8px; color: #8a9ab0; }
+
+    /* Responsive */
+    @media (max-width: 768px) {
+      .add-form { flex-direction: column; align-items: stretch; }
+      .stats-grid { grid-template-columns: repeat(2, 1fr); }
+      .chart-grid { height: 150px; }
+      .holdings-table { font-size: 0.85rem; }
+      .holdings-table th, .holdings-table td { padding: 8px 12px; }
+    }
+
+    /* Content Sections */
+    .content-section { max-width: 1000px; margin: 80px auto; padding: 0 20px; }
+    .content-section h2 { font-size: 1.8rem; font-weight: 800; color: #fff; margin-bottom: 16px; }
+    .content-section p { color: #8a9ab0; margin-bottom: 16px; line-height: 1.7; }
+    .content-section ul { color: #8a9ab0; margin: 16px 0 16px 20px; }
+    .content-section li { margin-bottom: 8px; }
+
+    /* Related Links */
+    .related-links { margin: 60px auto; padding: 32px; background: #0a1020; border: 1px solid #152040; border-radius: 16px; max-width: 1000px; }
+    .related-title { font-size: 1.3rem; font-weight: 700; color: #fff; margin-bottom: 16px; }
+    .links-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 16px; }
+    .link-item { background: #060a12; border: 1px solid #152040; border-radius: 8px; padding: 16px; transition: all 0.2s; }
+    .link-item:hover { border-color: #4a8fe7; transform: translateY(-2px); }
+    .link-title { color: #4a8fe7; font-weight: 600; margin-bottom: 4px; }
+    .link-desc { color: #5a6a80; font-size: 0.8rem; }
+
+    .position-relative { position: relative; }
+  </style>
+
+  <div class="header">
+    <div class="header-content">
+      <a href="/tools" class="back-link">← Tools</a>
+      <div class="tag">Free Tool</div>
+      <h1>Dividend Portfolio Tracker</h1>
+      <p class="subtitle">Build your dividend portfolio and calculate your annual income, monthly payments, and yield breakdown</p>
+    </div>
+  </div>
+
+  <div class="container">
+    <div class="tool-section">
+      <!-- Add Stock Form -->
+      <div class="add-form">
+        <div class="form-group position-relative">
+          <label for="ticker-input" class="form-label">Stock Ticker</label>
+          <input type="text" id="ticker-input" class="form-input" placeholder="Type symbol (e.g., AAPL)" autocomplete="off">
+          <div id="suggestions" class="suggestions" style="display: none;"></div>
+        </div>
+        <div class="form-group">
+          <label for="shares-input" class="form-label">Shares Owned</label>
+          <input type="number" id="shares-input" class="form-input" placeholder="100" min="1" step="1">
+        </div>
+        <div class="form-group">
+          <button id="add-button" class="btn">Add to Portfolio</button>
+        </div>
+      </div>
+
+      <!-- Portfolio Stats -->
+      <div class="stats-grid">
+        <div class="stat-card">
+          <div id="total-income" class="stat-value">$0</div>
+          <div class="stat-label">Annual Income</div>
+        </div>
+        <div class="stat-card">
+          <div id="portfolio-yield" class="stat-value">0%</div>
+          <div class="stat-label">Portfolio Yield</div>
+        </div>
+        <div class="stat-card">
+          <div id="total-value" class="stat-value">$0</div>
+          <div class="stat-label">Total Value</div>
+        </div>
+        <div class="stat-card">
+          <div id="monthly-avg" class="stat-value">$0</div>
+          <div class="stat-label">Monthly Average</div>
+        </div>
+      </div>
+
+      <!-- Holdings Table -->
+      <div class="holdings-section">
+        <table class="holdings-table" id="holdings-table" style="display: none;">
+          <thead>
+            <tr>
+              <th>Stock</th>
+              <th>Shares</th>
+              <th>Yield</th>
+              <th>Annual Dividend</th>
+              <th>Annual Income</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody id="holdings-body"></tbody>
+        </table>
+        
+        <div id="empty-state" class="empty-state">
+          <h3>Build Your Dividend Portfolio</h3>
+          <p>Add dividend stocks above to see your income breakdown, monthly payments, and sector allocation</p>
+        </div>
+      </div>
+
+      <!-- Monthly Income Chart -->
+      <div class="chart-section" id="chart-section" style="display: none;">
+        <div class="chart-container">
+          <div class="chart-title">Monthly Income Distribution</div>
+          <div class="chart-grid" id="monthly-chart"></div>
+          <div class="chart-labels">
+            <div class="chart-label">Jan</div>
+            <div class="chart-label">Feb</div>
+            <div class="chart-label">Mar</div>
+            <div class="chart-label">Apr</div>
+            <div class="chart-label">May</div>
+            <div class="chart-label">Jun</div>
+            <div class="chart-label">Jul</div>
+            <div class="chart-label">Aug</div>
+            <div class="chart-label">Sep</div>
+            <div class="chart-label">Oct</div>
+            <div class="chart-label">Nov</div>
+            <div class="chart-label">Dec</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Sector Breakdown -->
+      <div class="chart-section" id="sectors-section" style="display: none;">
+        <div class="chart-container">
+          <div class="chart-title">Sector Diversification</div>
+          <div class="sectors-grid" id="sectors-grid"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- SEO Content -->
+  <div class="content-section">
+    <h2>How to Track Dividend Income</h2>
+    <p>Tracking your dividend income is essential for building a sustainable passive income stream. Our dividend portfolio tracker automatically calculates your annual dividend income, portfolio yield, and monthly payment schedule by analyzing your holdings against current dividend data.</p>
+    
+    <p>Start by adding your dividend-paying stocks using their ticker symbols. The tool includes data for over 50 popular dividend stocks including Dividend Aristocrats, REITs, and monthly payers. For each position, you'll see the current dividend yield, annual dividend per share, and your projected income from that holding.</p>
+
+    <p>The portfolio view provides four key metrics: total annual income from all holdings, weighted average portfolio yield, total portfolio value at current prices, and average monthly income. This gives you a complete picture of your dividend investment performance and cash flow generation.</p>
+
+    <p>Monthly income visualization shows which months you'll receive dividend payments, helping you plan for irregular income distribution. Most companies pay quarterly, so building a diversified portfolio with staggered payment dates can smooth your cash flow throughout the year.</p>
+
+    <p>Sector breakdown reveals your exposure across different industries, from technology and healthcare to utilities and REITs. Proper sector diversification reduces risk while maintaining income stability, as different sectors perform better in various economic conditions.</p>
+  </div>
+
+  <div class="content-section">
+    <h2>Dividend Payment Schedules Explained</h2>
+    <p>Understanding when dividends are paid is crucial for income planning. Most U.S. companies pay quarterly dividends, typically in January, April, July, and October (or February, May, August, November). However, payment months vary by company, creating opportunities to build monthly income streams.</p>
+
+    <p>Monthly dividend payers like Realty Income (O), Main Street Capital (MAIN), and AGNC Investment Corp (AGNC) provide consistent monthly cash flow. These are popular among retirees and income-focused investors who prefer predictable monthly payments over quarterly lumps.</p>
+
+    <p>Companies announce dividend payment dates well in advance, including the declaration date, ex-dividend date, record date, and payment date. The ex-dividend date is most important for investors – you must own the stock before this date to receive the upcoming dividend payment.</p>
+  </div>
+
+  <div class="content-section">
+    <h2>Building a Monthly Income Stream</h2>
+    <p>Creating monthly dividend income requires strategic selection of stocks with different payment schedules. By combining quarterly payers with staggered months, you can receive dividend payments in all 12 months of the year, creating a more consistent cash flow stream.</p>
+
+    <p>Many income investors use a "dividend ladder" approach, selecting stocks that pay in different months. For example, holding Coca-Cola (March, June, September, December), Johnson & Johnson (March, June, September, December), and Realty Income (monthly) provides both quarterly and monthly income components.</p>
+
+    <p>Monthly dividend stocks often have higher yields than quarterly payers, but may carry additional risks. REITs and BDCs (Business Development Companies) are common monthly payers, offering yields of 5-10% but with more volatile underlying asset values and different tax treatment.</p>
+  </div>
+
+  <!-- Related Links -->
+  <div class="related-links">
+    <h3 class="related-title">Related Tools & Guides</h3>
+    <div class="links-grid">
+      <a href="/dividend-aristocrats" class="link-item">
+        <div class="link-title">Dividend Aristocrats</div>
+        <div class="link-desc">67 S&P 500 stocks with 25+ years of dividend increases</div>
+      </a>
+      <a href="/dividend-reinvestment-calculator" class="link-item">
+        <div class="link-title">DRIP Calculator</div>
+        <div class="link-desc">Calculate compound growth with dividend reinvestment</div>
+      </a>
+      <a href="/monthly-dividend-stocks" class="link-item">
+        <div class="link-title">Monthly Dividend Stocks</div>
+        <div class="link-desc">Complete list of stocks that pay monthly dividends</div>
+      </a>
+      <a href="/buyback-leaders" class="link-item">
+        <div class="link-title">Share Buyback Leaders</div>
+        <div class="link-desc">Companies returning cash through share repurchases</div>
+      </a>
+    </div>
+  </div>
+
+  <script is:inline>
+    // Dividend Stocks Database
+    const dividendStocks = {
+      'AAPL': { name: 'Apple Inc.', yield: 0.52, dividend: 0.96, sector: 'Technology', months: [2, 5, 8, 11] },
+      'MSFT': { name: 'Microsoft Corporation', yield: 0.68, dividend: 3.32, sector: 'Technology', months: [2, 5, 8, 11] },
+      'JNJ': { name: 'Johnson & Johnson', yield: 2.91, dividend: 4.76, sector: 'Healthcare', months: [3, 6, 9, 12] },
+      'KO': { name: 'The Coca-Cola Company', yield: 3.21, dividend: 1.94, sector: 'Consumer Staples', months: [3, 6, 9, 12] },
+      'PG': { name: 'Procter & Gamble Co.', yield: 2.47, dividend: 3.80, sector: 'Consumer Staples', months: [2, 5, 8, 11] },
+      'PEP': { name: 'PepsiCo Inc.', yield: 2.74, dividend: 5.06, sector: 'Consumer Staples', months: [3, 6, 9, 1] },
+      'MCD': { name: "McDonald's Corporation", yield: 2.19, dividend: 6.68, sector: 'Consumer Discretionary', months: [3, 6, 9, 12] },
+      'ABBV': { name: 'AbbVie Inc.', yield: 3.35, dividend: 6.24, sector: 'Healthcare', months: [2, 5, 8, 11] },
+      'XOM': { name: 'Exxon Mobil Corporation', yield: 3.27, dividend: 3.64, sector: 'Energy', months: [3, 6, 9, 12] },
+      'CVX': { name: 'Chevron Corporation', yield: 3.12, dividend: 6.04, sector: 'Energy', months: [3, 6, 9, 12] },
+      'T': { name: 'AT&T Inc.', yield: 6.84, dividend: 1.11, sector: 'Communication Services', months: [2, 5, 8, 11] },
+      'VZ': { name: 'Verizon Communications Inc.', yield: 6.32, dividend: 2.71, sector: 'Communication Services', months: [2, 5, 8, 11] },
+      'MO': { name: 'Altria Group Inc.', yield: 8.24, dividend: 3.92, sector: 'Consumer Staples', months: [1, 4, 7, 10] },
+      'PM': { name: 'Philip Morris International Inc.', yield: 4.89, dividend: 5.48, sector: 'Consumer Staples', months: [1, 4, 7, 10] },
+      'IBM': { name: 'International Business Machines Corp.', yield: 3.84, dividend: 6.68, sector: 'Technology', months: [3, 6, 9, 12] },
+      'MMM': { name: '3M Company', yield: 6.42, dividend: 6.12, sector: 'Industrials', months: [3, 6, 9, 12] },
+      'CAT': { name: 'Caterpillar Inc.', yield: 1.95, dividend: 4.80, sector: 'Industrials', months: [2, 5, 8, 11] },
+      'HD': { name: 'The Home Depot Inc.', yield: 2.31, dividend: 8.36, sector: 'Consumer Discretionary', months: [3, 6, 9, 12] },
+      'LOW': { name: "Lowe's Companies Inc.", yield: 1.84, dividend: 4.60, sector: 'Consumer Discretionary', months: [2, 5, 8, 11] },
+      'WMT': { name: 'Walmart Inc.', yield: 2.87, dividend: 2.28, sector: 'Consumer Staples', months: [1, 4, 7, 10] },
+      'COST': { name: 'Costco Wholesale Corporation', yield: 0.55, dividend: 4.52, sector: 'Consumer Staples', months: [2, 5, 8, 11] },
+      'TGT': { name: 'Target Corporation', yield: 2.87, dividend: 4.32, sector: 'Consumer Discretionary', months: [3, 6, 9, 12] },
+      'O': { name: 'Realty Income Corporation', yield: 5.84, dividend: 3.11, sector: 'Real Estate', months: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] },
+      'MAIN': { name: 'Main Street Capital Corporation', yield: 7.22, dividend: 3.12, sector: 'Financials', months: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] },
+      'STAG': { name: 'STAG Industrial Inc.', yield: 3.91, dividend: 1.44, sector: 'Real Estate', months: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] },
+      'EPR': { name: 'EPR Properties', yield: 7.33, dividend: 3.00, sector: 'Real Estate', months: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] },
+      'AGNC': { name: 'AGNC Investment Corp.', yield: 14.21, dividend: 1.44, sector: 'Financials', months: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] },
+      'PFE': { name: 'Pfizer Inc.', yield: 5.93, dividend: 1.68, sector: 'Healthcare', months: [3, 6, 9, 12] },
+      'MRK': { name: 'Merck & Co. Inc.', yield: 2.68, dividend: 2.80, sector: 'Healthcare', months: [1, 4, 7, 10] },
+      'UNH': { name: 'UnitedHealth Group Incorporated', yield: 1.22, dividend: 7.52, sector: 'Healthcare', months: [3, 6, 9, 12] },
+      'LMT': { name: 'Lockheed Martin Corporation', yield: 2.84, dividend: 12.00, sector: 'Industrials', months: [3, 6, 9, 12] },
+      'GD': { name: 'General Dynamics Corporation', yield: 2.19, dividend: 5.52, sector: 'Industrials', months: [2, 5, 8, 11] },
+      'RTX': { name: 'Raytheon Technologies Corporation', yield: 2.31, dividend: 2.24, sector: 'Industrials', months: [3, 6, 9, 12] },
+      'NEE': { name: 'NextEra Energy Inc.', yield: 3.11, dividend: 1.85, sector: 'Utilities', months: [3, 6, 9, 12] },
+      'SO': { name: 'The Southern Company', yield: 3.97, dividend: 2.80, sector: 'Utilities', months: [3, 6, 9, 12] },
+      'DUK': { name: 'Duke Energy Corporation', yield: 3.89, dividend: 4.02, sector: 'Utilities', months: [3, 6, 9, 12] },
+      'D': { name: 'Dominion Energy Inc.', yield: 5.84, dividend: 2.67, sector: 'Utilities', months: [3, 6, 9, 12] },
+      'ED': { name: 'Consolidated Edison Inc.', yield: 3.26, dividend: 3.12, sector: 'Utilities', months: [3, 6, 9, 12] },
+      'SPGI': { name: 'S&P Global Inc.', yield: 0.84, dividend: 3.40, sector: 'Financials', months: [3, 6, 9, 12] },
+      'BLK': { name: 'BlackRock Inc.', yield: 2.31, dividend: 19.52, sector: 'Financials', months: [3, 6, 9, 12] },
+      'TROW': { name: 'T. Rowe Price Group Inc.', yield: 4.21, dividend: 4.56, sector: 'Financials', months: [3, 6, 9, 12] },
+      'BEN': { name: 'Franklin Resources Inc.', yield: 5.89, dividend: 1.20, sector: 'Financials', months: [1, 4, 7, 10] },
+      'SCHD': { name: 'Schwab US Dividend Equity ETF', yield: 3.52, dividend: 2.44, sector: 'ETF', months: [3, 6, 9, 12] },
+      'VYM': { name: 'Vanguard High Dividend Yield ETF', yield: 2.91, dividend: 3.12, sector: 'ETF', months: [3, 6, 9, 12] },
+      'HDV': { name: 'iShares Core High Dividend ETF', yield: 3.84, dividend: 3.88, sector: 'ETF', months: [3, 6, 9, 12] },
+      'JEPI': { name: 'JPMorgan Equity Premium Income ETF', yield: 7.72, dividend: 4.32, sector: 'ETF', months: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] },
+      'JEPQ': { name: 'JPMorgan Nasdaq Equity Premium Income ETF', yield: 9.34, dividend: 5.88, sector: 'ETF', months: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12] },
+      'DVY': { name: 'iShares Select Dividend ETF', yield: 3.67, dividend: 4.20, sector: 'ETF', months: [3, 6, 9, 12] },
+      'SDY': { name: 'SPDR S&P Dividend ETF', yield: 2.43, dividend: 3.24, sector: 'ETF', months: [3, 6, 9, 12] }
+    };
+
+    // Portfolio State
+    let portfolio = JSON.parse(localStorage.getItem('dividendPortfolio') || '[]');
+
+    // DOM Elements
+    const tickerInput = document.getElementById('ticker-input');
+    const sharesInput = document.getElementById('shares-input');
+    const addButton = document.getElementById('add-button');
+    const suggestionsDiv = document.getElementById('suggestions');
+    const holdingsTable = document.getElementById('holdings-table');
+    const holdingsBody = document.getElementById('holdings-body');
+    const emptyState = document.getElementById('empty-state');
+    const chartSection = document.getElementById('chart-section');
+    const sectorsSection = document.getElementById('sectors-section');
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', function() {
+      updateDisplay();
+      setupEventListeners();
+    });
+
+    function setupEventListeners() {
+      tickerInput.addEventListener('input', handleTickerInput);
+      tickerInput.addEventListener('blur', function() {
+        setTimeout(() => suggestionsDiv.style.display = 'none', 200);
+      });
+      addButton.addEventListener('click', addToPortfolio);
+      sharesInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter') addToPortfolio();
+      });
+      tickerInput.addEventListener('keypress', function(e) {
+        if (e.key === 'Enter' && suggestionsDiv.style.display === 'none') {
+          sharesInput.focus();
+        }
+      });
+    }
+
+    function handleTickerInput() {
+      const query = tickerInput.value.toUpperCase();
+      const suggestions = Object.keys(dividendStocks)
+        .filter(ticker => ticker.includes(query) || dividendStocks[ticker].name.toUpperCase().includes(query))
+        .slice(0, 8);
+
+      if (query.length > 0 && suggestions.length > 0) {
+        suggestionsDiv.innerHTML = suggestions.map(ticker => 
+          `<div class="suggestion" onclick="selectSuggestion('${ticker}')">
+            <span class="suggestion-ticker">${ticker}</span>
+            <span class="suggestion-name">${dividendStocks[ticker].name}</span>
+          </div>`
+        ).join('');
+        suggestionsDiv.style.display = 'block';
+      } else {
+        suggestionsDiv.style.display = 'none';
+      }
+    }
+
+    function selectSuggestion(ticker) {
+      tickerInput.value = ticker;
+      suggestionsDiv.style.display = 'none';
+      sharesInput.focus();
+    }
+
+    function addToPortfolio() {
+      const ticker = tickerInput.value.toUpperCase().trim();
+      const shares = parseInt(sharesInput.value);
+
+      if (!ticker || !shares || shares <= 0) {
+        alert('Please enter a valid ticker symbol and number of shares');
+        return;
+      }
+
+      if (!dividendStocks[ticker]) {
+        alert('Stock not found in database. Please select from the suggestions.');
+        return;
+      }
+
+      const existing = portfolio.find(p => p.ticker === ticker);
+      if (existing) {
+        existing.shares += shares;
+      } else {
+        portfolio.push({ ticker, shares });
+      }
+
+      savePortfolio();
+      updateDisplay();
+      
+      // Clear inputs
+      tickerInput.value = '';
+      sharesInput.value = '';
+      tickerInput.focus();
+    }
+
+    function removeFromPortfolio(ticker) {
+      portfolio = portfolio.filter(p => p.ticker !== ticker);
+      savePortfolio();
+      updateDisplay();
+    }
+
+    function savePortfolio() {
+      localStorage.setItem('dividendPortfolio', JSON.stringify(portfolio));
+    }
+
+    function updateDisplay() {
+      updateStats();
+      updateHoldingsTable();
+      updateMonthlyChart();
+      updateSectorBreakdown();
+    }
+
+    function updateStats() {
+      let totalIncome = 0;
+      let totalValue = 0;
+
+      portfolio.forEach(holding => {
+        const stock = dividendStocks[holding.ticker];
+        const currentPrice = stock.dividend / (stock.yield / 100); // Estimate current price
+        totalIncome += stock.dividend * holding.shares;
+        totalValue += currentPrice * holding.shares;
+      });
+
+      const portfolioYield = totalValue > 0 ? (totalIncome / totalValue) * 100 : 0;
+      const monthlyAvg = totalIncome / 12;
+
+      document.getElementById('total-income').textContent = `$${totalIncome.toLocaleString(undefined, {maximumFractionDigits: 0})}`;
+      document.getElementById('portfolio-yield').textContent = `${portfolioYield.toFixed(2)}%`;
+      document.getElementById('total-value').textContent = `$${totalValue.toLocaleString(undefined, {maximumFractionDigits: 0})}`;
+      document.getElementById('monthly-avg').textContent = `$${monthlyAvg.toLocaleString(undefined, {maximumFractionDigits: 0})}`;
+    }
+
+    function updateHoldingsTable() {
+      if (portfolio.length === 0) {
+        holdingsTable.style.display = 'none';
+        emptyState.style.display = 'block';
+        return;
+      }
+
+      holdingsTable.style.display = 'table';
+      emptyState.style.display = 'none';
+
+      holdingsBody.innerHTML = portfolio.map(holding => {
+        const stock = dividendStocks[holding.ticker];
+        const annualIncome = stock.dividend * holding.shares;
+        
+        return `
+          <tr>
+            <td class="ticker">${holding.ticker}</td>
+            <td class="amount">${holding.shares.toLocaleString()}</td>
+            <td class="amount">${stock.yield.toFixed(2)}%</td>
+            <td class="amount">$${stock.dividend.toFixed(2)}</td>
+            <td class="amount">$${annualIncome.toLocaleString(undefined, {maximumFractionDigits: 0})}</td>
+            <td><button class="remove-btn" onclick="removeFromPortfolio('${holding.ticker}')">Remove</button></td>
+          </tr>
+        `;
+      }).join('');
+    }
+
+    function updateMonthlyChart() {
+      if (portfolio.length === 0) {
+        chartSection.style.display = 'none';
+        return;
+      }
+
+      chartSection.style.display = 'block';
+      const monthlyIncome = new Array(12).fill(0);
+
+      portfolio.forEach(holding => {
+        const stock = dividendStocks[holding.ticker];
+        const quarterlyDividend = stock.dividend / (stock.months.length / 3);
+        
+        stock.months.forEach(month => {
+          const index = month - 1;
+          if (stock.months.length === 12) {
+            // Monthly payer
+            monthlyIncome[index] += (stock.dividend / 12) * holding.shares;
+          } else {
+            // Quarterly payer
+            monthlyIncome[index] += quarterlyDividend * holding.shares;
+          }
+        });
+      });
+
+      const maxIncome = Math.max(...monthlyIncome);
+      const chartContainer = document.getElementById('monthly-chart');
+      
+      chartContainer.innerHTML = monthlyIncome.map((income, index) => {
+        const height = maxIncome > 0 ? (income / maxIncome) * 100 : 0;
+        return `
+          <div class="chart-bar" style="height: ${height}%;">
+            <div class="chart-bar-value">$${Math.round(income)}</div>
+          </div>
+        `;
+      }).join('');
+    }
+
+    function updateSectorBreakdown() {
+      if (portfolio.length === 0) {
+        sectorsSection.style.display = 'none';
+        return;
+      }
+
+      sectorsSection.style.display = 'block';
+      const sectors = {};
+      let totalValue = 0;
+
+      portfolio.forEach(holding => {
+        const stock = dividendStocks[holding.ticker];
+        const currentPrice = stock.dividend / (stock.yield / 100);
+        const value = currentPrice * holding.shares;
+        
+        sectors[stock.sector] = (sectors[stock.sector] || 0) + value;
+        totalValue += value;
+      });
+
+      const sectorsGrid = document.getElementById('sectors-grid');
+      sectorsGrid.innerHTML = Object.entries(sectors)
+        .sort((a, b) => b[1] - a[1])
+        .map(([sector, value]) => {
+          const percentage = ((value / totalValue) * 100).toFixed(1);
+          return `
+            <div class="sector-item">
+              <div class="sector-name">${sector}</div>
+              <div class="sector-value">${percentage}%</div>
+            </div>
+          `;
+        }).join('');
+    }
+
+    // Make functions global for onclick handlers
+    window.selectSuggestion = selectSuggestion;
+    window.removeFromPortfolio = removeFromPortfolio;
+  </script>
+
+  <div class="related-tools" style="margin-top:3rem;padding-top:2rem;border-top:1px solid rgba(255,255,255,0.08);">
+    <h2 style="font-size:1.2rem;margin-bottom:1rem;">🔗 Related Tools</h2>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1rem;">
+      <a href="https://firemaths.info/subscription-tracker" style="display:block;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:1.25rem;text-decoration:none;color:inherit;transition:border-color 0.2s,transform 0.2s;" onmouseover="this.style.borderColor='rgba(255,255,255,0.2)';this.style.transform='translateY(-2px)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.08)';this.style.transform='none'">
+        <strong style="font-size:0.95rem;">Subscription Tracker</strong>
+        <p style="opacity:0.6;font-size:0.83rem;margin:0.4rem 0 0;line-height:1.4;">Free subscription tracker — add all your recurring subscriptions, see total monthly and annual cost, breakdown by catego...</p>
+      </a>
+      <a href="/dividend-yield-calculator" style="display:block;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:1.25rem;text-decoration:none;color:inherit;transition:border-color 0.2s,transform 0.2s;" onmouseover="this.style.borderColor='rgba(255,255,255,0.2)';this.style.transform='translateY(-2px)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.08)';this.style.transform='none'">
+        <strong style="font-size:0.95rem;">Dividend Yield Calculator: Annual Income Estimator</strong>
+        <p style="opacity:0.6;font-size:0.83rem;margin:0.4rem 0 0;line-height:1.4;">Calculate expected annual dividend income, project yield-on-cost, and estimate portfolio growth based on real market dat...</p>
+      </a>
+      <a href="https://sendnerds.photonbuilder.com/tip-calculator" style="display:block;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:1.25rem;text-decoration:none;color:inherit;transition:border-color 0.2s,transform 0.2s;" onmouseover="this.style.borderColor='rgba(255,255,255,0.2)';this.style.transform='translateY(-2px)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.08)';this.style.transform='none'">
+        <strong style="font-size:0.95rem;">Tip Calculator</strong>
+        <p style="opacity:0.6;font-size:0.83rem;margin:0.4rem 0 0;line-height:1.4;">Stop guessing! Calculate your tip and split the bill instantly. See exact tip amounts, total cost, and per-person breakd...</p>
+      </a>
+    </div>
+  </div>
+</SiteLayout>

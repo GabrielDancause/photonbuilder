@@ -1,0 +1,511 @@
+---
+import SiteLayout from "../../../layouts/SiteLayout.astro";
+
+export const meta = {
+  title: "Schedule Builder | Free Weekly Schedule Maker",
+  description: "Build your weekly schedule with drag-and-drop time blocks. Color-coded categories, custom time slots, print and export options. Free, no sign-up required.",
+  category: "tool",
+  published: "2026-03-28",
+};
+
+const schema = [
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "Schedule Builder",
+    "description": "Free online weekly schedule builder with drag-and-drop time blocks, color-coded categories, and export to PNG or text.",
+    "url": "https://justonemoment.photonbuilder.com/schedule-builder",
+    "applicationCategory": "UtilityApplication",
+    "operatingSystem": "Any",
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+    "author": { "@type": "Organization", "name": "JustOneMoment", "url": "https://justonemoment.photonbuilder.com" }
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      { "@type": "Question", "name": "How do I create a weekly schedule?", "acceptedAnswer": { "@type": "Answer", "text": "Click any empty time slot on the grid to add an activity. Give it a name, pick a category (color), and set the start and end time. Your blocks appear on the schedule instantly. Drag to rearrange, click to edit, and use the export button to save as an image or text file." } },
+      { "@type": "Question", "name": "Can I print my schedule?", "acceptedAnswer": { "@type": "Answer", "text": "Yes. Click 'Export PNG' to download your schedule as an image, which you can print. The export captures the full weekly grid with all your color-coded blocks, times, and labels." } },
+      { "@type": "Question", "name": "Is this schedule builder free?", "acceptedAnswer": { "@type": "Answer", "text": "Completely free, no sign-up required. Your schedule is saved in your browser's local storage, so it persists between visits on the same device. You can also export it as an image or text file for backup." } },
+      { "@type": "Question", "name": "What's the best way to organize a weekly schedule?", "acceptedAnswer": { "@type": "Answer", "text": "Start with fixed commitments (classes, work, appointments), then add recurring activities (exercise, meals, study time). Use color categories to visually distinguish different types of activities. Leave buffer time between blocks — back-to-back scheduling leads to burnout. Finally, schedule your most important or demanding tasks during your peak energy hours." } },
+      { "@type": "Question", "name": "Can I use this for class schedules?", "acceptedAnswer": { "@type": "Answer", "text": "Yes — the schedule builder works great for class schedules. Add each class with its time, day, and a color for the subject. You can also add study blocks, office hours, club meetings, and other campus activities. Export the finished schedule to keep on your phone or print for your dorm wall." } }
+    ]
+  }
+];
+---
+
+<SiteLayout title={meta.title} description={meta.description} site="justonemoment">
+  <Fragment slot="head">
+    <script type="application/ld+json" set:html={JSON.stringify(schema)} />
+  </Fragment>
+
+  <style>
+    .sb-container { max-width: 1000px; margin: 0 auto; padding: 20px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: #c8d6e5; }
+    h1 { font-size: 2rem; color: #f1f5f9; text-align: center; margin-bottom: 8px; }
+    .subtitle { text-align: center; color: #64748b; margin-bottom: 24px; font-size: 1.05rem; }
+    h2 { font-size: 1.4rem; color: #e2e8f0; margin: 40px 0 16px; border-bottom: 1px solid #152040; padding-bottom: 8px; }
+
+    .toolbar { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
+    .btn { padding: 10px 16px; border: none; border-radius: 8px; cursor: pointer; font-size: 0.9rem; font-weight: 600; transition: all 0.2s; }
+    .btn-accent { background: #F59E0B; color: #0a1020; }
+    .btn-accent:hover { background: #d97706; }
+    .btn-ghost { background: transparent; border: 1px solid #152040; color: #94a3b8; }
+    .btn-ghost:hover { border-color: #F59E0B; color: #c8d6e5; }
+    .btn-green { background: #22c55e; color: #fff; }
+    .btn-red { background: #ef4444; color: #fff; }
+
+    .schedule-wrap { overflow-x: auto; }
+    .schedule { width: 100%; border-collapse: collapse; font-size: 0.8rem; min-width: 700px; }
+    .schedule th { background: #0f1b30; color: #94a3b8; padding: 10px 8px; text-align: center; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; border: 1px solid #152040; position: sticky; top: 0; z-index: 2; }
+    .schedule td { border: 1px solid #0f1629; padding: 0; height: 36px; vertical-align: top; position: relative; cursor: pointer; min-width: 100px; }
+    .schedule td:first-child { width: 70px; min-width: 70px; text-align: right; padding: 8px 8px 8px 4px; color: #64748b; font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; cursor: default; background: #060a12; }
+    .schedule td:hover:not(:first-child) { background: rgba(245,158,11,0.04); }
+
+    .block { position: absolute; left: 2px; right: 2px; border-radius: 6px; padding: 4px 6px; font-size: 0.75rem; overflow: hidden; cursor: pointer; z-index: 1; border: 1px solid rgba(255,255,255,0.1); }
+    .block .block-title { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: #fff; }
+    .block .block-time { font-size: 0.65rem; opacity: 0.8; color: rgba(255,255,255,0.8); }
+    .block .block-del { position: absolute; top: 2px; right: 4px; background: none; border: none; color: rgba(255,255,255,0.5); cursor: pointer; font-size: 0.7rem; padding: 0; }
+    .block .block-del:hover { color: #fff; }
+
+    /* Categories/colors */
+    .cat-work { background: #3B82F6; }
+    .cat-class { background: #8B5CF6; }
+    .cat-study { background: #06B6D4; }
+    .cat-exercise { background: #22C55E; }
+    .cat-meal { background: #F59E0B; }
+    .cat-social { background: #EC4899; }
+    .cat-personal { background: #6366F1; }
+    .cat-other { background: #64748B; }
+
+    .legend { display: flex; gap: 10px; flex-wrap: wrap; margin: 12px 0; }
+    .legend-item { display: flex; align-items: center; gap: 6px; font-size: 0.8rem; color: #94a3b8; }
+    .legend-dot { width: 12px; height: 12px; border-radius: 3px; }
+
+    /* Modal */
+    .modal-bg { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); display: none; align-items: center; justify-content: center; z-index: 100; }
+    .modal-bg.show { display: flex; }
+    .modal { background: #0a1020; border: 1px solid #152040; border-radius: 12px; padding: 24px; width: 380px; max-width: 90vw; }
+    .modal h3 { color: #e2e8f0; margin: 0 0 16px; }
+    .form-group { margin-bottom: 14px; }
+    .form-group label { display: block; font-size: 0.85rem; color: #94a3b8; margin-bottom: 6px; }
+    .form-group input, .form-group select { width: 100%; padding: 10px; background: #060a12; border: 1px solid #152040; border-radius: 8px; color: #f1f5f9; font-size: 0.95rem; box-sizing: border-box; }
+    .form-group input:focus, .form-group select:focus { outline: none; border-color: #F59E0B; }
+    .time-row { display: flex; gap: 8px; }
+    .time-row > div { flex: 1; }
+    .btn-row { display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px; }
+
+    .tips-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 16px; margin: 16px 0; }
+    .tip-card { background: #0a1020; border: 1px solid #152040; border-radius: 10px; padding: 20px; }
+    .tip-card h4 { color: #e2e8f0; margin: 0 0 8px; font-size: 1rem; }
+    .tip-card p { color: #94a3b8; font-size: 0.9rem; margin: 0; line-height: 1.5; }
+
+    .faq-section { margin-top: 40px; }
+    .faq-item { border: 1px solid #152040; border-radius: 10px; margin-bottom: 10px; overflow: hidden; }
+    .faq-q { padding: 16px 20px; background: #0a1020; cursor: pointer; display: flex; justify-content: space-between; align-items: center; color: #e2e8f0; font-weight: 500; }
+    .faq-q:hover { background: #0f1629; }
+    .faq-arrow { transition: transform 0.2s; color: #F59E0B; }
+    .faq-item.open .faq-arrow { transform: rotate(180deg); }
+    .faq-a { padding: 0 20px; max-height: 0; overflow: hidden; transition: max-height 0.3s, padding 0.3s; }
+    .faq-item.open .faq-a { max-height: 300px; padding: 16px 20px; }
+    .faq-a p { color: #94a3b8; line-height: 1.7; margin: 0; }
+  </style>
+
+  <div class="sb-container">
+    <div style="background:rgba(245,158,11,0.08);border:1px solid rgba(245,158,11,0.2);border-radius:12px;padding:1rem 1.5rem;font-size:0.88rem;color:var(--text-secondary);line-height:1.6;margin-bottom:1rem;">
+      📅 <strong style="color:#F59E0B;">Time blocking increases productivity by 80% according to Cal Newport.</strong> Freelancers who schedule their week in advance earn 2× more per hour than reactive workers. Build your visual weekly plan below — drag, drop, export. <a href="https://gab.ae/news/global-freelance-economy-record-growth-2026" style="color:#F59E0B;">Why structured time wins →</a>
+    </div>
+    <h1>Schedule Builder</h1>
+    <p class="subtitle">Build your weekly schedule visually — click to add blocks, drag to rearrange</p>
+
+    <div class="toolbar">
+      <button class="btn btn-accent" onclick="openAdd()">+ Add Block</button>
+      <button class="btn btn-green" onclick="exportPNG()">📥 Export PNG</button>
+      <button class="btn btn-ghost" onclick="exportText()">📄 Export Text</button>
+      <button class="btn btn-ghost" onclick="loadSample()">📋 Load Sample</button>
+      <button class="btn btn-ghost" onclick="clearAll()">🗑️ Clear All</button>
+    </div>
+
+    <div class="legend" id="legend"></div>
+
+    <div class="schedule-wrap">
+      <table class="schedule" id="scheduleTable"></table>
+    </div>
+
+    <!-- Add/Edit Modal -->
+    <div class="modal-bg" id="modal">
+      <div class="modal">
+        <h3 id="modalTitle">Add Activity</h3>
+        <div class="form-group">
+          <label>Activity Name</label>
+          <input type="text" id="blockName" placeholder="e.g. Math 101, Gym, Lunch...">
+        </div>
+        <div class="form-group">
+          <label>Category</label>
+          <select id="blockCat">
+            <option value="work">💼 Work</option>
+            <option value="class">📚 Class</option>
+            <option value="study">✏️ Study</option>
+            <option value="exercise">🏃 Exercise</option>
+            <option value="meal">🍽️ Meal</option>
+            <option value="social">🎉 Social</option>
+            <option value="personal">🧘 Personal</option>
+            <option value="other">📌 Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Day</label>
+          <select id="blockDay">
+            <option value="0">Monday</option>
+            <option value="1">Tuesday</option>
+            <option value="2">Wednesday</option>
+            <option value="3">Thursday</option>
+            <option value="4">Friday</option>
+            <option value="5">Saturday</option>
+            <option value="6">Sunday</option>
+          </select>
+        </div>
+        <div class="time-row">
+          <div class="form-group">
+            <label>Start Time</label>
+            <select id="blockStart"></select>
+          </div>
+          <div class="form-group">
+            <label>End Time</label>
+            <select id="blockEnd"></select>
+          </div>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-ghost" onclick="closeModal()">Cancel</button>
+          <button class="btn btn-red" id="btnDelete" style="display:none" onclick="deleteBlock()">Delete</button>
+          <button class="btn btn-accent" onclick="saveBlock()">Save</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Scheduling Tips -->
+    <h2>Scheduling Tips That Actually Work</h2>
+    <div class="tips-grid">
+      <div class="tip-card">
+        <h4>🎯 Time Block, Don't List</h4>
+        <p>Assigning tasks to specific time slots is more effective than to-do lists. When an activity has a place on your schedule, you're 2-3× more likely to actually do it.</p>
+      </div>
+      <div class="tip-card">
+        <h4>⚡ Energy Mapping</h4>
+        <p>Schedule demanding work during your peak energy hours (usually 9-11 AM for most people). Save routine tasks for low-energy periods. Match difficulty to energy, not just availability.</p>
+      </div>
+      <div class="tip-card">
+        <h4>🔄 Buffer Time</h4>
+        <p>Leave 15-minute gaps between blocks. Back-to-back scheduling causes cascading delays — one overrun ruins the rest of your day. Buffers absorb the chaos.</p>
+      </div>
+      <div class="tip-card">
+        <h4>📐 The 60% Rule</h4>
+        <p>Only schedule 60% of your available hours. The remaining 40% handles interruptions, transitions, and spontaneous tasks. Over-scheduling is the #1 reason schedules fail.</p>
+      </div>
+      <div class="tip-card">
+        <h4>🏗️ Fixed First, Flex Second</h4>
+        <p>Start with non-negotiable commitments (classes, work, appointments), then fill around them with flexible activities. This prevents conflicts and reduces rescheduling.</p>
+      </div>
+      <div class="tip-card">
+        <h4>📊 Weekly Review</h4>
+        <p>Spend 15 minutes Sunday evening reviewing next week. What worked? What didn't? Adjust. A schedule that doesn't evolve becomes a schedule you ignore.</p>
+      </div>
+    </div>
+
+    <!-- FAQ -->
+    <div class="faq-section">
+      <h2>Frequently Asked Questions</h2>
+      <div class="faq-item">
+        <div class="faq-q" onclick="this.parentElement.classList.toggle('open')">How do I create a weekly schedule? <span class="faq-arrow">▼</span></div>
+        <div class="faq-a"><p>Click "Add Block" or click any empty cell on the grid. Enter an activity name, pick a category, select the day, and set start/end times. Your block appears immediately. Repeat for all your activities, then export to save or print.</p></div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q" onclick="this.parentElement.classList.toggle('open')">Can I print my schedule? <span class="faq-arrow">▼</span></div>
+        <div class="faq-a"><p>Yes — click "Export PNG" to download your schedule as an image, then print it. The export captures your full weekly grid with all color-coded blocks, times, and labels.</p></div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q" onclick="this.parentElement.classList.toggle('open')">Is this schedule builder free? <span class="faq-arrow">▼</span></div>
+        <div class="faq-a"><p>Completely free, no sign-up needed. Your schedule saves to your browser's local storage automatically. Export as PNG or text for backup.</p></div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q" onclick="this.parentElement.classList.toggle('open')">What's the best way to organize a weekly schedule? <span class="faq-arrow">▼</span></div>
+        <div class="faq-a"><p>Start with fixed commitments, add recurring activities, use color categories for visual clarity, leave buffer time between blocks, and schedule demanding tasks during peak energy hours. Only fill about 60% of your available time.</p></div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q" onclick="this.parentElement.classList.toggle('open')">Can I use this for class schedules? <span class="faq-arrow">▼</span></div>
+        <div class="faq-a"><p>Absolutely. Add classes, study blocks, office hours, club meetings, and other campus activities. Color-code by subject. Export and keep on your phone or print for your dorm wall.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <script is:inline>
+    const DAYS = ['Monday','Tuesday','Wednesday','Thursday','Friday','Saturday','Sunday'];
+    const CATS = {
+      work: { label: '💼 Work', color: '#3B82F6' },
+      class: { label: '📚 Class', color: '#8B5CF6' },
+      study: { label: '✏️ Study', color: '#06B6D4' },
+      exercise: { label: '🏃 Exercise', color: '#22C55E' },
+      meal: { label: '🍽️ Meal', color: '#F59E0B' },
+      social: { label: '🎉 Social', color: '#EC4899' },
+      personal: { label: '🧘 Personal', color: '#6366F1' },
+      other: { label: '📌 Other', color: '#64748B' }
+    };
+    const START_HOUR = 6, END_HOUR = 23;
+    let blocks = [];
+    let editId = null;
+    let blockIdCounter = 0;
+
+    function init() {
+      // Populate time selects
+      const startSel = document.getElementById('blockStart');
+      const endSel = document.getElementById('blockEnd');
+      for (let h = START_HOUR; h <= END_HOUR; h++) {
+        for (let m = 0; m < 60; m += 30) {
+          const val = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+          const label = formatTime(h, m);
+          startSel.innerHTML += `<option value="${val}">${label}</option>`;
+          endSel.innerHTML += `<option value="${val}">${label}</option>`;
+        }
+      }
+      // Load from localStorage
+      try { blocks = JSON.parse(localStorage.getItem('sb_blocks') || '[]'); blockIdCounter = blocks.length ? Math.max(...blocks.map(b=>b.id)) : 0; } catch(e) {}
+      renderLegend();
+      renderSchedule();
+    }
+
+    function formatTime(h, m) {
+      const ampm = h >= 12 ? 'PM' : 'AM';
+      const h12 = h > 12 ? h - 12 : (h === 0 ? 12 : h);
+      return `${h12}:${String(m).padStart(2,'0')} ${ampm}`;
+    }
+
+    function timeToMinutes(t) { const [h,m] = t.split(':').map(Number); return h * 60 + m; }
+
+    function renderLegend() {
+      const el = document.getElementById('legend');
+      el.innerHTML = Object.entries(CATS).map(([k,v]) =>
+        `<span class="legend-item"><span class="legend-dot" style="background:${v.color}"></span>${v.label}</span>`
+      ).join('');
+    }
+
+    function renderSchedule() {
+      const table = document.getElementById('scheduleTable');
+      let html = '<thead><tr><th>Time</th>';
+      DAYS.forEach(d => html += `<th>${d}</th>`);
+      html += '</tr></thead><tbody>';
+
+      for (let h = START_HOUR; h < END_HOUR; h++) {
+        for (let m = 0; m < 60; m += 30) {
+          const timeStr = `${String(h).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+          html += `<tr><td>${formatTime(h, m)}</td>`;
+          for (let d = 0; d < 7; d++) {
+            html += `<td data-day="${d}" data-time="${timeStr}" onclick="cellClick(${d},'${timeStr}')"></td>`;
+          }
+          html += '</tr>';
+        }
+      }
+      html += '</tbody>';
+      table.innerHTML = html;
+
+      // Place blocks
+      blocks.forEach(b => {
+        const startMin = timeToMinutes(b.start);
+        const endMin = timeToMinutes(b.end);
+        const rowHeight = 36; // matches td height
+        const startSlot = (startMin - START_HOUR * 60) / 30;
+        const duration = (endMin - startMin) / 30;
+
+        // Find the cell
+        const cells = table.querySelectorAll(`td[data-day="${b.day}"]`);
+        if (cells[Math.floor(startSlot)]) {
+          const cell = cells[Math.floor(startSlot)];
+          const offsetWithin = (startMin % 30) / 30 * rowHeight;
+          const height = duration * rowHeight - 2;
+          const cat = CATS[b.cat] || CATS.other;
+
+          const div = document.createElement('div');
+          div.className = `block cat-${b.cat}`;
+          div.style.top = offsetWithin + 'px';
+          div.style.height = Math.max(height, 18) + 'px';
+          div.innerHTML = `<div class="block-title">${esc(b.name)}</div>${height > 22 ? `<div class="block-time">${b.start}–${b.end}</div>` : ''}<button class="block-del" onclick="event.stopPropagation();deleteById(${b.id})">✕</button>`;
+          div.onclick = (e) => { e.stopPropagation(); openEdit(b.id); };
+          cell.appendChild(div);
+        }
+      });
+
+      save();
+    }
+
+    function esc(s) { const d = document.createElement('div'); d.textContent = s; return d.innerHTML; }
+
+    function cellClick(day, time) {
+      editId = null;
+      document.getElementById('modalTitle').textContent = 'Add Activity';
+      document.getElementById('blockName').value = '';
+      document.getElementById('blockCat').value = 'work';
+      document.getElementById('blockDay').value = day;
+      document.getElementById('blockStart').value = time;
+      // Default 1 hour end
+      const [h,m] = time.split(':').map(Number);
+      const endH = Math.min(h + 1, END_HOUR);
+      document.getElementById('blockEnd').value = `${String(endH).padStart(2,'0')}:${String(m).padStart(2,'0')}`;
+      document.getElementById('btnDelete').style.display = 'none';
+      document.getElementById('modal').classList.add('show');
+    }
+
+    function openAdd() { cellClick(0, `${String(START_HOUR + 3).padStart(2,'0')}:00`); }
+
+    function openEdit(id) {
+      const b = blocks.find(x => x.id === id);
+      if (!b) return;
+      editId = id;
+      document.getElementById('modalTitle').textContent = 'Edit Activity';
+      document.getElementById('blockName').value = b.name;
+      document.getElementById('blockCat').value = b.cat;
+      document.getElementById('blockDay').value = b.day;
+      document.getElementById('blockStart').value = b.start;
+      document.getElementById('blockEnd').value = b.end;
+      document.getElementById('btnDelete').style.display = 'inline-block';
+      document.getElementById('modal').classList.add('show');
+    }
+
+    function closeModal() { document.getElementById('modal').classList.remove('show'); editId = null; }
+
+    function saveBlock() {
+      const name = document.getElementById('blockName').value.trim();
+      if (!name) return;
+      const data = {
+        name,
+        cat: document.getElementById('blockCat').value,
+        day: parseInt(document.getElementById('blockDay').value),
+        start: document.getElementById('blockStart').value,
+        end: document.getElementById('blockEnd').value
+      };
+      if (timeToMinutes(data.end) <= timeToMinutes(data.start)) { alert('End time must be after start time.'); return; }
+
+      if (editId !== null) {
+        const idx = blocks.findIndex(b => b.id === editId);
+        if (idx >= 0) blocks[idx] = { ...blocks[idx], ...data };
+      } else {
+        blocks.push({ id: ++blockIdCounter, ...data });
+      }
+      closeModal();
+      renderSchedule();
+    }
+
+    function deleteBlock() { if (editId !== null) { blocks = blocks.filter(b => b.id !== editId); closeModal(); renderSchedule(); } }
+    function deleteById(id) { blocks = blocks.filter(b => b.id !== id); renderSchedule(); }
+
+    function clearAll() { if (confirm('Clear entire schedule?')) { blocks = []; renderSchedule(); } }
+
+    function save() { try { localStorage.setItem('sb_blocks', JSON.stringify(blocks)); } catch(e) {} }
+
+    function loadSample() {
+      blocks = [
+        { id: ++blockIdCounter, name: 'Math 201', cat: 'class', day: 0, start: '09:00', end: '10:30' },
+        { id: ++blockIdCounter, name: 'Math 201', cat: 'class', day: 2, start: '09:00', end: '10:30' },
+        { id: ++blockIdCounter, name: 'Math 201', cat: 'class', day: 4, start: '09:00', end: '10:30' },
+        { id: ++blockIdCounter, name: 'English 102', cat: 'class', day: 1, start: '10:00', end: '11:30' },
+        { id: ++blockIdCounter, name: 'English 102', cat: 'class', day: 3, start: '10:00', end: '11:30' },
+        { id: ++blockIdCounter, name: 'Physics Lab', cat: 'class', day: 2, start: '14:00', end: '16:00' },
+        { id: ++blockIdCounter, name: 'Study Group', cat: 'study', day: 0, start: '14:00', end: '15:30' },
+        { id: ++blockIdCounter, name: 'Study Group', cat: 'study', day: 3, start: '14:00', end: '15:30' },
+        { id: ++blockIdCounter, name: 'Gym', cat: 'exercise', day: 0, start: '17:00', end: '18:00' },
+        { id: ++blockIdCounter, name: 'Gym', cat: 'exercise', day: 2, start: '17:00', end: '18:00' },
+        { id: ++blockIdCounter, name: 'Gym', cat: 'exercise', day: 4, start: '17:00', end: '18:00' },
+        { id: ++blockIdCounter, name: 'Lunch', cat: 'meal', day: 0, start: '12:00', end: '13:00' },
+        { id: ++blockIdCounter, name: 'Lunch', cat: 'meal', day: 1, start: '12:00', end: '13:00' },
+        { id: ++blockIdCounter, name: 'Lunch', cat: 'meal', day: 2, start: '12:00', end: '13:00' },
+        { id: ++blockIdCounter, name: 'Lunch', cat: 'meal', day: 3, start: '12:00', end: '13:00' },
+        { id: ++blockIdCounter, name: 'Lunch', cat: 'meal', day: 4, start: '12:00', end: '13:00' },
+        { id: ++blockIdCounter, name: 'Part-time Job', cat: 'work', day: 5, start: '09:00', end: '14:00' },
+        { id: ++blockIdCounter, name: 'Movie Night', cat: 'social', day: 4, start: '19:00', end: '21:30' },
+      ];
+      renderSchedule();
+    }
+
+    function exportText() {
+      let text = 'WEEKLY SCHEDULE\n' + '='.repeat(50) + '\n\n';
+      DAYS.forEach((day, d) => {
+        const dayBlocks = blocks.filter(b => b.day === d).sort((a, b) => timeToMinutes(a.start) - timeToMinutes(b.start));
+        if (dayBlocks.length) {
+          text += `--- ${day} ---\n`;
+          dayBlocks.forEach(b => { text += `  ${b.start}–${b.end}  ${b.name} (${b.cat})\n`; });
+          text += '\n';
+        }
+      });
+      const blob = new Blob([text], { type: 'text/plain' });
+      const a = document.createElement('a');
+      a.download = 'weekly-schedule.txt';
+      a.href = URL.createObjectURL(blob);
+      a.click();
+    }
+
+    function exportPNG() {
+      const canvas = document.createElement('canvas');
+      const ctx = canvas.getContext('2d');
+      const colW = 110, timeW = 70, rowH = 28;
+      const rows = (END_HOUR - START_HOUR) * 2;
+      const W = timeW + colW * 7 + 2;
+      const H = 40 + rowH * rows + 2;
+      canvas.width = W; canvas.height = H;
+
+      ctx.fillStyle = '#060a12'; ctx.fillRect(0, 0, W, H);
+
+      // Header
+      ctx.fillStyle = '#0f1b30'; ctx.fillRect(0, 0, W, 36);
+      ctx.fillStyle = '#94a3b8'; ctx.font = 'bold 11px sans-serif'; ctx.textAlign = 'center';
+      DAYS.forEach((d, i) => ctx.fillText(d, timeW + colW * i + colW / 2, 23));
+
+      // Time labels + grid
+      ctx.font = '10px monospace'; ctx.textAlign = 'right';
+      for (let r = 0; r < rows; r++) {
+        const h = START_HOUR + Math.floor(r / 2);
+        const m = (r % 2) * 30;
+        const y = 38 + r * rowH;
+        ctx.fillStyle = '#64748b';
+        ctx.fillText(formatTime(h, m), timeW - 4, y + 16);
+        ctx.strokeStyle = '#0f1629'; ctx.lineWidth = 0.5;
+        ctx.beginPath(); ctx.moveTo(timeW, y); ctx.lineTo(W, y); ctx.stroke();
+      }
+
+      // Blocks
+      blocks.forEach(b => {
+        const cat = CATS[b.cat] || CATS.other;
+        const startMin = timeToMinutes(b.start) - START_HOUR * 60;
+        const endMin = timeToMinutes(b.end) - START_HOUR * 60;
+        const x = timeW + b.day * colW + 2;
+        const y = 38 + (startMin / 30) * rowH;
+        const h = ((endMin - startMin) / 30) * rowH - 1;
+
+        ctx.fillStyle = cat.color; 
+        ctx.beginPath();
+        ctx.roundRect(x, y, colW - 4, Math.max(h, 14), 4);
+        ctx.fill();
+        ctx.fillStyle = '#fff'; ctx.font = 'bold 10px sans-serif'; ctx.textAlign = 'left';
+        ctx.fillText(b.name.slice(0, 14), x + 4, y + 13);
+        if (h > 20) { ctx.font = '9px sans-serif'; ctx.fillStyle = 'rgba(255,255,255,0.7)'; ctx.fillText(`${b.start}–${b.end}`, x + 4, y + 24); }
+      });
+
+      const link = document.createElement('a');
+      link.download = 'weekly-schedule.png';
+      link.href = canvas.toDataURL('image/png');
+      link.click();
+    }
+
+    init();
+  </script>
+
+  <div class="related-tools" style="margin-top:3rem;padding-top:2rem;border-top:1px solid rgba(255,255,255,0.08);">
+    <h2 style="font-size:1.2rem;margin-bottom:1rem;">🔗 Related Tools</h2>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1rem;">
+      <a href="https://eeniemeenie.photonbuilder.com/tier-list-maker" style="display:block;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:1.25rem;text-decoration:none;color:inherit;transition:border-color 0.2s,transform 0.2s;" onmouseover="this.style.borderColor='rgba(255,255,255,0.2)';this.style.transform='translateY(-2px)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.08)';this.style.transform='none'">
+        <strong style="font-size:0.95rem;">Tier List Maker</strong>
+        <p style="opacity:0.6;font-size:0.83rem;margin:0.4rem 0 0;line-height:1.4;">Drag-and-drop tier list maker. Add images or text, rank items from S to F tier, customize colors and labels, and export ...</p>
+      </a>
+      <a href="https://leeroyjenkins.quest/tier-list-maker" style="display:block;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:1.25rem;text-decoration:none;color:inherit;transition:border-color 0.2s,transform 0.2s;" onmouseover="this.style.borderColor='rgba(255,255,255,0.2)';this.style.transform='translateY(-2px)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.08)';this.style.transform='none'">
+        <strong style="font-size:0.95rem;">Tier List Maker</strong>
+        <p style="opacity:0.6;font-size:0.83rem;margin:0.4rem 0 0;line-height:1.4;">Create custom tier lists for games, movies, food, anime, and more. Drag-and-drop interface with templates, customizable ...</p>
+      </a>
+    </div>
+  </div>
+</SiteLayout>

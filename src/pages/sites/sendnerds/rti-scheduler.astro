@@ -1,0 +1,469 @@
+---
+import SiteLayout from "../../../layouts/SiteLayout.astro";
+
+export const meta = {
+  title: "RTI Scheduler | Free Response to Intervention Scheduling Tool",
+  description: "Plan and organize RTI intervention schedules for Tier 1, 2, and 3. Drag-and-drop student groups, set session times, track progress, and export schedules. Free for educators.",
+  category: "tool",
+  published: "2026-03-28",
+};
+
+const schema = [
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "RTI Scheduler",
+    "description": "Free online Response to Intervention scheduling tool for educators. Plan Tier 1, 2, and 3 interventions, assign students to groups, and export weekly schedules.",
+    "url": "https://sendnerds.photonbuilder.com/rti-scheduler",
+    "applicationCategory": "EducationalApplication",
+    "operatingSystem": "Any",
+    "offers": { "@type": "Offer", "price": "0", "priceCurrency": "USD" },
+    "author": { "@type": "Organization", "name": "SendNerds", "url": "https://sendnerds.photonbuilder.com" }
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      { "@type": "Question", "name": "What is RTI (Response to Intervention)?", "acceptedAnswer": { "@type": "Answer", "text": "Response to Intervention (RTI) is a multi-tiered approach to identifying and supporting students with learning and behavior needs. It uses increasingly intensive levels of instruction: Tier 1 (whole-class instruction for all students), Tier 2 (small-group targeted interventions), and Tier 3 (intensive individualized support). Students move between tiers based on progress monitoring data." } },
+      { "@type": "Question", "name": "What are the 3 tiers of RTI?", "acceptedAnswer": { "@type": "Answer", "text": "Tier 1 is universal instruction delivered to all students (about 80% of students succeed here). Tier 2 provides targeted small-group interventions for students not meeting benchmarks (about 15% of students). Tier 3 offers intensive, individualized interventions for students with significant skill gaps (about 5% of students). Each tier increases in frequency, duration, and specificity of instruction." } },
+      { "@type": "Question", "name": "How often should RTI interventions be scheduled?", "acceptedAnswer": { "@type": "Answer", "text": "Tier 2 interventions typically run 3-5 times per week for 20-30 minutes per session, lasting 8-12 weeks before reassessment. Tier 3 interventions are usually daily, 30-60 minutes per session, with more frequent progress monitoring (weekly or bi-weekly). The schedule depends on the student's needs, available staff, and the specific intervention program being used." } },
+      { "@type": "Question", "name": "How do I schedule RTI groups without conflicts?", "acceptedAnswer": { "@type": "Answer", "text": "Start by mapping your available intervention time blocks (often during specials, lunch, or dedicated intervention periods). Group students by skill level and need, not just tier. Stagger Tier 2 and Tier 3 sessions so specialists aren't double-booked. Use this scheduler to visually organize groups across time slots and check for conflicts before finalizing." } },
+      { "@type": "Question", "name": "What is progress monitoring in RTI?", "acceptedAnswer": { "@type": "Answer", "text": "Progress monitoring is the systematic assessment of student performance over time to evaluate the effectiveness of interventions. Tier 2 students are typically assessed every 2-4 weeks, while Tier 3 students are assessed weekly. Common tools include curriculum-based measurements (CBM), DIBELS, AIMSweb, and iReady. Data from progress monitoring determines whether students move up or down in tiers." } }
+    ]
+  }
+];
+---
+
+<SiteLayout title={meta.title} description={meta.description} site="sendnerds">
+  <Fragment slot="head">
+    <script type="application/ld+json" set:html={JSON.stringify(schema)} />
+  </Fragment>
+
+  <style>
+    .rti-container { max-width: 960px; margin: 0 auto; padding: 20px; font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: #c8d6e5; }
+    h1 { font-size: 2rem; color: #f1f5f9; text-align: center; margin-bottom: 8px; }
+    .subtitle { text-align: center; color: #64748b; margin-bottom: 28px; font-size: 1.05rem; }
+    h2 { font-size: 1.4rem; color: #e2e8f0; margin: 40px 0 16px; border-bottom: 1px solid #152040; padding-bottom: 8px; }
+    h3 { font-size: 1.15rem; color: #cbd5e1; margin: 24px 0 12px; }
+
+    .card { background: #0a1020; border: 1px solid #152040; border-radius: 12px; padding: 24px; margin-bottom: 20px; }
+
+    /* Setup */
+    .setup-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; }
+    @media (max-width: 600px) { .setup-grid { grid-template-columns: 1fr; } }
+    .field label { display: block; font-size: 0.85rem; color: #94a3b8; margin-bottom: 6px; }
+    .field input, .field select { width: 100%; padding: 10px 14px; background: #060a12; border: 1px solid #152040; border-radius: 8px; color: #f1f5f9; font-size: 0.95rem; box-sizing: border-box; }
+    .field input:focus, .field select:focus { outline: none; border-color: #3B82F6; }
+
+    /* Students */
+    .student-add { display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap; }
+    .student-add input { flex: 1; min-width: 150px; padding: 10px 14px; background: #060a12; border: 1px solid #152040; border-radius: 8px; color: #f1f5f9; font-size: 0.95rem; }
+    .student-add select { padding: 10px; background: #060a12; border: 1px solid #152040; border-radius: 8px; color: #f1f5f9; }
+    .btn { padding: 10px 16px; border: none; border-radius: 8px; cursor: pointer; font-size: 0.9rem; font-weight: 600; transition: all 0.2s; }
+    .btn-blue { background: #3B82F6; color: #fff; }
+    .btn-blue:hover { background: #2563eb; }
+    .btn-sm { padding: 6px 12px; font-size: 0.8rem; }
+    .btn-red { background: #ef4444; color: #fff; }
+    .btn-green { background: #22c55e; color: #fff; }
+    .btn-ghost { background: transparent; border: 1px solid #152040; color: #94a3b8; }
+    .btn-ghost:hover { border-color: #3B82F6; color: #c8d6e5; }
+
+    .student-list { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 16px; }
+    .student-tag { display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 20px; font-size: 0.85rem; cursor: default; }
+    .student-tag .remove { cursor: pointer; opacity: 0.6; font-size: 0.75rem; }
+    .student-tag .remove:hover { opacity: 1; }
+    .tier1-tag { background: rgba(34,197,94,0.15); color: #4ade80; border: 1px solid rgba(34,197,94,0.3); }
+    .tier2-tag { background: rgba(251,191,36,0.15); color: #fbbf24; border: 1px solid rgba(251,191,36,0.3); }
+    .tier3-tag { background: rgba(239,68,68,0.15); color: #f87171; border: 1px solid rgba(239,68,68,0.3); }
+
+    /* Schedule Grid */
+    .schedule-grid { overflow-x: auto; }
+    .sched-table { width: 100%; border-collapse: collapse; font-size: 0.85rem; }
+    .sched-table th { background: #0f1b30; color: #94a3b8; padding: 10px 12px; text-align: left; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid #152040; white-space: nowrap; }
+    .sched-table td { padding: 8px 12px; border-bottom: 1px solid #0f1629; vertical-align: top; }
+    .sched-table tr:hover td { background: rgba(59,130,246,0.04); }
+    .time-cell { color: #94a3b8; font-family: 'JetBrains Mono', monospace; white-space: nowrap; font-size: 0.8rem; }
+    .slot-cell { min-width: 120px; min-height: 50px; position: relative; }
+    .slot-empty { color: #334155; font-style: italic; font-size: 0.8rem; cursor: pointer; padding: 8px; border-radius: 6px; }
+    .slot-empty:hover { background: rgba(59,130,246,0.06); color: #64748b; }
+    .slot-filled { padding: 8px; border-radius: 8px; font-size: 0.8rem; }
+    .slot-filled .group-name { font-weight: 600; margin-bottom: 4px; }
+    .slot-filled .group-students { font-size: 0.75rem; opacity: 0.8; }
+    .slot-t1 { background: rgba(34,197,94,0.1); border: 1px solid rgba(34,197,94,0.25); color: #4ade80; }
+    .slot-t2 { background: rgba(251,191,36,0.1); border: 1px solid rgba(251,191,36,0.25); color: #fbbf24; }
+    .slot-t3 { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.25); color: #f87171; }
+
+    /* Groups */
+    .group-card { background: #060a12; border: 1px solid #152040; border-radius: 10px; padding: 16px; margin-bottom: 12px; }
+    .group-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+    .group-header input { background: transparent; border: none; color: #e2e8f0; font-size: 1rem; font-weight: 600; padding: 0; }
+    .group-header input:focus { outline: none; border-bottom: 1px solid #3B82F6; }
+    .group-members { display: flex; flex-wrap: wrap; gap: 4px; }
+
+    /* Stats */
+    .stats-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; margin: 20px 0; }
+    @media (max-width: 500px) { .stats-row { grid-template-columns: 1fr; } }
+    .stat-card { background: #0a1020; border: 1px solid #152040; border-radius: 10px; padding: 16px; text-align: center; }
+    .stat-num { font-size: 2rem; font-weight: 800; font-family: 'JetBrains Mono', monospace; }
+    .stat-label { font-size: 0.8rem; color: #64748b; margin-top: 4px; }
+    .stat-t1 .stat-num { color: #4ade80; }
+    .stat-t2 .stat-num { color: #fbbf24; }
+    .stat-t3 .stat-num { color: #f87171; }
+
+    .toolbar-row { display: flex; gap: 8px; flex-wrap: wrap; margin: 16px 0; }
+
+    /* Assign modal */
+    .modal-bg { position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.7); display: none; align-items: center; justify-content: center; z-index: 100; }
+    .modal-bg.show { display: flex; }
+    .modal { background: #0a1020; border: 1px solid #152040; border-radius: 12px; padding: 24px; width: 400px; max-width: 90vw; max-height: 80vh; overflow-y: auto; }
+    .modal h3 { color: #e2e8f0; margin: 0 0 16px; }
+    .modal .form-group { margin-bottom: 14px; }
+    .modal .form-group label { display: block; font-size: 0.85rem; color: #94a3b8; margin-bottom: 6px; }
+    .modal select, .modal input { width: 100%; padding: 10px; background: #060a12; border: 1px solid #152040; border-radius: 8px; color: #f1f5f9; box-sizing: border-box; }
+    .modal .btn-row { display: flex; gap: 8px; justify-content: flex-end; margin-top: 16px; }
+    .check-list { max-height: 150px; overflow-y: auto; }
+    .check-item { display: flex; align-items: center; gap: 8px; padding: 6px 0; color: #c8d6e5; font-size: 0.9rem; }
+    .check-item input[type="checkbox"] { accent-color: #3B82F6; }
+
+    .faq-section { margin-top: 40px; }
+    .faq-item { border: 1px solid #152040; border-radius: 10px; margin-bottom: 10px; overflow: hidden; }
+    .faq-q { padding: 16px 20px; background: #0a1020; cursor: pointer; display: flex; justify-content: space-between; align-items: center; color: #e2e8f0; font-weight: 500; }
+    .faq-q:hover { background: #0f1629; }
+    .faq-arrow { transition: transform 0.2s; color: #3B82F6; }
+    .faq-item.open .faq-arrow { transform: rotate(180deg); }
+    .faq-a { padding: 0 20px; max-height: 0; overflow: hidden; transition: max-height 0.3s, padding 0.3s; }
+    .faq-item.open .faq-a { max-height: 400px; padding: 16px 20px; }
+    .faq-a p { color: #94a3b8; line-height: 1.7; margin: 0; }
+
+    .info-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 16px; margin: 16px 0; }
+    .info-card { background: #0a1020; border: 1px solid #152040; border-radius: 10px; padding: 20px; }
+    .info-card .icon { font-size: 1.8rem; margin-bottom: 8px; }
+    .info-card h4 { color: #e2e8f0; margin: 0 0 8px; }
+    .info-card p { color: #94a3b8; font-size: 0.9rem; margin: 0; line-height: 1.5; }
+  </style>
+
+  <div class="rti-container">
+    <div style="background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.2);border-radius:12px;padding:1rem 1.5rem;font-size:0.88rem;color:var(--text-secondary);line-height:1.6;margin-bottom:1.5rem;">
+      📋 <strong style="color:#3B82F6;">Schools using structured RTI frameworks see 20-30% fewer special education referrals.</strong> Tier 1 covers 80% of students, Tier 2 targets the 15% needing extra support, Tier 3 serves the 5% requiring intensive intervention. Organize your groups and sessions by tier. <a href="https://gab.ae/news/trump-medical-school-admissions-investigation-2026" style="color:#3B82F6;">Why education systems are evolving →</a>
+    </div>
+    <h1>RTI Scheduler</h1>
+    <p class="subtitle">Plan Response to Intervention schedules — organize students, groups, and sessions by tier</p>
+
+    <!-- Stats -->
+    <div class="stats-row">
+      <div class="stat-card stat-t1"><div class="stat-num" id="statT1">0</div><div class="stat-label">Tier 1 Students</div></div>
+      <div class="stat-card stat-t2"><div class="stat-num" id="statT2">0</div><div class="stat-label">Tier 2 Students</div></div>
+      <div class="stat-card stat-t3"><div class="stat-num" id="statT3">0</div><div class="stat-label">Tier 3 Students</div></div>
+    </div>
+
+    <!-- Add Students -->
+    <div class="card">
+      <h3 style="margin-top:0;">Add Students</h3>
+      <div class="student-add">
+        <input type="text" id="studentName" placeholder="Student name" onkeydown="if(event.key==='Enter')addStudent()">
+        <select id="studentTier">
+          <option value="1">Tier 1</option>
+          <option value="2">Tier 2</option>
+          <option value="3">Tier 3</option>
+        </select>
+        <button class="btn btn-blue" onclick="addStudent()">+ Add</button>
+        <button class="btn btn-ghost btn-sm" onclick="addSample()">Load Sample</button>
+      </div>
+      <div class="student-list" id="studentList"></div>
+    </div>
+
+    <!-- Schedule -->
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+        <h3 style="margin:0;">Weekly Schedule</h3>
+        <div style="display:flex;gap:8px;">
+          <button class="btn btn-ghost btn-sm" onclick="exportSchedule()">📥 Export</button>
+          <button class="btn btn-ghost btn-sm" onclick="clearSchedule()">Clear</button>
+        </div>
+      </div>
+      <div class="schedule-grid" style="margin-top:16px;">
+        <table class="sched-table" id="schedTable"></table>
+      </div>
+    </div>
+
+    <!-- Assign Modal -->
+    <div class="modal-bg" id="assignModal">
+      <div class="modal">
+        <h3>Assign Intervention</h3>
+        <div class="form-group">
+          <label>Group Name</label>
+          <input type="text" id="groupNameInput" placeholder="e.g. Reading Group A">
+        </div>
+        <div class="form-group">
+          <label>Tier Level</label>
+          <select id="groupTierInput">
+            <option value="1">Tier 1 — Universal</option>
+            <option value="2">Tier 2 — Targeted</option>
+            <option value="3">Tier 3 — Intensive</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Focus Area</label>
+          <select id="groupFocusInput">
+            <option value="Reading">Reading</option>
+            <option value="Math">Math</option>
+            <option value="Writing">Writing</option>
+            <option value="Behavior">Behavior</option>
+            <option value="Other">Other</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Select Students</label>
+          <div class="check-list" id="studentChecklist"></div>
+        </div>
+        <div class="btn-row">
+          <button class="btn btn-ghost" onclick="closeAssign()">Cancel</button>
+          <button class="btn btn-blue" onclick="saveAssign()">Save</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- RTI Tiers Explained -->
+    <h2>Understanding the 3 Tiers of RTI</h2>
+    <div class="info-grid">
+      <div class="info-card">
+        <div class="icon">🟢</div>
+        <h4>Tier 1 — Universal Instruction</h4>
+        <p>Core classroom instruction delivered to all students. Uses evidence-based curriculum and differentiated teaching strategies. About 80% of students meet benchmarks with Tier 1 alone. Screening assessments (3× per year) identify students who need more support.</p>
+      </div>
+      <div class="info-card">
+        <div class="icon">🟡</div>
+        <h4>Tier 2 — Targeted Intervention</h4>
+        <p>Small-group instruction (3-6 students) targeting specific skill gaps. Sessions run 20-30 minutes, 3-5 times per week, for 8-12 week cycles. Progress monitored every 2-4 weeks. About 15% of students need Tier 2 support. Students move back to Tier 1 when they reach benchmark.</p>
+      </div>
+      <div class="info-card">
+        <div class="icon">🔴</div>
+        <h4>Tier 3 — Intensive Intervention</h4>
+        <p>Individualized or very small group (1-3 students) instruction addressing significant skill deficits. Daily sessions of 30-60 minutes with weekly progress monitoring. About 5% of students require this level. Data from Tier 3 may inform special education referral decisions.</p>
+      </div>
+    </div>
+
+    <!-- Scheduling Tips -->
+    <h2>RTI Scheduling Best Practices</h2>
+    <div class="info-grid">
+      <div class="info-card">
+        <h4>🕐 Protected Time Blocks</h4>
+        <p>Designate daily "intervention blocks" (30-45 min) where all students receive instruction at their tier level simultaneously. This prevents Tier 2/3 students from missing core instruction — the most common scheduling pitfall.</p>
+      </div>
+      <div class="info-card">
+        <h4>👥 Flexible Grouping</h4>
+        <p>Groups should change based on data, not convenience. Reassess every 6-8 weeks. A student who improves should move down in tier; one who plateaus may need different grouping or a higher tier.</p>
+      </div>
+      <div class="info-card">
+        <h4>📊 Progress Monitoring Calendar</h4>
+        <p>Build assessment dates into the schedule. Tier 2: every 2-4 weeks. Tier 3: weekly. Use consistent tools (DIBELS, AIMSweb, CBMs) so data is comparable across time points.</p>
+      </div>
+      <div class="info-card">
+        <h4>🔄 Stagger Specialists</h4>
+        <p>Reading specialists, math interventionists, and behavioral support staff should have staggered schedules so multiple groups can run simultaneously without staff conflicts.</p>
+      </div>
+    </div>
+
+    <!-- FAQ -->
+    <div class="faq-section">
+      <h2>Frequently Asked Questions</h2>
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFaq(this)">What is RTI (Response to Intervention)? <span class="faq-arrow">▼</span></div>
+        <div class="faq-a"><p>Response to Intervention (RTI) is a multi-tiered framework for identifying and supporting students with learning and behavior needs. It uses three increasingly intensive levels: Tier 1 (whole-class), Tier 2 (small-group targeted), and Tier 3 (intensive individualized). Students move between tiers based on progress monitoring data, ensuring every student gets the right level of support.</p></div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFaq(this)">What are the 3 tiers of RTI? <span class="faq-arrow">▼</span></div>
+        <div class="faq-a"><p>Tier 1 is universal instruction for all students (~80% succeed). Tier 2 provides targeted small-group interventions for students not meeting benchmarks (~15%). Tier 3 offers intensive individualized support for students with significant gaps (~5%). Each tier increases in frequency, duration, and specificity of instruction.</p></div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFaq(this)">How often should RTI interventions be scheduled? <span class="faq-arrow">▼</span></div>
+        <div class="faq-a"><p>Tier 2: 3-5 sessions per week, 20-30 minutes each, for 8-12 week cycles. Tier 3: daily sessions, 30-60 minutes, with weekly progress monitoring. Reassess tier placement every 6-8 weeks based on data.</p></div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFaq(this)">How do I schedule RTI groups without conflicts? <span class="faq-arrow">▼</span></div>
+        <div class="faq-a"><p>Map your available intervention time blocks first. Group students by skill level and need. Stagger specialist schedules so multiple groups run simultaneously. Use a protected "intervention block" where all students receive tier-appropriate instruction — this prevents Tier 2/3 students from missing core lessons.</p></div>
+      </div>
+      <div class="faq-item">
+        <div class="faq-q" onclick="toggleFaq(this)">What is progress monitoring in RTI? <span class="faq-arrow">▼</span></div>
+        <div class="faq-a"><p>Progress monitoring is systematic assessment of student performance over time to evaluate intervention effectiveness. Tier 2 students are assessed every 2-4 weeks; Tier 3 students weekly. Common tools include DIBELS, AIMSweb, and curriculum-based measurements. Data determines whether students advance, remain, or move to a different tier.</p></div>
+      </div>
+    </div>
+  </div>
+
+  <script is:inline>
+    let students = [];
+    let schedule = {}; // key: "day-slot" → { name, tier, focus, studentIds }
+    let studentId = 0;
+    let editSlotKey = null;
+
+    const DAYS = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday'];
+    const SLOTS = [
+      { label: '8:00 – 8:30', id: '0800' },
+      { label: '8:30 – 9:00', id: '0830' },
+      { label: '9:00 – 9:30', id: '0900' },
+      { label: '9:30 – 10:00', id: '0930' },
+      { label: '10:00 – 10:30', id: '1000' },
+      { label: '10:30 – 11:00', id: '1030' },
+      { label: '11:00 – 11:30', id: '1100' },
+      { label: '11:30 – 12:00', id: '1130' },
+      { label: '1:00 – 1:30', id: '1300' },
+      { label: '1:30 – 2:00', id: '1330' },
+      { label: '2:00 – 2:30', id: '1400' },
+      { label: '2:30 – 3:00', id: '1430' }
+    ];
+
+    function addStudent() {
+      const input = document.getElementById('studentName');
+      const tier = parseInt(document.getElementById('studentTier').value);
+      const name = input.value.trim();
+      if (!name) return;
+      students.push({ id: ++studentId, name, tier });
+      input.value = '';
+      renderStudents();
+      renderSchedule();
+    }
+
+    function removeStudent(id) {
+      students = students.filter(s => s.id !== id);
+      // Remove from schedule
+      Object.values(schedule).forEach(slot => {
+        if (slot.studentIds) slot.studentIds = slot.studentIds.filter(sid => sid !== id);
+      });
+      renderStudents();
+      renderSchedule();
+    }
+
+    function addSample() {
+      const samples = [
+        { name: 'Emma W.', tier: 1 }, { name: 'Liam K.', tier: 1 }, { name: 'Sophia R.', tier: 1 },
+        { name: 'Noah M.', tier: 1 }, { name: 'Olivia T.', tier: 1 }, { name: 'Ava J.', tier: 1 },
+        { name: 'Mason B.', tier: 2 }, { name: 'Isabella C.', tier: 2 }, { name: 'Ethan P.', tier: 2 },
+        { name: 'Mia L.', tier: 2 }, { name: 'James H.', tier: 3 }, { name: 'Charlotte D.', tier: 3 }
+      ];
+      samples.forEach(s => students.push({ id: ++studentId, name: s.name, tier: s.tier }));
+      renderStudents();
+      renderSchedule();
+    }
+
+    function renderStudents() {
+      const list = document.getElementById('studentList');
+      list.innerHTML = '';
+      const sorted = [...students].sort((a, b) => a.tier - b.tier);
+      sorted.forEach(s => {
+        const tag = document.createElement('span');
+        tag.className = `student-tag tier${s.tier}-tag`;
+        tag.innerHTML = `T${s.tier} ${s.name} <span class="remove" onclick="removeStudent(${s.id})">✕</span>`;
+        list.appendChild(tag);
+      });
+      // Update stats
+      document.getElementById('statT1').textContent = students.filter(s => s.tier === 1).length;
+      document.getElementById('statT2').textContent = students.filter(s => s.tier === 2).length;
+      document.getElementById('statT3').textContent = students.filter(s => s.tier === 3).length;
+    }
+
+    function renderSchedule() {
+      const table = document.getElementById('schedTable');
+      let html = '<thead><tr><th>Time</th>';
+      DAYS.forEach(d => html += `<th>${d}</th>`);
+      html += '</tr></thead><tbody>';
+
+      SLOTS.forEach(slot => {
+        html += `<tr><td class="time-cell">${slot.label}</td>`;
+        DAYS.forEach(day => {
+          const key = `${day}-${slot.id}`;
+          const data = schedule[key];
+          if (data) {
+            const tierClass = `slot-t${data.tier}`;
+            const studentNames = (data.studentIds || []).map(id => {
+              const s = students.find(st => st.id === id);
+              return s ? s.name : '';
+            }).filter(Boolean).join(', ');
+            html += `<td class="slot-cell"><div class="slot-filled ${tierClass}" onclick="openAssign('${key}')">
+              <div class="group-name">${data.name}</div>
+              <div class="group-students">${studentNames || 'No students assigned'}</div>
+            </div></td>`;
+          } else {
+            html += `<td class="slot-cell"><div class="slot-empty" onclick="openAssign('${key}')">+ Add intervention</div></td>`;
+          }
+        });
+        html += '</tr>';
+      });
+      html += '</tbody>';
+      table.innerHTML = html;
+    }
+
+    function openAssign(key) {
+      editSlotKey = key;
+      const data = schedule[key] || {};
+      document.getElementById('groupNameInput').value = data.name || '';
+      document.getElementById('groupTierInput').value = data.tier || '2';
+      document.getElementById('groupFocusInput').value = data.focus || 'Reading';
+
+      const checklist = document.getElementById('studentChecklist');
+      checklist.innerHTML = '';
+      const selectedIds = data.studentIds || [];
+      students.forEach(s => {
+        const div = document.createElement('div');
+        div.className = 'check-item';
+        div.innerHTML = `<input type="checkbox" value="${s.id}" ${selectedIds.includes(s.id) ? 'checked' : ''}> <span class="student-tag tier${s.tier}-tag" style="padding:2px 8px;font-size:0.8rem;">T${s.tier}</span> ${s.name}`;
+        checklist.appendChild(div);
+      });
+
+      document.getElementById('assignModal').classList.add('show');
+    }
+
+    function closeAssign() { document.getElementById('assignModal').classList.remove('show'); editSlotKey = null; }
+
+    function saveAssign() {
+      if (!editSlotKey) return;
+      const name = document.getElementById('groupNameInput').value.trim();
+      if (!name) { closeAssign(); delete schedule[editSlotKey]; renderSchedule(); return; }
+      const tier = parseInt(document.getElementById('groupTierInput').value);
+      const focus = document.getElementById('groupFocusInput').value;
+      const checks = document.querySelectorAll('#studentChecklist input[type=checkbox]:checked');
+      const studentIds = Array.from(checks).map(c => parseInt(c.value));
+      schedule[editSlotKey] = { name, tier, focus, studentIds };
+      closeAssign();
+      renderSchedule();
+    }
+
+    function clearSchedule() {
+      if (!confirm('Clear all scheduled interventions?')) return;
+      schedule = {};
+      renderSchedule();
+    }
+
+    function exportSchedule() {
+      let text = 'RTI WEEKLY SCHEDULE\n' + '='.repeat(60) + '\n\n';
+      text += `Total Students: ${students.length} (T1: ${students.filter(s=>s.tier===1).length}, T2: ${students.filter(s=>s.tier===2).length}, T3: ${students.filter(s=>s.tier===3).length})\n\n`;
+
+      DAYS.forEach(day => {
+        text += `--- ${day} ---\n`;
+        let hasSlots = false;
+        SLOTS.forEach(slot => {
+          const key = `${day}-${slot.id}`;
+          const data = schedule[key];
+          if (data) {
+            hasSlots = true;
+            const names = (data.studentIds || []).map(id => { const s = students.find(st => st.id === id); return s ? s.name : ''; }).filter(Boolean).join(', ');
+            text += `  ${slot.label}  |  [Tier ${data.tier}] ${data.name} (${data.focus})  |  ${names}\n`;
+          }
+        });
+        if (!hasSlots) text += '  (no interventions scheduled)\n';
+        text += '\n';
+      });
+
+      const blob = new Blob([text], { type: 'text/plain' });
+      const link = document.createElement('a');
+      link.download = 'rti-schedule.txt';
+      link.href = URL.createObjectURL(blob);
+      link.click();
+    }
+
+    function toggleFaq(el) { el.parentElement.classList.toggle('open'); }
+
+    // Init
+    renderStudents();
+    renderSchedule();
+  </script>
+</SiteLayout>

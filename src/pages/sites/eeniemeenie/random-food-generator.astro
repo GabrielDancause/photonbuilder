@@ -1,0 +1,568 @@
+---
+import SiteLayout from '../../../layouts/SiteLayout.astro';
+
+export const meta = {
+  title: 'Random Food Generator: What Should I Eat?',
+  description: 'Can\'t decide what to eat? Spin the random food generator! Filter by cuisine, diet, prep time, and effort. 120+ real dishes with fun slot-machine animation.',
+  category: 'tool',
+  published: '2026-03-29'
+};
+
+const SITE_ID = 'eeniemeenie';
+const CANONICAL = 'https://eeniemeenie.photonbuilder.com/random-food-generator';
+
+const faqItems = [
+  { q: 'How does the random food generator work?', a: 'Our generator picks from a database of 120+ real dishes. Set your filters (cuisine, meal type, diet, prep time, effort) and hit the button. A slot-machine animation spins through options before landing on your meal. Don\'t like it? Hit "Try Again" to re-spin without repeats.' },
+  { q: 'Can I filter for dietary restrictions?', a: 'Yes! Filter by Vegetarian, Vegan, Gluten-Free, Keto, or Dairy-Free. The generator only shows dishes matching your selected diet. Many dishes carry multiple tags, so you\'ll still get plenty of variety.' },
+  { q: 'What cuisines are included?', a: 'The database covers American, Italian, Mexican, Asian, Indian, Mediterranean, Japanese, Thai, and French cuisines — over 120 dishes spanning breakfast, lunch, dinner, snacks, and desserts.' },
+  { q: 'Does it remember what I\'ve been suggested?', a: 'Yes! Your last 10 picks are saved in your browser\'s local storage and displayed in the history section. Clear history anytime with one click. Nothing is sent to any server.' },
+  { q: 'What if I keep getting foods I don\'t like?', a: 'Use the "I Don\'t Like That" button to exclude the current pick and re-spin. You can also narrow your filters — try selecting a specific cuisine or meal type to get more relevant suggestions.' }
+];
+
+const articleSchema = {
+  "@context": "https://schema.org",
+  "@type": "Article",
+  "headline": meta.title,
+  "description": meta.description,
+  "datePublished": meta.published,
+  "author": { "@type": "Organization", "name": "Eenie Meenie" }
+};
+
+const faqSchema = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": faqItems.map(item => ({
+    "@type": "Question",
+    "name": item.q,
+    "acceptedAnswer": { "@type": "Answer", "text": item.a }
+  }))
+};
+---
+
+<SiteLayout title={meta.title} description={meta.description} site={SITE_ID} canonical={CANONICAL} schema={JSON.stringify([articleSchema, faqSchema])}>
+  <style>
+    :root {
+      --food-orange: #f97316;
+      --food-green: #22c55e;
+      --food-pink: #ec4899;
+      --food-blue: #3b82f6;
+      --food-yellow: #eab308;
+      --food-purple: #a855f7;
+    }
+
+    .page-wrap { max-width: 900px; margin: 0 auto; padding: 2rem 1rem; }
+
+    .hero { text-align: center; margin-bottom: 2rem; }
+    .hero h1 { font-size: 2.4rem; color: var(--accent-color); margin-bottom: 0.5rem; line-height: 1.2; }
+    .hero .emoji-row { font-size: 2rem; margin-bottom: 0.5rem; }
+    .hero p { color: var(--text-secondary); font-size: 1.1rem; max-width: 600px; margin: 0 auto; }
+
+    /* Filters */
+    .filters { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.25rem; margin-bottom: 1.5rem; }
+    .filters-title { font-size: 1rem; font-weight: 600; color: var(--text-secondary); margin-bottom: 1rem; display: flex; align-items: center; gap: 0.5rem; cursor: pointer; user-select: none; }
+    .filters-title .arrow { transition: transform 0.2s; display: inline-block; }
+    .filters-title .arrow.open { transform: rotate(90deg); }
+    .filters-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(200px, 1fr)); gap: 1rem; }
+    .filters-grid.collapsed { display: none; }
+    .filter-group label { display: block; font-size: 0.8rem; color: var(--text-secondary); margin-bottom: 0.35rem; text-transform: uppercase; letter-spacing: 0.5px; }
+    .filter-group select { width: 100%; padding: 0.5rem; background: var(--bg-color); color: var(--text-color); border: 1px solid var(--border-color); border-radius: 8px; font-size: 0.95rem; cursor: pointer; }
+    .filter-group select:focus { outline: none; border-color: var(--accent-color); }
+
+    /* Spinner area */
+    .spinner-area { text-align: center; margin-bottom: 2rem; }
+    .spin-btn { background: linear-gradient(135deg, var(--food-orange), var(--food-pink)); color: #fff; border: none; padding: 1rem 2.5rem; font-size: 1.3rem; font-weight: 700; border-radius: 60px; cursor: pointer; transition: transform 0.15s, box-shadow 0.15s; box-shadow: 0 4px 20px rgba(249,115,22,0.3); }
+    .spin-btn:hover { transform: scale(1.05); box-shadow: 0 6px 28px rgba(249,115,22,0.45); }
+    .spin-btn:active { transform: scale(0.97); }
+    .spin-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+
+    /* Result card */
+    .result-card { background: var(--card-bg); border: 2px solid var(--border-color); border-radius: 16px; padding: 2rem; margin: 1.5rem auto; max-width: 500px; text-align: center; position: relative; overflow: hidden; min-height: 220px; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+    .result-card.spinning { border-color: var(--food-orange); }
+    .result-card .food-emoji { font-size: 4rem; margin-bottom: 0.5rem; transition: transform 0.3s; }
+    .result-card.revealed .food-emoji { animation: pop 0.4s ease; }
+    .result-card .food-name { font-size: 1.8rem; font-weight: 800; color: var(--text-color); margin-bottom: 0.25rem; }
+    .result-card .food-cuisine { font-size: 1rem; color: var(--food-orange); font-weight: 600; margin-bottom: 0.75rem; }
+    .result-card .food-desc { color: var(--text-secondary); font-size: 0.95rem; margin-bottom: 1rem; max-width: 400px; }
+    .result-card .food-meta { display: flex; flex-wrap: wrap; gap: 0.5rem; justify-content: center; }
+    .result-card .tag { background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 20px; padding: 0.25rem 0.75rem; font-size: 0.8rem; color: var(--text-secondary); }
+    .result-card .tag.time { border-color: var(--food-blue); color: var(--food-blue); }
+    .result-card .tag.effort-easy { border-color: var(--food-green); color: var(--food-green); }
+    .result-card .tag.effort-medium { border-color: var(--food-yellow); color: var(--food-yellow); }
+    .result-card .tag.effort-chef { border-color: var(--food-purple); color: var(--food-purple); }
+    .result-card .tag.diet { border-color: var(--food-pink); color: var(--food-pink); }
+
+    .result-placeholder { color: var(--text-secondary); font-size: 1.1rem; }
+    .result-placeholder .big-emoji { font-size: 3rem; display: block; margin-bottom: 0.5rem; }
+
+    /* Spin animation overlay */
+    .spin-reel { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; background: var(--card-bg); z-index: 2; }
+    .spin-reel .reel-item { font-size: 3rem; position: absolute; animation: slotSpin 0.12s linear infinite; }
+
+    @keyframes slotSpin {
+      0% { transform: translateY(-60px); opacity: 0; }
+      20% { opacity: 1; }
+      80% { opacity: 1; }
+      100% { transform: translateY(60px); opacity: 0; }
+    }
+
+    @keyframes pop {
+      0% { transform: scale(0.3) rotate(-15deg); }
+      50% { transform: scale(1.2) rotate(5deg); }
+      100% { transform: scale(1) rotate(0); }
+    }
+
+    /* Action buttons */
+    .action-btns { display: flex; gap: 0.75rem; justify-content: center; margin-top: 1rem; flex-wrap: wrap; }
+    .btn-secondary { background: var(--card-bg); color: var(--text-color); border: 1px solid var(--border-color); padding: 0.6rem 1.25rem; border-radius: 8px; font-size: 0.95rem; cursor: pointer; transition: border-color 0.15s; }
+    .btn-secondary:hover { border-color: var(--accent-color); }
+    .btn-dislike { border-color: var(--food-pink); color: var(--food-pink); }
+    .btn-dislike:hover { background: rgba(236,72,153,0.1); }
+
+    .no-results { text-align: center; padding: 2rem; color: var(--text-secondary); }
+    .no-results .big-emoji { font-size: 3rem; display: block; margin-bottom: 0.5rem; }
+
+    /* History */
+    .history-section { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.25rem; margin-bottom: 2rem; }
+    .history-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+    .history-header h2 { font-size: 1.2rem; color: var(--text-color); margin: 0; }
+    .clear-btn { background: none; border: none; color: var(--text-secondary); font-size: 0.85rem; cursor: pointer; text-decoration: underline; }
+    .clear-btn:hover { color: var(--food-pink); }
+    .history-list { display: flex; flex-direction: column; gap: 0.5rem; }
+    .history-item { display: flex; align-items: center; gap: 0.75rem; padding: 0.5rem 0.75rem; background: var(--bg-color); border-radius: 8px; font-size: 0.9rem; }
+    .history-item .h-emoji { font-size: 1.4rem; flex-shrink: 0; }
+    .history-item .h-name { font-weight: 600; color: var(--text-color); }
+    .history-item .h-cuisine { color: var(--text-secondary); font-size: 0.8rem; }
+    .history-empty { color: var(--text-secondary); font-size: 0.9rem; text-align: center; padding: 1rem; }
+
+    /* FAQ */
+    .faq-section { margin-top: 2.5rem; }
+    .faq-section h2 { font-size: 1.5rem; color: var(--text-color); margin-bottom: 1rem; }
+    .faq-item { border-bottom: 1px solid var(--border-color); }
+    .faq-q { width: 100%; background: none; border: none; color: var(--text-color); font-size: 1rem; font-weight: 600; padding: 1rem 0; text-align: left; cursor: pointer; display: flex; justify-content: space-between; align-items: center; }
+    .faq-q:hover { color: var(--accent-color); }
+    .faq-q .faq-arrow { transition: transform 0.2s; font-size: 0.8rem; color: var(--text-secondary); }
+    .faq-q.open .faq-arrow { transform: rotate(90deg); }
+    .faq-a { padding: 0 0 1rem; color: var(--text-secondary); line-height: 1.6; display: none; }
+    .faq-a.open { display: block; }
+
+    /* Intro */
+    .intro { color: var(--text-secondary); line-height: 1.7; margin-bottom: 2rem; max-width: 700px; margin-left: auto; margin-right: auto; }
+    .intro h2 { color: var(--text-color); font-size: 1.3rem; margin-bottom: 0.5rem; }
+
+    @media (max-width: 600px) {
+      .hero h1 { font-size: 1.7rem; }
+      .filters-grid { grid-template-columns: 1fr 1fr; }
+      .spin-btn { font-size: 1.1rem; padding: 0.85rem 2rem; }
+      .result-card .food-name { font-size: 1.4rem; }
+      .result-card { padding: 1.5rem 1rem; }
+    }
+  </style>
+
+  <main class="page-wrap">
+    <div style="background:rgba(224,64,251,0.08);border:1px solid rgba(224,64,251,0.2);border-radius:12px;padding:1rem 1.5rem;font-size:0.88rem;color:var(--text-secondary);line-height:1.6;margin-bottom:1rem;">
+      🍽️ <strong style="color:#E040FB;">Americans spend 40 minutes/day deciding what to eat.</strong> That's 243 hours/year wasted on decision fatigue. With food prices up 15%, let randomness pick — then cook at home and save. <a href="https://gab.ae/news/grocery-prices-rising-raspberries-oil-costs-2026" style="color:#E040FB;">Why food costs more →</a>
+    </div>
+    <section class="hero">
+      <div class="emoji-row">🍕 🌮 🍣 🍜 🥗</div>
+      <h1>Random Food Generator</h1>
+      <p>Can't decide what to eat? Let fate decide! Filter by cuisine, diet, and more — then spin for your next meal.</p>
+    </section>
+
+    <section class="filters">
+      <div class="filters-title" id="filtersToggle">
+        <span class="arrow open">▶</span> Filters
+      </div>
+      <div class="filters-grid" id="filtersGrid">
+        <div class="filter-group">
+          <label>Cuisine</label>
+          <select id="filterCuisine">
+            <option value="all">All Cuisines</option>
+            <option value="American">American</option>
+            <option value="Italian">Italian</option>
+            <option value="Mexican">Mexican</option>
+            <option value="Asian">Asian</option>
+            <option value="Indian">Indian</option>
+            <option value="Mediterranean">Mediterranean</option>
+            <option value="Japanese">Japanese</option>
+            <option value="Thai">Thai</option>
+            <option value="French">French</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label>Meal Type</label>
+          <select id="filterMeal">
+            <option value="all">Any Meal</option>
+            <option value="Breakfast">Breakfast</option>
+            <option value="Lunch">Lunch</option>
+            <option value="Dinner">Dinner</option>
+            <option value="Snack">Snack</option>
+            <option value="Dessert">Dessert</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label>Diet</label>
+          <select id="filterDiet">
+            <option value="all">Any Diet</option>
+            <option value="Vegetarian">Vegetarian</option>
+            <option value="Vegan">Vegan</option>
+            <option value="Gluten-Free">Gluten-Free</option>
+            <option value="Keto">Keto</option>
+            <option value="Dairy-Free">Dairy-Free</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label>Max Prep Time</label>
+          <select id="filterTime">
+            <option value="any">Any</option>
+            <option value="15">Under 15 min</option>
+            <option value="30">Under 30 min</option>
+            <option value="60">Under 60 min</option>
+          </select>
+        </div>
+        <div class="filter-group">
+          <label>Effort</label>
+          <select id="filterEffort">
+            <option value="all">Any Effort</option>
+            <option value="Easy">Easy</option>
+            <option value="Medium">Medium</option>
+            <option value="Chef Mode">Chef Mode</option>
+          </select>
+        </div>
+      </div>
+    </section>
+
+    <section class="spinner-area">
+      <button class="spin-btn" id="spinBtn">🎰 What Should I Eat?</button>
+
+      <div class="result-card" id="resultCard">
+        <div class="result-placeholder" id="placeholder">
+          <span class="big-emoji">🤔</span>
+          Hungry? Hit the button!
+        </div>
+        <div id="resultContent" style="display:none;">
+          <div class="food-emoji" id="foodEmoji"></div>
+          <div class="food-name" id="foodName"></div>
+          <div class="food-cuisine" id="foodCuisine"></div>
+          <div class="food-desc" id="foodDesc"></div>
+          <div class="food-meta" id="foodMeta"></div>
+        </div>
+        <div id="spinReel" style="display:none;" class="spin-reel">
+          <div class="reel-item" id="reelEmoji"></div>
+        </div>
+        <div id="noResults" style="display:none;" class="no-results">
+          <span class="big-emoji">😅</span>
+          No dishes match your filters. Try loosening them up!
+        </div>
+      </div>
+
+      <div class="action-btns" id="actionBtns" style="display:none;">
+        <button class="btn-secondary btn-dislike" id="dislikeBtn">👎 I Don't Like That</button>
+        <button class="btn-secondary" id="respinBtn">🔄 Spin Again</button>
+      </div>
+    </section>
+
+    <section class="history-section" id="historySection" style="display:none;">
+      <div class="history-header">
+        <h2>🕐 Recent Picks</h2>
+        <button class="clear-btn" id="clearHistory">Clear</button>
+      </div>
+      <div class="history-list" id="historyList"></div>
+    </section>
+
+    <section class="intro">
+      <h2>How It Works</h2>
+      <p>Set your preferences using the filters above — pick a cuisine, meal type, dietary restriction, prep time, or effort level. Then hit the big button and watch the slot-machine animation spin through options. You'll land on a random dish complete with its emoji, cuisine, prep time, effort level, and dietary tags. Don't like the result? Hit "I Don't Like That" to exclude it and spin again. Your last 10 picks are saved so you can look back at your options.</p>
+    </section>
+
+    <section class="faq-section">
+      <h2>Frequently Asked Questions</h2>
+      {faqItems.map(item => (
+        <div class="faq-item">
+          <button class="faq-q">{item.q} <span class="faq-arrow">▶</span></button>
+          <div class="faq-a">{item.a}</div>
+        </div>
+      ))}
+    </section>
+  </main>
+
+  <script>
+    const FOODS = [
+      // === AMERICAN ===
+      {name:"Classic Cheeseburger",cuisine:"American",mealType:"Lunch",diet:["Gluten-Free"],prepTime:20,effort:"Easy",emoji:"🍔",desc:"Juicy beef patty with melted cheese, lettuce, and tomato."},
+      {name:"BBQ Pulled Pork",cuisine:"American",mealType:"Dinner",diet:["Gluten-Free","Dairy-Free"],prepTime:240,effort:"Chef Mode",emoji:"🐖",desc:"Slow-smoked pork shoulder with tangy BBQ sauce."},
+      {name:"Buffalo Wings",cuisine:"American",mealType:"Snack",diet:["Gluten-Free","Keto"],prepTime:40,effort:"Easy",emoji:"🍗",desc:"Crispy chicken wings tossed in spicy buffalo sauce."},
+      {name:"Pancakes",cuisine:"American",mealType:"Breakfast",diet:["Vegetarian"],prepTime:15,effort:"Easy",emoji:"🥞",desc:"Fluffy buttermilk pancakes stacked high with maple syrup."},
+      {name:"Mac and Cheese",cuisine:"American",mealType:"Dinner",diet:["Vegetarian"],prepTime:30,effort:"Easy",emoji:"🧀",desc:"Creamy baked macaroni with a crunchy breadcrumb topping."},
+      {name:"BLT Sandwich",cuisine:"American",mealType:"Lunch",diet:["Dairy-Free"],prepTime:10,effort:"Easy",emoji:"🥪",desc:"Bacon, lettuce, and tomato on toasted bread with mayo."},
+      {name:"Apple Pie",cuisine:"American",mealType:"Dessert",diet:["Vegetarian"],prepTime:90,effort:"Medium",emoji:"🥧",desc:"Classic double-crust pie with cinnamon-spiced apple filling."},
+      {name:"Scrambled Eggs",cuisine:"American",mealType:"Breakfast",diet:["Vegetarian","Gluten-Free","Keto"],prepTime:5,effort:"Easy",emoji:"🍳",desc:"Soft, buttery scrambled eggs seasoned with salt and pepper."},
+      {name:"Grilled Cheese",cuisine:"American",mealType:"Lunch",diet:["Vegetarian"],prepTime:10,effort:"Easy",emoji:"🧀",desc:"Golden-grilled bread with gooey melted cheese inside."},
+      {name:"Caesar Salad",cuisine:"American",mealType:"Lunch",diet:["Gluten-Free"],prepTime:15,effort:"Easy",emoji:"🥗",desc:"Crisp romaine with parmesan, croutons, and creamy dressing."},
+      {name:"Chocolate Chip Cookies",cuisine:"American",mealType:"Dessert",diet:["Vegetarian"],prepTime:25,effort:"Easy",emoji:"🍪",desc:"Chewy cookies loaded with melted chocolate chips."},
+      {name:"Clam Chowder",cuisine:"American",mealType:"Dinner",diet:[],prepTime:45,effort:"Medium",emoji:"🍲",desc:"Creamy New England soup with tender clams and potatoes."},
+      {name:"Cobb Salad",cuisine:"American",mealType:"Lunch",diet:["Gluten-Free","Keto"],prepTime:15,effort:"Easy",emoji:"🥗",desc:"Loaded salad with chicken, bacon, egg, avocado, and blue cheese."},
+
+      // === ITALIAN ===
+      {name:"Margherita Pizza",cuisine:"Italian",mealType:"Dinner",diet:["Vegetarian"],prepTime:30,effort:"Medium",emoji:"🍕",desc:"Simple perfection: tomato, mozzarella, basil on thin crust."},
+      {name:"Spaghetti Carbonara",cuisine:"Italian",mealType:"Dinner",diet:[],prepTime:25,effort:"Medium",emoji:"🍝",desc:"Pasta in a silky sauce of egg, pecorino, guanciale, and pepper."},
+      {name:"Risotto",cuisine:"Italian",mealType:"Dinner",diet:["Vegetarian","Gluten-Free"],prepTime:40,effort:"Medium",emoji:"🍚",desc:"Creamy arborio rice slowly stirred with broth and parmesan."},
+      {name:"Bruschetta",cuisine:"Italian",mealType:"Snack",diet:["Vegan","Dairy-Free"],prepTime:10,effort:"Easy",emoji:"🍅",desc:"Toasted bread topped with diced tomatoes, basil, and garlic."},
+      {name:"Caprese Salad",cuisine:"Italian",mealType:"Lunch",diet:["Vegetarian","Gluten-Free"],prepTime:5,effort:"Easy",emoji:"🧀",desc:"Fresh mozzarella, ripe tomatoes, and basil with olive oil."},
+      {name:"Tiramisu",cuisine:"Italian",mealType:"Dessert",diet:["Vegetarian"],prepTime:30,effort:"Medium",emoji:"🍰",desc:"Espresso-soaked ladyfingers layered with mascarpone cream."},
+      {name:"Lasagna",cuisine:"Italian",mealType:"Dinner",diet:[],prepTime:90,effort:"Chef Mode",emoji:"🍝",desc:"Layers of pasta, rich meat ragu, bechamel, and melted cheese."},
+      {name:"Minestrone Soup",cuisine:"Italian",mealType:"Lunch",diet:["Vegan","Dairy-Free"],prepTime:35,effort:"Easy",emoji:"🍲",desc:"Hearty vegetable soup with beans, pasta, and fresh herbs."},
+      {name:"Pesto Pasta",cuisine:"Italian",mealType:"Dinner",diet:["Vegetarian"],prepTime:15,effort:"Easy",emoji:"🍝",desc:"Pasta tossed in vibrant homemade basil and pine nut pesto."},
+      {name:"Focaccia",cuisine:"Italian",mealType:"Snack",diet:["Vegan","Dairy-Free"],prepTime:60,effort:"Medium",emoji:"🍞",desc:"Fluffy olive-oil bread with rosemary and sea salt crust."},
+      {name:"Panna Cotta",cuisine:"Italian",mealType:"Dessert",diet:["Vegetarian","Gluten-Free"],prepTime:20,effort:"Easy",emoji:"🍮",desc:"Silky vanilla cream set to a gentle wobble, topped with berries."},
+      {name:"Gnocchi",cuisine:"Italian",mealType:"Dinner",diet:["Vegetarian"],prepTime:45,effort:"Medium",emoji:"🥔",desc:"Pillowy potato dumplings in sage brown butter sauce."},
+
+      // === MEXICAN ===
+      {name:"Tacos al Pastor",cuisine:"Mexican",mealType:"Dinner",diet:["Dairy-Free"],prepTime:35,effort:"Medium",emoji:"🌮",desc:"Marinated pork on corn tortillas with pineapple and cilantro."},
+      {name:"Guacamole & Chips",cuisine:"Mexican",mealType:"Snack",diet:["Vegan","Gluten-Free","Dairy-Free"],prepTime:10,effort:"Easy",emoji:"🥑",desc:"Chunky avocado dip with lime, cilantro, and fresh tortilla chips."},
+      {name:"Chicken Burrito",cuisine:"Mexican",mealType:"Lunch",diet:[],prepTime:25,effort:"Easy",emoji:"🌯",desc:"Flour tortilla stuffed with chicken, rice, beans, and salsa."},
+      {name:"Churros",cuisine:"Mexican",mealType:"Dessert",diet:["Vegetarian"],prepTime:30,effort:"Medium",emoji:"🍩",desc:"Fried dough sticks coated in cinnamon sugar with chocolate sauce."},
+      {name:"Enchiladas",cuisine:"Mexican",mealType:"Dinner",diet:["Gluten-Free"],prepTime:40,effort:"Medium",emoji:"🌮",desc:"Corn tortillas rolled with chicken, smothered in red chili sauce."},
+      {name:"Quesadilla",cuisine:"Mexican",mealType:"Lunch",diet:["Vegetarian"],prepTime:10,effort:"Easy",emoji:"🧀",desc:"Crispy tortilla filled with melted cheese, peppers, and onions."},
+      {name:"Elote",cuisine:"Mexican",mealType:"Snack",diet:["Vegetarian","Gluten-Free"],prepTime:15,effort:"Easy",emoji:"🌽",desc:"Grilled Mexican street corn with mayo, cotija, chili, and lime."},
+      {name:"Pozole",cuisine:"Mexican",mealType:"Dinner",diet:["Gluten-Free","Dairy-Free"],prepTime:120,effort:"Chef Mode",emoji:"🍲",desc:"Rich pork and hominy stew with cabbage, radish, and lime."},
+      {name:"Huevos Rancheros",cuisine:"Mexican",mealType:"Breakfast",diet:["Vegetarian","Gluten-Free"],prepTime:20,effort:"Easy",emoji:"🍳",desc:"Fried eggs on corn tortillas with salsa roja and refried beans."},
+      {name:"Fish Tacos",cuisine:"Mexican",mealType:"Lunch",diet:["Dairy-Free"],prepTime:25,effort:"Medium",emoji:"🐟",desc:"Beer-battered fish in corn tortillas with slaw and crema."},
+      {name:"Tres Leches Cake",cuisine:"Mexican",mealType:"Dessert",diet:["Vegetarian"],prepTime:50,effort:"Medium",emoji:"🍰",desc:"Sponge cake soaked in three milks, topped with whipped cream."},
+      {name:"Chilaquiles",cuisine:"Mexican",mealType:"Breakfast",diet:["Vegetarian","Gluten-Free"],prepTime:20,effort:"Easy",emoji:"🌮",desc:"Crispy tortilla chips simmered in salsa with cheese and cream."},
+
+      // === ASIAN ===
+      {name:"Fried Rice",cuisine:"Asian",mealType:"Dinner",diet:["Dairy-Free"],prepTime:15,effort:"Easy",emoji:"🍚",desc:"Wok-fried rice with vegetables, egg, and soy sauce."},
+      {name:"Dumplings",cuisine:"Asian",mealType:"Snack",diet:["Dairy-Free"],prepTime:45,effort:"Medium",emoji:"🥟",desc:"Pan-fried pork and cabbage dumplings with dipping sauce."},
+      {name:"Kung Pao Chicken",cuisine:"Asian",mealType:"Dinner",diet:["Dairy-Free"],prepTime:25,effort:"Medium",emoji:"🍗",desc:"Stir-fried chicken with peanuts, chili, and Sichuan peppercorn."},
+      {name:"Spring Rolls",cuisine:"Asian",mealType:"Snack",diet:["Vegan","Dairy-Free"],prepTime:20,effort:"Easy",emoji:"🥢",desc:"Fresh rice paper rolls with vegetables and sweet chili sauce."},
+      {name:"Wonton Soup",cuisine:"Asian",mealType:"Lunch",diet:["Dairy-Free"],prepTime:30,effort:"Medium",emoji:"🍜",desc:"Delicate pork wontons floating in clear aromatic broth."},
+      {name:"Mapo Tofu",cuisine:"Asian",mealType:"Dinner",diet:["Vegan","Dairy-Free","Gluten-Free"],prepTime:20,effort:"Easy",emoji:"🌶️",desc:"Silky tofu in spicy, numbing chili-bean sauce with scallions."},
+      {name:"Congee",cuisine:"Asian",mealType:"Breakfast",diet:["Gluten-Free","Dairy-Free"],prepTime:60,effort:"Easy",emoji:"🍚",desc:"Silky rice porridge topped with ginger, scallions, and sesame oil."},
+      {name:"Char Siu Pork",cuisine:"Asian",mealType:"Dinner",diet:["Dairy-Free","Gluten-Free"],prepTime:60,effort:"Medium",emoji:"🐖",desc:"Cantonese BBQ pork glazed with honey, soy, and five-spice."},
+      {name:"Sesame Noodles",cuisine:"Asian",mealType:"Lunch",diet:["Vegan","Dairy-Free"],prepTime:15,effort:"Easy",emoji:"🍜",desc:"Cold noodles tossed in a creamy sesame-soy dressing."},
+      {name:"Dan Dan Noodles",cuisine:"Asian",mealType:"Dinner",diet:["Dairy-Free"],prepTime:25,effort:"Medium",emoji:"🍜",desc:"Spicy Sichuan noodles with minced pork and chili oil."},
+      {name:"Egg Drop Soup",cuisine:"Asian",mealType:"Lunch",diet:["Gluten-Free","Dairy-Free"],prepTime:10,effort:"Easy",emoji:"🍲",desc:"Light broth with silky ribbons of beaten egg."},
+      {name:"Mango Sticky Rice",cuisine:"Asian",mealType:"Dessert",diet:["Vegan","Gluten-Free","Dairy-Free"],prepTime:40,effort:"Medium",emoji:"🥭",desc:"Sweet coconut sticky rice with fresh ripe mango slices."},
+
+      // === INDIAN ===
+      {name:"Butter Chicken",cuisine:"Indian",mealType:"Dinner",diet:["Gluten-Free"],prepTime:40,effort:"Medium",emoji:"🍛",desc:"Tender chicken in a rich, creamy tomato-butter sauce."},
+      {name:"Chana Masala",cuisine:"Indian",mealType:"Dinner",diet:["Vegan","Gluten-Free","Dairy-Free"],prepTime:30,effort:"Easy",emoji:"🍛",desc:"Spiced chickpea curry in a bold tomato-onion gravy."},
+      {name:"Samosa",cuisine:"Indian",mealType:"Snack",diet:["Vegan","Dairy-Free"],prepTime:45,effort:"Medium",emoji:"🥟",desc:"Crispy pastry triangles filled with spiced potatoes and peas."},
+      {name:"Dal Tadka",cuisine:"Indian",mealType:"Dinner",diet:["Vegan","Gluten-Free","Dairy-Free"],prepTime:35,effort:"Easy",emoji:"🍲",desc:"Creamy lentils tempered with cumin, garlic, and chili."},
+      {name:"Biryani",cuisine:"Indian",mealType:"Dinner",diet:["Gluten-Free","Dairy-Free"],prepTime:60,effort:"Chef Mode",emoji:"🍚",desc:"Fragrant layered rice with spiced meat, saffron, and fried onions."},
+      {name:"Naan Bread",cuisine:"Indian",mealType:"Snack",diet:["Vegetarian"],prepTime:20,effort:"Easy",emoji:"🍞",desc:"Soft, pillowy flatbread baked in a tandoor oven."},
+      {name:"Palak Paneer",cuisine:"Indian",mealType:"Dinner",diet:["Vegetarian","Gluten-Free"],prepTime:30,effort:"Medium",emoji:"🧀",desc:"Cubes of paneer cheese in a vibrant pureed spinach sauce."},
+      {name:"Mango Lassi",cuisine:"Indian",mealType:"Snack",diet:["Vegetarian","Gluten-Free"],prepTime:5,effort:"Easy",emoji:"🥭",desc:"Cool, creamy yogurt smoothie blended with sweet mango."},
+      {name:"Aloo Gobi",cuisine:"Indian",mealType:"Dinner",diet:["Vegan","Gluten-Free","Dairy-Free"],prepTime:30,effort:"Easy",emoji:"🥔",desc:"Dry-roasted potatoes and cauliflower with turmeric and cumin."},
+      {name:"Masala Dosa",cuisine:"Indian",mealType:"Breakfast",diet:["Vegan","Gluten-Free","Dairy-Free"],prepTime:30,effort:"Medium",emoji:"🥞",desc:"Crispy rice-lentil crepe stuffed with spiced potato filling."},
+      {name:"Gulab Jamun",cuisine:"Indian",mealType:"Dessert",diet:["Vegetarian"],prepTime:40,effort:"Medium",emoji:"🍩",desc:"Soft milk-solid balls soaked in rose-cardamom sugar syrup."},
+      {name:"Tikka Masala",cuisine:"Indian",mealType:"Dinner",diet:["Gluten-Free"],prepTime:45,effort:"Medium",emoji:"🍛",desc:"Charred chicken pieces in a spiced creamy tomato sauce."},
+
+      // === MEDITERRANEAN ===
+      {name:"Falafel Wrap",cuisine:"Mediterranean",mealType:"Lunch",diet:["Vegan","Dairy-Free"],prepTime:25,effort:"Medium",emoji:"🧆",desc:"Crispy chickpea patties in pita with hummus and pickled veg."},
+      {name:"Greek Salad",cuisine:"Mediterranean",mealType:"Lunch",diet:["Vegetarian","Gluten-Free"],prepTime:10,effort:"Easy",emoji:"🥗",desc:"Tomato, cucumber, olive, and feta tossed in olive oil dressing."},
+      {name:"Hummus",cuisine:"Mediterranean",mealType:"Snack",diet:["Vegan","Gluten-Free","Dairy-Free"],prepTime:10,effort:"Easy",emoji:"🫘",desc:"Smooth blended chickpeas with tahini, lemon, and garlic."},
+      {name:"Shakshuka",cuisine:"Mediterranean",mealType:"Breakfast",diet:["Vegetarian","Gluten-Free"],prepTime:25,effort:"Easy",emoji:"🍳",desc:"Eggs poached in spiced tomato-pepper sauce with crusty bread."},
+      {name:"Lamb Kofta",cuisine:"Mediterranean",mealType:"Dinner",diet:["Gluten-Free","Dairy-Free"],prepTime:30,effort:"Medium",emoji:"🥩",desc:"Grilled spiced lamb skewers with yogurt sauce and flatbread."},
+      {name:"Tabbouleh",cuisine:"Mediterranean",mealType:"Lunch",diet:["Vegan","Dairy-Free"],prepTime:15,effort:"Easy",emoji:"🥗",desc:"Parsley-heavy bulgur salad with tomato, mint, and lemon."},
+      {name:"Stuffed Grape Leaves",cuisine:"Mediterranean",mealType:"Snack",diet:["Vegan","Gluten-Free","Dairy-Free"],prepTime:45,effort:"Medium",emoji:"🍃",desc:"Tender vine leaves filled with herbed rice and pine nuts."},
+      {name:"Moussaka",cuisine:"Mediterranean",mealType:"Dinner",diet:["Gluten-Free"],prepTime:75,effort:"Chef Mode",emoji:"🍆",desc:"Layered eggplant, spiced lamb, and creamy bechamel baked golden."},
+      {name:"Baklava",cuisine:"Mediterranean",mealType:"Dessert",diet:["Vegetarian"],prepTime:60,effort:"Chef Mode",emoji:"🍯",desc:"Crispy phyllo layers with walnuts and honey-rosewater syrup."},
+      {name:"Baba Ganoush",cuisine:"Mediterranean",mealType:"Snack",diet:["Vegan","Gluten-Free","Dairy-Free"],prepTime:20,effort:"Easy",emoji:"🍆",desc:"Smoky roasted eggplant dip with tahini and lemon."},
+
+      // === JAPANESE ===
+      {name:"Sushi Rolls",cuisine:"Japanese",mealType:"Dinner",diet:["Dairy-Free"],prepTime:45,effort:"Medium",emoji:"🍣",desc:"Vinegared rice rolled with fresh fish, avocado, and nori."},
+      {name:"Ramen",cuisine:"Japanese",mealType:"Dinner",diet:["Dairy-Free"],prepTime:30,effort:"Medium",emoji:"🍜",desc:"Rich pork broth noodles with egg, chashu, and nori."},
+      {name:"Miso Soup",cuisine:"Japanese",mealType:"Lunch",diet:["Vegan","Dairy-Free"],prepTime:10,effort:"Easy",emoji:"🍲",desc:"Warm dashi broth with miso paste, tofu, and wakame seaweed."},
+      {name:"Tempura",cuisine:"Japanese",mealType:"Dinner",diet:["Vegetarian","Dairy-Free"],prepTime:25,effort:"Medium",emoji:"🍤",desc:"Lightly battered and fried vegetables and shrimp with dipping sauce."},
+      {name:"Onigiri",cuisine:"Japanese",mealType:"Snack",diet:["Vegan","Dairy-Free"],prepTime:15,effort:"Easy",emoji:"🍙",desc:"Triangle-shaped rice balls with umeboshi, wrapped in nori."},
+      {name:"Teriyaki Chicken",cuisine:"Japanese",mealType:"Dinner",diet:["Dairy-Free"],prepTime:25,effort:"Easy",emoji:"🍗",desc:"Glazed chicken thighs in sweet soy-mirin teriyaki sauce."},
+      {name:"Gyoza",cuisine:"Japanese",mealType:"Snack",diet:["Dairy-Free"],prepTime:30,effort:"Medium",emoji:"🥟",desc:"Pan-fried Japanese dumplings with pork and cabbage filling."},
+      {name:"Katsu Curry",cuisine:"Japanese",mealType:"Dinner",diet:[],prepTime:40,effort:"Medium",emoji:"🍛",desc:"Crispy breaded chicken cutlet over rice with Japanese curry sauce."},
+      {name:"Edamame",cuisine:"Japanese",mealType:"Snack",diet:["Vegan","Gluten-Free","Dairy-Free"],prepTime:5,effort:"Easy",emoji:"🫛",desc:"Steamed young soybeans sprinkled with sea salt."},
+      {name:"Mochi",cuisine:"Japanese",mealType:"Dessert",diet:["Vegan","Gluten-Free","Dairy-Free"],prepTime:30,effort:"Medium",emoji:"🍡",desc:"Soft, chewy rice cakes filled with sweet red bean paste."},
+      {name:"Japanese Omelette",cuisine:"Japanese",mealType:"Breakfast",diet:["Vegetarian","Gluten-Free"],prepTime:15,effort:"Medium",emoji:"🍳",desc:"Sweet rolled omelette (tamagoyaki) with dashi and mirin."},
+      {name:"Matcha Latte",cuisine:"Japanese",mealType:"Snack",diet:["Vegetarian","Gluten-Free"],prepTime:5,effort:"Easy",emoji:"🍵",desc:"Whisked ceremonial matcha with steamed milk."},
+
+      // === THAI ===
+      {name:"Pad Thai",cuisine:"Thai",mealType:"Dinner",diet:["Gluten-Free","Dairy-Free"],prepTime:25,effort:"Medium",emoji:"🍜",desc:"Stir-fried rice noodles with tamarind, peanuts, and lime."},
+      {name:"Green Curry",cuisine:"Thai",mealType:"Dinner",diet:["Gluten-Free","Dairy-Free"],prepTime:30,effort:"Medium",emoji:"🍛",desc:"Coconut milk curry with Thai basil, bamboo, and chicken."},
+      {name:"Tom Yum Soup",cuisine:"Thai",mealType:"Lunch",diet:["Gluten-Free","Dairy-Free"],prepTime:20,effort:"Easy",emoji:"🍲",desc:"Hot and sour shrimp soup with lemongrass and galangal."},
+      {name:"Som Tum",cuisine:"Thai",mealType:"Lunch",diet:["Vegan","Gluten-Free","Dairy-Free"],prepTime:15,effort:"Easy",emoji:"🥗",desc:"Spicy green papaya salad with lime, chili, and peanuts."},
+      {name:"Massaman Curry",cuisine:"Thai",mealType:"Dinner",diet:["Gluten-Free","Dairy-Free"],prepTime:50,effort:"Medium",emoji:"🍛",desc:"Rich peanut-coconut curry with potatoes and tender beef."},
+      {name:"Thai Iced Tea",cuisine:"Thai",mealType:"Snack",diet:["Vegetarian","Gluten-Free"],prepTime:5,effort:"Easy",emoji:"🧋",desc:"Strong brewed Thai tea with condensed milk over ice."},
+      {name:"Larb",cuisine:"Thai",mealType:"Lunch",diet:["Gluten-Free","Dairy-Free"],prepTime:15,effort:"Easy",emoji:"🥗",desc:"Spicy minced meat salad with mint, lime, and toasted rice."},
+      {name:"Mango Sticky Rice",cuisine:"Thai",mealType:"Dessert",diet:["Vegan","Gluten-Free","Dairy-Free"],prepTime:35,effort:"Medium",emoji:"🥭",desc:"Sweet coconut-soaked sticky rice with ripe mango slices."},
+      {name:"Satay Skewers",cuisine:"Thai",mealType:"Snack",diet:["Gluten-Free","Dairy-Free"],prepTime:30,effort:"Medium",emoji:"🥩",desc:"Grilled marinated chicken skewers with peanut dipping sauce."},
+      {name:"Thai Basil Stir-Fry",cuisine:"Thai",mealType:"Dinner",diet:["Dairy-Free"],prepTime:15,effort:"Easy",emoji:"🌿",desc:"Quick wok-fried chicken with holy basil, chili, and garlic."},
+
+      // === FRENCH ===
+      {name:"Croissant",cuisine:"French",mealType:"Breakfast",diet:["Vegetarian"],prepTime:120,effort:"Chef Mode",emoji:"🥐",desc:"Flaky, buttery layered pastry baked to golden perfection."},
+      {name:"French Onion Soup",cuisine:"French",mealType:"Lunch",diet:["Vegetarian"],prepTime:60,effort:"Medium",emoji:"🍲",desc:"Caramelized onion broth topped with a gruyere-toast crust."},
+      {name:"Crêpes",cuisine:"French",mealType:"Breakfast",diet:["Vegetarian"],prepTime:20,effort:"Easy",emoji:"🥞",desc:"Thin French pancakes filled with Nutella, fruit, or cheese."},
+      {name:"Coq au Vin",cuisine:"French",mealType:"Dinner",diet:["Gluten-Free","Dairy-Free"],prepTime:90,effort:"Chef Mode",emoji:"🍷",desc:"Chicken braised in red wine with mushrooms and pearl onions."},
+      {name:"Ratatouille",cuisine:"French",mealType:"Dinner",diet:["Vegan","Gluten-Free","Dairy-Free"],prepTime:45,effort:"Medium",emoji:"🍆",desc:"Provençal stewed vegetables with tomato, zucchini, and herbs."},
+      {name:"Crème Brûlée",cuisine:"French",mealType:"Dessert",diet:["Vegetarian","Gluten-Free"],prepTime:50,effort:"Medium",emoji:"🍮",desc:"Vanilla custard with a caramelized sugar crust on top."},
+      {name:"Quiche Lorraine",cuisine:"French",mealType:"Lunch",diet:[],prepTime:50,effort:"Medium",emoji:"🥧",desc:"Savory pastry filled with egg, cream, bacon, and gruyere."},
+      {name:"Salade Niçoise",cuisine:"French",mealType:"Lunch",diet:["Gluten-Free","Dairy-Free"],prepTime:20,effort:"Easy",emoji:"🥗",desc:"Composed salad with tuna, eggs, olives, green beans, and potatoes."},
+      {name:"Beef Bourguignon",cuisine:"French",mealType:"Dinner",diet:["Gluten-Free","Dairy-Free"],prepTime:180,effort:"Chef Mode",emoji:"🥩",desc:"Beef slow-braised in Burgundy wine with root vegetables."},
+      {name:"Madeleines",cuisine:"French",mealType:"Dessert",diet:["Vegetarian"],prepTime:25,effort:"Easy",emoji:"🧁",desc:"Small shell-shaped sponge cakes with a hint of lemon."},
+      {name:"Croque Monsieur",cuisine:"French",mealType:"Lunch",diet:[],prepTime:15,effort:"Easy",emoji:"🥪",desc:"Grilled ham and cheese sandwich with creamy bechamel sauce."},
+      {name:"Pain au Chocolat",cuisine:"French",mealType:"Breakfast",diet:["Vegetarian"],prepTime:120,effort:"Chef Mode",emoji:"🍫",desc:"Flaky pastry wrapped around rich dark chocolate batons."},
+      {name:"Tarte Tatin",cuisine:"French",mealType:"Dessert",diet:["Vegetarian"],prepTime:50,effort:"Medium",emoji:"🍎",desc:"Upside-down caramelized apple tart with buttery pastry."},
+    ];
+
+    let currentPick = null;
+    let excluded = new Set();
+    let history = [];
+
+    const STORAGE_KEY = 'foodgen_history';
+
+    const $ = id => document.getElementById(id);
+
+    function loadHistory() {
+      try { history = JSON.parse(localStorage.getItem(STORAGE_KEY)) || []; } catch { history = []; }
+      renderHistory();
+    }
+
+    function saveHistory() {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(history.slice(0, 10)));
+    }
+
+    function addToHistory(food) {
+      history = [food, ...history.filter(f => f.name !== food.name)].slice(0, 10);
+      saveHistory();
+      renderHistory();
+    }
+
+    function renderHistory() {
+      const sec = $('historySection');
+      const list = $('historyList');
+      if (history.length === 0) { sec.style.display = 'none'; return; }
+      sec.style.display = 'block';
+      list.innerHTML = history.map(f =>
+        `<div class="history-item"><span class="h-emoji">${f.emoji}</span><span><span class="h-name">${f.name}</span><br><span class="h-cuisine">${f.cuisine} · ${f.mealType}</span></span></div>`
+      ).join('');
+    }
+
+    function getFiltered() {
+      const cuisine = $('filterCuisine').value;
+      const meal = $('filterMeal').value;
+      const diet = $('filterDiet').value;
+      const time = $('filterTime').value;
+      const effort = $('filterEffort').value;
+
+      return FOODS.filter(f => {
+        if (excluded.has(f.name)) return false;
+        if (cuisine !== 'all' && f.cuisine !== cuisine) return false;
+        if (meal !== 'all' && f.mealType !== meal) return false;
+        if (diet !== 'all' && !f.diet.includes(diet)) return false;
+        if (time !== 'any' && f.prepTime > parseInt(time)) return false;
+        if (effort !== 'all' && f.effort !== effort) return false;
+        return true;
+      });
+    }
+
+    function showResult(food) {
+      $('placeholder').style.display = 'none';
+      $('noResults').style.display = 'none';
+      $('resultContent').style.display = '';
+      $('foodEmoji').textContent = food.emoji;
+      $('foodName').textContent = food.name;
+      $('foodCuisine').textContent = food.cuisine + ' · ' + food.mealType;
+      $('foodDesc').textContent = food.desc;
+
+      let tags = '';
+      tags += `<span class="tag time">⏱ ${food.prepTime} min</span>`;
+      const effortClass = food.effort === 'Easy' ? 'effort-easy' : food.effort === 'Medium' ? 'effort-medium' : 'effort-chef';
+      tags += `<span class="tag ${effortClass}">${food.effort === 'Chef Mode' ? '👨‍🍳' : food.effort === 'Medium' ? '🔥' : '✅'} ${food.effort}</span>`;
+      food.diet.forEach(d => { tags += `<span class="tag diet">${d}</span>`; });
+      $('foodMeta').innerHTML = tags;
+
+      $('resultCard').classList.add('revealed');
+      $('actionBtns').style.display = 'flex';
+      setTimeout(() => $('resultCard').classList.remove('revealed'), 500);
+    }
+
+    function showNoResults() {
+      $('placeholder').style.display = 'none';
+      $('resultContent').style.display = 'none';
+      $('noResults').style.display = '';
+      $('actionBtns').style.display = 'none';
+    }
+
+    async function spin() {
+      const pool = getFiltered();
+      if (pool.length === 0) { showNoResults(); return; }
+
+      const btn = $('spinBtn');
+      btn.disabled = true;
+      $('actionBtns').style.display = 'none';
+
+      // Spin animation
+      const reel = $('spinReel');
+      const reelEmoji = $('reelEmoji');
+      $('placeholder').style.display = 'none';
+      $('resultContent').style.display = 'none';
+      $('noResults').style.display = 'none';
+      reel.style.display = 'flex';
+      $('resultCard').classList.add('spinning');
+
+      const allEmojis = pool.map(f => f.emoji);
+      let tick = 0;
+      const totalTicks = 18;
+
+      await new Promise(resolve => {
+        const interval = setInterval(() => {
+          reelEmoji.textContent = allEmojis[Math.floor(Math.random() * allEmojis.length)];
+          reelEmoji.style.fontSize = (3 + Math.random())  + 'rem';
+          tick++;
+          if (tick >= totalTicks) { clearInterval(interval); resolve(); }
+        }, 80 + tick * 8);
+      });
+
+      // Pick random
+      const pick = pool[Math.floor(Math.random() * pool.length)];
+      currentPick = pick;
+
+      reel.style.display = 'none';
+      $('resultCard').classList.remove('spinning');
+      showResult(pick);
+      addToHistory(pick);
+      btn.disabled = false;
+    }
+
+    // Init
+    loadHistory();
+
+    $('spinBtn').addEventListener('click', () => { excluded.clear(); spin(); });
+
+    $('dislikeBtn').addEventListener('click', () => {
+      if (currentPick) excluded.add(currentPick.name);
+      spin();
+    });
+
+    $('respinBtn').addEventListener('click', () => spin());
+
+    $('clearHistory').addEventListener('click', () => {
+      history = [];
+      localStorage.removeItem(STORAGE_KEY);
+      renderHistory();
+    });
+
+    $('filtersToggle').addEventListener('click', () => {
+      const grid = $('filtersGrid');
+      const arrow = $('filtersToggle').querySelector('.arrow');
+      grid.classList.toggle('collapsed');
+      arrow.classList.toggle('open');
+    });
+
+    // FAQ toggles
+    document.querySelectorAll('.faq-q').forEach(btn => {
+      btn.addEventListener('click', () => {
+        btn.classList.toggle('open');
+        btn.nextElementSibling.classList.toggle('open');
+      });
+    });
+  </script>
+</SiteLayout>

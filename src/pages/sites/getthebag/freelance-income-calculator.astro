@@ -64,9 +64,22 @@ export const meta = {
   schema={schema}
 >
   <div class="calculator-container">
+    <div style="background:rgba(59,130,246,0.08);border:1px solid rgba(59,130,246,0.2);border-radius:12px;padding:1rem 1.5rem;font-size:0.88rem;color:var(--text-secondary);line-height:1.6;margin-bottom:1rem;">
+      💼 <strong style="color:#3B82F6;">The freelance economy grew 14% in 2026.</strong> More people are going independent than ever — but most underestimate taxes, insurance, and unbillable hours. Calculate your real take-home before making the leap. <a href="https://gab.ae/news/global-freelance-economy-record-growth-2026" style="color:#3B82F6;">The freelance boom →</a>
+    </div>
     <div class="header">
       <h1>Freelance Income Calculator</h1>
       <p>Estimate your real take-home pay and effective hourly rate.</p>
+    </div>
+
+    <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:1.5rem;">
+      <span style="font-size:0.8rem;font-weight:700;text-transform:uppercase;letter-spacing:0.5px;color:var(--text-secondary);line-height:32px;margin-right:4px;">Presets:</span>
+      <button class="preset-pill" onclick="loadPreset(150,30,48,5000,15.3,32)">💻 Software Dev</button>
+      <button class="preset-pill" onclick="loadPreset(100,28,48,3000,15.3,24)">🎨 Designer</button>
+      <button class="preset-pill" onclick="loadPreset(75,25,46,2000,15.3,22)">✍️ Writer</button>
+      <button class="preset-pill" onclick="loadPreset(200,25,46,4000,15.3,35)">📊 Consultant</button>
+      <button class="preset-pill" onclick="loadPreset(60,30,48,1500,15.3,22)">📱 Social Media</button>
+      <button class="preset-pill" onclick="loadPreset(125,28,46,3500,15.3,24)">📸 Photographer</button>
     </div>
 
     <div class="calc-grid">
@@ -99,6 +112,16 @@ export const meta = {
           <label for="incomeTaxRate">Income Tax Bracket (%)</label>
           <input type="number" id="incomeTaxRate" value="22" min="0" max="100" />
         </div>
+
+        <h2>Insurance & Retirement</h2>
+        <div class="input-group">
+          <label for="healthInsurance">Annual Health Insurance ($)</label>
+          <input type="number" id="healthInsurance" value="6000" min="0" />
+        </div>
+        <div class="input-group">
+          <label for="retirementPct">Retirement Savings (% of net)</label>
+          <input type="number" id="retirementPct" value="15" min="0" max="100" step="1" />
+        </div>
       </div>
 
       <!-- Outputs -->
@@ -121,6 +144,14 @@ export const meta = {
             <span>Income Tax</span>
             <strong id="outIncomeTax">$0</strong>
           </div>
+          <div class="result-card">
+            <span>Health Insurance</span>
+            <strong id="outHealth">$0</strong>
+          </div>
+          <div class="result-card">
+            <span>Retirement Savings</span>
+            <strong id="outRetirement">$0</strong>
+          </div>
           <div class="result-card highlight">
             <span>Net Take-Home Pay</span>
             <strong id="outNet">$0</strong>
@@ -129,6 +160,10 @@ export const meta = {
             <span>Effective Hourly Rate</span>
             <strong id="outEffectiveRate">$0/hr</strong>
           </div>
+          <div class="result-card" style="grid-column: 1/-1; text-align:center; padding:1rem;">
+            <span>Monthly Take-Home</span>
+            <strong id="outMonthly" style="font-size:1.5rem;">$0</strong>
+          </div>
         </div>
 
         <div class="chart-container">
@@ -136,6 +171,8 @@ export const meta = {
           <div class="donut-chart" id="donutChart"></div>
           <div class="chart-legend">
             <div class="legend-item"><span class="color-box" style="background: var(--accent-color);"></span> Take-Home</div>
+            <div class="legend-item"><span class="color-box" style="background: #22c55e;"></span> Retirement</div>
+            <div class="legend-item"><span class="color-box" style="background: #8b5cf6;"></span> Health Ins</div>
             <div class="legend-item"><span class="color-box" style="background: #ef4444;"></span> Income Tax</div>
             <div class="legend-item"><span class="color-box" style="background: #f59e0b;"></span> SE Tax</div>
             <div class="legend-item"><span class="color-box" style="background: #6b7280;"></span> Expenses</div>
@@ -158,68 +195,82 @@ export const meta = {
   </div>
 
   <script is:inline>
+    function loadPreset(rate, hours, weeks, expenses, se, tax) {
+      document.getElementById('hourlyRate').value = rate;
+      document.getElementById('hoursPerWeek').value = hours;
+      document.getElementById('weeksPerYear').value = weeks;
+      document.getElementById('annualExpenses').value = expenses;
+      document.getElementById('seTaxRate').value = se;
+      document.getElementById('incomeTaxRate').value = tax;
+      calculate();
+    }
+
     function calculate() {
-      const hourlyRate = parseFloat(document.getElementById('hourlyRate').value) || 0;
-      const hoursPerWeek = parseFloat(document.getElementById('hoursPerWeek').value) || 0;
-      const weeksPerYear = parseFloat(document.getElementById('weeksPerYear').value) || 0;
-      const annualExpenses = parseFloat(document.getElementById('annualExpenses').value) || 0;
-      const seTaxRate = parseFloat(document.getElementById('seTaxRate').value) || 0;
-      const incomeTaxRate = parseFloat(document.getElementById('incomeTaxRate').value) || 0;
+      var hourlyRate = parseFloat(document.getElementById('hourlyRate').value) || 0;
+      var hoursPerWeek = parseFloat(document.getElementById('hoursPerWeek').value) || 0;
+      var weeksPerYear = parseFloat(document.getElementById('weeksPerYear').value) || 0;
+      var annualExpenses = parseFloat(document.getElementById('annualExpenses').value) || 0;
+      var seTaxRate = parseFloat(document.getElementById('seTaxRate').value) || 0;
+      var incomeTaxRate = parseFloat(document.getElementById('incomeTaxRate').value) || 0;
+      var healthIns = parseFloat(document.getElementById('healthInsurance').value) || 0;
+      var retirePct = parseFloat(document.getElementById('retirementPct').value) || 0;
 
-      // Calculations
-      const grossIncome = hourlyRate * hoursPerWeek * weeksPerYear;
-      const taxableIncomeSE = Math.max(0, grossIncome - annualExpenses);
+      var grossIncome = hourlyRate * hoursPerWeek * weeksPerYear;
+      var taxableIncomeSE = Math.max(0, grossIncome - annualExpenses);
+      var seTax = taxableIncomeSE * (seTaxRate / 100);
+      var incomeTaxable = Math.max(0, taxableIncomeSE - (seTax / 2));
+      var incomeTax = incomeTaxable * (incomeTaxRate / 100);
 
-      const seTax = taxableIncomeSE * (seTaxRate / 100);
+      var afterTaxes = grossIncome - annualExpenses - seTax - incomeTax - healthIns;
+      var retirementAmt = Math.max(0, afterTaxes * (retirePct / 100));
+      var netIncome = afterTaxes - retirementAmt;
 
-      const incomeTaxable = Math.max(0, taxableIncomeSE - (seTax / 2));
-      const incomeTax = incomeTaxable * (incomeTaxRate / 100);
+      var totalHours = hoursPerWeek * weeksPerYear;
+      var effectiveRate = totalHours > 0 ? netIncome / totalHours : 0;
 
-      const netIncome = grossIncome - annualExpenses - seTax - incomeTax;
+      var fmt = function(val) { return '$' + Math.round(val).toLocaleString(); };
 
-      const totalHours = hoursPerWeek * weeksPerYear;
-      const effectiveRate = totalHours > 0 ? netIncome / totalHours : 0;
+      document.getElementById('outGross').innerText = fmt(grossIncome);
+      document.getElementById('outExpenses').innerText = fmt(annualExpenses);
+      document.getElementById('outSETax').innerText = fmt(seTax);
+      document.getElementById('outIncomeTax').innerText = fmt(incomeTax);
+      document.getElementById('outHealth').innerText = fmt(healthIns);
+      document.getElementById('outRetirement').innerText = fmt(retirementAmt);
+      document.getElementById('outNet').innerText = fmt(netIncome);
+      document.getElementById('outMonthly').innerText = fmt(netIncome / 12);
+      document.getElementById('outEffectiveRate').innerText = '$' + effectiveRate.toFixed(2) + '/hr';
 
-      // Update UI
-      const formatCurrency = (val) => new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(val);
-
-      document.getElementById('outGross').innerText = formatCurrency(grossIncome);
-      document.getElementById('outExpenses').innerText = formatCurrency(annualExpenses);
-      document.getElementById('outSETax').innerText = formatCurrency(seTax);
-      document.getElementById('outIncomeTax').innerText = formatCurrency(incomeTax);
-      document.getElementById('outNet').innerText = formatCurrency(netIncome);
-
-      // Keep cents for hourly rate
-      const formattedRate = new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(effectiveRate);
-      document.getElementById('outEffectiveRate').innerText = formattedRate + '/hr';
-
-      // Update Chart
-      const donutChart = document.getElementById('donutChart');
+      var donutChart = document.getElementById('donutChart');
       if (grossIncome > 0) {
-        const netPct = Math.max(0, (netIncome / grossIncome) * 100);
-        const incTaxPct = Math.max(0, (incomeTax / grossIncome) * 100);
-        const seTaxPct = Math.max(0, (seTax / grossIncome) * 100);
-        const expPct = Math.max(0, (annualExpenses / grossIncome) * 100);
+        var netPct = Math.max(0, (netIncome / grossIncome) * 100);
+        var retPct = Math.max(0, (retirementAmt / grossIncome) * 100);
+        var hlthPct = Math.max(0, (healthIns / grossIncome) * 100);
+        var incTaxPct = Math.max(0, (incomeTax / grossIncome) * 100);
+        var seTaxPct = Math.max(0, (seTax / grossIncome) * 100);
+        var expPct = Math.max(0, (annualExpenses / grossIncome) * 100);
 
-        donutChart.style.background = `conic-gradient(
-          var(--accent-color) 0% ${netPct}%,
-          #ef4444 ${netPct}% ${netPct + incTaxPct}%,
-          #f59e0b ${netPct + incTaxPct}% ${netPct + incTaxPct + seTaxPct}%,
-          #6b7280 ${netPct + incTaxPct + seTaxPct}% 100%
-        )`;
+        donutChart.style.background = 'conic-gradient(' +
+          'var(--accent-color) 0% ' + netPct + '%,' +
+          '#22c55e ' + netPct + '% ' + (netPct + retPct) + '%,' +
+          '#8b5cf6 ' + (netPct + retPct) + '% ' + (netPct + retPct + hlthPct) + '%,' +
+          '#ef4444 ' + (netPct + retPct + hlthPct) + '% ' + (netPct + retPct + hlthPct + incTaxPct) + '%,' +
+          '#f59e0b ' + (netPct + retPct + hlthPct + incTaxPct) + '% ' + (netPct + retPct + hlthPct + incTaxPct + seTaxPct) + '%,' +
+          '#6b7280 ' + (netPct + retPct + hlthPct + incTaxPct + seTaxPct) + '% 100%)';
       } else {
         donutChart.style.background = '#e5e7eb';
       }
     }
 
-    document.addEventListener('DOMContentLoaded', () => {
-      const inputs = document.querySelectorAll('.inputs-panel input');
-      inputs.forEach(input => input.addEventListener('input', calculate));
-      calculate(); // Initial calculation
+    document.addEventListener('DOMContentLoaded', function() {
+      var inputs = document.querySelectorAll('.inputs-panel input');
+      inputs.forEach(function(input) { input.addEventListener('input', calculate); });
+      calculate();
     });
   </script>
 
   <style is:inline>
+    .preset-pill { background: var(--card-bg); border: 1px solid var(--border-color); color: var(--text-secondary); padding: 6px 14px; border-radius: 20px; font-size: 12px; font-weight: 600; cursor: pointer; font-family: inherit; transition: all 0.2s; white-space: nowrap; }
+    .preset-pill:hover { border-color: var(--accent-color); color: var(--text-primary, #fff); }
     .calculator-container {
       max-width: 1000px;
       margin: 0 auto;
@@ -395,4 +446,22 @@ export const meta = {
       line-height: 1.5;
     }
   </style>
+
+  <div class="related-tools" style="margin-top:3rem;padding-top:2rem;border-top:1px solid rgba(255,255,255,0.08);">
+    <h2 style="font-size:1.2rem;margin-bottom:1rem;">🔗 Related Tools</h2>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1rem;">
+      <a href="https://firemaths.info/florida-paycheck-calculator" style="display:block;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:1.25rem;text-decoration:none;color:inherit;transition:border-color 0.2s,transform 0.2s;" onmouseover="this.style.borderColor='rgba(255,255,255,0.2)';this.style.transform='translateY(-2px)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.08)';this.style.transform='none'">
+        <strong style="font-size:0.95rem;">Florida Paycheck Calculator: Accurate Net Pay Estimator</strong>
+        <p style="opacity:0.6;font-size:0.83rem;margin:0.4rem 0 0;line-height:1.4;">Calculate your exact Florida take-home pay. Are you losing more to taxes than you think? Our real-time calculator reveal...</p>
+      </a>
+      <a href="https://firemaths.info/income-tax-calculator" style="display:block;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:1.25rem;text-decoration:none;color:inherit;transition:border-color 0.2s,transform 0.2s;" onmouseover="this.style.borderColor='rgba(255,255,255,0.2)';this.style.transform='translateY(-2px)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.08)';this.style.transform='none'">
+        <strong style="font-size:0.95rem;">Income Tax Calculator: Find Your True Take-Home Pay</strong>
+        <p style="opacity:0.6;font-size:0.83rem;margin:0.4rem 0 0;line-height:1.4;">Stop guessing how much of your paycheck you actually keep. Calculate your true net income after federal, Social Security...</p>
+      </a>
+      <a href="https://firemaths.info/freelance-rate" style="display:block;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:1.25rem;text-decoration:none;color:inherit;transition:border-color 0.2s,transform 0.2s;" onmouseover="this.style.borderColor='rgba(255,255,255,0.2)';this.style.transform='translateY(-2px)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.08)';this.style.transform='none'">
+        <strong style="font-size:0.95rem;">Freelance Rate Calculator</strong>
+        <p style="opacity:0.6;font-size:0.83rem;margin:0.4rem 0 0;line-height:1.4;">Calculate your ideal hourly and project rates as a freelancer. Factor in desired salary, business expenses, taxes, and b...</p>
+      </a>
+    </div>
+  </div>
 </SiteLayout>

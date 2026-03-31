@@ -1,0 +1,451 @@
+---
+import SiteLayout from '../../../layouts/SiteLayout.astro';
+
+export const meta = {
+  title: 'Random NFL Team Generator: Pick a Team for Fantasy & Fun',
+  description: 'Randomly pick an NFL team with our fun generator. Spin through all 32 teams, filter by conference or division, run head-to-head matchups, and browse the full league.',
+  category: 'tool',
+  published: '2026-03-29'
+};
+
+const SITE_ID = 'eeniemeenie';
+const CANONICAL = 'https://eeniemeenie.photonbuilder.com/random-nfl-team-generator';
+
+const faqItems = [
+  { q: 'How does the random NFL team generator work?', a: 'The generator uses your browser\'s built-in cryptographic random number generator (crypto.getRandomValues) to pick a team from the pool of 32 NFL teams with perfectly equal probability. You can narrow the pool by filtering by conference (AFC/NFC) or division, and exclude specific teams.' },
+  { q: 'Can I use this for fantasy football drafts?', a: 'Yes! Use the "Pick Multiple" mode to randomly assign 2-8 teams at once with no duplicates. It\'s great for assigning fan allegiances, settling debates about which team to root for, or randomizing fantasy draft order.' },
+  { q: 'Are all 32 NFL teams included?', a: 'Yes. The generator includes every team from both the AFC and NFC across all eight divisions: East, North, South, and West. Team info includes city, stadium, colors, and a fun fact.' },
+  { q: 'What is the Head-to-Head mode?', a: 'Head-to-Head picks two random teams from your filtered pool and displays them as a matchup card, complete with team colors and details. It\'s a fun way to generate hypothetical game scenarios.' },
+  { q: 'Can I exclude certain teams from the random pick?', a: 'Absolutely. Click any team in the exclude list to toggle it off. Excluded teams won\'t appear in any random picks. This is perfect for "anyone but the Cowboys" scenarios or narrowing down choices.' }
+];
+
+const faqSchema = {
+  "@context": "https://schema.org",
+  "@type": "FAQPage",
+  "mainEntity": faqItems.map(item => ({
+    "@type": "Question",
+    "name": item.q,
+    "acceptedAnswer": { "@type": "Answer", "text": item.a }
+  }))
+};
+---
+<SiteLayout title={meta.title} description={meta.description} site={SITE_ID} schema={faqSchema} canonical={CANONICAL}>
+<style is:inline>
+
+  .page-content { display:flex; flex-direction:column; align-items:center; width:100%; }
+  .hero { text-align:center; margin-bottom:2rem; }
+  .hero h1 { font-size:2rem; margin:0 0 0.5rem; }
+  .hero p { color:var(--text-secondary, #aaa); font-size:1.1rem; margin:0; }
+
+  /* Tabs */
+  .tabs { display:flex; gap:0.5rem; flex-wrap:wrap; justify-content:center; margin-bottom:1.5rem; }
+  .tab-btn { padding:0.5rem 1rem; border-radius:8px; border:1px solid var(--border, #333); background:var(--card-bg, #1a1a2e); color:var(--text, #e0e0e0); cursor:pointer; font-size:0.9rem; transition:all 0.2s; }
+  .tab-btn:hover { border-color:var(--accent, #6c63ff); }
+  .tab-btn.active { background:var(--accent, #6c63ff); color:#fff; border-color:var(--accent, #6c63ff); }
+
+  .tab-panel { display:none; width:100%; max-width:900px; }
+  .tab-panel.active { display:block; }
+
+  /* Filters */
+  .filters { display:flex; flex-wrap:wrap; gap:0.75rem; margin-bottom:1.5rem; align-items:flex-end; }
+  .filter-group label { display:block; font-size:0.8rem; color:var(--text-secondary, #aaa); margin-bottom:0.25rem; }
+  .filter-group select { padding:0.4rem 0.6rem; border-radius:6px; border:1px solid var(--border, #333); background:var(--card-bg, #1a1a2e); color:var(--text, #e0e0e0); font-size:0.9rem; }
+
+  /* Exclude */
+  .exclude-section { margin-bottom:1.5rem; }
+  .exclude-section summary { cursor:pointer; color:var(--text-secondary, #aaa); font-size:0.85rem; margin-bottom:0.5rem; }
+  .exclude-grid { display:flex; flex-wrap:wrap; gap:0.35rem; margin-top:0.5rem; }
+  .exclude-chip { padding:0.25rem 0.5rem; border-radius:4px; font-size:0.75rem; cursor:pointer; border:1px solid var(--border, #333); background:var(--card-bg, #1a1a2e); color:var(--text, #e0e0e0); transition:all 0.2s; user-select:none; }
+  .exclude-chip.excluded { opacity:0.35; text-decoration:line-through; }
+
+  /* Big button */
+  .pick-btn { padding:1rem 2.5rem; font-size:1.3rem; font-weight:700; border:none; border-radius:12px; background:var(--accent, #6c63ff); color:#fff; cursor:pointer; transition:transform 0.15s, box-shadow 0.15s; box-shadow:0 4px 20px rgba(108,99,255,0.3); }
+  .pick-btn:hover { transform:scale(1.03); box-shadow:0 6px 28px rgba(108,99,255,0.45); }
+  .pick-btn:active { transform:scale(0.97); }
+  .pick-btn:disabled { opacity:0.5; cursor:not-allowed; transform:none; }
+
+  .btn-row { display:flex; gap:0.75rem; justify-content:center; flex-wrap:wrap; margin-bottom:1.5rem; }
+  .multi-select { padding:0.4rem 0.6rem; border-radius:6px; border:1px solid var(--border, #333); background:var(--card-bg, #1a1a2e); color:var(--text, #e0e0e0); font-size:0.9rem; }
+
+  /* Result card */
+  .result-area { min-height:200px; display:flex; justify-content:center; align-items:center; width:100%; }
+  .team-card { border-radius:16px; padding:2rem; text-align:center; width:100%; max-width:420px; border:2px solid var(--border, #333); background:var(--card-bg, #1a1a2e); position:relative; overflow:hidden; animation:cardIn 0.4s ease; }
+  @keyframes cardIn { from { opacity:0; transform:translateY(20px) scale(0.95); } to { opacity:1; transform:translateY(0) scale(1); } }
+  .team-card .color-bar { position:absolute; top:0; left:0; right:0; height:6px; }
+  .team-logo { width:80px; height:80px; border-radius:50%; display:flex; align-items:center; justify-content:center; margin:0.5rem auto 1rem; font-size:1.4rem; font-weight:800; color:#fff; text-shadow:0 1px 3px rgba(0,0,0,0.5); }
+  .team-city { font-size:0.9rem; color:var(--text-secondary, #aaa); margin:0; }
+  .team-name { font-size:1.8rem; font-weight:800; margin:0.25rem 0 0.5rem; }
+  .team-division { display:inline-block; padding:0.2rem 0.6rem; border-radius:4px; font-size:0.8rem; font-weight:600; margin-bottom:0.75rem; }
+  .color-swatches { display:flex; gap:0.5rem; justify-content:center; margin-bottom:0.75rem; }
+  .swatch { width:28px; height:28px; border-radius:6px; border:2px solid rgba(255,255,255,0.15); }
+  .team-stadium { font-size:0.85rem; color:var(--text-secondary, #aaa); margin:0.25rem 0; }
+  .team-fact { font-size:0.85rem; color:var(--text-secondary, #aaa); margin-top:0.5rem; font-style:italic; padding:0.5rem; border-radius:8px; background:rgba(255,255,255,0.03); }
+
+  /* Spin animation */
+  .spin-display { font-size:1.6rem; font-weight:700; min-height:60px; display:flex; align-items:center; justify-content:center; }
+
+  /* Multi results */
+  .multi-results { display:grid; grid-template-columns:repeat(auto-fill, minmax(180px, 1fr)); gap:1rem; width:100%; }
+  .mini-card { border-radius:12px; padding:1rem; text-align:center; border:1px solid var(--border, #333); background:var(--card-bg, #1a1a2e); animation:cardIn 0.4s ease; }
+  .mini-card .team-logo { width:50px; height:50px; font-size:0.9rem; margin-bottom:0.5rem; }
+  .mini-card .team-name { font-size:1rem; }
+  .mini-card .team-city { font-size:0.75rem; }
+
+  /* H2H */
+  .h2h-container { display:flex; gap:1rem; align-items:center; justify-content:center; flex-wrap:wrap; width:100%; }
+  .h2h-vs { font-size:2rem; font-weight:900; color:var(--accent, #6c63ff); }
+  .h2h-container .team-card { max-width:340px; flex:1; min-width:260px; }
+
+  /* Browser grid */
+  .browser-grid { display:grid; grid-template-columns:repeat(auto-fill, minmax(200px, 1fr)); gap:0.75rem; width:100%; }
+  .browser-team { border-radius:10px; padding:0.75rem; display:flex; align-items:center; gap:0.75rem; border:1px solid var(--border, #333); background:var(--card-bg, #1a1a2e); cursor:pointer; transition:border-color 0.2s, transform 0.15s; }
+  .browser-team:hover { border-color:var(--accent, #6c63ff); transform:translateY(-2px); }
+  .browser-team .team-logo { width:40px; height:40px; font-size:0.7rem; margin:0; flex-shrink:0; }
+  .browser-team .bt-info { text-align:left; }
+  .browser-team .bt-name { font-weight:700; font-size:0.9rem; }
+  .browser-team .bt-div { font-size:0.75rem; color:var(--text-secondary, #aaa); }
+  .div-header { font-size:1.1rem; font-weight:700; margin:1.5rem 0 0.75rem; padding-bottom:0.25rem; border-bottom:1px solid var(--border, #333); }
+  .div-header:first-child { margin-top:0; }
+
+  /* Detail modal */
+  .modal-overlay { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.7); z-index:1000; align-items:center; justify-content:center; padding:1rem; }
+  .modal-overlay.active { display:flex; }
+  .modal-overlay .team-card { max-width:420px; }
+  .modal-close { position:absolute; top:0.75rem; right:0.75rem; background:none; border:none; color:var(--text, #e0e0e0); font-size:1.5rem; cursor:pointer; z-index:2; }
+
+  /* FAQ */
+  .faq-section { width:100%; max-width:900px; margin-top:3rem; }
+  .faq-section h2 { font-size:1.5rem; margin-bottom:1rem; }
+  .faq-item { border-bottom:1px solid var(--border, #333); }
+  .faq-q { width:100%; padding:1rem 0; text-align:left; background:none; border:none; color:var(--text, #e0e0e0); font-size:1rem; font-weight:600; cursor:pointer; display:flex; justify-content:space-between; align-items:center; gap:1rem; }
+  .faq-q::after { content:'+'; font-size:1.3rem; flex-shrink:0; transition:transform 0.2s; }
+  .faq-item.open .faq-q::after { transform:rotate(45deg); }
+  .faq-a { max-height:0; overflow:hidden; transition:max-height 0.3s ease; }
+  .faq-item.open .faq-a { max-height:300px; }
+  .faq-a p { padding:0 0 1rem; margin:0; color:var(--text-secondary, #aaa); font-size:0.95rem; line-height:1.6; }
+
+  @media (max-width:600px) {
+    .hero h1 { font-size:1.5rem; }
+    .team-card { padding:1.25rem; }
+    .team-name { font-size:1.4rem; }
+    .h2h-container .team-card { min-width:100%; }
+    .browser-grid { grid-template-columns:repeat(auto-fill, minmax(160px, 1fr)); }
+    .multi-results { grid-template-columns:repeat(auto-fill, minmax(150px, 1fr)); }
+  }
+
+</style>
+
+<div class="page-content">
+  <div class="hero">
+    <h1>Random NFL Team Generator</h1>
+    <p>Randomly pick from all 32 NFL teams — for fantasy, fun, or fate</p>
+  </div>
+
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('generator')">Pick a Team</button>
+    <button class="tab-btn" onclick="switchTab('multi')">Pick Multiple</button>
+    <button class="tab-btn" onclick="switchTab('h2h')">Head-to-Head</button>
+    <button class="tab-btn" onclick="switchTab('browse')">All 32 Teams</button>
+  </div>
+
+  <!-- Filters (shared) -->
+  <div class="filters" id="filters">
+    <div class="filter-group">
+      <label>Conference</label>
+      <select id="conf-filter" onchange="updatePool()">
+        <option value="all">Both (AFC + NFC)</option>
+        <option value="AFC">AFC Only</option>
+        <option value="NFC">NFC Only</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>Division</label>
+      <select id="div-filter" onchange="updatePool()">
+        <option value="all">All Divisions</option>
+        <option value="East">East</option>
+        <option value="North">North</option>
+        <option value="South">South</option>
+        <option value="West">West</option>
+      </select>
+    </div>
+    <div class="filter-group">
+      <label>Pool size</label>
+      <span id="pool-count" style="font-size:0.95rem;font-weight:600;">32 teams</span>
+    </div>
+  </div>
+
+  <details class="exclude-section" id="exclude-section">
+    <summary>Exclude teams (click to toggle)</summary>
+    <div class="exclude-grid" id="exclude-grid"></div>
+  </details>
+
+  <!-- Tab: Generator -->
+  <div class="tab-panel active" id="panel-generator">
+    <div style="text-align:center;">
+      <div class="spin-display" id="spin-display"></div>
+      <div class="btn-row">
+        <button class="pick-btn" id="btn-pick" onclick="pickOne()">Pick My Team</button>
+      </div>
+      <div class="result-area" id="result-single"></div>
+    </div>
+  </div>
+
+  <!-- Tab: Multi -->
+  <div class="tab-panel" id="panel-multi">
+    <div style="text-align:center;">
+      <div class="btn-row">
+        <select class="multi-select" id="multi-count">
+          <option value="2">2 teams</option>
+          <option value="3">3 teams</option>
+          <option value="4" selected>4 teams</option>
+          <option value="5">5 teams</option>
+          <option value="6">6 teams</option>
+          <option value="7">7 teams</option>
+          <option value="8">8 teams</option>
+        </select>
+        <button class="pick-btn" style="font-size:1rem;padding:0.7rem 1.5rem;" onclick="pickMulti()">Pick Teams</button>
+      </div>
+      <div class="multi-results" id="result-multi"></div>
+    </div>
+  </div>
+
+  <!-- Tab: H2H -->
+  <div class="tab-panel" id="panel-h2h">
+    <div style="text-align:center;">
+      <div class="btn-row">
+        <button class="pick-btn" style="font-size:1rem;padding:0.7rem 1.5rem;" onclick="pickH2H()">Generate Matchup</button>
+      </div>
+      <div class="h2h-container" id="result-h2h"></div>
+    </div>
+  </div>
+
+  <!-- Tab: Browse -->
+  <div class="tab-panel" id="panel-browse">
+    <div id="browse-content"></div>
+  </div>
+
+  <!-- Detail modal -->
+  <div class="modal-overlay" id="modal" onclick="if(event.target===this)closeModal()">
+    <div class="team-card" id="modal-card" style="position:relative;">
+      <button class="modal-close" onclick="closeModal()">&times;</button>
+    </div>
+  </div>
+
+  <!-- FAQ -->
+  <div class="faq-section">
+    <h2>Frequently Asked Questions</h2>
+    {faqItems.map(item => (
+      <div class="faq-item">
+        <button class="faq-q" onclick="this.parentElement.classList.toggle('open')">{item.q}</button>
+        <div class="faq-a"><p>{item.a}</p></div>
+      </div>
+    ))}
+  </div>
+</div>
+
+<script is:inline>
+  const TEAMS = [
+    { city:'Buffalo', name:'Bills', abbr:'BUF', conf:'AFC', div:'East', c1:'#00338D', c2:'#C60C30', stadium:'Highmark Stadium', fact:'The Bills are the only team to appear in four consecutive Super Bowls (XXV–XXVIII), though they lost all four.' },
+    { city:'Miami', name:'Dolphins', abbr:'MIA', conf:'AFC', div:'East', c1:'#008E97', c2:'#FC4C02', stadium:'Hard Rock Stadium', fact:'The 1972 Dolphins remain the only NFL team to complete a perfect season, going 17-0 including the Super Bowl.' },
+    { city:'New England', name:'Patriots', abbr:'NE', conf:'AFC', div:'East', c1:'#002244', c2:'#C60C30', stadium:'Gillette Stadium', fact:'The Patriots won six Super Bowls under Bill Belichick and Tom Brady, the most successful coach-QB duo in NFL history.' },
+    { city:'New York', name:'Jets', abbr:'NYJ', conf:'AFC', div:'East', c1:'#125740', c2:'#000000', stadium:'MetLife Stadium', fact:'Joe Namath famously guaranteed a Jets victory in Super Bowl III, then delivered with a 16-7 upset over the Colts.' },
+    { city:'Baltimore', name:'Ravens', abbr:'BAL', conf:'AFC', div:'North', c1:'#241773', c2:'#9E7C0C', stadium:'M&T Bank Stadium', fact:'The Ravens are named after Edgar Allan Poe\'s famous poem "The Raven" — Poe is buried in Baltimore.' },
+    { city:'Cincinnati', name:'Bengals', abbr:'CIN', conf:'AFC', div:'North', c1:'#FB4F14', c2:'#000000', stadium:'Paycor Stadium', fact:'The Bengals\' iconic tiger-striped helmets are one of the most unique designs in the NFL — no logo, just stripes.' },
+    { city:'Cleveland', name:'Browns', abbr:'CLE', conf:'AFC', div:'North', c1:'#311D00', c2:'#FF3C00', stadium:'Huntington Bank Field', fact:'The Browns are the only NFL team whose helmet has no logo — just a solid orange color, which is itself the trademark.' },
+    { city:'Pittsburgh', name:'Steelers', abbr:'PIT', conf:'AFC', div:'North', c1:'#FFB612', c2:'#101820', stadium:'Acrisure Stadium', fact:'The Steelers have won six Super Bowls, tied for the most in NFL history. Their logo appears on only one side of the helmet.' },
+    { city:'Houston', name:'Texans', abbr:'HOU', conf:'AFC', div:'South', c1:'#03202F', c2:'#A71930', stadium:'NRG Stadium', fact:'The Texans are the NFL\'s youngest franchise, joining the league in 2002 as an expansion team.' },
+    { city:'Indianapolis', name:'Colts', abbr:'IND', conf:'AFC', div:'South', c1:'#002C5F', c2:'#A2AAAD', stadium:'Lucas Oil Stadium', fact:'The Colts moved from Baltimore to Indianapolis in 1984 in a famous overnight move using Mayflower moving trucks.' },
+    { city:'Jacksonville', name:'Jaguars', abbr:'JAX', conf:'AFC', div:'South', c1:'#006778', c2:'#9F792C', stadium:'EverBank Stadium', fact:'The Jaguars made the AFC Championship game in just their second season of existence in 1996.' },
+    { city:'Tennessee', name:'Titans', abbr:'TEN', conf:'AFC', div:'South', c1:'#0C2340', c2:'#4B92DB', stadium:'Nissan Stadium', fact:'The Titans came within one yard of tying Super Bowl XXXIV on the famous "Music City Miracle" play — actually, that was their playoff win; the yard-short play was vs. the Rams.' },
+    { city:'Denver', name:'Broncos', abbr:'DEN', conf:'AFC', div:'West', c1:'#FB4F14', c2:'#002244', stadium:'Empower Field at Mile High', fact:'The Broncos play at the highest altitude in the NFL — 5,280 feet above sea level, giving them a home-field advantage.' },
+    { city:'Kansas City', name:'Chiefs', abbr:'KC', conf:'AFC', div:'West', c1:'#E31837', c2:'#FFB81C', stadium:'GEHA Field at Arrowhead Stadium', fact:'Arrowhead Stadium holds the Guinness World Record for loudest crowd roar at a sports stadium, reaching 142.2 decibels.' },
+    { city:'Las Vegas', name:'Raiders', abbr:'LV', conf:'AFC', div:'West', c1:'#A5ACAF', c2:'#000000', stadium:'Allegiant Stadium', fact:'The Raiders have called three different cities home: Oakland, Los Angeles, and now Las Vegas.' },
+    { city:'Los Angeles', name:'Chargers', abbr:'LAC', conf:'AFC', div:'West', c1:'#0080C6', c2:'#FFC20E', stadium:'SoFi Stadium', fact:'The Chargers\' powder blue uniforms are consistently voted among the best in the NFL by fans and media.' },
+    { city:'Dallas', name:'Cowboys', abbr:'DAL', conf:'NFC', div:'East', c1:'#041E42', c2:'#869397', stadium:'AT&T Stadium', fact:'Known as "America\'s Team," the Cowboys are the most valuable sports franchise in the world, worth over $9 billion.' },
+    { city:'New York', name:'Giants', abbr:'NYG', conf:'NFC', div:'East', c1:'#0B2265', c2:'#A71930', stadium:'MetLife Stadium', fact:'The Giants share MetLife Stadium with the Jets — it\'s the only NFL stadium that hosts two teams.' },
+    { city:'Philadelphia', name:'Eagles', abbr:'PHI', conf:'NFC', div:'East', c1:'#004C54', c2:'#A5ACAF', stadium:'Lincoln Financial Field', fact:'Eagles fans are so passionate that the stadium has a courtroom and jail in the basement for unruly spectators.' },
+    { city:'Washington', name:'Commanders', abbr:'WAS', conf:'NFC', div:'East', c1:'#5A1414', c2:'#FFB612', stadium:'Northwest Stadium', fact:'The Commanders were previously known as the Redskins for 87 years before rebranding in 2020-2022.' },
+    { city:'Chicago', name:'Bears', abbr:'CHI', conf:'NFC', div:'North', c1:'#0B162A', c2:'#C83803', stadium:'Soldier Field', fact:'The Bears have the most NFL Hall of Famers of any franchise, with 30 inducted members.' },
+    { city:'Detroit', name:'Lions', abbr:'DET', conf:'NFC', div:'North', c1:'#0076B6', c2:'#B0B7BC', stadium:'Ford Field', fact:'The Lions have hosted a Thanksgiving Day game every year since 1934 — a tradition spanning 90+ years.' },
+    { city:'Green Bay', name:'Packers', abbr:'GB', conf:'NFC', div:'North', c1:'#203731', c2:'#FFB612', stadium:'Lambeau Field', fact:'The Packers are the only community-owned franchise in the NFL, with over 360,000 shareholders.' },
+    { city:'Minnesota', name:'Vikings', abbr:'MIN', conf:'NFC', div:'North', c1:'#4F2683', c2:'#FFC62F', stadium:'U.S. Bank Stadium', fact:'The Vikings have appeared in four Super Bowls but have never won one, making them one of the most "cursed" franchises.' },
+    { city:'Atlanta', name:'Falcons', abbr:'ATL', conf:'NFC', div:'South', c1:'#A71930', c2:'#000000', stadium:'Mercedes-Benz Stadium', fact:'The Falcons\' stadium has a retractable roof that opens like a camera aperture and is one of the most expensive stadiums ever built.' },
+    { city:'Carolina', name:'Panthers', abbr:'CAR', conf:'NFC', div:'South', c1:'#0085CA', c2:'#101820', stadium:'Bank of America Stadium', fact:'The Panthers went 15-1 in 2015 with MVP Cam Newton, one of the best regular season records in NFL history.' },
+    { city:'New Orleans', name:'Saints', abbr:'NO', conf:'NFC', div:'South', c1:'#D3BC8D', c2:'#101820', stadium:'Caesars Superdome', fact:'The Superdome served as a shelter for thousands during Hurricane Katrina in 2005, and the Saints\' 2009 Super Bowl win helped unite the city.' },
+    { city:'Tampa Bay', name:'Buccaneers', abbr:'TB', conf:'NFC', div:'South', c1:'#D50A0A', c2:'#34302B', stadium:'Raymond James Stadium', fact:'The Buccaneers lost their first 26 games as a franchise (1976-77), the worst start in NFL history.' },
+    { city:'Arizona', name:'Cardinals', abbr:'ARI', conf:'NFC', div:'West', c1:'#97233F', c2:'#000000', stadium:'State Farm Stadium', fact:'The Cardinals are the oldest continuously operating professional football team in the US, founded in 1898.' },
+    { city:'Los Angeles', name:'Rams', abbr:'LAR', conf:'NFC', div:'West', c1:'#003594', c2:'#FFA300', stadium:'SoFi Stadium', fact:'The Rams share SoFi Stadium with the Chargers — the $5.5 billion venue is the most expensive stadium ever built.' },
+    { city:'San Francisco', name:'49ers', abbr:'SF', conf:'NFC', div:'West', c1:'#AA0000', c2:'#B3995D', stadium:'Levi\'s Stadium', fact:'The 49ers won five Super Bowls in 14 years (1981-1994), a dynasty led by Joe Montana and later Steve Young.' },
+    { city:'Seattle', name:'Seahawks', abbr:'SEA', conf:'NFC', div:'West', c1:'#002244', c2:'#69BE28', stadium:'Lumen Field', fact:'Seahawks fans have caused measurable seismic activity during games — their 12th Man is one of the loudest in football.' }
+  ];
+
+  let excluded = new Set();
+  let pool = [...TEAMS];
+  const $ = id => document.getElementById(id);
+
+  function rng(max) {
+    const arr = new Uint32Array(1);
+    crypto.getRandomValues(arr);
+    return arr[0] % max;
+  }
+
+  function shuffle(arr) {
+    const a = [...arr];
+    for (let i = a.length - 1; i > 0; i--) {
+      const j = rng(i + 1);
+      [a[i], a[j]] = [a[j], a[i]];
+    }
+    return a;
+  }
+
+  function updatePool() {
+    const conf = $('conf-filter').value;
+    const div = $('div-filter').value;
+    pool = TEAMS.filter(t => {
+      if (excluded.has(t.abbr)) return false;
+      if (conf !== 'all' && t.conf !== conf) return false;
+      if (div !== 'all' && t.div !== div) return false;
+      return true;
+    });
+    $('pool-count').textContent = pool.length + ' team' + (pool.length !== 1 ? 's' : '');
+  }
+
+  function buildExcludeGrid() {
+    const g = $('exclude-grid');
+    g.innerHTML = TEAMS.map(t =>
+      `<span class="exclude-chip" data-abbr="${t.abbr}" onclick="toggleExclude('${t.abbr}', this)" style="border-left:3px solid ${t.c1}">${t.abbr}</span>`
+    ).join('');
+  }
+
+  function toggleExclude(abbr, el) {
+    if (excluded.has(abbr)) { excluded.delete(abbr); el.classList.remove('excluded'); }
+    else { excluded.add(abbr); el.classList.add('excluded'); }
+    updatePool();
+  }
+
+  function teamCardHTML(t, mini) {
+    if (mini) {
+      return `<div class="mini-card" onclick="showModal('${t.abbr}')" style="border-top:3px solid ${t.c1}">
+        <div class="team-logo" style="background:${t.c1};width:50px;height:50px;font-size:0.9rem;">${t.abbr}</div>
+        <p class="team-city" style="margin:0">${t.city}</p>
+        <p class="team-name" style="font-size:1rem;margin:0.15rem 0">${t.name}</p>
+        <span class="team-division" style="background:${t.conf==='AFC'?'rgba(200,50,50,0.15);color:#f88':'rgba(50,120,200,0.15);color:#8bf'};font-size:0.7rem;">${t.conf} ${t.div}</span>
+      </div>`;
+    }
+    return `<div class="team-card" style="border-color:${t.c1}">
+      <div class="color-bar" style="background:linear-gradient(90deg,${t.c1} 50%,${t.c2} 50%)"></div>
+      <div class="team-logo" style="background:${t.c1}">${t.abbr}</div>
+      <p class="team-city">${t.city}</p>
+      <p class="team-name">${t.name}</p>
+      <span class="team-division" style="background:${t.conf==='AFC'?'rgba(200,50,50,0.15);color:#f88':'rgba(50,120,200,0.15);color:#8bf'}">${t.conf} ${t.div}</span>
+      <div class="color-swatches">
+        <div class="swatch" style="background:${t.c1}" title="Primary"></div>
+        <div class="swatch" style="background:${t.c2}" title="Secondary"></div>
+      </div>
+      <p class="team-stadium">🏟️ ${t.stadium}</p>
+      <div class="team-fact">💡 ${t.fact}</div>
+    </div>`;
+  }
+
+  async function spinAnimation(target, cb) {
+    const display = $('spin-display');
+    const btn = $('btn-pick');
+    btn.disabled = true;
+    display.textContent = '';
+    const dur = 1500;
+    const start = Date.now();
+    const interval = setInterval(() => {
+      const t = TEAMS[rng(TEAMS.length)];
+      display.textContent = t.city + ' ' + t.name;
+      display.style.color = t.c1;
+      if (Date.now() - start > dur) {
+        clearInterval(interval);
+        display.textContent = '';
+        btn.disabled = false;
+        cb();
+      }
+    }, 60);
+  }
+
+  function pickOne() {
+    if (pool.length === 0) return alert('No teams in pool! Adjust filters.');
+    const team = pool[rng(pool.length)];
+    spinAnimation($('spin-display'), () => {
+      $('result-single').innerHTML = teamCardHTML(team, false);
+    });
+  }
+
+  function pickMulti() {
+    const count = parseInt($('multi-count').value);
+    if (pool.length < count) return alert(`Need at least ${count} teams in pool. Currently ${pool.length}.`);
+    const picks = shuffle(pool).slice(0, count);
+    $('result-multi').innerHTML = picks.map(t => teamCardHTML(t, true)).join('');
+  }
+
+  function pickH2H() {
+    if (pool.length < 2) return alert('Need at least 2 teams in pool.');
+    const picks = shuffle(pool).slice(0, 2);
+    $('result-h2h').innerHTML =
+      teamCardHTML(picks[0], false) +
+      '<div class="h2h-vs">VS</div>' +
+      teamCardHTML(picks[1], false);
+  }
+
+  function buildBrowser() {
+    const divOrder = ['East','North','South','West'];
+    const confs = ['AFC','NFC'];
+    let html = '';
+    for (const conf of confs) {
+      for (const div of divOrder) {
+        html += `<div class="div-header">${conf} ${div}</div><div class="browser-grid">`;
+        const teams = TEAMS.filter(t => t.conf === conf && t.div === div);
+        html += teams.map(t => `
+          <div class="browser-team" onclick="showModal('${t.abbr}')">
+            <div class="team-logo" style="background:${t.c1};width:40px;height:40px;font-size:0.7rem;">${t.abbr}</div>
+            <div class="bt-info">
+              <div class="bt-name">${t.city} ${t.name}</div>
+              <div class="bt-div">${t.stadium}</div>
+            </div>
+          </div>`).join('');
+        html += '</div>';
+      }
+    }
+    $('browse-content').innerHTML = html;
+  }
+
+  function showModal(abbr) {
+    const t = TEAMS.find(x => x.abbr === abbr);
+    if (!t) return;
+    const card = $('modal-card');
+    card.innerHTML = `<button class="modal-close" onclick="closeModal()">&times;</button>` + teamCardHTML(t, false).replace('<div class="team-card"', '<div');
+    $('modal').classList.add('active');
+  }
+
+  function closeModal() {
+    $('modal').classList.remove('active');
+  }
+
+  function switchTab(name) {
+    document.querySelectorAll('.tab-btn').forEach((b, i) => {
+      const tabs = ['generator','multi','h2h','browse'];
+      b.classList.toggle('active', tabs[i] === name);
+    });
+    ['generator','multi','h2h','browse'].forEach(t => {
+      const p = $('panel-' + t);
+      if (p) p.classList.toggle('active', t === name);
+    });
+    const showFilters = name !== 'browse';
+    $('filters').style.display = showFilters ? '' : 'none';
+    $('exclude-section').style.display = showFilters ? '' : 'none';
+  }
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') closeModal();
+  });
+
+  // Init
+  buildExcludeGrid();
+  buildBrowser();
+  updatePool();
+</script>
+</SiteLayout>

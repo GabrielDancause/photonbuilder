@@ -106,6 +106,19 @@ export const meta = {
           <div class="calendar-view" id="calendar-view">
             <!-- Calendar generated via JS -->
           </div>
+
+          <h3 style="margin-top:2rem;">📅 3-Month Forecast</h3>
+          <p style="font-size:0.9rem;color:var(--text-secondary);margin-bottom:1rem;">Based on your average cycle length, here are your estimated fertile windows for the next 3 cycles:</p>
+          <div id="forecast-grid" class="forecast-grid"></div>
+
+          <div class="insights-panel" id="insights-panel">
+            <h3>📊 Cycle Insights</h3>
+            <div id="insights-content"></div>
+          </div>
+
+          <div style="margin-top:1.5rem;padding:1rem;border-radius:8px;background:rgba(45,184,154,0.05);border:1px solid rgba(45,184,154,0.15);font-size:0.85rem;color:var(--text-secondary);">
+            🔒 <strong>Your privacy:</strong> All calculations happen in your browser. No data is sent to any server. Nothing is stored. Close the tab and it's gone.
+          </div>
         </div>
       </div>
 
@@ -185,8 +198,66 @@ export const meta = {
       // Generate Calendar
       generateCalendar(lastPeriodDate, fertileStartDate, fertileEndDate, ovulationDate, nextPeriodDate);
 
+      // Generate 3-month forecast
+      generateForecast(lastPeriodDate, cycleLength);
+
+      // Generate insights
+      generateInsights(cycleLength, ovulationDate, fertileStartDate, fertileEndDate);
+
       document.getElementById('calc-results').style.display = 'block';
       document.getElementById('calc-results').scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+    }
+
+    function generateForecast(periodStart, cycleLength) {
+      var grid = document.getElementById('forecast-grid');
+      grid.innerHTML = '';
+      var luteal = 14;
+
+      for (var c = 1; c <= 3; c++) {
+        var nextPeriod = new Date(periodStart);
+        nextPeriod.setDate(periodStart.getDate() + (cycleLength * c));
+
+        var ovDay = new Date(nextPeriod);
+        ovDay.setDate(nextPeriod.getDate() - luteal);
+
+        var fertStart = new Date(ovDay);
+        fertStart.setDate(ovDay.getDate() - 5);
+        var fertEnd = new Date(ovDay);
+        fertEnd.setDate(ovDay.getDate() + 1);
+
+        var card = document.createElement('div');
+        card.className = 'forecast-card';
+        card.innerHTML =
+          '<h4>Cycle ' + (c + 1) + '</h4>' +
+          '<div class="forecast-row"><span class="fl">Period starts</span><span class="fv period">' + formatDate(nextPeriod) + '</span></div>' +
+          '<div class="forecast-row"><span class="fl">Fertile window</span><span class="fv fertile">' + formatDate(fertStart) + ' – ' + formatDate(fertEnd) + '</span></div>' +
+          '<div class="forecast-row"><span class="fl">Ovulation (est.)</span><span class="fv fertile">' + formatDate(ovDay) + '</span></div>';
+        grid.appendChild(card);
+      }
+    }
+
+    function generateInsights(cycleLength, ovDay, fertStart, fertEnd) {
+      var panel = document.getElementById('insights-content');
+      var lutealLen = 14;
+      var follicularLen = cycleLength - lutealLen;
+      var fertDays = Math.round((fertEnd - fertStart) / (24*60*60*1000));
+      var ovDayNum = cycleLength - lutealLen;
+
+      var html = '';
+      html += '<div class="insight-stat">Cycle length: <strong>' + cycleLength + ' days</strong></div>';
+      html += '<div class="insight-stat">Follicular phase: <strong>' + follicularLen + ' days</strong></div>';
+      html += '<div class="insight-stat">Luteal phase: <strong>' + lutealLen + ' days</strong> (assumed)</div>';
+      html += '<div class="insight-stat">Ovulation day: <strong>Day ' + ovDayNum + '</strong></div>';
+      html += '<div class="insight-stat">Fertile window: <strong>' + fertDays + ' days</strong></div>';
+
+      if (cycleLength < 24) {
+        html += '<p style="margin-top:1rem;font-size:0.85rem;color:#E05A5A;">⚠️ A cycle shorter than 24 days may indicate irregular ovulation. Consider speaking with a healthcare provider.</p>';
+      } else if (cycleLength > 38) {
+        html += '<p style="margin-top:1rem;font-size:0.85rem;color:#E05A5A;">⚠️ A cycle longer than 38 days may indicate irregular ovulation. Consider speaking with a healthcare provider.</p>';
+      } else {
+        html += '<p style="margin-top:1rem;font-size:0.85rem;color:var(--text-secondary);">Your cycle length is within the typical range (24-38 days). Remember: stress, travel, and illness can shift ovulation by several days.</p>';
+      }
+      panel.innerHTML = html;
     }
 
     function generateCalendar(periodStart, fertileStart, fertileEnd, ovulation, nextPeriod) {
@@ -326,5 +397,37 @@ export const meta = {
 
     .cal-next-period { border: 2px dashed #E84393; }
     .cal-next-period .cal-label { color: #E84393; }
+
+    .forecast-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1rem; margin-bottom: 1.5rem; }
+    .forecast-card { background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 10px; padding: 1.2rem; }
+    .forecast-card h4 { margin: 0 0 0.8rem; font-size: 0.95rem; color: var(--accent-color); }
+    .forecast-row { display: flex; justify-content: space-between; font-size: 0.85rem; padding: 0.3rem 0; border-bottom: 1px solid var(--border-color); }
+    .forecast-row:last-child { border-bottom: none; }
+    .forecast-row .fl { color: var(--text-secondary); }
+    .forecast-row .fv { color: var(--text-primary); font-weight: 600; }
+    .forecast-row .fv.fertile { color: #2DB89A; }
+    .forecast-row .fv.period { color: #E84393; }
+    .insights-panel { margin-top: 1.5rem; background: var(--bg-color); border: 1px solid var(--border-color); border-radius: 10px; padding: 1.5rem; }
+    .insights-panel h3 { margin: 0 0 1rem; font-size: 1.1rem; color: var(--text-primary); }
+    .insight-stat { display: inline-block; padding: 0.5rem 1rem; margin: 0.3rem; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 8px; font-size: 0.85rem; }
+    .insight-stat strong { color: var(--accent-color); font-family: 'JetBrains Mono', monospace; }
   </style>
+
+  <div class="related-tools" style="margin-top:3rem;padding-top:2rem;border-top:1px solid rgba(255,255,255,0.08);">
+    <h2 style="font-size:1.2rem;margin-bottom:1rem;">🔗 Related Tools</h2>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1rem;">
+      <a href="/ovulation-calculator" style="display:block;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:1.25rem;text-decoration:none;color:inherit;transition:border-color 0.2s,transform 0.2s;" onmouseover="this.style.borderColor='rgba(255,255,255,0.2)';this.style.transform='translateY(-2px)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.08)';this.style.transform='none'">
+        <strong style="font-size:0.95rem;">Ovulation Calculator</strong>
+        <p style="opacity:0.6;font-size:0.83rem;margin:0.4rem 0 0;line-height:1.4;">Free ovulation calculator and fertility calendar. Enter your last period and cycle length to find your ovulation date an...</p>
+      </a>
+      <a href="https://bodycount.photonbuilder.com/period-tracker" style="display:block;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:1.25rem;text-decoration:none;color:inherit;transition:border-color 0.2s,transform 0.2s;" onmouseover="this.style.borderColor='rgba(255,255,255,0.2)';this.style.transform='translateY(-2px)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.08)';this.style.transform='none'">
+        <strong style="font-size:0.95rem;">Period Tracker & Calculator</strong>
+        <p style="opacity:0.6;font-size:0.83rem;margin:0.4rem 0 0;line-height:1.4;">Find your exact fertile window, ovulation date, and next period with this private, client-side calculator. You might be ...</p>
+      </a>
+      <a href="https://bodycount.photonbuilder.com/ovulation-calculator" style="display:block;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:1.25rem;text-decoration:none;color:inherit;transition:border-color 0.2s,transform 0.2s;" onmouseover="this.style.borderColor='rgba(255,255,255,0.2)';this.style.transform='translateY(-2px)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.08)';this.style.transform='none'">
+        <strong style="font-size:0.95rem;">Ovulation Calculator & Tracker</strong>
+        <p style="opacity:0.6;font-size:0.83rem;margin:0.4rem 0 0;line-height:1.4;">When are you most fertile? Your cycle might be hiding the real answer...</p>
+      </a>
+    </div>
+  </div>
 </SiteLayout>

@@ -154,6 +154,13 @@ export default {
 
     const pathname = url.pathname;
 
+    // IndexNow verification key
+    if (pathname === '/ddb65220289543b589d6deadc9bcc754.txt') {
+      return new Response('ddb65220289543b589d6deadc9bcc754', {
+        headers: { 'Content-Type': 'text/plain; charset=utf-8', 'Cache-Control': 'public, max-age=86400' }
+      });
+    }
+
     // Check for SEO redirects
     const siteRedirects = REDIRECTS[site];
     if (siteRedirects && siteRedirects[pathname]) {

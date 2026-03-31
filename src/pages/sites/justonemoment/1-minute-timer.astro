@@ -2,22 +2,21 @@
 import SiteLayout from "../../../layouts/SiteLayout.astro";
 
 export const meta = {
-  title: "Building a Precise 1",
-  description: "Think a simple setTimeout is accurate enough for production? Find out why browser timers fail and how to build truly precise timekeeping functions.",
-  category: "guide",
-  published: "2026-03-15",
+  title: "1 Minute Timer - Free Online Countdown | Start in One Click",
+  description: "The best 1-minute timer online. Start instantly with one click. Perfect for brushing teeth, microwave heating, quick stretches, and speed challenges. Works offline with sound alerts.",
+  category: "tool",
+  published: "2026-03-28"
 };
 
 const schema = [
   {
     "@context": "https://schema.org",
-    "@type": "Article",
-    "headline": "Building a Precise 1-Minute Timer: Event Loops & System Clocks",
-    "description": "Think a simple setTimeout is accurate enough for production? Find out why browser timers fail and how to build truly precise timekeeping functions.",
-    "author": {
-      "@type": "Organization",
-      "name": "Silicon Based"
-    }
+    "@type": "WebApplication",
+    "name": "1 Minute Timer",
+    "url": "https://justonemoment.photonbuilder.com/1-minute-timer",
+    "applicationCategory": "Utility",
+    "operatingSystem": "All",
+    "description": "Free online 1-minute countdown timer with sound alerts and visual progress indicator."
   },
   {
     "@context": "https://schema.org",
@@ -25,42 +24,34 @@ const schema = [
     "mainEntity": [
       {
         "@type": "Question",
-        "name": "Why is a simple setTimeout not accurate for a 1-minute timer?",
+        "name": "How do I set a 1 minute timer?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Functions like setTimeout do not guarantee execution at an exact time; they guarantee a minimum delay. If the browser's main thread is busy doing other tasks, the timer will be delayed, leading to drift over a 1-minute period."
+          "text": "Simply click the big START button. The timer begins immediately at 1:00 and counts down to 0:00 with a sound alert when finished."
         }
       },
       {
         "@type": "Question",
-        "name": "How do you make a Javascript timer more accurate?",
+        "name": "Will the timer work if I switch tabs?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Instead of relying on interval delays to track time, you should capture the system's current timestamp (using Date.now() or performance.now()) when the timer starts, and continuously compare the current time against the target end time."
+          "text": "Yes! The timer uses precise timestamp calculations to stay accurate even when the browser tab is in the background. The tab title also shows the remaining time."
         }
       },
       {
         "@type": "Question",
-        "name": "What is drift in software timers?",
+        "name": "Can I use this timer on my phone?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "Drift is the accumulated error in a timer caused by execution delays. For example, a 1000ms interval might actually fire every 1004ms. After 60 iterations (a 1-minute timer), it will have drifted by a quarter of a second."
+          "text": "Absolutely. The timer is fully responsive and works perfectly on mobile devices. The large display and buttons are touch-friendly."
         }
       },
       {
         "@type": "Question",
-        "name": "Should I use setTimeout or setInterval for timers?",
+        "name": "What happens when the 1 minute timer ends?",
         "acceptedAnswer": {
           "@type": "Answer",
-          "text": "For accurate timers, neither is perfect, but a recursive setTimeout combined with delta-time calculations (adjusting the next timeout based on how late the previous one was) is generally preferred over setInterval, which can queue up multiple executions if the main thread locks."
-        }
-      },
-      {
-        "@type": "Question",
-        "name": "How does the browser event loop affect timers?",
-        "acceptedAnswer": {
-          "@type": "Answer",
-          "text": "Timer callbacks are placed in the task queue. The event loop only executes tasks from this queue when the call stack is completely empty. If a heavy computation is blocking the stack, the timer callback must wait, destroying its accuracy."
+          "text": "When time reaches 0:00, the timer plays a sound alert, flashes the screen, shows a browser notification (if allowed), and updates the tab title to indicate completion."
         }
       }
     ]
@@ -68,128 +59,1080 @@ const schema = [
 ];
 ---
 <SiteLayout site="justonemoment" title={meta.title} description={meta.description} canonical="https://justonemoment.photonbuilder.com/1-minute-timer" schema={schema}>
-  <div class="page-content">
-    <div class="hero">
-      <h1>Building a Precise 1-Minute Timer</h1>
-      <p class="subtitle">Understanding system clocks, event loop delays, and drift mitigation.</p>
+  <div class="timer-page">
+    <!-- Giant Timer Display (Hero) -->
+    <div class="timer-hero">
+      <div class="timer-container">
+        <!-- Progress Circle -->
+        <div class="progress-ring-container">
+          <svg class="progress-ring" width="280" height="280">
+            <circle class="progress-ring-background" cx="140" cy="140" r="120"></circle>
+            <circle class="progress-ring-fill" cx="140" cy="140" r="120" id="progress-circle"></circle>
+          </svg>
+          
+          <!-- Timer Display -->
+          <div class="timer-display" id="timer-display">1:00</div>
+        </div>
+
+        <!-- Main Controls -->
+        <div class="main-controls">
+          <button id="start-btn" class="start-button">START</button>
+          <div class="secondary-controls" id="secondary-controls">
+            <button id="pause-btn" class="control-btn pause-btn">PAUSE</button>
+            <button id="reset-btn" class="control-btn reset-btn">RESET</button>
+            <button id="fullscreen-btn" class="control-btn fullscreen-btn">⛶</button>
+          </div>
+        </div>
+      </div>
     </div>
 
-    <section class="content-body">
-      <h2>The Deceptive Simplicity of Timekeeping</h2>
-      <p>If you ask a junior developer to build a simple 1-minute timer in JavaScript, they will almost universally reach for the `setInterval` function. They will set it to trigger every 1,000 milliseconds (1 second), decrement a counter from 60 to 0, and call it a day.</p>
-
-      <p>In a controlled, sterile environment with absolutely nothing else happening on the web page, this approach <em>might</em> work. But in the real world—where browsers are simultaneously parsing heavy CSS, executing complex React renders, running background scripts, and dealing with low-power mobile CPU throttling—this naive approach will fail. The timer will inevitably "drift," taking perhaps 62 or 65 seconds to complete its "1-minute" countdown.</p>
-
-      <p>Understanding why this happens, and knowing how to build a truly robust timekeeping system, requires diving deep into the architecture of modern execution environments, specifically the Event Loop and System Clocks. Whether you are building an online quiz platform, a high-frequency trading dashboard, or simply timing media analytics, precise timing is non-negotiable.</p>
-
-      <h2>A Clear, Jargon-Free Explanation</h2>
-      <p>Imagine you are baking a cake that takes exactly 60 minutes. You have two ways to keep track of the time.</p>
-
-      <p><strong>The Bad Way (The Interval Approach)</strong><br/>
-      You decide to count to 60. You say "One," wait what feels like a minute, say "Two," wait, say "Three." But while you are waiting, the doorbell rings, your dog barks, and your phone goes off. You get distracted. Your internal "wait" gets slightly longer. By the time you reach "60," an hour and ten minutes have passed. Your cake is burnt. This is exactly how `setInterval` works. It is easily distracted by other tasks.</p>
-
-      <p><strong>The Good Way (The System Clock Approach)</strong><br/>
-      You look at the clock on your wall. It says 2:00 PM. You know the cake is done at 3:00 PM. You can get distracted, answer the door, or play with the dog. It doesn't matter. You just keep glancing at the clock. When the clock says 3:00 PM, you take the cake out. It is perfectly baked. This is how precise software timers work. They calculate a target <em>end time</em> and continuously compare the current system time against that target.</p>
-
-      <div class="callout">
-        <strong>The Precision Timer Formula</strong>
-        <p>To eliminate drift, we stop tracking the <em>duration of intervals</em> and start tracking the <em>delta from a fixed timestamp</em>.</p>
-        <code>
-const duration = 60000; // 1 minute<br/>
-const startTime = Date.now();<br/>
-const endTime = startTime + duration;<br/>
-<br/>
-function checkTimer() &#123;<br/>
-&nbsp;&nbsp;const remaining = endTime - Date.now();<br/>
-&nbsp;&nbsp;if (remaining &lt;= 0) console.log("Done!");<br/>
-&nbsp;&nbsp;else requestAnimationFrame(checkTimer);<br/>
-&#125;
-        </code>
-        <p>Because `Date.now()` relies on the operating system's hardware clock, it does not matter if the browser lags or freezes; the calculation of `remaining` time will always be mathematically perfect upon the next check.</p>
+    <!-- Quick Adjust Buttons -->
+    <div class="quick-adjust-section">
+      <div class="custom-time-controls">
+        <button id="minus-btn" class="adjust-btn">-15s</button>
+        <button id="time-input-btn" class="time-input-btn" id="time-display-btn">1:00</button>
+        <button id="plus-btn" class="adjust-btn">+15s</button>
       </div>
 
-      <h2>Real-World Examples and Analogies</h2>
-      <p>Precision timing is critical in a surprising number of applications. The naive interval approach often masks underlying bugs that only surface under heavy load.</p>
-
-      <h3>1. Competitive Gaming and E-Sports</h3>
-      <p>In web-based multiplayer games, state synchronization is everything. If Player A's client timer drifts and they think they have 2 seconds left to defuse a bomb, but the server (and Player B) knows the timer is at 0, you have a critical desynchronization error resulting in an unfair game. Game engines often use complex generator functions combined with ultra-precise delta-time calculations to ensure animations and game logic run identically regardless of client CPU speed.</p>
-
-      <h3>2. Secure Financial Transactions</h3>
-      <p>Many banking applications utilize One-Time Passwords (OTPs) that expire exactly 60 seconds after they are generated. If the client-side 1-minute timer is inaccurate, the user interface might tell the user the code is still valid when the server has already rejected it. This leads to user frustration and support tickets. The timer must be tightly coupled to a real-time system clock, often synchronized with an external NTP (Network Time Protocol) server to prevent users from manipulating their local computer clocks.</p>
-
-      <h3>3. Timed Academic Testing</h3>
-      <p>Online exam software requires strict adherence to time limits. If a student is given a 60-minute test, and the browser's execution thread is throttled because the student minimized the window (a common battery-saving technique in modern browsers), an interval-based timer will slow down, giving the student extra time. A system-clock-based timer will instantly jump to the correct remaining time the moment the window is brought back into focus.</p>
-
-      <div class="card">
-        <h3>Why setTimeout and setInterval Fail: The Event Loop</h3>
-        <p>JavaScript is fundamentally single-threaded. This means it can only do one thing at a time. To handle asynchronous operations (like network requests or timers), it uses an architecture called the <strong>Event Loop</strong>.</p>
-        <p>When you call <code>setTimeout(fn, 1000)</code>, you are not saying "execute this function in exactly 1000ms." You are actually saying, "wait 1000ms, and then push this function into the <em>Task Queue</em>."</p>
-        <p>If the main thread is currently busy doing a massive calculation, it will ignore the Task Queue until it is finished. Your timer callback might wait in that queue for an extra 200ms. Therefore, <code>setTimeout</code> guarantees a <em>minimum</em> delay, never a maximum or an exact delay.</p>
+      <div class="preset-timers">
+        <button class="preset-timer" data-seconds="30">30s</button>
+        <button class="preset-timer" data-seconds="45">45s</button>
+        <span class="preset-timer active">1 min</span>
+        <a href="/2-minute-timer" class="preset-timer">2 min</a>
+        <a href="/3-minute-timer" class="preset-timer">3 min</a>
+        <a href="/5-minute-timer" class="preset-timer">5 min</a>
+        <a href="/10-minute-timer" class="preset-timer">10 min</a>
       </div>
+    </div>
 
-      <h2>Why It Matters: Practical Implications</h2>
-      <p>Moving away from interval-based logic to clock-based logic is a critical paradigm shift for frontend developers. It forces you to respect the asynchronous, unpredictable nature of the browser environment.</p>
+    <!-- Timer Presets for 1 Minute -->
+    <div class="presets-section">
+      <h2>Perfect for 1 Minute</h2>
+      <div class="presets-grid">
+        <div class="preset-card">
+          <div class="preset-icon">🪥</div>
+          <div class="preset-title">Brushing Teeth</div>
+          <div class="preset-desc">Dentist recommended minimum time</div>
+        </div>
+        <div class="preset-card">
+          <div class="preset-icon">🥛</div>
+          <div class="preset-title">Microwave Heating</div>
+          <div class="preset-desc">Quick food warming</div>
+        </div>
+        <div class="preset-card">
+          <div class="preset-icon">🤸</div>
+          <div class="preset-title">Quick Stretch</div>
+          <div class="preset-desc">Fast mobility break</div>
+        </div>
+        <div class="preset-card">
+          <div class="preset-icon">🎤</div>
+          <div class="preset-title">Elevator Pitch</div>
+          <div class="preset-desc">Perfect practice timing</div>
+        </div>
+        <div class="preset-card">
+          <div class="preset-icon">⚡</div>
+          <div class="preset-title">Speed Challenge</div>
+          <div class="preset-desc">Quick burst activities</div>
+        </div>
+        <div class="preset-card">
+          <div class="preset-icon">☕</div>
+          <div class="preset-title">Coffee Brewing</div>
+          <div class="preset-desc">AeroPress timing</div>
+        </div>
+      </div>
+    </div>
 
-      <h3>Mitigating Browser Throttling</h3>
-      <p>To save battery life on laptops and mobile devices, modern browsers aggressively throttle background tabs. If a user switches away from your site, `setInterval` might go from running 60 times a second to running once a minute. If your application logic relies on intervals running at a specific frequency, it will break completely. Clock-based delta-timing is entirely immune to background throttling because it only calculates the time difference when it actually executes.</p>
+    <!-- How Long Is 1 Minute? -->
+    <div class="content-section">
+      <h2>How Long Is 1 Minute?</h2>
+      <div class="content-grid">
+        <div class="content-card">
+          <strong>1 minute = 60 seconds</strong>
+          <p>In the time it takes this timer to count down, you could read about 150 words at average reading speed, take 15-20 breaths, or walk roughly 80 meters at a normal pace.</p>
+        </div>
+        <div class="content-card">
+          <strong>Nature's Rhythm</strong>
+          <p>A hummingbird's heart beats approximately 1,200 times in one minute, while light travels an incredible 18 million kilometers through space in this same timeframe.</p>
+        </div>
+        <div class="content-card">
+          <strong>Productivity Power</strong>
+          <p>One minute is the perfect duration for habits that feel too small to fail. It's long enough to matter but short enough to never feel overwhelming or time-consuming.</p>
+        </div>
+        <div class="content-card">
+          <strong>Physical Perspective</strong>
+          <p>Holding a plank position for one full minute is a solid fitness achievement. Meanwhile, most people can hold their breath for 1-2 minutes with practice.</p>
+        </div>
+      </div>
+    </div>
 
-      <h3>Achieving High-Fidelity UI Updates</h3>
-      <p>For visual timers (like a progress bar slowly emptying over 60 seconds), developers should pair system-clock calculations with `requestAnimationFrame`. While `setTimeout` is tied to arbitrary millisecond values, `requestAnimationFrame` tells the browser to execute a function right before the next screen repaint (usually 60 times a second). This results in buttery-smooth animations that are perfectly synchronized with the user's hardware display refresh rate, while the underlying logic ensures mathematical accuracy.</p>
+    <!-- Related Timers -->
+    <div class="related-section">
+      <h2>Related Timers</h2>
+      <div class="related-grid">
+        <a href="/2-minute-timer" class="related-timer">2 Minute Timer</a>
+        <a href="/3-minute-timer" class="related-timer">3 Minute Timer</a>
+        <a href="/5-minute-timer" class="related-timer">5 Minute Timer</a>
+        <a href="/10-minute-timer" class="related-timer">10 Minute Timer</a>
+        <a href="/15-minute-timer" class="related-timer">15 Minute Timer</a>
+        <a href="/20-minute-timer" class="related-timer">20 Minute Timer</a>
+        <a href="/25-minute-timer" class="related-timer">25 Minute Timer</a>
+        <a href="/30-minute-timer" class="related-timer">30 Minute Timer</a>
+        <a href="/45-minute-timer" class="related-timer">45 Minute Timer</a>
+        <a href="/60-minute-timer" class="related-timer">1 Hour Timer</a>
+      </div>
+    </div>
 
-      <h3>Hardware Clocks vs. Software Clocks</h3>
-      <p>For the ultimate precision, modern web APIs provide `performance.now()`. While `Date.now()` is tied to the operating system clock (which can be manually changed by the user or skewed by daylight saving time updates), `performance.now()` offers a high-resolution, monotonically increasing timestamp (meaning it only ever goes forward) measured in microseconds since the page loaded. When building a 1-minute timer where sub-millisecond precision matters, `performance.now()` is the gold standard.</p>
-
-    </section>
-
-    <section class="faq-section">
+    <!-- FAQ -->
+    <div class="faq-section">
       <h2>Frequently Asked Questions</h2>
+      <div class="faq-grid">
+        <details class="faq-item">
+          <summary>How do I set a 1 minute timer?</summary>
+          <p>Simply click the big START button. The timer begins immediately at 1:00 and counts down to 0:00 with a sound alert when finished.</p>
+        </details>
+        
+        <details class="faq-item">
+          <summary>Will the timer work if I switch tabs?</summary>
+          <p>Yes! The timer uses precise timestamp calculations to stay accurate even when the browser tab is in the background. The tab title also shows the remaining time.</p>
+        </details>
+        
+        <details class="faq-item">
+          <summary>Can I use this timer on my phone?</summary>
+          <p>Absolutely. The timer is fully responsive and works perfectly on mobile devices. The large display and buttons are touch-friendly.</p>
+        </details>
+        
+        <details class="faq-item">
+          <summary>What happens when the 1 minute timer ends?</summary>
+          <p>When time reaches 0:00, the timer plays a sound alert, flashes the screen, shows a browser notification (if allowed), and updates the tab title to indicate completion.</p>
+        </details>
+      </div>
+    </div>
 
-      <details>
-        <summary>Why is a simple setTimeout not accurate for a 1-minute timer?</summary>
-        <p>Functions like <code>setTimeout</code> do not guarantee execution at an exact time; they guarantee a <em>minimum</em> delay. If the browser's main thread is busy doing other tasks, the timer will be delayed in the task queue, leading to cumulative drift over a 1-minute period.</p>
-      </details>
-
-      <details>
-        <summary>How do you make a Javascript timer more accurate?</summary>
-        <p>Instead of relying on interval delays to track time, you should capture the system's current timestamp (using <code>Date.now()</code> or <code>performance.now()</code>) when the timer starts, and continuously compare the current time against the target end time.</p>
-      </details>
-
-      <details>
-        <summary>What is drift in software timers?</summary>
-        <p>Drift is the accumulated error in a timer caused by execution delays. For example, a 1000ms interval might actually fire every 1004ms due to slight processing overhead. After 60 iterations (a 1-minute timer), it will have drifted by roughly a quarter of a second, causing the timer to finish late.</p>
-      </details>
-
-      <details>
-        <summary>Should I use setTimeout or setInterval for timers?</summary>
-        <p>For accurate timers, neither is perfect on its own. However, a recursive <code>setTimeout</code> combined with delta-time calculations (adjusting the next timeout delay based on how late the previous one was) is generally preferred over <code>setInterval</code>, which can unpredictably queue up multiple executions if the main thread locks.</p>
-      </details>
-
-      <details>
-        <summary>How does the browser event loop affect timers?</summary>
-        <p>Timer callbacks are placed in the task queue when their delay expires. The event loop only executes tasks from this queue when the main call stack is completely empty. If a heavy computation is blocking the stack, the timer callback must wait, completely destroying its accuracy.</p>
-      </details>
-    </section>
+    <!-- Time Input Modal -->
+    <div class="time-input-modal" id="time-input-modal">
+      <div class="modal-content">
+        <h3>Set Custom Time</h3>
+        <div class="time-inputs">
+          <label>
+            Minutes:
+            <input type="number" id="custom-minutes" min="0" max="60" value="1">
+          </label>
+          <label>
+            Seconds:
+            <input type="number" id="custom-seconds" min="0" max="59" value="0">
+          </label>
+        </div>
+        <div class="modal-buttons">
+          <button id="set-custom-time" class="btn-primary">Set Time</button>
+          <button id="cancel-custom-time" class="btn-secondary">Cancel</button>
+        </div>
+      </div>
+    </div>
   </div>
-  <style is:inline>
-    .page-content { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem; line-height: 1.6; }
-    .hero { text-align: center; padding: 3rem 0 2rem; }
-    .hero h1 { font-size: 2.2rem; font-weight: 800; margin-bottom: 0.5rem; }
-    .subtitle { color: var(--text-secondary); font-size: 1.1rem; }
-    .content-body h2 { margin-top: 2.5rem; margin-bottom: 1rem; color: var(--text-primary); }
-    .content-body h3 { margin-top: 1.5rem; margin-bottom: 0.75rem; color: var(--text-primary); }
-    .content-body p { margin-bottom: 1.25rem; color: var(--text-secondary); }
-    .content-body ul { margin-bottom: 1.25rem; padding-left: 1.5rem; color: var(--text-secondary); }
-    .content-body li { margin-bottom: 0.5rem; }
-    .card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 12px; padding: 1.5rem; margin: 1.5rem 0; }
-    .card h3 { margin-top: 0; }
-    .callout { background: color-mix(in srgb, var(--accent-color) 10%, transparent); border-left: 4px solid var(--accent-color); padding: 1rem 1.5rem; border-radius: 0 8px 8px 0; margin: 1.5rem 0; }
-    .callout code { display: block; margin: 1rem 0; padding: 0.5rem; background: rgba(0,0,0,0.1); border-radius: 4px; font-family: monospace; }
-    .faq-section { margin-top: 3rem; }
-    .faq-section h2 { margin-bottom: 1.5rem; }
-    .faq-section details { margin: 1rem 0; padding: 1rem; background: var(--card-bg); border-radius: 8px; border: 1px solid var(--border-color); }
-    .faq-section summary { font-weight: 600; cursor: pointer; color: var(--text-primary); outline: none; }
-    .faq-section p { margin-top: 1rem; margin-bottom: 0; color: var(--text-secondary); }
-    a { color: var(--accent-color); text-decoration: none; }
-    a:hover { text-decoration: underline; }
+
+  <style>
+    /* Global Reset & Base */
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    
+    .timer-page {
+      background: #060a12;
+      color: #e5e5e5;
+      min-height: 100vh;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      line-height: 1.6;
+    }
+
+    /* Timer Hero Section */
+    .timer-hero {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 100vh;
+      padding: 2rem 1rem;
+      background: #060a12;
+      position: relative;
+    }
+
+    .timer-container {
+      text-align: center;
+      max-width: 400px;
+      width: 100%;
+    }
+
+    /* Progress Ring */
+    .progress-ring-container {
+      position: relative;
+      display: inline-block;
+      margin-bottom: 3rem;
+    }
+
+    .progress-ring {
+      transform: rotate(-90deg);
+      filter: drop-shadow(0 0 20px rgba(245, 158, 11, 0.3));
+    }
+
+    .progress-ring-background {
+      fill: none;
+      stroke: #152040;
+      stroke-width: 8;
+    }
+
+    .progress-ring-fill {
+      fill: none;
+      stroke: #F59E0B;
+      stroke-width: 8;
+      stroke-linecap: round;
+      stroke-dasharray: 753.98;
+      stroke-dashoffset: 0;
+      transition: stroke-dashoffset 0.1s ease;
+    }
+
+    /* Timer Display */
+    .timer-display {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-family: 'JetBrains Mono', 'SF Mono', 'Monaco', 'Cascadia Code', monospace;
+      font-size: 4rem;
+      font-weight: 800;
+      color: #F59E0B;
+      text-shadow: 0 0 30px rgba(245, 158, 11, 0.5);
+      user-select: none;
+      cursor: pointer;
+    }
+
+    /* Main Controls */
+    .main-controls {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+      align-items: center;
+    }
+
+    .start-button {
+      background: #F59E0B;
+      color: #060a12;
+      border: none;
+      border-radius: 16px;
+      padding: 1.5rem 4rem;
+      font-size: 1.5rem;
+      font-weight: 800;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-transform: uppercase;
+      letter-spacing: 2px;
+      box-shadow: 0 8px 32px rgba(245, 158, 11, 0.3);
+    }
+
+    .start-button:hover {
+      background: #D97706;
+      transform: translateY(-2px);
+      box-shadow: 0 12px 40px rgba(245, 158, 11, 0.4);
+    }
+
+    .secondary-controls {
+      display: none;
+      gap: 1rem;
+      align-items: center;
+    }
+
+    .secondary-controls.visible {
+      display: flex;
+    }
+
+    .control-btn {
+      background: #0a1020;
+      color: #e5e5e5;
+      border: 2px solid #152040;
+      border-radius: 12px;
+      padding: 0.75rem 1.5rem;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .control-btn:hover {
+      border-color: #F59E0B;
+      background: #152040;
+    }
+
+    .fullscreen-btn {
+      padding: 0.75rem;
+      font-size: 1.2rem;
+    }
+
+    /* Quick Adjust Section */
+    .quick-adjust-section {
+      padding: 3rem 1rem;
+      background: #0a1020;
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+      align-items: center;
+    }
+
+    .custom-time-controls {
+      display: flex;
+      gap: 1rem;
+      align-items: center;
+    }
+
+    .adjust-btn, .time-input-btn {
+      background: #152040;
+      color: #e5e5e5;
+      border: 2px solid #1e293b;
+      border-radius: 8px;
+      padding: 0.75rem 1rem;
+      font-size: 1rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .time-input-btn {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 1.2rem;
+      min-width: 80px;
+    }
+
+    .adjust-btn:hover, .time-input-btn:hover {
+      border-color: #F59E0B;
+      background: #1e293b;
+    }
+
+    .preset-timers {
+      display: flex;
+      gap: 0.5rem;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    .preset-timer {
+      background: #152040;
+      color: #e5e5e5;
+      text-decoration: none;
+      border: 2px solid #1e293b;
+      border-radius: 8px;
+      padding: 0.5rem 1rem;
+      font-size: 0.9rem;
+      font-weight: 600;
+      transition: all 0.2s ease;
+      cursor: pointer;
+    }
+
+    .preset-timer:hover {
+      border-color: #F59E0B;
+      background: #1e293b;
+    }
+
+    .preset-timer.active {
+      background: #F59E0B;
+      color: #060a12;
+      border-color: #F59E0B;
+    }
+
+    /* Presets Section */
+    .presets-section {
+      padding: 4rem 1rem;
+      background: #060a12;
+    }
+
+    .presets-section h2 {
+      text-align: center;
+      font-size: 2rem;
+      font-weight: 800;
+      color: #F59E0B;
+      margin-bottom: 2rem;
+    }
+
+    .presets-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 1.5rem;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .preset-card {
+      background: #0a1020;
+      border: 2px solid #152040;
+      border-radius: 12px;
+      padding: 1.5rem;
+      text-align: center;
+      transition: all 0.2s ease;
+    }
+
+    .preset-card:hover {
+      border-color: #F59E0B;
+      transform: translateY(-2px);
+    }
+
+    .preset-icon {
+      font-size: 2rem;
+      margin-bottom: 0.75rem;
+    }
+
+    .preset-title {
+      font-size: 1.1rem;
+      font-weight: 700;
+      color: #F59E0B;
+      margin-bottom: 0.5rem;
+    }
+
+    .preset-desc {
+      font-size: 0.9rem;
+      color: #9ca3af;
+    }
+
+    /* Content Section */
+    .content-section {
+      padding: 4rem 1rem;
+      background: #0a1020;
+    }
+
+    .content-section h2 {
+      text-align: center;
+      font-size: 2rem;
+      font-weight: 800;
+      color: #F59E0B;
+      margin-bottom: 2rem;
+    }
+
+    .content-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 2rem;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .content-card {
+      background: #152040;
+      border-radius: 12px;
+      padding: 2rem;
+      border: 1px solid #1e293b;
+    }
+
+    .content-card strong {
+      display: block;
+      color: #F59E0B;
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin-bottom: 1rem;
+    }
+
+    .content-card p {
+      color: #d1d5db;
+      line-height: 1.6;
+    }
+
+    /* Related Section */
+    .related-section {
+      padding: 4rem 1rem;
+      background: #060a12;
+    }
+
+    .related-section h2 {
+      text-align: center;
+      font-size: 2rem;
+      font-weight: 800;
+      color: #F59E0B;
+      margin-bottom: 2rem;
+    }
+
+    .related-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+      max-width: 1000px;
+      margin: 0 auto;
+    }
+
+    .related-timer {
+      background: #0a1020;
+      color: #e5e5e5;
+      text-decoration: none;
+      border: 2px solid #152040;
+      border-radius: 8px;
+      padding: 1rem;
+      text-align: center;
+      font-weight: 600;
+      transition: all 0.2s ease;
+    }
+
+    .related-timer:hover {
+      border-color: #F59E0B;
+      background: #152040;
+      color: #F59E0B;
+    }
+
+    /* FAQ Section */
+    .faq-section {
+      padding: 4rem 1rem;
+      background: #0a1020;
+    }
+
+    .faq-section h2 {
+      text-align: center;
+      font-size: 2rem;
+      font-weight: 800;
+      color: #F59E0B;
+      margin-bottom: 2rem;
+    }
+
+    .faq-grid {
+      max-width: 800px;
+      margin: 0 auto;
+      display: grid;
+      gap: 1rem;
+    }
+
+    .faq-item {
+      background: #152040;
+      border: 2px solid #1e293b;
+      border-radius: 8px;
+      padding: 1.5rem;
+      transition: border-color 0.2s ease;
+    }
+
+    .faq-item:hover {
+      border-color: #F59E0B;
+    }
+
+    .faq-item summary {
+      font-weight: 700;
+      color: #F59E0B;
+      cursor: pointer;
+      font-size: 1.1rem;
+    }
+
+    .faq-item p {
+      margin-top: 1rem;
+      color: #d1d5db;
+      line-height: 1.6;
+    }
+
+    /* Time Input Modal */
+    .time-input-modal {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: rgba(0, 0, 0, 0.8);
+      display: none;
+      align-items: center;
+      justify-content: center;
+      z-index: 1000;
+    }
+
+    .time-input-modal.visible {
+      display: flex;
+    }
+
+    .modal-content {
+      background: #0a1020;
+      border: 2px solid #152040;
+      border-radius: 12px;
+      padding: 2rem;
+      max-width: 400px;
+      width: 90%;
+    }
+
+    .modal-content h3 {
+      color: #F59E0B;
+      margin-bottom: 1.5rem;
+      text-align: center;
+    }
+
+    .time-inputs {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 2rem;
+    }
+
+    .time-inputs label {
+      flex: 1;
+      color: #e5e5e5;
+      font-weight: 600;
+    }
+
+    .time-inputs input {
+      width: 100%;
+      background: #152040;
+      border: 2px solid #1e293b;
+      color: #e5e5e5;
+      border-radius: 6px;
+      padding: 0.5rem;
+      margin-top: 0.5rem;
+      font-size: 1rem;
+    }
+
+    .time-inputs input:focus {
+      outline: none;
+      border-color: #F59E0B;
+    }
+
+    .modal-buttons {
+      display: flex;
+      gap: 1rem;
+    }
+
+    .btn-primary, .btn-secondary {
+      flex: 1;
+      padding: 0.75rem;
+      border: none;
+      border-radius: 6px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+    }
+
+    .btn-primary {
+      background: #F59E0B;
+      color: #060a12;
+    }
+
+    .btn-secondary {
+      background: #152040;
+      color: #e5e5e5;
+      border: 2px solid #1e293b;
+    }
+
+    .btn-primary:hover {
+      background: #D97706;
+    }
+
+    .btn-secondary:hover {
+      border-color: #F59E0B;
+    }
+
+    /* Fullscreen Styles */
+    .timer-hero.fullscreen {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 999;
+      background: #060a12;
+    }
+
+    .timer-hero.fullscreen .timer-display {
+      font-size: 6rem;
+    }
+
+    /* Completion Flash */
+    .timer-page.flash {
+      animation: completion-flash 0.5s ease;
+    }
+
+    @keyframes completion-flash {
+      0%, 100% { background: #060a12; }
+      50% { background: #F59E0B; }
+    }
+
+    /* Mobile Responsive */
+    @media (max-width: 768px) {
+      .timer-display {
+        font-size: 3rem;
+      }
+      
+      .progress-ring {
+        width: 240px;
+        height: 240px;
+      }
+      
+      .progress-ring-background,
+      .progress-ring-fill {
+        r: 100;
+      }
+      
+      .start-button {
+        padding: 1.25rem 3rem;
+        font-size: 1.25rem;
+      }
+      
+      .custom-time-controls {
+        flex-wrap: wrap;
+      }
+      
+      .preset-timers {
+        gap: 0.25rem;
+      }
+      
+      .preset-timer {
+        padding: 0.4rem 0.8rem;
+        font-size: 0.8rem;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .timer-display {
+        font-size: 2.5rem;
+      }
+      
+      .progress-ring {
+        width: 200px;
+        height: 200px;
+      }
+      
+      .progress-ring-background,
+      .progress-ring-fill {
+        r: 80;
+      }
+      
+      .timer-hero.fullscreen .timer-display {
+        font-size: 4rem;
+      }
+    }
   </style>
+
+  <script is:inline>
+    document.addEventListener('DOMContentLoaded', () => {
+      // DOM Elements
+      const display = document.getElementById('timer-display');
+      const startBtn = document.getElementById('start-btn');
+      const pauseBtn = document.getElementById('pause-btn');
+      const resetBtn = document.getElementById('reset-btn');
+      const fullscreenBtn = document.getElementById('fullscreen-btn');
+      const secondaryControls = document.getElementById('secondary-controls');
+      const progressCircle = document.getElementById('progress-circle');
+      const minusBtn = document.getElementById('minus-btn');
+      const plusBtn = document.getElementById('plus-btn');
+      const timeInputBtn = document.getElementById('time-input-btn');
+      const timeInputModal = document.getElementById('time-input-modal');
+      const customMinutes = document.getElementById('custom-minutes');
+      const customSeconds = document.getElementById('custom-seconds');
+      const setCustomTimeBtn = document.getElementById('set-custom-time');
+      const cancelCustomTimeBtn = document.getElementById('cancel-custom-time');
+      const timerHero = document.querySelector('.timer-hero');
+      const timerPage = document.querySelector('.timer-page');
+
+      // Timer State
+      const INITIAL_TIME = 1 * 60; // 1 minute in seconds
+      let totalTime = INITIAL_TIME;
+      let remainingTime = totalTime;
+      let timerInterval = null;
+      let endTime = null;
+      let isRunning = false;
+      let hasInteracted = false;
+      let audioContext = null;
+      const progressCircleCircumference = 2 * Math.PI * 120; // r=120
+
+      // Audio Setup (Web Audio API)
+      function createAudioContext() {
+        if (!hasInteracted) return;
+        try {
+          audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        } catch (e) {
+          console.log('Web Audio not supported');
+        }
+      }
+
+      function playAlarmSound() {
+        if (!audioContext) return;
+        try {
+          const oscillator = audioContext.createOscillator();
+          const gainNode = audioContext.createGain();
+          
+          oscillator.connect(gainNode);
+          gainNode.connect(audioContext.destination);
+          
+          oscillator.frequency.setValueAtTime(800, audioContext.currentTime);
+          oscillator.frequency.setValueAtTime(600, audioContext.currentTime + 0.5);
+          
+          gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+          gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 1);
+          
+          oscillator.start(audioContext.currentTime);
+          oscillator.stop(audioContext.currentTime + 1);
+          
+          // Play again after delay for multiple beeps
+          setTimeout(() => {
+            const osc2 = audioContext.createOscillator();
+            const gain2 = audioContext.createGain();
+            osc2.connect(gain2);
+            gain2.connect(audioContext.destination);
+            osc2.frequency.setValueAtTime(800, audioContext.currentTime);
+            gain2.gain.setValueAtTime(0.3, audioContext.currentTime);
+            gain2.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+            osc2.start();
+            osc2.stop(audioContext.currentTime + 0.5);
+          }, 300);
+        } catch (e) {
+          console.log('Audio playback failed');
+        }
+      }
+
+      // Enable interaction tracking
+      document.addEventListener('click', () => {
+        if (!hasInteracted) {
+          hasInteracted = true;
+          createAudioContext();
+        }
+      });
+
+      // Notification Permission
+      function requestNotificationPermission() {
+        if ('Notification' in window && Notification.permission === 'default') {
+          Notification.requestPermission();
+        }
+      }
+
+      function showNotification() {
+        if ('Notification' in window && Notification.permission === 'granted') {
+          new Notification('⏰ Timer Complete!', {
+            body: '1 minute is up!',
+            icon: '/favicon.ico',
+            tag: 'timer-complete'
+          });
+        }
+      }
+
+      // Time Formatting
+      function formatTime(seconds) {
+        if (seconds < 0) seconds = 0;
+        const m = Math.floor(seconds / 60).toString();
+        const s = Math.floor(seconds % 60).toString().padStart(2, '0');
+        return `${m}:${s}`;
+      }
+
+      // Update Display
+      function updateDisplay() {
+        const timeText = formatTime(remainingTime);
+        display.textContent = timeText;
+        timeInputBtn.textContent = formatTime(totalTime);
+        
+        // Update tab title
+        if (isRunning && remainingTime > 0) {
+          document.title = `${timeText} — 1 Min Timer`;
+        } else if (remainingTime === 0) {
+          document.title = 'Done! — 1 Min Timer';
+        } else {
+          document.title = '1 Minute Timer - Free Online Countdown | Start in One Click';
+        }
+
+        // Update progress circle
+        const progress = remainingTime / totalTime;
+        const offset = progressCircleCircumference * (1 - progress);
+        progressCircle.style.strokeDashoffset = offset;
+
+        // Handle completion
+        if (remainingTime <= 0 && isRunning) {
+          completeTimer();
+        }
+      }
+
+      // Timer Control Functions
+      function startTimer() {
+        if (isRunning) return;
+        if (remainingTime <= 0) {
+          resetTimer();
+        }
+
+        isRunning = true;
+        endTime = Date.now() + (remainingTime * 1000);
+        startBtn.style.display = 'none';
+        secondaryControls.classList.add('visible');
+
+        // Request notification permission on first start
+        requestNotificationPermission();
+
+        timerInterval = setInterval(() => {
+          const now = Date.now();
+          const delta = endTime - now;
+          remainingTime = Math.max(0, Math.ceil(delta / 1000));
+          updateDisplay();
+        }, 100);
+
+        updateDisplay();
+      }
+
+      function pauseTimer() {
+        if (!isRunning) return;
+        isRunning = false;
+        clearInterval(timerInterval);
+        timerInterval = null;
+        startBtn.style.display = 'inline-block';
+        startBtn.textContent = 'RESUME';
+        updateDisplay();
+      }
+
+      function resetTimer() {
+        isRunning = false;
+        clearInterval(timerInterval);
+        timerInterval = null;
+        remainingTime = totalTime;
+        startBtn.style.display = 'inline-block';
+        startBtn.textContent = 'START';
+        secondaryControls.classList.remove('visible');
+        updateDisplay();
+      }
+
+      function completeTimer() {
+        isRunning = false;
+        clearInterval(timerInterval);
+        timerInterval = null;
+        remainingTime = 0;
+        
+        // Visual flash
+        timerPage.classList.add('flash');
+        setTimeout(() => timerPage.classList.remove('flash'), 500);
+        
+        // Sound alert
+        playAlarmSound();
+        
+        // Notification
+        showNotification();
+        
+        // Reset controls
+        startBtn.style.display = 'inline-block';
+        startBtn.textContent = 'START';
+        secondaryControls.classList.remove('visible');
+        
+        updateDisplay();
+      }
+
+      // Time Adjustment
+      function adjustTime(seconds) {
+        if (isRunning) return;
+        totalTime = Math.max(15, totalTime + seconds); // Minimum 15 seconds
+        remainingTime = totalTime;
+        updateDisplay();
+      }
+
+      // Preset Timer Functions
+      function setPresetTime(seconds) {
+        if (isRunning) return;
+        totalTime = seconds;
+        remainingTime = totalTime;
+        updateDisplay();
+      }
+
+      // Custom Time Input
+      function showTimeInput() {
+        const currentMinutes = Math.floor(totalTime / 60);
+        const currentSeconds = totalTime % 60;
+        customMinutes.value = currentMinutes;
+        customSeconds.value = currentSeconds;
+        timeInputModal.classList.add('visible');
+        customMinutes.focus();
+      }
+
+      function hideTimeInput() {
+        timeInputModal.classList.remove('visible');
+      }
+
+      function setCustomTime() {
+        const minutes = parseInt(customMinutes.value) || 0;
+        const seconds = parseInt(customSeconds.value) || 0;
+        const newTime = (minutes * 60) + seconds;
+        
+        if (newTime > 0) {
+          totalTime = newTime;
+          remainingTime = totalTime;
+          updateDisplay();
+        }
+        
+        hideTimeInput();
+      }
+
+      // Fullscreen Toggle
+      function toggleFullscreen() {
+        timerHero.classList.toggle('fullscreen');
+        const isFullscreen = timerHero.classList.contains('fullscreen');
+        fullscreenBtn.textContent = isFullscreen ? '⛶' : '⛶';
+      }
+
+      // Event Listeners
+      startBtn.addEventListener('click', startTimer);
+      pauseBtn.addEventListener('click', pauseTimer);
+      resetBtn.addEventListener('click', resetTimer);
+      fullscreenBtn.addEventListener('click', toggleFullscreen);
+      minusBtn.addEventListener('click', () => adjustTime(-15));
+      plusBtn.addEventListener('click', () => adjustTime(15));
+      timeInputBtn.addEventListener('click', showTimeInput);
+      display.addEventListener('click', showTimeInput);
+      setCustomTimeBtn.addEventListener('click', setCustomTime);
+      cancelCustomTimeBtn.addEventListener('click', hideTimeInput);
+
+      // Preset timer buttons
+      document.querySelectorAll('.preset-timer[data-seconds]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const seconds = parseInt(btn.dataset.seconds);
+          setPresetTime(seconds);
+        });
+      });
+
+      // Modal handling
+      timeInputModal.addEventListener('click', (e) => {
+        if (e.target === timeInputModal) hideTimeInput();
+      });
+
+      // Keyboard shortcuts
+      document.addEventListener('keydown', (e) => {
+        if (e.code === 'Space') {
+          e.preventDefault();
+          isRunning ? pauseTimer() : startTimer();
+        } else if (e.code === 'KeyR') {
+          e.preventDefault();
+          resetTimer();
+        } else if (e.code === 'KeyF') {
+          e.preventDefault();
+          toggleFullscreen();
+        } else if (e.code === 'Escape') {
+          hideTimeInput();
+          if (timerHero.classList.contains('fullscreen')) {
+            timerHero.classList.remove('fullscreen');
+          }
+        }
+      });
+
+      // Custom time input enter key
+      [customMinutes, customSeconds].forEach(input => {
+        input.addEventListener('keydown', (e) => {
+          if (e.code === 'Enter') {
+            setCustomTime();
+          }
+        });
+      });
+
+      // Handle page visibility change for background accuracy
+      document.addEventListener('visibilitychange', () => {
+        if (!document.hidden && isRunning && endTime) {
+          // Recalculate when tab becomes visible again
+          const now = Date.now();
+          const delta = endTime - now;
+          remainingTime = Math.max(0, Math.ceil(delta / 1000));
+          updateDisplay();
+        }
+      });
+
+      // Initialize
+      updateDisplay();
+    });
+  </script>
+
+  <div class="related-tools" style="margin-top:3rem;padding-top:2rem;border-top:1px solid rgba(255,255,255,0.08);">
+    <h2 style="font-size:1.2rem;margin-bottom:1rem;">🔗 Related Tools</h2>
+    <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:1rem;">
+      <a href="/5-minute-timer" style="display:block;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:1.25rem;text-decoration:none;color:inherit;transition:border-color 0.2s,transform 0.2s;" onmouseover="this.style.borderColor='rgba(255,255,255,0.2)';this.style.transform='translateY(-2px)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.08)';this.style.transform='none'">
+        <strong style="font-size:0.95rem;">5 Minute Timer</strong>
+        <p style="opacity:0.6;font-size:0.83rem;margin:0.4rem 0 0;line-height:1.4;">The best 5-minute timer online. Start instantly with one click. Perfect for tea steeping, exercise rest, meditation, and...</p>
+      </a>
+      <a href="https://siliconbased.dev/12-minute-timer" style="display:block;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:1.25rem;text-decoration:none;color:inherit;transition:border-color 0.2s,transform 0.2s;" onmouseover="this.style.borderColor='rgba(255,255,255,0.2)';this.style.transform='translateY(-2px)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.08)';this.style.transform='none'">
+        <strong style="font-size:0.95rem;">12 Minute Timer: Free Online Countdown Tool</strong>
+        <p style="opacity:0.6;font-size:0.83rem;margin:0.4rem 0 0;line-height:1.4;">What happens when you dedicate exactly 1/5th of an hour to a single task? The </p>
+      </a>
+      <a href="https://siliconbased.dev/7-minute-timer" style="display:block;background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.08);border-radius:10px;padding:1.25rem;text-decoration:none;color:inherit;transition:border-color 0.2s,transform 0.2s;" onmouseover="this.style.borderColor='rgba(255,255,255,0.2)';this.style.transform='translateY(-2px)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.08)';this.style.transform='none'">
+        <strong style="font-size:0.95rem;">7 Minute Timer: Free Online Countdown Tool</strong>
+        <p style="opacity:0.6;font-size:0.83rem;margin:0.4rem 0 0;line-height:1.4;">Stop procrastinating right now. Here is why setting a strict 7-minute deadline is the only psychological hack you need t...</p>
+      </a>
+    </div>
+  </div>
 </SiteLayout>

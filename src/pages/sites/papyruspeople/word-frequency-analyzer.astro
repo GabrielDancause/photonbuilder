@@ -59,6 +59,9 @@ const schema = JSON.stringify([
   </Fragment>
 
   <!-- HERO -->
+  <div style="background:rgba(212,165,116,0.08);border:1px solid rgba(212,165,116,0.2);border-radius:12px;padding:1rem 1.5rem;font-size:0.88rem;color:var(--text-secondary);line-height:1.6;margin-bottom:1rem;">
+    ✍️ <strong style="color:#D4A574;">Overused words kill content performance — SEO experts say keyword stuffing drops rankings by 30%.</strong> Analyze your word frequency to find repetition, improve readability, and optimize for search engines. Freelance writers use this to deliver cleaner copy. <a href="https://gab.ae/news/global-freelance-economy-record-growth-2026" style="color:#D4A574;">Why clean writing wins clients →</a>
+  </div>
   <section class="freq-hero">
     <div class="freq-hero-badge">INTERACTIVE ANALYZER</div>
     <h1>Word Frequency <em>Analyzer</em> & Statistics</h1>
@@ -156,6 +159,31 @@ const schema = JSON.stringify([
           </div>
         </div>
 
+        <!-- AI WRITING PATTERNS -->
+        <div class="freq-panel" id="ai-panel" style="border: 1px solid rgba(212,165,116,0.3);">
+          <h2 class="freq-panel-title">🤖 AI Writing Pattern Analysis</h2>
+          <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 16px;">Heuristic indicators that may suggest AI-generated text. Not definitive — use as one data point among many.</p>
+          <div class="freq-stats-grid" style="margin-bottom: 16px;">
+            <div class="freq-stat-card">
+              <div class="freq-stat-val" id="ai-burstiness">—</div>
+              <div class="freq-stat-label">Burstiness</div>
+            </div>
+            <div class="freq-stat-card">
+              <div class="freq-stat-val" id="ai-repetition">—</div>
+              <div class="freq-stat-label">Phrase Repetition</div>
+            </div>
+            <div class="freq-stat-card">
+              <div class="freq-stat-val" id="ai-flags">—</div>
+              <div class="freq-stat-label">AI Phrases Found</div>
+            </div>
+            <div class="freq-stat-card">
+              <div class="freq-stat-val" id="ai-verdict">—</div>
+              <div class="freq-stat-label">Overall Signal</div>
+            </div>
+          </div>
+          <div id="ai-details" style="font-size: 0.85rem; color: var(--text-secondary); line-height: 1.7;"></div>
+        </div>
+
       </div>
     </div>
   </section>
@@ -183,6 +211,14 @@ const schema = JSON.stringify([
       <details class="freq-faq-item">
         <summary>Are common words like 'the' and 'and' ignored?</summary>
         <p>Yes, by default, common English stop words are filtered out from the word cloud and frequency table to highlight the most meaningful words in your text, though you can toggle this setting.</p>
+      </details>
+      <details class="freq-faq-item">
+        <summary>How does the AI writing pattern detection work?</summary>
+        <p>Our AI analysis uses three heuristic signals: <strong>burstiness</strong> (variance in sentence length — human writing is "bursty" with short and long sentences mixed, while AI tends toward uniform lengths), <strong>phrase repetition</strong> (repeated bigram patterns that indicate formulaic writing), and <strong>AI-typical phrases</strong> (common filler phrases like "it is worth noting" or "delve into" that appear frequently in AI-generated text). These are indicators, not proof — always use human judgment alongside any tool.</p>
+      </details>
+      <details class="freq-faq-item">
+        <summary>Can this tool reliably detect AI-generated text?</summary>
+        <p>No single tool can reliably detect AI text with 100% accuracy. Our heuristic analysis provides data points — burstiness scores, phrase patterns, and vocabulary diversity — that may suggest AI involvement. However, skilled human writers can trigger false positives, and sophisticated AI prompting can produce human-like patterns. Use these signals as one input among many, not as a definitive verdict.</p>
       </details>
     </div>
   </section>
@@ -777,6 +813,61 @@ const schema = JSON.stringify([
         '<td>' + pct + '% <div class="freq-bar-bg"><div class="freq-bar-fill" style="width:' + pct + '%"></div></div></td>';
       tbody.appendChild(tr);
     });
+
+    // === AI WRITING PATTERN ANALYSIS ===
+    // Burstiness: variance of sentence lengths (AI text tends to be uniform)
+    var sentLens = sentencesRaw.map(function(s) { return (s.match(/\b\w+('\w+)?\b/g) || []).length; });
+    var avgSentLen = sentLens.reduce(function(a,b){return a+b;}, 0) / Math.max(sentLens.length, 1);
+    var variance = sentLens.reduce(function(a,b){return a + (b-avgSentLen)*(b-avgSentLen);}, 0) / Math.max(sentLens.length, 1);
+    var burstiness = Math.sqrt(variance);
+    // Human text: high burstiness (10+), AI: low (3-7)
+    var burstLabel = burstiness >= 10 ? 'High (human-like)' : burstiness >= 6 ? 'Medium' : 'Low (AI-like)';
+    document.getElementById('ai-burstiness').textContent = burstiness.toFixed(1);
+
+    // Repeated phrases (bigrams/trigrams)
+    var bigramMap = {};
+    for (var bi = 0; bi < wordsRaw.length - 1; bi++) {
+      var bg = wordsRaw[bi].toLowerCase() + ' ' + wordsRaw[bi+1].toLowerCase();
+      bigramMap[bg] = (bigramMap[bg] || 0) + 1;
+    }
+    var repeatedBigrams = Object.keys(bigramMap).filter(function(k) { return bigramMap[k] >= 3; }).length;
+    document.getElementById('ai-repetition').textContent = repeatedBigrams;
+
+    // Common AI phrases
+    var AI_PHRASES = ['it is worth noting','it is important to note','in conclusion','furthermore','moreover',
+      'delve into','it should be noted','in today\'s world','plays a crucial role','in this article',
+      'landscape of','paradigm shift','at the end of the day','a testament to','the importance of',
+      'comprehensive guide','game changer','holistic approach','cutting edge','state of the art',
+      'leverage','utilize','facilitate','subsequently','aforementioned','pivotal','multifaceted',
+      'in the realm of','it goes without saying','needless to say','it\'s worth mentioning'];
+
+    var textLower = text.toLowerCase();
+    var aiPhraseHits = AI_PHRASES.filter(function(p) { return textLower.indexOf(p) !== -1; });
+    document.getElementById('ai-flags').textContent = aiPhraseHits.length;
+
+    // Overall signal
+    var aiScore = 0;
+    if (burstiness < 6) aiScore += 2; else if (burstiness < 10) aiScore += 1;
+    if (repeatedBigrams > 5) aiScore += 1;
+    if (aiPhraseHits.length >= 3) aiScore += 2; else if (aiPhraseHits.length >= 1) aiScore += 1;
+    if (diversity < 40) aiScore += 1;
+
+    var verdictLabel = aiScore >= 4 ? 'Strong AI' : aiScore >= 2 ? 'Possible AI' : 'Likely Human';
+    var verdictColor = aiScore >= 4 ? '#ef4444' : aiScore >= 2 ? '#eab308' : '#22c55e';
+    document.getElementById('ai-verdict').textContent = verdictLabel;
+    document.getElementById('ai-verdict').style.color = verdictColor;
+
+    // Details
+    var detailsHtml = '<strong>Burstiness:</strong> ' + burstiness.toFixed(1) + ' — ' + burstLabel + '. ';
+    detailsHtml += 'Human writing varies wildly in sentence length (burstiness 10+). AI text tends to produce uniform-length sentences (burstiness 3-7).<br>';
+    detailsHtml += '<strong>Repeated bigrams:</strong> ' + repeatedBigrams + ' phrases appear 3+ times. ';
+    detailsHtml += 'High repetition can indicate formulaic writing.<br>';
+    if (aiPhraseHits.length > 0) {
+      detailsHtml += '<strong>AI-typical phrases found:</strong> ' + aiPhraseHits.map(function(p){return '"'+p+'"';}).join(', ') + '<br>';
+    }
+    detailsHtml += '<strong>Vocabulary diversity:</strong> ' + diversity + '%. Below 40% may indicate limited lexical range.<br>';
+    detailsHtml += '<em style="color:var(--text-secondary);font-size:0.8rem;">⚠️ This is heuristic analysis, not definitive AI detection. False positives/negatives are common. Use alongside other tools and human judgment.</em>';
+    document.getElementById('ai-details').innerHTML = detailsHtml;
   });
 
   exportBtn.addEventListener('click', function() {
