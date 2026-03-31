@@ -68,6 +68,8 @@ const REDIRECTS = {
     '/short-squeeze-candidates-march-2026/': '/short-interest/',
     '/short-interest-study': '/short-interest/',
     '/short-interest-study/': '/short-interest/',
+    '/average-institutional-ownership-2026': '/institutional-ownership/',
+    '/average-institutional-ownership-2026/': '/institutional-ownership/',
     '/average-etf-expense-ratio-2026': '/etf-expense-ratios/',
     '/average-etf-expense-ratio-2026/': '/etf-expense-ratios/',
     '/lowest-expense-ratio-etfs-2026': '/etf-expense-ratios/',
