@@ -8,24 +8,10 @@ interface Props {
 const { data } = Astro.props;
 
 // Cross-linking: find related pages for this ticker
-const prospectFiles = import.meta.glob('../data/prospect/*.json', { eager: true });
 const ivFiles = import.meta.glob('../data/iv/*.json', { eager: true });
 
 const ticker = data.ticker;
 const relatedPages: { slug: string; label: string; type: string }[] = [];
-
-// Find prospect pages for same ticker
-for (const [, rawData] of Object.entries(prospectFiles)) {
-  const d = (rawData as any).default ?? rawData;
-  if (d.ticker === ticker) {
-    const isGemini = d.slug?.includes('-gemini');
-    relatedPages.push({
-      slug: d.slug,
-      label: `${isGemini ? 'Gemini 3.1' : 'Opus 4.6'} Prospect Score`,
-      type: 'prospect'
-    });
-  }
-}
 
 // Find other IV pages for same ticker
 for (const [path, rawData] of Object.entries(ivFiles)) {
@@ -39,6 +25,11 @@ for (const [path, rawData] of Object.entries(ivFiles)) {
     });
   }
 }
+
+// Prospect data (merged inline)
+const hasProspect = !!data.prospectScore;
+const prospectPillars = data.prospectPillars || {};
+const prospectPillarEntries = hasProspect ? Object.entries(prospectPillars) : [];
 
 // Find 4 related companies by similar IV
 const allIVs: { ticker: string; name: string; slug: string; iv: number }[] = [];
@@ -109,7 +100,8 @@ const schema = {
   "dateModified": data.published || "2026-03-18",
   "author": { "@type": "Organization", "name": "Westmount Research", "url": "https://westmountfundamentals.com" },
   "publisher": { "@type": "Organization", "name": "Westmount Research", "url": "https://westmountfundamentals.com" },
-  "mainEntityOfPage": { "@type": "WebPage", "@id": `https://westmountfundamentals.com/${data.slug}/` }
+  "mainEntityOfPage": { "@type": "WebPage", "@id": `https://westmountfundamentals.com/${data.slug}/` },
+  ...(data.prospectScore ? { "about": { "@type": "Rating", "ratingValue": data.prospectScore, "bestRating": 100, "name": "Economic Prospect Score" } } : {})
 };
 
 const faqSchema = data.faq?.length ? {
@@ -238,6 +230,68 @@ const thesisTitle = data.thesisTitle || '';
             <p set:html={risk.description} />
           </div>
         ))}
+      </section>
+    )}
+
+    <!-- ECONOMIC PROSPECT SCORE -->
+    {hasProspect && (
+      <section class="content-section prospect-section">
+        <h2>Economic Prospect Score</h2>
+        <div class="prospect-verdict-card">
+          <div class="prospect-score-badge">
+            <span class="prospect-score-number">{data.prospectScore}</span>
+            <span class="prospect-score-label">/ 100</span>
+          </div>
+          <div class={`prospect-verdict-badge ${data.prospectScore >= 70 ? 'strong' : data.prospectScore >= 50 ? 'moderate' : 'weak'}`}>
+            {data.prospectVerdict}
+          </div>
+          {data.prospectVerdictDetail && <p class="prospect-detail">{data.prospectVerdictDetail}</p>}
+        </div>
+
+        {prospectPillarEntries.length > 0 && (
+          <div class="pillars-grid">
+            {prospectPillarEntries.map(([key, pillar]: [string, any]) => (
+              <div class="pillar-card">
+                <div class="pillar-header">
+                  <span class="pillar-title">{pillar.title || key}</span>
+                  <span class="pillar-score">{pillar.score}<span class="pillar-max">/{pillar.maxScore}</span></span>
+                </div>
+                <div class="pillar-bar">
+                  <div class="pillar-bar-fill" style={`width: ${(pillar.score / pillar.maxScore) * 100}%`} />
+                </div>
+                {pillar.summary && <p class="pillar-summary">{pillar.summary}</p>}
+              </div>
+            ))}
+          </div>
+        )}
+
+        {data.prospectKeyRisks?.length > 0 && (
+          <div class="prospect-list-section">
+            <h3 class="risks-heading">⚠️ Key Risks</h3>
+            <ul class="prospect-list risks-list">
+              {data.prospectKeyRisks.map((risk: any) => (
+                <li>
+                  <strong>{risk.title || risk.name}</strong>
+                  {risk.detail && <span> — {risk.detail}</span>}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
+
+        {data.prospectKeyCatalysts?.length > 0 && (
+          <div class="prospect-list-section">
+            <h3 class="catalysts-heading">🚀 Key Catalysts</h3>
+            <ul class="prospect-list catalysts-list">
+              {data.prospectKeyCatalysts.map((cat: any) => (
+                <li>
+                  <strong>{cat.title || cat.name}</strong>
+                  {cat.detail && <span> — {cat.detail}</span>}
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       </section>
     )}
 
@@ -475,6 +529,145 @@ const thesisTitle = data.thesisTitle || '';
     padding: 1.5rem;
     margin-top: 2rem;
   }
+  /* Prospect Section */
+  .prospect-verdict-card {
+    text-align: center;
+    margin-bottom: 1.5rem;
+  }
+  .prospect-score-badge {
+    display: inline-flex;
+    align-items: baseline;
+    gap: 0.25rem;
+    margin-bottom: 0.75rem;
+  }
+  .prospect-score-number {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 3rem;
+    font-weight: 800;
+    color: #4a8fe7;
+  }
+  .prospect-score-label {
+    font-size: 1.2rem;
+    color: #64748b;
+    font-weight: 600;
+  }
+  .prospect-verdict-badge {
+    display: inline-block;
+    padding: 0.4rem 1.2rem;
+    border-radius: 8px;
+    font-weight: 700;
+    font-size: 0.85rem;
+    letter-spacing: 0.05em;
+    margin-bottom: 1rem;
+  }
+  .prospect-verdict-badge.strong {
+    background: rgba(34, 197, 94, 0.15);
+    color: #22c55e;
+    border: 1px solid rgba(34, 197, 94, 0.3);
+  }
+  .prospect-verdict-badge.moderate {
+    background: rgba(234, 179, 8, 0.15);
+    color: #eab308;
+    border: 1px solid rgba(234, 179, 8, 0.3);
+  }
+  .prospect-verdict-badge.weak {
+    background: rgba(239, 68, 68, 0.15);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.3);
+  }
+  .prospect-detail {
+    color: #94a3b8;
+    font-size: 0.9rem;
+    line-height: 1.7;
+    max-width: 700px;
+    margin: 0 auto;
+  }
+  .pillars-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1rem;
+    margin: 1.5rem 0;
+  }
+  .pillar-card {
+    background: #0d1528;
+    border: 1px solid #1e293b;
+    border-radius: 10px;
+    padding: 1.25rem;
+  }
+  .pillar-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 0.5rem;
+  }
+  .pillar-title {
+    color: #e2e8f0;
+    font-weight: 600;
+    font-size: 0.9rem;
+  }
+  .pillar-score {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: #4a8fe7;
+  }
+  .pillar-max {
+    font-size: 0.8rem;
+    color: #64748b;
+    font-weight: 400;
+  }
+  .pillar-bar {
+    height: 4px;
+    background: #1e293b;
+    border-radius: 2px;
+    margin-bottom: 0.75rem;
+    overflow: hidden;
+  }
+  .pillar-bar-fill {
+    height: 100%;
+    background: linear-gradient(90deg, #4a8fe7, #6c63ff);
+    border-radius: 2px;
+  }
+  .pillar-summary {
+    color: #94a3b8;
+    font-size: 0.8rem;
+    line-height: 1.6;
+    margin: 0;
+  }
+  .prospect-list-section {
+    margin-top: 1.25rem;
+  }
+  .risks-heading {
+    color: #ef4444;
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0 0 0.5rem;
+  }
+  .catalysts-heading {
+    color: #22c55e;
+    font-size: 1rem;
+    font-weight: 600;
+    margin: 0 0 0.5rem;
+  }
+  .prospect-list {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+  }
+  .prospect-list li {
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #152040;
+    font-size: 0.85rem;
+    line-height: 1.5;
+  }
+  .prospect-list li:last-child {
+    border-bottom: none;
+  }
+  .risks-list li strong { color: #f87171; }
+  .risks-list li span { color: #94a3b8; }
+  .catalysts-list li strong { color: #4ade80; }
+  .catalysts-list li span { color: #94a3b8; }
+
   .disclaimer p {
     color: #64748b;
     font-size: 0.8rem;

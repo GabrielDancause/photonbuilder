@@ -175,6 +175,16 @@ export default {
       });
     }
 
+    // Pattern-based redirect: prospect pages → intrinsic value pages (westmount)
+    if (site === 'westmount' && pathname.includes('-economic-prospect')) {
+      const ivSlug = pathname
+        .replace('-economic-prospect-consensus', '-intrinsic-value')
+        .replace('-economic-prospect-gemini', '-intrinsic-value')
+        .replace('-economic-prospect-opus', '-intrinsic-value')
+        .replace('-economic-prospect', '-intrinsic-value');
+      return Response.redirect(new URL(ivSlug + (ivSlug.endsWith('/') ? '' : '/'), url.origin).toString(), 301);
+    }
+
     // Check for SEO redirects
     const siteRedirects = REDIRECTS[site];
     if (siteRedirects && siteRedirects[pathname]) {
