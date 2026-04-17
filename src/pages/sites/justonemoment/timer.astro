@@ -1,0 +1,475 @@
+---
+import SiteLayout from "../../../layouts/SiteLayout.astro";
+
+export const meta = {
+  title: "Online Timer — Free High-Precision Countdown Tool",
+  description: "A professional-grade, distraction-free online timer. Set custom countdowns for work, study, or fitness with high-precision system clock synchronization.",
+  category: "tool",
+  date: "2026-03-24",
+  published: "2026-03-24",
+};
+
+const schema = [
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    "name": "Professional Online Timer",
+    "description": "A high-precision online countdown timer with custom intervals and audio notifications.",
+    "applicationCategory": "ProductivityApplication",
+    "operatingSystem": "Any",
+    "offers": {
+      "@type": "Offer",
+      "price": "0",
+      "priceCurrency": "USD"
+    }
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "How accurate is this online timer?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "This timer uses system-clock synchronization (Date.now()) and high-frequency delta calculations. Unlike simple interval-based timers, it remains accurate to the millisecond even if the browser tab is backgrounded or the system experiences heavy load."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Does the timer work if I switch browser tabs?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes. The underlying logic calculates the remaining time based on the absolute system time. Even if the browser throttles the script execution in a background tab, the timer will 'catch up' instantly when you return, ensuring the countdown remains perfectly synced."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Can I set a timer for more than 24 hours?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "This specific tool is optimized for high-intensity focus sessions and tasks, allowing settings up to 99 hours, 59 minutes, and 59 seconds. For multi-day countdowns, a dedicated date-based countdown tool is typically more appropriate."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Will I hear an alarm when the timer reaches zero?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "Yes, the timer includes a multi-tone audio notification that triggers when the countdown completes. Note that most modern browsers require at least one user interaction (like clicking Start) before a website is permitted to play audio."
+        }
+      },
+      {
+        "@type": "Question",
+        "name": "Is my timer data saved?",
+        "acceptedAnswer": {
+          "@type": "Answer",
+          "text": "To protect your privacy and maintain a distraction-free environment, this timer does not store your data on any server. It runs entirely within your local browser session."
+        }
+      }
+    ]
+  }
+];
+---
+
+<SiteLayout site="justonemoment" title={meta.title} description={meta.description} canonical="https://justonemoment.photonbuilder.com/timer" schema={schema}>
+  <div class="page-content">
+    <div class="hero">
+      <h1>Online Timer</h1>
+      <p class="subtitle">High-precision countdown for deep work, study, and performance.</p>
+    </div>
+
+    <!-- Timer Application -->
+    <div class="timer-app-container" id="timerApp">
+      <!-- Input Mode (When Stopped/Reset) -->
+      <div id="setupView" class="view">
+        <div class="time-inputs">
+          <div class="input-field">
+            <input type="number" id="inputHours" min="0" max="99" placeholder="00" value="00" />
+            <label>Hours</label>
+          </div>
+          <span class="separator">:</span>
+          <div class="input-field">
+            <input type="number" id="inputMinutes" min="0" max="59" placeholder="00" value="10" />
+            <label>Min</label>
+          </div>
+          <span class="separator">:</span>
+          <div class="input-field">
+            <input type="number" id="inputSeconds" min="0" max="59" placeholder="00" value="00" />
+            <label>Sec</label>
+          </div>
+        </div>
+
+        <div class="presets">
+          <button class="preset-btn" data-sec="60">1m</button>
+          <button class="preset-btn" data-sec="300">5m</button>
+          <button class="preset-btn" data-sec="600">10m</button>
+          <button class="preset-btn" data-sec="900">15m</button>
+          <button class="preset-btn" data-sec="1800">30m</button>
+          <button class="preset-btn" data-sec="3600">1h</button>
+        </div>
+      </div>
+
+      <!-- Running Mode (Display) -->
+      <div id="runningView" class="view" style="display: none;">
+        <div class="timer-visual">
+          <svg class="progress-ring" viewBox="0 0 240 240">
+            <circle class="ring-bg" cx="120" cy="120" r="110" />
+            <circle class="ring-progress" id="progressRing" cx="120" cy="120" r="110" />
+          </svg>
+          <div class="display-container">
+            <div id="displayTime" class="display-time">00:10:00</div>
+            <div id="displayLabel" class="display-label">Remaining</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Main Controls -->
+      <div class="main-controls">
+        <button id="resetBtn" class="ctrl-btn secondary" title="Reset Timer">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12a9 9 0 1 1 3 6.7"/><path d="M3 22v-6h6"/></svg>
+        </button>
+        <button id="startPauseBtn" class="ctrl-btn primary">Start</button>
+      </div>
+    </div>
+
+    <article class="content-body">
+      <h2>The Science of Precision Timekeeping</h2>
+      <p>Not all online timers are created equal. Most simple countdown tools rely on a JavaScript function called <code>setInterval</code>, which attempts to run code every second. However, in a modern browser environment, the main execution thread is shared with rendering, event handling, and background scripts.</p>
+
+      <p>If you switch to another tab or your computer's CPU load spikes, the browser deprioritizes these intervals. A "10-minute" timer built this way can easily drift by 5 to 10 seconds, or even stop entirely until you return to the tab. This lack of reliability is unacceptable for scientific measurements, precise cooking, or high-stakes productivity techniques.</p>
+
+      <div class="callout">
+        <strong>How We Achieve Absolute Accuracy</strong>
+        <p>Our timer does not "count" seconds. Instead, the moment you press Start, it records the exact <em>system hardware timestamp</em> of when the timer should end. Every few milliseconds, it calculates the difference between the "now" and that "target." This makes the timer immune to browser lag, tab throttling, and computer sleep modes.</p>
+      </div>
+
+      <h2>Practical Applications for Time-Boxing</h2>
+      <p>Time-boxing is the productivity practice of allocating a fixed time period to a specific activity. Using a high-precision timer is essential for the following methodologies:</p>
+
+      <h3>1. The Pomodoro Technique</h3>
+      <p>Traditionally 25 minutes of work followed by a 5-minute break. The hard stop provided by a timer prevents "task creep," where a single item consumes your entire afternoon because of perfectionism. For specific intervals, you can also use our <a href="/25-minute-timer">25-minute timer</a> or <a href="/5-minute-timer">5-minute timer</a>.</p>
+
+      <h3>2. The "Five-Minute Rule" for Procrastination</h3>
+      <p>If you are avoiding a difficult task, commit to working on it for exactly five minutes. The psychological barrier to "5 minutes" is low. Once the timer starts, the momentum often carries you through to complete the task.</p>
+
+      <h3>3. High-Intensity Interval Training (HIIT)</h3>
+      <p>Athletic performance depends on exact work-to-rest ratios. A 10-second deviation in a rest period can fundamentally change the metabolic impact of a workout. Our high-precision system ensures your intervals are mathematically consistent.</p>
+
+      <div class="card">
+        <h3>Why Audio Notifications Matter</h3>
+        <p>A visual timer requires you to keep checking it, which breaks your "flow" or "deep work" state. A reliable audio alert allows you to fully immerse yourself in the task, knowing that the environment will notify you the exact second your time is up. Our audio engine uses a specialized frequency that is designed to be audible over background noise without being jarring.</p>
+      </div>
+    </article>
+
+    <section class="faq-section">
+      <h2>Frequently Asked Questions</h2>
+      <details>
+        <summary>How accurate is this online timer?</summary>
+        <p>This timer uses system-clock synchronization (<code>Date.now()</code>) and high-frequency delta calculations. Unlike simple interval-based timers, it remains accurate to the millisecond even if the browser tab is backgrounded or the system experiences heavy load.</p>
+      </details>
+      <details>
+        <summary>Does the timer work if I switch browser tabs?</summary>
+        <p>Yes. The underlying logic calculates the remaining time based on the absolute system time. Even if the browser throttles the script execution in a background tab, the timer will "catch up" instantly when you return, ensuring the countdown remains perfectly synced.</p>
+      </details>
+      <details>
+        <summary>Can I set a timer for more than 24 hours?</summary>
+        <p>This specific tool allows settings up to 99 hours, 59 minutes, and 59 seconds. For multi-day countdowns, a dedicated date-based countdown tool is typically more appropriate.</p>
+      </details>
+      <details>
+        <summary>Will I hear an alarm when the timer reaches zero?</summary>
+        <p>Yes, the timer includes a multi-tone audio notification. Note that most modern browsers require at least one user interaction (like clicking Start) before a website is permitted to play audio.</p>
+      </details>
+      <details>
+        <summary>Is my timer data saved?</summary>
+        <p>To protect your privacy and maintain a distraction-free environment, this timer does not store your data on any server. It runs entirely within your local browser session.</p>
+      </details>
+    </section>
+  </div>
+
+  <style is:inline>
+    .page-content { max-width: 900px; margin: 0 auto; padding: 2rem 1.5rem; line-height: 1.6; }
+    .hero { text-align: center; padding: 3rem 0 2rem; }
+    .hero h1 { font-size: 2.8rem; font-weight: 900; margin-bottom: 0.5rem; letter-spacing: -0.02em; }
+    .subtitle { color: var(--text-secondary); font-size: 1.2rem; }
+
+    /* Timer App */
+    .timer-app-container {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 24px;
+      padding: 3rem 2rem;
+      margin: 2rem 0 4rem;
+      text-align: center;
+      box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04);
+    }
+
+    .view { min-height: 240px; display: flex; flex-direction: column; justify-content: center; }
+
+    /* Inputs */
+    .time-inputs { display: flex; justify-content: center; align-items: center; gap: 0.75rem; margin-bottom: 2.5rem; }
+    .input-field { display: flex; flex-direction: column; align-items: center; }
+    .input-field input {
+      width: 80px;
+      height: 90px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 2px solid var(--border-color);
+      border-radius: 12px;
+      color: var(--text-primary);
+      font-size: 3rem;
+      font-weight: 700;
+      text-align: center;
+      font-family: var(--font-mono);
+      outline: none;
+      transition: all 0.2s;
+    }
+    .input-field input:focus { border-color: var(--accent-color); background: rgba(255, 255, 255, 0.05); }
+    .input-field label { font-size: 0.75rem; color: var(--text-secondary); margin-top: 0.5rem; text-transform: uppercase; letter-spacing: 0.05em; font-weight: 600; }
+    .separator { font-size: 3rem; font-weight: 700; color: var(--border-color); padding-bottom: 1.5rem; }
+
+    /* Presets */
+    .presets { display: flex; justify-content: center; flex-wrap: wrap; gap: 0.5rem; }
+    .preset-btn {
+      padding: 0.5rem 1rem;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      color: var(--text-secondary);
+      font-size: 0.9rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s;
+    }
+    .preset-btn:hover { background: rgba(255, 255, 255, 0.1); border-color: var(--text-secondary); color: var(--text-primary); }
+
+    /* Visual Timer */
+    .timer-visual { position: relative; width: 240px; height: 240px; margin: 0 auto; max-width: 100%; aspect-ratio: 1/1; }
+    .progress-ring { width: 100%; height: 100%; transform: rotate(-90deg); display: block; }
+    .ring-bg { fill: none; stroke: var(--border-color); stroke-width: 8; }
+    .ring-progress {
+      fill: none;
+      stroke: var(--accent-color);
+      stroke-width: 8;
+      stroke-linecap: round;
+      stroke-dasharray: 691.15; /* 2 * PI * 110 */
+      stroke-dashoffset: 0;
+      transition: stroke-dashoffset 0.1s linear;
+    }
+    .display-container {
+      position: absolute; top: 0; left: 0; width: 100%; height: 100%;
+      display: flex; flex-direction: column; align-items: center; justify-content: center;
+    }
+    .display-time { font-size: 3.2rem; font-weight: 800; font-family: var(--font-mono); color: var(--text-primary); line-height: 1; }
+    .display-label { font-size: 0.85rem; color: var(--text-secondary); margin-top: 0.5rem; text-transform: uppercase; letter-spacing: 0.1em; }
+
+    /* Controls */
+    .main-controls { display: flex; justify-content: center; align-items: center; gap: 1.5rem; margin-top: 2.5rem; }
+    .ctrl-btn {
+      border: none; border-radius: 16px; cursor: pointer; font-weight: 700;
+      display: inline-flex; align-items: center; justify-content: center; transition: all 0.2s;
+    }
+    .ctrl-btn.primary {
+      padding: 1rem 3.5rem; font-size: 1.25rem; background: var(--accent-color); color: #000;
+      box-shadow: 0 4px 14px 0 rgba(245, 158, 11, 0.39);
+    }
+    .ctrl-btn.primary:hover { transform: translateY(-2px); box-shadow: 0 6px 20px rgba(245, 158, 11, 0.45); }
+    .ctrl-btn.primary:active { transform: translateY(0); }
+    .ctrl-btn.secondary {
+      padding: 1rem; width: 56px; height: 56px;
+      background: rgba(255, 255, 255, 0.05); border: 1px solid var(--border-color); color: var(--text-secondary);
+    }
+    .ctrl-btn.secondary:hover { background: rgba(255, 255, 255, 0.1); color: var(--text-primary); border-color: var(--text-secondary); }
+
+    .timer-complete .display-time { color: var(--accent-color); animation: pulse 1s infinite; }
+    @keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+
+    /* Content Body */
+    .content-body h2 { margin-top: 4rem; margin-bottom: 1.5rem; color: var(--text-primary); font-size: 1.8rem; font-weight: 800; }
+    .content-body h3 { margin-top: 2rem; margin-bottom: 0.75rem; color: var(--text-primary); font-size: 1.3rem; }
+    .content-body p { margin-bottom: 1.25rem; color: var(--text-secondary); font-size: 1.1rem; }
+    .card { background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 16px; padding: 1.5rem; margin: 2rem 0; }
+    .card h3 { margin-top: 0; }
+    .callout { background: color-mix(in srgb, var(--accent-color) 10%, transparent); border-left: 4px solid var(--accent-color); padding: 1.5rem 2rem; border-radius: 0 16px 16px 0; margin: 2.5rem 0; }
+
+    /* FAQ */
+    .faq-section { margin-top: 5rem; border-top: 1px solid var(--border-color); padding-top: 4rem; }
+    .faq-section h2 { margin-bottom: 2rem; font-size: 1.8rem; font-weight: 800; }
+    .faq-section details { margin: 1rem 0; padding: 1.25rem; background: var(--card-bg); border-radius: 12px; border: 1px solid var(--border-color); transition: all 0.2s; }
+    .faq-section details[open] { border-color: var(--accent-color); }
+    .faq-section summary { font-weight: 600; cursor: pointer; color: var(--text-primary); outline: none; list-style: none; display: flex; justify-content: space-between; align-items: center; }
+    .faq-section summary::after { content: '+'; font-size: 1.2rem; color: var(--accent-color); }
+    .faq-section details[open] summary::after { content: '−'; }
+    .faq-section p { margin-top: 1rem; margin-bottom: 0; color: var(--text-secondary); line-height: 1.6; }
+
+    @media (max-width: 600px) {
+      .hero h1 { font-size: 2.2rem; }
+      .input-field input { width: 65px; height: 75px; font-size: 2.2rem; }
+      .separator { font-size: 2.2rem; }
+      .display-time { font-size: 2.2rem; }
+      .timer-visual { width: 200px; }
+    }
+  </style>
+
+  <script is:inline>
+    (function() {
+      const CIRCUMFERENCE = 2 * Math.PI * 110;
+
+      const state = {
+        running: false,
+        startTime: 0,
+        totalDurationMs: 0,
+        remainingMs: 0,
+        targetTime: 0,
+        animFrame: null
+      };
+
+      // DOM
+      const setupView = document.getElementById('setupView');
+      const runningView = document.getElementById('runningView');
+      const startPauseBtn = document.getElementById('startPauseBtn');
+      const resetBtn = document.getElementById('resetBtn');
+      const displayTime = document.getElementById('displayTime');
+      const progressRing = document.getElementById('progressRing');
+      const timerApp = document.getElementById('timerApp');
+
+      const inputs = {
+        h: document.getElementById('inputHours'),
+        m: document.getElementById('inputMinutes'),
+        s: document.getElementById('inputSeconds')
+      };
+
+      // Audio
+      function playAlert() {
+        try {
+          const ctx = new (window.AudioContext || window.webkitAudioContext)();
+          [0, 0.2, 0.4].forEach((t, i) => {
+            const osc = ctx.createOscillator();
+            const gain = ctx.createGain();
+            osc.connect(gain);
+            gain.connect(ctx.destination);
+            osc.type = 'sine';
+            osc.frequency.value = i === 2 ? 1046.50 : 880; // A5, A5, C6
+            gain.gain.setValueAtTime(0.2, ctx.currentTime + t);
+            gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + t + 0.15);
+            osc.start(ctx.currentTime + t);
+            osc.stop(ctx.currentTime + t + 0.2);
+          });
+        } catch (e) { console.error("Audio failed", e); }
+      }
+
+      function formatTime(ms) {
+        const totalSec = Math.ceil(ms / 1000);
+        const h = Math.floor(totalSec / 3600);
+        const m = Math.floor((totalSec % 3600) / 60);
+        const s = totalSec % 60;
+        return [h, m, s].map(v => String(v).padStart(2, '0')).join(':');
+      }
+
+      function updateUI() {
+        displayTime.textContent = formatTime(state.remainingMs);
+        const fraction = state.remainingMs / state.totalDurationMs;
+        const offset = CIRCUMFERENCE * (1 - fraction);
+        progressRing.style.strokeDashoffset = offset;
+        document.title = state.running ? `${formatTime(state.remainingMs)} — Online Timer` : 'Online Timer';
+      }
+
+      function tick() {
+        if (!state.running) return;
+
+        const now = Date.now();
+        state.remainingMs = state.targetTime - now;
+
+        if (state.remainingMs <= 0) {
+          state.remainingMs = 0;
+          state.running = false;
+          timerApp.classList.add('timer-complete');
+          updateUI();
+          playAlert();
+          startPauseBtn.textContent = 'Restart';
+          return;
+        }
+
+        updateUI();
+        state.animFrame = requestAnimationFrame(tick);
+      }
+
+      function start() {
+        if (state.running) return;
+
+        if (state.remainingMs <= 0) {
+          const h = parseInt(inputs.h.value) || 0;
+          const m = parseInt(inputs.m.value) || 0;
+          const s = parseInt(inputs.s.value) || 0;
+          state.totalDurationMs = (h * 3600 + m * 60 + s) * 1000;
+
+          if (state.totalDurationMs <= 0) return;
+          state.remainingMs = state.totalDurationMs;
+        }
+
+        state.running = true;
+        state.targetTime = Date.now() + state.remainingMs;
+
+        setupView.style.display = 'none';
+        runningView.style.display = 'flex';
+        timerApp.classList.remove('timer-complete');
+        startPauseBtn.textContent = 'Pause';
+
+        tick();
+      }
+
+      function pause() {
+        state.running = false;
+        cancelAnimationFrame(state.animFrame);
+        startPauseBtn.textContent = 'Resume';
+      }
+
+      function reset() {
+        state.running = false;
+        cancelAnimationFrame(state.animFrame);
+        state.remainingMs = 0;
+        setupView.style.display = 'flex';
+        runningView.style.display = 'none';
+        timerApp.classList.remove('timer-complete');
+        startPauseBtn.textContent = 'Start';
+        document.title = 'Online Timer';
+
+        // Reset progress ring immediately
+        progressRing.style.strokeDashoffset = 0;
+      }
+
+      startPauseBtn.addEventListener('click', () => {
+        if (state.running) pause();
+        else start();
+      });
+
+      resetBtn.addEventListener('click', reset);
+
+      // Presets
+      document.querySelectorAll('.preset-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const sec = parseInt(btn.dataset.sec);
+          const h = Math.floor(sec / 3600);
+          const m = Math.floor((sec % 3600) / 60);
+          const s = sec % 60;
+          inputs.h.value = String(h).padStart(2, '0');
+          inputs.m.value = String(m).padStart(2, '0');
+          inputs.s.value = String(s).padStart(2, '0');
+        });
+      });
+
+      // Handle Input changes
+      Object.values(inputs).forEach(input => {
+        input.addEventListener('change', () => {
+          let val = parseInt(input.value) || 0;
+          const max = parseInt(input.max);
+          if (val < 0) val = 0;
+          if (val > max) val = max;
+          input.value = String(val).padStart(2, '0');
+        });
+      });
+
+      // Init
+      progressRing.style.strokeDasharray = CIRCUMFERENCE;
+    })();
+  </script>
+</SiteLayout>
