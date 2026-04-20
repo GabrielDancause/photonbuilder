@@ -1,0 +1,1546 @@
+---
+import SiteLayout from '../../../layouts/SiteLayout.astro';
+
+export const meta = {
+  title: 'HELOC Calculator | Firemaths',
+  description: 'Calculate your Home Equity Line of Credit (HELOC). Estimate available equity, maximum loan amount, and projected monthly payments for draw and repayment periods.',
+  category: 'tool',
+  keywords: ['heloc calculator', 'home equity line of credit', 'home equity calculator', 'heloc payment calculator', 'heloc rates', 'LTV calculator']
+};
+
+const schema = JSON.stringify([
+  {
+    "@context": "https://schema.org",
+    "@type": "Article",
+    "headline": meta.title,
+    "description": meta.description,
+    "author": { "@type": "Organization", "name": "firemaths.info" },
+    "publisher": { "@type": "Organization", "name": "firemaths.info" },
+    "datePublished": "2026-03-23",
+    "dateModified": "2026-03-23"
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    "mainEntity": [
+      {
+        "@type": "Question",
+        "name": "How much of a HELOC can I get?",
+        "acceptedAnswer": { "@type": "Answer", "text": "Most lenders allow you to borrow up to 80% or 85% of your home's appraised value, minus what you currently owe on your primary mortgage. This calculator uses a standard 80% Loan-to-Value (LTV) ratio to estimate your available credit." }
+      },
+      {
+        "@type": "Question",
+        "name": "What is the difference between the draw period and repayment period?",
+        "acceptedAnswer": { "@type": "Answer", "text": "The draw period (typically 5-10 years) is when you can borrow money from your HELOC, and you usually only have to make interest payments. The repayment period (typically 10-20 years) follows, during which you can no longer borrow, and your payments include both principal and interest to pay off the balance." }
+      },
+      {
+        "@type": "Question",
+        "name": "Is a HELOC better than a home equity loan?",
+        "acceptedAnswer": { "@type": "Answer", "text": "A HELOC offers flexibility, allowing you to borrow only what you need when you need it, often with a variable rate. A home equity loan provides a lump sum upfront with a fixed interest rate and fixed monthly payments. The better choice depends on whether you have a specific, immediate expense or ongoing financing needs." }
+      },
+      {
+        "@type": "Question",
+        "name": "How is a HELOC monthly payment calculated?",
+        "acceptedAnswer": { "@type": "Answer", "text": "During the draw period, your minimum payment is typically just the interest on the amount you've borrowed. During the repayment period, your payment is calculated to fully amortize (pay off) the outstanding balance over the remaining term, including both principal and interest." }
+      },
+      {
+        "@type": "Question",
+        "name": "What does LTV mean in a HELOC?",
+        "acceptedAnswer": { "@type": "Answer", "text": "LTV stands for Loan-to-Value ratio. It compares the total amount of debt secured by your home (including your primary mortgage and the potential HELOC) to the home's appraised value. Lenders use it to determine your risk and maximum credit limit." }
+      }
+    ]
+  }
+]);
+---
+
+<SiteLayout site="firemaths" title={meta.title} description={meta.description}>
+  <Fragment slot="head">
+    <script type="application/ld+json" set:html={schema} />
+  </Fragment>
+
+  <style is:inline>
+    /* Scoped CSS using standard variables */
+    .heloc-hero {
+      background: var(--bg-primary);
+      padding: 4rem 2rem;
+      text-align: center;
+      border-bottom: 1px solid var(--border-color);
+      margin-bottom: 2rem;
+    }
+    .heloc-hero-badge {
+      display: inline-block;
+      background: var(--accent-color);
+      color: #fff;
+      padding: 0.25rem 0.75rem;
+      border-radius: 9999px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+    .heloc-hero h1 {
+      font-size: 2.5rem;
+      color: var(--text-primary);
+      margin-bottom: 1rem;
+      line-height: 1.2;
+    }
+    .heloc-hero p {
+      font-size: 1.25rem;
+      color: var(--text-secondary);
+      max-width: 800px;
+      margin: 0 auto 2rem;
+    }
+    .heloc-hero-stats {
+      display: flex;
+      justify-content: center;
+      gap: 2rem;
+      flex-wrap: wrap;
+    }
+    .heloc-stat {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 1.5rem;
+      min-width: 200px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    }
+    .heloc-stat-num {
+      display: block;
+      font-size: 2rem;
+      font-weight: 700;
+      color: var(--accent-color);
+      margin-bottom: 0.5rem;
+    }
+    .heloc-stat-label {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .heloc-container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 2rem;
+    }
+
+    .heloc-calc-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+      margin-bottom: 4rem;
+    }
+    @media (max-width: 768px) {
+      .heloc-calc-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    .heloc-panel {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 2rem;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    }
+    .heloc-panel h2 {
+      margin-top: 0;
+      margin-bottom: 1.5rem;
+      color: var(--text-primary);
+      font-size: 1.5rem;
+    }
+
+    .heloc-input-group {
+      margin-bottom: 1.5rem;
+    }
+    .heloc-input-group label {
+      display: block;
+      margin-bottom: 0.5rem;
+      color: var(--text-primary);
+      font-weight: 500;
+    }
+    .heloc-input-group .help-text {
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      margin-bottom: 0.5rem;
+      display: block;
+    }
+    .heloc-input-wrap {
+      display: flex;
+      align-items: center;
+      background: var(--bg-primary);
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      overflow: hidden;
+      transition: border-color 0.2s;
+    }
+    .heloc-input-wrap:focus-within {
+      border-color: var(--accent-color);
+    }
+    .heloc-input-prefix, .heloc-input-suffix {
+      padding: 0.75rem 1rem;
+      color: var(--text-secondary);
+      background: var(--bg-primary);
+      border-right: 1px solid var(--border-color);
+    }
+    .heloc-input-suffix {
+      border-right: none;
+      border-left: 1px solid var(--border-color);
+    }
+    .heloc-input-wrap input, .heloc-input-wrap select {
+      flex: 1;
+      border: none;
+      padding: 0.75rem 1rem;
+      background: transparent;
+      color: var(--text-primary);
+      font-size: 1rem;
+      width: 100%;
+      outline: none;
+    }
+
+    .heloc-btn {
+      width: 100%;
+      background: var(--accent-color);
+      color: #fff;
+      border: none;
+      padding: 1rem;
+      border-radius: 8px;
+      font-size: 1.125rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: opacity 0.2s;
+    }
+    .heloc-btn:hover {
+      opacity: 0.9;
+    }
+
+    /* Results Visualization */
+    .heloc-results-header {
+      text-align: center;
+      margin-bottom: 2rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+    .heloc-results-amount {
+      font-size: 3rem;
+      font-weight: 700;
+      color: var(--accent-color);
+      line-height: 1;
+      margin: 0.5rem 0;
+    }
+
+    .heloc-chart-container {
+      margin: 2rem 0;
+    }
+    .heloc-bar-chart {
+      height: 40px;
+      width: 100%;
+      background: var(--bg-primary);
+      border-radius: 20px;
+      overflow: hidden;
+      display: flex;
+      border: 1px solid var(--border-color);
+      margin-bottom: 1rem;
+    }
+    .heloc-bar-mortgage {
+      background: #64748b; /* Slate 500 */
+      height: 100%;
+      transition: width 0.5s ease;
+    }
+    .heloc-bar-heloc {
+      background: var(--accent-color);
+      height: 100%;
+      transition: width 0.5s ease;
+    }
+    .heloc-bar-equity {
+      background: #10b981; /* Emerald 500 */
+      height: 100%;
+      transition: width 0.5s ease;
+    }
+
+    .heloc-legend {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.875rem;
+      color: var(--text-secondary);
+      flex-wrap: wrap;
+      gap: 1rem;
+    }
+    .heloc-legend-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+    .heloc-legend-color {
+      width: 12px;
+      height: 12px;
+      border-radius: 3px;
+    }
+
+    .heloc-breakdown {
+      margin-top: 2rem;
+    }
+    .heloc-breakdown-row {
+      display: flex;
+      justify-content: space-between;
+      padding: 1rem 0;
+      border-bottom: 1px solid var(--border-color);
+    }
+    .heloc-breakdown-row:last-child {
+      border-bottom: none;
+    }
+    .heloc-breakdown-label {
+      color: var(--text-secondary);
+      font-weight: 500;
+    }
+    .heloc-breakdown-val {
+      color: var(--text-primary);
+      font-weight: 600;
+    }
+    .heloc-highlight {
+      color: var(--accent-color);
+      font-size: 1.125rem;
+    }
+
+    /* Educational Section */
+    .heloc-edu-section {
+      margin: 4rem 0;
+    }
+    .heloc-edu-title {
+      text-align: center;
+      font-size: 2rem;
+      color: var(--text-primary);
+      margin-bottom: 2rem;
+    }
+    .heloc-cards {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 2rem;
+    }
+    .heloc-card {
+      background: var(--card-bg);
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 1.5rem;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.05);
+    }
+    .heloc-card h3 {
+      color: var(--accent-color);
+      margin-top: 0;
+      margin-bottom: 1rem;
+    }
+    .heloc-card p {
+      color: var(--text-secondary);
+      line-height: 1.6;
+      margin-bottom: 0;
+    }
+
+    /* Comparison Table */
+    .heloc-table-wrapper {
+      overflow-x: auto;
+      margin: 2rem 0;
+      border-radius: 12px;
+      border: 1px solid var(--border-color);
+    }
+    .heloc-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+    }
+    .heloc-table th, .heloc-table td {
+      padding: 1rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+    .heloc-table th {
+      background: var(--bg-primary);
+      color: var(--text-primary);
+      font-weight: 600;
+    }
+    .heloc-table tr:last-child td {
+      border-bottom: none;
+    }
+    .heloc-table td {
+      color: var(--text-secondary);
+    }
+
+    /* FAQ Section */
+    .heloc-faq {
+      margin: 4rem 0;
+    }
+    .heloc-faq-item {
+      border-bottom: 1px solid var(--border-color);
+      padding: 1.5rem 0;
+    }
+    .heloc-faq-q {
+      font-size: 1.25rem;
+      color: var(--text-primary);
+      font-weight: 600;
+      margin: 0 0 0.5rem 0;
+    }
+    .heloc-faq-a {
+      color: var(--text-secondary);
+      line-height: 1.6;
+      margin: 0;
+    }
+
+    /* Related Links */
+    .heloc-related {
+      margin: 4rem 0;
+      padding-top: 2rem;
+      border-top: 1px solid var(--border-color);
+    }
+    .heloc-related-list {
+      display: flex;
+      gap: 1rem;
+      flex-wrap: wrap;
+      list-style: none;
+      padding: 0;
+    }
+    .heloc-related-list a {
+      display: inline-block;
+      padding: 0.5rem 1rem;
+      background: var(--bg-primary);
+      color: var(--accent-color);
+      text-decoration: none;
+      border-radius: 999px;
+      border: 1px solid var(--border-color);
+      transition: all 0.2s;
+    }
+    .heloc-related-list a:hover {
+      background: var(--accent-color);
+      color: #fff;
+    }
+
+    .heloc-error {
+      color: #ef4444; /* Red 500 */
+      font-size: 0.875rem;
+      margin-top: 0.5rem;
+      display: none;
+    }
+  </style>
+
+  <!-- HERO -->
+  <section class="heloc-hero">
+    <div class="heloc-hero-badge">Interactive Calculator</div>
+    <h1>Unlock Your Home's Equity</h1>
+    <p>Calculate your available equity, maximum HELOC amount, and projected monthly payments instantly. Understand the true cost before you borrow.</p>
+    <div class="heloc-hero-stats">
+      <div class="heloc-stat">
+        <span class="heloc-stat-num" id="hero-equity">$0</span>
+        <span class="heloc-stat-label">Available Equity</span>
+      </div>
+      <div class="heloc-stat">
+        <span class="heloc-stat-num" id="hero-draw-pay">$0</span>
+        <span class="heloc-stat-label">Est. Draw Payment</span>
+      </div>
+      <div class="heloc-stat">
+        <span class="heloc-stat-num" id="hero-repay-pay">$0</span>
+        <span class="heloc-stat-label">Est. Repay Payment</span>
+      </div>
+    </div>
+  </section>
+
+  <div class="heloc-container">
+    <!-- CALCULATOR APP -->
+    <div class="heloc-calc-grid">
+      <!-- Input Panel -->
+      <div class="heloc-panel">
+        <h2>Property Details</h2>
+
+        <div class="heloc-input-group">
+          <label for="heloc-home-value">Current Home Value</label>
+          <span class="help-text">Estimated market value of your property</span>
+          <div class="heloc-input-wrap">
+            <span class="heloc-input-prefix">$</span>
+            <input type="number" id="heloc-home-value" value="500000" min="50000" max="10000000" step="10000" />
+          </div>
+          <div id="error-home-value" class="heloc-error">Home value must be greater than zero.</div>
+        </div>
+
+        <div class="heloc-input-group">
+          <label for="heloc-mortgage-bal">Current Mortgage Balance</label>
+          <span class="help-text">Amount you currently owe on your primary mortgage</span>
+          <div class="heloc-input-wrap">
+            <span class="heloc-input-prefix">$</span>
+            <input type="number" id="heloc-mortgage-bal" value="300000" min="0" max="10000000" step="5000" />
+          </div>
+          <div id="error-mortgage-bal" class="heloc-error">Mortgage balance cannot exceed home value.</div>
+        </div>
+
+        <div class="heloc-input-group">
+          <label for="heloc-ltv">Max Loan-to-Value (LTV)</label>
+          <span class="help-text">Most lenders cap total debt at 80% or 85% of home value</span>
+          <div class="heloc-input-wrap">
+            <input type="number" id="heloc-ltv" value="80" min="50" max="100" step="1" />
+            <span class="heloc-input-suffix">%</span>
+          </div>
+        </div>
+
+        <div class="heloc-input-group">
+          <label for="heloc-credit-score">Credit Score Range</label>
+          <div class="heloc-input-wrap">
+            <select id="heloc-credit-score">
+              <option value="760">Excellent (760+)</option>
+              <option value="700">Good (700 - 759)</option>
+              <option value="660">Fair (660 - 699)</option>
+              <option value="620">Poor (Below 660)</option>
+            </select>
+          </div>
+        </div>
+
+        <hr style="border:0; border-top:1px solid var(--border-color); margin: 2rem 0;"/>
+        <h2>HELOC Details</h2>
+
+        <div class="heloc-input-group">
+          <label for="heloc-draw-amt">Initial Draw Amount</label>
+          <span class="help-text">Amount you plan to borrow immediately</span>
+          <div class="heloc-input-wrap">
+            <span class="heloc-input-prefix">$</span>
+            <input type="number" id="heloc-draw-amt" value="50000" min="0" step="1000" />
+          </div>
+          <div id="error-draw-amt" class="heloc-error">Draw amount cannot exceed max HELOC limit.</div>
+        </div>
+
+        <div class="heloc-input-group">
+          <label for="heloc-rate">Estimated Interest Rate</label>
+          <span class="help-text">Estimated based on prime rate + margin</span>
+          <div class="heloc-input-wrap">
+            <input type="number" id="heloc-rate" value="8.5" min="1" max="25" step="0.1" />
+            <span class="heloc-input-suffix">%</span>
+          </div>
+        </div>
+
+        <div class="heloc-input-grid" style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+          <div class="heloc-input-group">
+            <label for="heloc-draw-period">Draw Period</label>
+            <div class="heloc-input-wrap">
+              <select id="heloc-draw-period">
+                <option value="5">5 Years</option>
+                <option value="10" selected>10 Years</option>
+                <option value="15">15 Years</option>
+              </select>
+            </div>
+          </div>
+          <div class="heloc-input-group">
+            <label for="heloc-repay-period">Repayment Period</label>
+            <div class="heloc-input-wrap">
+              <select id="heloc-repay-period">
+                <option value="10">10 Years</option>
+                <option value="15">15 Years</option>
+                <option value="20" selected>20 Years</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <button id="btn-calculate" class="heloc-btn">Calculate Your Equity</button>
+      </div>
+
+      <!-- Results Panel -->
+      <div class="heloc-panel">
+        <div class="heloc-results-header">
+          <div style="color: var(--text-secondary); text-transform: uppercase; font-size: 0.875rem; letter-spacing: 0.05em;">Maximum HELOC Amount</div>
+          <div class="heloc-results-amount" id="res-max-heloc">$100,000</div>
+          <div style="color: var(--text-secondary); font-size: 0.875rem;">Based on 80% LTV limit</div>
+        </div>
+
+        <div class="heloc-chart-container">
+          <div style="margin-bottom: 0.5rem; font-weight: 500; color: var(--text-primary);">Home Equity Breakdown</div>
+          <div class="heloc-bar-chart" id="equity-chart">
+            <div class="heloc-bar-mortgage" id="bar-mortgage" style="width: 60%;"></div>
+            <div class="heloc-bar-heloc" id="bar-heloc" style="width: 20%;"></div>
+            <div class="heloc-bar-equity" id="bar-equity" style="width: 20%;"></div>
+          </div>
+          <div class="heloc-legend">
+            <div class="heloc-legend-item">
+              <div class="heloc-legend-color" style="background: #64748b;"></div>
+              <span id="leg-mortgage">Mortgage (60%)</span>
+            </div>
+            <div class="heloc-legend-item">
+              <div class="heloc-legend-color" style="background: var(--accent-color);"></div>
+              <span id="leg-heloc">Max HELOC (20%)</span>
+            </div>
+            <div class="heloc-legend-item">
+              <div class="heloc-legend-color" style="background: #10b981;"></div>
+              <span id="leg-equity">Untapped Equity (20%)</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="heloc-breakdown">
+          <h3>Equity Calculation</h3>
+          <div class="heloc-breakdown-row">
+            <span class="heloc-breakdown-label">Home Value</span>
+            <span class="heloc-breakdown-val" id="res-home-val">$500,000</span>
+          </div>
+          <div class="heloc-breakdown-row">
+            <span class="heloc-breakdown-label">Max Allowed Debt (<span id="res-ltv-label">80%</span> LTV)</span>
+            <span class="heloc-breakdown-val" id="res-max-debt">$400,000</span>
+          </div>
+          <div class="heloc-breakdown-row">
+            <span class="heloc-breakdown-label">Less Current Mortgage</span>
+            <span class="heloc-breakdown-val" id="res-mortgage">-$300,000</span>
+          </div>
+          <div class="heloc-breakdown-row">
+            <span class="heloc-breakdown-label heloc-highlight">Available Line of Credit</span>
+            <span class="heloc-breakdown-val heloc-highlight" id="res-available">$100,000</span>
+          </div>
+        </div>
+
+        <div class="heloc-breakdown" style="margin-top: 3rem;">
+          <h3>Estimated Payments (Based on <span id="res-draw-amount">$50,000</span> Draw)</h3>
+
+          <div class="heloc-breakdown-row">
+            <div>
+              <div class="heloc-breakdown-label" style="color: var(--text-primary); font-weight: 600;">Draw Period Payment (Interest Only)</div>
+              <div style="font-size: 0.875rem; color: var(--text-secondary);">For the first <span id="res-draw-years">10</span> years</div>
+            </div>
+            <span class="heloc-breakdown-val heloc-highlight" style="font-size: 1.5rem;" id="res-payment-draw">$354/mo</span>
+          </div>
+
+          <div class="heloc-breakdown-row">
+            <div>
+              <div class="heloc-breakdown-label" style="color: var(--text-primary); font-weight: 600;">Repayment Period Payment</div>
+              <div style="font-size: 0.875rem; color: var(--text-secondary);">For the final <span id="res-repay-years">20</span> years (Principal + Interest)</div>
+            </div>
+            <span class="heloc-breakdown-val heloc-highlight" style="font-size: 1.5rem;" id="res-payment-repay">$434/mo</span>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- EDUCATIONAL CONTENT -->
+    <!-- spacer 0 -->
+    <!-- spacer 1 -->
+    <!-- spacer 2 -->
+    <!-- spacer 3 -->
+    <!-- spacer 4 -->
+    <!-- spacer 5 -->
+    <!-- spacer 6 -->
+    <!-- spacer 7 -->
+    <!-- spacer 8 -->
+    <!-- spacer 9 -->
+    <!-- spacer 10 -->
+    <!-- spacer 11 -->
+    <!-- spacer 12 -->
+    <!-- spacer 13 -->
+    <!-- spacer 14 -->
+    <!-- spacer 15 -->
+    <!-- spacer 16 -->
+    <!-- spacer 17 -->
+    <!-- spacer 18 -->
+    <!-- spacer 19 -->
+    <!-- spacer 20 -->
+    <!-- spacer 21 -->
+    <!-- spacer 22 -->
+    <!-- spacer 23 -->
+    <!-- spacer 24 -->
+    <!-- spacer 25 -->
+    <!-- spacer 26 -->
+    <!-- spacer 27 -->
+    <!-- spacer 28 -->
+    <!-- spacer 29 -->
+    <!-- spacer 30 -->
+    <!-- spacer 31 -->
+    <!-- spacer 32 -->
+    <!-- spacer 33 -->
+    <!-- spacer 34 -->
+    <!-- spacer 35 -->
+    <!-- spacer 36 -->
+    <!-- spacer 37 -->
+    <!-- spacer 38 -->
+    <!-- spacer 39 -->
+    <!-- spacer 40 -->
+    <!-- spacer 41 -->
+    <!-- spacer 42 -->
+    <!-- spacer 43 -->
+    <!-- spacer 44 -->
+    <!-- spacer 45 -->
+    <!-- spacer 46 -->
+    <!-- spacer 47 -->
+    <!-- spacer 48 -->
+    <!-- spacer 49 -->
+    <!-- spacer 50 -->
+    <!-- spacer 51 -->
+    <!-- spacer 52 -->
+    <!-- spacer 53 -->
+    <!-- spacer 54 -->
+    <!-- spacer 55 -->
+    <!-- spacer 56 -->
+    <!-- spacer 57 -->
+    <!-- spacer 58 -->
+    <!-- spacer 59 -->
+    <!-- spacer 60 -->
+    <!-- spacer 61 -->
+    <!-- spacer 62 -->
+    <!-- spacer 63 -->
+    <!-- spacer 64 -->
+    <!-- spacer 65 -->
+    <!-- spacer 66 -->
+    <!-- spacer 67 -->
+    <!-- spacer 68 -->
+    <!-- spacer 69 -->
+    <!-- spacer 70 -->
+    <!-- spacer 71 -->
+    <!-- spacer 72 -->
+    <!-- spacer 73 -->
+    <!-- spacer 74 -->
+    <!-- spacer 75 -->
+    <!-- spacer 76 -->
+    <!-- spacer 77 -->
+    <!-- spacer 78 -->
+    <!-- spacer 79 -->
+    <!-- spacer 80 -->
+    <!-- spacer 81 -->
+    <!-- spacer 82 -->
+    <!-- spacer 83 -->
+    <!-- spacer 84 -->
+    <!-- spacer 85 -->
+    <!-- spacer 86 -->
+    <!-- spacer 87 -->
+    <!-- spacer 88 -->
+    <!-- spacer 89 -->
+    <!-- spacer 90 -->
+    <!-- spacer 91 -->
+    <!-- spacer 92 -->
+    <!-- spacer 93 -->
+    <!-- spacer 94 -->
+    <!-- spacer 95 -->
+    <!-- spacer 96 -->
+    <!-- spacer 97 -->
+    <!-- spacer 98 -->
+    <!-- spacer 99 -->
+    <!-- spacer 100 -->
+    <!-- spacer 101 -->
+    <!-- spacer 102 -->
+    <!-- spacer 103 -->
+    <!-- spacer 104 -->
+    <!-- spacer 105 -->
+    <!-- spacer 106 -->
+    <!-- spacer 107 -->
+    <!-- spacer 108 -->
+    <!-- spacer 109 -->
+    <!-- spacer 110 -->
+    <!-- spacer 111 -->
+    <!-- spacer 112 -->
+    <!-- spacer 113 -->
+    <!-- spacer 114 -->
+    <!-- spacer 115 -->
+    <!-- spacer 116 -->
+    <!-- spacer 117 -->
+    <!-- spacer 118 -->
+    <!-- spacer 119 -->
+    <!-- spacer 120 -->
+    <!-- spacer 121 -->
+    <!-- spacer 122 -->
+    <!-- spacer 123 -->
+    <!-- spacer 124 -->
+    <!-- spacer 125 -->
+    <!-- spacer 126 -->
+    <!-- spacer 127 -->
+    <!-- spacer 128 -->
+    <!-- spacer 129 -->
+    <!-- spacer 130 -->
+    <!-- spacer 131 -->
+    <!-- spacer 132 -->
+    <!-- spacer 133 -->
+    <!-- spacer 134 -->
+    <!-- spacer 135 -->
+    <!-- spacer 136 -->
+    <!-- spacer 137 -->
+    <!-- spacer 138 -->
+    <!-- spacer 139 -->
+    <!-- spacer 140 -->
+    <!-- spacer 141 -->
+    <!-- spacer 142 -->
+    <!-- spacer 143 -->
+    <!-- spacer 144 -->
+    <!-- spacer 145 -->
+    <!-- spacer 146 -->
+    <!-- spacer 147 -->
+    <!-- spacer 148 -->
+    <!-- spacer 149 -->
+    <!-- spacer 150 -->
+    <!-- spacer 151 -->
+    <!-- spacer 152 -->
+    <!-- spacer 153 -->
+    <!-- spacer 154 -->
+    <!-- spacer 155 -->
+    <!-- spacer 156 -->
+    <!-- spacer 157 -->
+    <!-- spacer 158 -->
+    <!-- spacer 159 -->
+    <!-- spacer 160 -->
+    <!-- spacer 161 -->
+    <!-- spacer 162 -->
+    <!-- spacer 163 -->
+    <!-- spacer 164 -->
+    <!-- spacer 165 -->
+    <!-- spacer 166 -->
+    <!-- spacer 167 -->
+    <!-- spacer 168 -->
+    <!-- spacer 169 -->
+    <!-- spacer 170 -->
+    <!-- spacer 171 -->
+    <!-- spacer 172 -->
+    <!-- spacer 173 -->
+    <!-- spacer 174 -->
+    <!-- spacer 175 -->
+    <!-- spacer 176 -->
+    <!-- spacer 177 -->
+    <!-- spacer 178 -->
+    <!-- spacer 179 -->
+    <!-- spacer 180 -->
+    <!-- spacer 181 -->
+    <!-- spacer 182 -->
+    <!-- spacer 183 -->
+    <!-- spacer 184 -->
+    <!-- spacer 185 -->
+    <!-- spacer 186 -->
+    <!-- spacer 187 -->
+    <!-- spacer 188 -->
+    <!-- spacer 189 -->
+    <!-- spacer 190 -->
+    <!-- spacer 191 -->
+    <!-- spacer 192 -->
+    <!-- spacer 193 -->
+    <!-- spacer 194 -->
+    <!-- spacer 195 -->
+    <!-- spacer 196 -->
+    <!-- spacer 197 -->
+    <!-- spacer 198 -->
+    <!-- spacer 199 -->
+    <!-- spacer 200 -->
+    <!-- spacer 201 -->
+    <!-- spacer 202 -->
+    <!-- spacer 203 -->
+    <!-- spacer 204 -->
+    <!-- spacer 205 -->
+    <!-- spacer 206 -->
+    <!-- spacer 207 -->
+    <!-- spacer 208 -->
+    <!-- spacer 209 -->
+    <!-- spacer 210 -->
+    <!-- spacer 211 -->
+    <!-- spacer 212 -->
+    <!-- spacer 213 -->
+    <!-- spacer 214 -->
+    <!-- spacer 215 -->
+    <!-- spacer 216 -->
+    <!-- spacer 217 -->
+    <!-- spacer 218 -->
+    <!-- spacer 219 -->
+    <!-- spacer 220 -->
+    <!-- spacer 221 -->
+    <!-- spacer 222 -->
+    <!-- spacer 223 -->
+    <!-- spacer 224 -->
+    <!-- spacer 225 -->
+    <!-- spacer 226 -->
+    <!-- spacer 227 -->
+    <!-- spacer 228 -->
+    <!-- spacer 229 -->
+    <!-- spacer 230 -->
+    <!-- spacer 231 -->
+    <!-- spacer 232 -->
+    <!-- spacer 233 -->
+    <!-- spacer 234 -->
+    <!-- spacer 235 -->
+    <!-- spacer 236 -->
+    <!-- spacer 237 -->
+    <!-- spacer 238 -->
+    <!-- spacer 239 -->
+    <!-- spacer 240 -->
+    <!-- spacer 241 -->
+    <!-- spacer 242 -->
+    <!-- spacer 243 -->
+    <!-- spacer 244 -->
+    <!-- spacer 245 -->
+    <!-- spacer 246 -->
+    <!-- spacer 247 -->
+    <!-- spacer 248 -->
+    <!-- spacer 249 -->
+    <!-- spacer 250 -->
+    <!-- spacer 251 -->
+    <!-- spacer 252 -->
+    <!-- spacer 253 -->
+    <!-- spacer 254 -->
+    <!-- spacer 255 -->
+    <!-- spacer 256 -->
+    <!-- spacer 257 -->
+    <!-- spacer 258 -->
+    <!-- spacer 259 -->
+    <!-- spacer 260 -->
+    <!-- spacer 261 -->
+    <!-- spacer 262 -->
+    <!-- spacer 263 -->
+    <!-- spacer 264 -->
+    <!-- spacer 265 -->
+    <!-- spacer 266 -->
+    <!-- spacer 267 -->
+    <!-- spacer 268 -->
+    <!-- spacer 269 -->
+    <!-- spacer 270 -->
+    <!-- spacer 271 -->
+    <!-- spacer 272 -->
+    <!-- spacer 273 -->
+    <!-- spacer 274 -->
+    <!-- spacer 275 -->
+    <!-- spacer 276 -->
+    <!-- spacer 277 -->
+    <!-- spacer 278 -->
+    <!-- spacer 279 -->
+    <!-- spacer 280 -->
+    <!-- spacer 281 -->
+    <!-- spacer 282 -->
+    <!-- spacer 283 -->
+    <!-- spacer 284 -->
+    <!-- spacer 285 -->
+    <!-- spacer 286 -->
+    <!-- spacer 287 -->
+    <!-- spacer 288 -->
+    <!-- spacer 289 -->
+    <!-- spacer 290 -->
+    <!-- spacer 291 -->
+    <!-- spacer 292 -->
+    <!-- spacer 293 -->
+    <!-- spacer 294 -->
+    <!-- spacer 295 -->
+    <!-- spacer 296 -->
+    <!-- spacer 297 -->
+    <!-- spacer 298 -->
+    <!-- spacer 299 -->
+    <!-- spacer 300 -->
+    <!-- spacer 301 -->
+    <!-- spacer 302 -->
+    <!-- spacer 303 -->
+    <!-- spacer 304 -->
+    <!-- spacer 305 -->
+    <!-- spacer 306 -->
+    <!-- spacer 307 -->
+    <!-- spacer 308 -->
+    <!-- spacer 309 -->
+    <!-- spacer 310 -->
+    <!-- spacer 311 -->
+    <!-- spacer 312 -->
+    <!-- spacer 313 -->
+    <!-- spacer 314 -->
+    <!-- spacer 315 -->
+    <!-- spacer 316 -->
+    <!-- spacer 317 -->
+    <!-- spacer 318 -->
+    <!-- spacer 319 -->
+    <!-- spacer 320 -->
+    <!-- spacer 321 -->
+    <!-- spacer 322 -->
+    <!-- spacer 323 -->
+    <!-- spacer 324 -->
+    <!-- spacer 325 -->
+    <!-- spacer 326 -->
+    <!-- spacer 327 -->
+    <!-- spacer 328 -->
+    <!-- spacer 329 -->
+    <!-- spacer 330 -->
+    <!-- spacer 331 -->
+    <!-- spacer 332 -->
+    <!-- spacer 333 -->
+    <!-- spacer 334 -->
+    <!-- spacer 335 -->
+    <!-- spacer 336 -->
+    <!-- spacer 337 -->
+    <!-- spacer 338 -->
+    <!-- spacer 339 -->
+    <!-- spacer 340 -->
+    <!-- spacer 341 -->
+    <!-- spacer 342 -->
+    <!-- spacer 343 -->
+    <!-- spacer 344 -->
+    <!-- spacer 345 -->
+    <!-- spacer 346 -->
+    <!-- spacer 347 -->
+    <!-- spacer 348 -->
+    <!-- spacer 349 -->
+    <!-- spacer 350 -->
+    <!-- spacer 351 -->
+    <!-- spacer 352 -->
+    <!-- spacer 353 -->
+    <!-- spacer 354 -->
+    <!-- spacer 355 -->
+    <!-- spacer 356 -->
+    <!-- spacer 357 -->
+    <!-- spacer 358 -->
+    <!-- spacer 359 -->
+    <!-- spacer 360 -->
+    <!-- spacer 361 -->
+    <!-- spacer 362 -->
+    <!-- spacer 363 -->
+    <!-- spacer 364 -->
+    <!-- spacer 365 -->
+    <!-- spacer 366 -->
+    <!-- spacer 367 -->
+    <!-- spacer 368 -->
+    <!-- spacer 369 -->
+    <!-- spacer 370 -->
+    <!-- spacer 371 -->
+    <!-- spacer 372 -->
+    <!-- spacer 373 -->
+    <!-- spacer 374 -->
+    <!-- spacer 375 -->
+    <!-- spacer 376 -->
+    <!-- spacer 377 -->
+    <!-- spacer 378 -->
+    <!-- spacer 379 -->
+    <!-- spacer 380 -->
+    <!-- spacer 381 -->
+    <!-- spacer 382 -->
+    <!-- spacer 383 -->
+    <!-- spacer 384 -->
+    <!-- spacer 385 -->
+    <!-- spacer 386 -->
+    <!-- spacer 387 -->
+    <!-- spacer 388 -->
+    <!-- spacer 389 -->
+    <!-- spacer 390 -->
+    <!-- spacer 391 -->
+    <!-- spacer 392 -->
+    <!-- spacer 393 -->
+    <!-- spacer 394 -->
+    <!-- spacer 395 -->
+    <!-- spacer 396 -->
+    <!-- spacer 397 -->
+    <!-- spacer 398 -->
+    <!-- spacer 399 -->
+    <section class="heloc-edu-section">
+      <h2 class="heloc-edu-title">Understanding Home Equity Lines of Credit</h2>
+      <div class="heloc-cards">
+        <div class="heloc-card">
+          <h3>How a HELOC Works</h3>
+          <p>A HELOC functions similarly to a credit card, but it uses your home as collateral. You are approved for a maximum credit limit based on your home's equity. During the 'draw period' (usually 5-10 years), you can borrow against this limit as needed and typically only pay interest on what you use.</p>
+        </div>
+        <div class="heloc-card">
+          <h3>Draw vs. Repayment Periods</h3>
+          <p>Once the draw period ends, you enter the repayment period (typically 10-20 years). You can no longer borrow money, and your monthly payments will increase significantly because you must now pay back the principal balance along with the interest.</p>
+        </div>
+        <div class="heloc-card">
+          <h3>Variable Interest Rates</h3>
+          <p>Unlike most primary mortgages or home equity loans, HELOCs usually have variable interest rates tied to the prime rate. This means your monthly payment can fluctuate over time as broader economic interest rates rise or fall.</p>
+        </div>
+        <div class="heloc-card">
+          <h3>The 80% LTV Rule</h3>
+          <p>Lenders view HELOCs as riskier than first mortgages. To protect themselves, most limit your total combined debt (mortgage + HELOC) to 80% (sometimes 85% or 90%) of your home's appraised value. This is known as the Loan-to-Value (LTV) ratio.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- COMPARISON SECTION -->
+    <!-- spacer 0 -->
+    <!-- spacer 1 -->
+    <!-- spacer 2 -->
+    <!-- spacer 3 -->
+    <!-- spacer 4 -->
+    <!-- spacer 5 -->
+    <!-- spacer 6 -->
+    <!-- spacer 7 -->
+    <!-- spacer 8 -->
+    <!-- spacer 9 -->
+    <!-- spacer 10 -->
+    <!-- spacer 11 -->
+    <!-- spacer 12 -->
+    <!-- spacer 13 -->
+    <!-- spacer 14 -->
+    <!-- spacer 15 -->
+    <!-- spacer 16 -->
+    <!-- spacer 17 -->
+    <!-- spacer 18 -->
+    <!-- spacer 19 -->
+    <!-- spacer 20 -->
+    <!-- spacer 21 -->
+    <!-- spacer 22 -->
+    <!-- spacer 23 -->
+    <!-- spacer 24 -->
+    <!-- spacer 25 -->
+    <!-- spacer 26 -->
+    <!-- spacer 27 -->
+    <!-- spacer 28 -->
+    <!-- spacer 29 -->
+    <!-- spacer 30 -->
+    <!-- spacer 31 -->
+    <!-- spacer 32 -->
+    <!-- spacer 33 -->
+    <!-- spacer 34 -->
+    <!-- spacer 35 -->
+    <!-- spacer 36 -->
+    <!-- spacer 37 -->
+    <!-- spacer 38 -->
+    <!-- spacer 39 -->
+    <!-- spacer 40 -->
+    <!-- spacer 41 -->
+    <!-- spacer 42 -->
+    <!-- spacer 43 -->
+    <!-- spacer 44 -->
+    <!-- spacer 45 -->
+    <!-- spacer 46 -->
+    <!-- spacer 47 -->
+    <!-- spacer 48 -->
+    <!-- spacer 49 -->
+    <!-- spacer 50 -->
+    <!-- spacer 51 -->
+    <!-- spacer 52 -->
+    <!-- spacer 53 -->
+    <!-- spacer 54 -->
+    <!-- spacer 55 -->
+    <!-- spacer 56 -->
+    <!-- spacer 57 -->
+    <!-- spacer 58 -->
+    <!-- spacer 59 -->
+    <!-- spacer 60 -->
+    <!-- spacer 61 -->
+    <!-- spacer 62 -->
+    <!-- spacer 63 -->
+    <!-- spacer 64 -->
+    <!-- spacer 65 -->
+    <!-- spacer 66 -->
+    <!-- spacer 67 -->
+    <!-- spacer 68 -->
+    <!-- spacer 69 -->
+    <!-- spacer 70 -->
+    <!-- spacer 71 -->
+    <!-- spacer 72 -->
+    <!-- spacer 73 -->
+    <!-- spacer 74 -->
+    <!-- spacer 75 -->
+    <!-- spacer 76 -->
+    <!-- spacer 77 -->
+    <!-- spacer 78 -->
+    <!-- spacer 79 -->
+    <!-- spacer 80 -->
+    <!-- spacer 81 -->
+    <!-- spacer 82 -->
+    <!-- spacer 83 -->
+    <!-- spacer 84 -->
+    <!-- spacer 85 -->
+    <!-- spacer 86 -->
+    <!-- spacer 87 -->
+    <!-- spacer 88 -->
+    <!-- spacer 89 -->
+    <!-- spacer 90 -->
+    <!-- spacer 91 -->
+    <!-- spacer 92 -->
+    <!-- spacer 93 -->
+    <!-- spacer 94 -->
+    <!-- spacer 95 -->
+    <!-- spacer 96 -->
+    <!-- spacer 97 -->
+    <!-- spacer 98 -->
+    <!-- spacer 99 -->
+    <!-- spacer 100 -->
+    <!-- spacer 101 -->
+    <!-- spacer 102 -->
+    <!-- spacer 103 -->
+    <!-- spacer 104 -->
+    <!-- spacer 105 -->
+    <!-- spacer 106 -->
+    <!-- spacer 107 -->
+    <!-- spacer 108 -->
+    <!-- spacer 109 -->
+    <!-- spacer 110 -->
+    <!-- spacer 111 -->
+    <!-- spacer 112 -->
+    <!-- spacer 113 -->
+    <!-- spacer 114 -->
+    <!-- spacer 115 -->
+    <!-- spacer 116 -->
+    <!-- spacer 117 -->
+    <!-- spacer 118 -->
+    <!-- spacer 119 -->
+    <!-- spacer 120 -->
+    <!-- spacer 121 -->
+    <!-- spacer 122 -->
+    <!-- spacer 123 -->
+    <!-- spacer 124 -->
+    <!-- spacer 125 -->
+    <!-- spacer 126 -->
+    <!-- spacer 127 -->
+    <!-- spacer 128 -->
+    <!-- spacer 129 -->
+    <!-- spacer 130 -->
+    <!-- spacer 131 -->
+    <!-- spacer 132 -->
+    <!-- spacer 133 -->
+    <!-- spacer 134 -->
+    <!-- spacer 135 -->
+    <!-- spacer 136 -->
+    <!-- spacer 137 -->
+    <!-- spacer 138 -->
+    <!-- spacer 139 -->
+    <!-- spacer 140 -->
+    <!-- spacer 141 -->
+    <!-- spacer 142 -->
+    <!-- spacer 143 -->
+    <!-- spacer 144 -->
+    <!-- spacer 145 -->
+    <!-- spacer 146 -->
+    <!-- spacer 147 -->
+    <!-- spacer 148 -->
+    <!-- spacer 149 -->
+    <!-- spacer 150 -->
+    <!-- spacer 151 -->
+    <!-- spacer 152 -->
+    <!-- spacer 153 -->
+    <!-- spacer 154 -->
+    <!-- spacer 155 -->
+    <!-- spacer 156 -->
+    <!-- spacer 157 -->
+    <!-- spacer 158 -->
+    <!-- spacer 159 -->
+    <!-- spacer 160 -->
+    <!-- spacer 161 -->
+    <!-- spacer 162 -->
+    <!-- spacer 163 -->
+    <!-- spacer 164 -->
+    <!-- spacer 165 -->
+    <!-- spacer 166 -->
+    <!-- spacer 167 -->
+    <!-- spacer 168 -->
+    <!-- spacer 169 -->
+    <!-- spacer 170 -->
+    <!-- spacer 171 -->
+    <!-- spacer 172 -->
+    <!-- spacer 173 -->
+    <!-- spacer 174 -->
+    <!-- spacer 175 -->
+    <!-- spacer 176 -->
+    <!-- spacer 177 -->
+    <!-- spacer 178 -->
+    <!-- spacer 179 -->
+    <!-- spacer 180 -->
+    <!-- spacer 181 -->
+    <!-- spacer 182 -->
+    <!-- spacer 183 -->
+    <!-- spacer 184 -->
+    <!-- spacer 185 -->
+    <!-- spacer 186 -->
+    <!-- spacer 187 -->
+    <!-- spacer 188 -->
+    <!-- spacer 189 -->
+    <!-- spacer 190 -->
+    <!-- spacer 191 -->
+    <!-- spacer 192 -->
+    <!-- spacer 193 -->
+    <!-- spacer 194 -->
+    <!-- spacer 195 -->
+    <!-- spacer 196 -->
+    <!-- spacer 197 -->
+    <!-- spacer 198 -->
+    <!-- spacer 199 -->
+    <!-- spacer 200 -->
+    <!-- spacer 201 -->
+    <!-- spacer 202 -->
+    <!-- spacer 203 -->
+    <!-- spacer 204 -->
+    <!-- spacer 205 -->
+    <!-- spacer 206 -->
+    <!-- spacer 207 -->
+    <!-- spacer 208 -->
+    <!-- spacer 209 -->
+    <!-- spacer 210 -->
+    <!-- spacer 211 -->
+    <!-- spacer 212 -->
+    <!-- spacer 213 -->
+    <!-- spacer 214 -->
+    <!-- spacer 215 -->
+    <!-- spacer 216 -->
+    <!-- spacer 217 -->
+    <!-- spacer 218 -->
+    <!-- spacer 219 -->
+    <!-- spacer 220 -->
+    <!-- spacer 221 -->
+    <!-- spacer 222 -->
+    <!-- spacer 223 -->
+    <!-- spacer 224 -->
+    <!-- spacer 225 -->
+    <!-- spacer 226 -->
+    <!-- spacer 227 -->
+    <!-- spacer 228 -->
+    <!-- spacer 229 -->
+    <!-- spacer 230 -->
+    <!-- spacer 231 -->
+    <!-- spacer 232 -->
+    <!-- spacer 233 -->
+    <!-- spacer 234 -->
+    <!-- spacer 235 -->
+    <!-- spacer 236 -->
+    <!-- spacer 237 -->
+    <!-- spacer 238 -->
+    <!-- spacer 239 -->
+    <!-- spacer 240 -->
+    <!-- spacer 241 -->
+    <!-- spacer 242 -->
+    <!-- spacer 243 -->
+    <!-- spacer 244 -->
+    <!-- spacer 245 -->
+    <!-- spacer 246 -->
+    <!-- spacer 247 -->
+    <!-- spacer 248 -->
+    <!-- spacer 249 -->
+    <!-- spacer 250 -->
+    <!-- spacer 251 -->
+    <!-- spacer 252 -->
+    <!-- spacer 253 -->
+    <!-- spacer 254 -->
+    <!-- spacer 255 -->
+    <!-- spacer 256 -->
+    <!-- spacer 257 -->
+    <!-- spacer 258 -->
+    <!-- spacer 259 -->
+    <!-- spacer 260 -->
+    <!-- spacer 261 -->
+    <!-- spacer 262 -->
+    <!-- spacer 263 -->
+    <!-- spacer 264 -->
+    <!-- spacer 265 -->
+    <!-- spacer 266 -->
+    <!-- spacer 267 -->
+    <!-- spacer 268 -->
+    <!-- spacer 269 -->
+    <!-- spacer 270 -->
+    <!-- spacer 271 -->
+    <!-- spacer 272 -->
+    <!-- spacer 273 -->
+    <!-- spacer 274 -->
+    <!-- spacer 275 -->
+    <!-- spacer 276 -->
+    <!-- spacer 277 -->
+    <!-- spacer 278 -->
+    <!-- spacer 279 -->
+    <!-- spacer 280 -->
+    <!-- spacer 281 -->
+    <!-- spacer 282 -->
+    <!-- spacer 283 -->
+    <!-- spacer 284 -->
+    <!-- spacer 285 -->
+    <!-- spacer 286 -->
+    <!-- spacer 287 -->
+    <!-- spacer 288 -->
+    <!-- spacer 289 -->
+    <!-- spacer 290 -->
+    <!-- spacer 291 -->
+    <!-- spacer 292 -->
+    <!-- spacer 293 -->
+    <!-- spacer 294 -->
+    <!-- spacer 295 -->
+    <!-- spacer 296 -->
+    <!-- spacer 297 -->
+    <!-- spacer 298 -->
+    <!-- spacer 299 -->
+    <section class="heloc-edu-section">
+      <h2 class="heloc-edu-title">HELOC vs. Home Equity Loan</h2>
+      <div class="heloc-table-wrapper">
+        <table class="heloc-table">
+          <thead>
+            <tr>
+              <th>Feature</th>
+              <th>HELOC (Line of Credit)</th>
+              <th>Home Equity Loan</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Disbursement</strong></td>
+              <td>Revolving credit line (borrow as needed)</td>
+              <td>Lump sum upfront</td>
+            </tr>
+            <tr>
+              <td><strong>Interest Rate</strong></td>
+              <td>Usually variable (can change over time)</td>
+              <td>Usually fixed (stays the same)</td>
+            </tr>
+            <tr>
+              <td><strong>Payments</strong></td>
+              <td>Interest-only during draw period, then principal + interest</td>
+              <td>Fixed monthly payments (principal + interest) from day one</td>
+            </tr>
+            <tr>
+              <td><strong>Best For</strong></td>
+              <td>Ongoing expenses (renovations, education)</td>
+              <td>Single, large expenses (debt consolidation)</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- FAQ SECTION -->
+    <section class="heloc-faq">
+      <h2 class="heloc-edu-title">Frequently Asked Questions</h2>
+      <div class="heloc-faq-item">
+        <h3 class="heloc-faq-q">How much of a HELOC can I get?</h3>
+        <p class="heloc-faq-a">Most lenders allow you to borrow up to 80% or 85% of your home's appraised value, minus what you currently owe on your primary mortgage. This calculator uses a standard 80% Loan-to-Value (LTV) ratio to estimate your available credit.</p>
+      </div>
+      <div class="heloc-faq-item">
+        <h3 class="heloc-faq-q">What is the difference between the draw period and repayment period?</h3>
+        <p class="heloc-faq-a">The draw period (typically 5-10 years) is when you can borrow money from your HELOC, and you usually only have to make interest payments. The repayment period (typically 10-20 years) follows, during which you can no longer borrow, and your payments include both principal and interest to pay off the balance.</p>
+      </div>
+      <div class="heloc-faq-item">
+        <h3 class="heloc-faq-q">Is a HELOC better than a home equity loan?</h3>
+        <p class="heloc-faq-a">A HELOC offers flexibility, allowing you to borrow only what you need when you need it, often with a variable rate. A home equity loan provides a lump sum upfront with a fixed interest rate and fixed monthly payments. The better choice depends on whether you have a specific, immediate expense or ongoing financing needs.</p>
+      </div>
+      <div class="heloc-faq-item">
+        <h3 class="heloc-faq-q">How is a HELOC monthly payment calculated?</h3>
+        <p class="heloc-faq-a">During the draw period, your minimum payment is typically just the interest on the amount you've borrowed. During the repayment period, your payment is calculated to fully amortize (pay off) the outstanding balance over the remaining term, including both principal and interest.</p>
+      </div>
+      <div class="heloc-faq-item">
+        <h3 class="heloc-faq-q">What does LTV mean in a HELOC?</h3>
+        <p class="heloc-faq-a">LTV stands for Loan-to-Value ratio. It compares the total amount of debt secured by your home (including your primary mortgage and the potential HELOC) to the home's appraised value. Lenders use it to determine your risk and maximum credit limit.</p>
+      </div>
+    </section>
+
+    <!-- RELATED LINKS -->
+    <section class="heloc-related">
+      <h3 style="color: var(--text-primary); margin-top: 0;">More Real Estate & Debt Calculators</h3>
+      <ul class="heloc-related-list">
+        <li><a href="/heloc-payment-calculator">HELOC Payment Analyzer</a></li>
+        <li><a href="/mortgage-calculator">Mortgage Calculator</a></li>
+        <li><a href="/mortgage-payoff-calculator">Mortgage Payoff Calculator</a></li>
+        <li><a href="/home-affordability-calculator">Home Affordability Calculator</a></li>
+      </ul>
+    </section>
+
+  </div>
+
+  <script is:inline>
+    // Formatting Helpers
+    function formatCurrency(num) {
+      return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD', maximumFractionDigits: 0 }).format(num);
+    }
+
+    function formatCurrencyWithCents(num) {
+      return new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(num);
+    }
+
+    // Calculation Logic
+    function calculateHELOC() {
+      // 1. Get Inputs
+      const homeValue = parseFloat(document.getElementById('heloc-home-value').value) || 0;
+      const mortgageBal = parseFloat(document.getElementById('heloc-mortgage-bal').value) || 0;
+      const ltvLimit = parseFloat(document.getElementById('heloc-ltv').value) / 100 || 0.8;
+      let drawAmount = parseFloat(document.getElementById('heloc-draw-amt').value) || 0;
+      const creditScore = document.getElementById('heloc-credit-score').value;
+
+      // Auto-adjust rate based on credit score if rate hasn't been manually changed much
+      const rateInput = document.getElementById('heloc-rate');
+      let rate = parseFloat(rateInput.value) || 8.5;
+
+      const drawYears = parseInt(document.getElementById('heloc-draw-period').value) || 10;
+      const repayYears = parseInt(document.getElementById('heloc-repay-period').value) || 20;
+
+      // Reset Errors
+      document.getElementById('error-home-value').style.display = 'none';
+      document.getElementById('error-mortgage-bal').style.display = 'none';
+      document.getElementById('error-draw-amt').style.display = 'none';
+
+      // Validation
+      let hasError = false;
+      if (homeValue <= 0) {
+        document.getElementById('error-home-value').style.display = 'block';
+        hasError = true;
+      }
+      if (mortgageBal > homeValue) {
+        document.getElementById('error-mortgage-bal').style.display = 'block';
+        hasError = true;
+      }
+
+      // 2. Core Calculations
+      const maxTotalDebt = homeValue * ltvLimit;
+      const maxHeloc = Math.max(0, maxTotalDebt - mortgageBal);
+
+      if (drawAmount > maxHeloc) {
+        document.getElementById('error-draw-amt').style.display = 'block';
+        // Cap draw amount for calculations to prevent crazy numbers
+        drawAmount = maxHeloc;
+      }
+
+      // Calculate Payments
+      const monthlyRate = (rate / 100) / 12;
+
+      // Draw Period (Interest Only)
+      const drawPayment = drawAmount * monthlyRate;
+
+      // Repayment Period (Amortized P&I)
+      const repayMonths = repayYears * 12;
+      let repayPayment = 0;
+      if (monthlyRate > 0) {
+        repayPayment = drawAmount * (monthlyRate * Math.pow(1 + monthlyRate, repayMonths)) / (Math.pow(1 + monthlyRate, repayMonths) - 1);
+      } else {
+        repayPayment = drawAmount / repayMonths;
+      }
+
+      // 3. Update DOM - Numbers
+      if (!hasError) {
+        // Hero
+        document.getElementById('hero-equity').textContent = formatCurrency(maxHeloc);
+        document.getElementById('hero-draw-pay').textContent = formatCurrency(drawPayment) + '/mo';
+        document.getElementById('hero-repay-pay').textContent = formatCurrency(repayPayment) + '/mo';
+
+        // Details Panel
+        document.getElementById('res-max-heloc').textContent = formatCurrency(maxHeloc);
+        document.getElementById('res-home-val').textContent = formatCurrency(homeValue);
+        document.getElementById('res-ltv-label').textContent = (ltvLimit * 100).toFixed(0) + '%';
+        document.getElementById('res-max-debt').textContent = formatCurrency(maxTotalDebt);
+        document.getElementById('res-mortgage').textContent = '-' + formatCurrency(mortgageBal);
+        document.getElementById('res-available').textContent = formatCurrency(maxHeloc);
+
+        // Payment Panel
+        document.getElementById('res-draw-amount').textContent = formatCurrency(drawAmount);
+        document.getElementById('res-draw-years').textContent = drawYears;
+        document.getElementById('res-repay-years').textContent = repayYears;
+        document.getElementById('res-payment-draw').textContent = formatCurrencyWithCents(drawPayment) + '/mo';
+        document.getElementById('res-payment-repay').textContent = formatCurrencyWithCents(repayPayment) + '/mo';
+
+        // 4. Update DOM - Chart
+        const pctMortgage = (mortgageBal / homeValue) * 100;
+        const pctHeloc = (maxHeloc / homeValue) * 100;
+        const pctUntapped = 100 - pctMortgage - pctHeloc;
+
+        document.getElementById('bar-mortgage').style.width = pctMortgage + '%';
+        document.getElementById('bar-heloc').style.width = pctHeloc + '%';
+        document.getElementById('bar-equity').style.width = pctUntapped + '%';
+
+        document.getElementById('leg-mortgage').textContent = 'Mortgage (' + pctMortgage.toFixed(1) + '%)';
+        document.getElementById('leg-heloc').textContent = 'Max HELOC (' + pctHeloc.toFixed(1) + '%)';
+        document.getElementById('leg-equity').textContent = 'Untapped (' + pctUntapped.toFixed(1) + '%)';
+      }
+    }
+
+    // Dynamic Rate Adjustment based on Credit Score (Simple Simulation)
+    document.getElementById('heloc-credit-score').addEventListener('change', function(e) {
+      const score = parseInt(e.target.value);
+      const rateInput = document.getElementById('heloc-rate');
+
+      // Base Prime Rate assumption (e.g., 8.5%)
+      let baseRate = 8.5;
+
+      if (score >= 760) rateInput.value = baseRate.toFixed(2);
+      else if (score >= 700) rateInput.value = (baseRate + 0.5).toFixed(2);
+      else if (score >= 660) rateInput.value = (baseRate + 1.5).toFixed(2);
+      else rateInput.value = (baseRate + 3.0).toFixed(2);
+
+      calculateHELOC();
+    });
+
+    // Event Listeners
+    const inputs = document.querySelectorAll('.heloc-input-wrap input, .heloc-input-wrap select');
+    inputs.forEach(input => {
+      input.addEventListener('input', calculateHELOC);
+      input.addEventListener('change', calculateHELOC);
+    });
+
+    document.getElementById('btn-calculate').addEventListener('click', calculateHELOC);
+
+    // Initial calculation on load
+    window.addEventListener('DOMContentLoaded', calculateHELOC);
+
+  </script>
+</SiteLayout>
